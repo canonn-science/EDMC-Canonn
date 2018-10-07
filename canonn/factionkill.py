@@ -35,11 +35,10 @@ class FactionKill(threading.Thread):
         payload["reward"]=self.entry["Reward"]
         payload["rewardingFaction"]=self.entry["AwardingFaction"]
         payload["victimFaction"]=self.entry["VictimFaction"]
-        if self.is_beta:
-            payload["isbeta"]=self.is_beta
+        payload["isbeta"]= self.is_beta
             
         try:        
-            r=requests.post("https://api.canonn.tech:2053/factionkillreport",data=json.dumps(payload),headers={"content-type":"application/json"})  
+            r=requests.post("https://api.canonn.tech:2053/factionkillreports",data=json.dumps(payload),headers={"content-type":"application/json"})  
         except:
             print("[EDMC-Canonn] Issue posting FactionKIll " + str(sys.exc_info()[0]))                            
             print r

@@ -3,6 +3,7 @@ import myNotebook as nb
 
 from canonn import journaldata
 from canonn import factionkill
+from canonn import ussdrop
 
 import ttk
 import Tkinter as tk
@@ -65,4 +66,5 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state):
     journaldata.submit(cmdr, is_beta, system, station, entry)
     factionkill.submit(cmdr, is_beta, system, station, entry)
+    ussdrop.submit(cmdr, is_beta, system, station, entry)
     
