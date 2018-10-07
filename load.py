@@ -1,4 +1,5 @@
 from config import config
+import myNotebook as nb
 
 from canonn import journaldata
 from canonn import factionkill
