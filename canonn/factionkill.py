@@ -18,13 +18,14 @@ class FactionKill(threading.Thread):
     '''
         Should probably make this a heritable class as this is a repeating pattern
     '''
-    def __init__(self,cmdr, is_beta, system, station, entry):
+    def __init__(self,cmdr, is_beta, system, station, entry,client):
         threading.Thread.__init__(self)
         self.system = system
         self.cmdr = cmdr
         self.station = station
         self.is_beta = is_beta
         self.entry = entry.copy()
+        self.client = client
 
         
     def run(self):
@@ -36,9 +37,10 @@ class FactionKill(threading.Thread):
         payload["rewardingFaction"]=self.entry["AwardingFaction"]
         payload["victimFaction"]=self.entry["VictimFaction"]
         payload["isbeta"]= self.is_beta
+        payload["clientVersion"]= self.client
             
         try:        
-            r=requests.post("https://api.canonn.tech:2053/factionkillreports",data=json.dumps(payload),headers={"content-type":"application/json"})  
+            r=requests.post("https://api.canonn.tech:2053/killreports",data=json.dumps(payload),headers={"content-type":"application/json"})  
         except:
             print("[EDMC-Canonn] Issue posting FactionKIll " + str(sys.exc_info()[0]))                            
             print r
@@ -51,11 +53,11 @@ def matches(d, field, value):
     journaldata.submit(cmdr, system, station, entry)
   
 '''
-def submit(cmdr, is_beta, system, station, entry):
+def submit(cmdr, is_beta, system, station, entry,client):
     if entry["event"] == "FactionKillBond" and (
         matches(entry, 'VictimFaction', '$faction_Thargoid;') or 
         matches(entry, 'VictimFaction', '$faction_Guardian;')
     ):
-        FactionKill(cmdr, is_beta, system, station, entry).start()   
+        FactionKill(cmdr, is_beta, system, station, entry,client).start()   
     
     

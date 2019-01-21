@@ -1,0 +1,6 @@
+{ 
+    "host": { "description": "Live Server", "url": "https://api.canonn.tech"}, 
+    "host": { "description": "Beta Server", "url": "https://api.canonn.tech:2053"}, 
+    "host": { "description": "Alpha Server", "url": "https://api.canonn.tech:2083"},     
+    "host": { "description": "Local Server Server", "url": "https://localhost:1337"},     
+}
