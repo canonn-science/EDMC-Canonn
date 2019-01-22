@@ -10,8 +10,8 @@ import json
         "AwardingFaction":"$faction_PilotsFederation;", 
         "AwardingFaction_Localised":"Pilots Federation", 
         "VictimFaction":"$faction_Thargoid;", 
-        "VictimFaction_Localised":"Thargoids" }
-
+        "VictimFaction_Localised":"Thargoids" 
+    }
 '''
 
 class FactionKill(threading.Thread):
@@ -27,7 +27,6 @@ class FactionKill(threading.Thread):
         self.entry = entry.copy()
         self.client = client
 
-        
     def run(self):
         payload={}
         payload["systemname"]=self.system
@@ -44,14 +43,13 @@ class FactionKill(threading.Thread):
         except:
             print("[EDMC-Canonn] Issue posting FactionKIll " + str(sys.exc_info()[0]))                            
             print r
-        
+
 def matches(d, field, value):
 	return field in d and value == d[field]	        
             
 '''
     from canonn import journaldata
     journaldata.submit(cmdr, system, station, entry)
-  
 '''
 def submit(cmdr, is_beta, system, station, entry,client):
     if entry["event"] == "FactionKillBond" and (
@@ -59,5 +57,4 @@ def submit(cmdr, is_beta, system, station, entry,client):
         matches(entry, 'VictimFaction', '$faction_Guardian;')
     ):
         FactionKill(cmdr, is_beta, system, station, entry,client).start()   
-    
-    
+

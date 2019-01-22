@@ -3,17 +3,13 @@ import requests
 import sys
 import json
 
-
-            
-            
-
 class Codex(threading.Thread):
     '''
         Should probably make this a heritable class as this is a repeating pattern
     '''
-    
+
     excludecodices={}
-    
+
     def __init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
         threading.Thread.__init__(self)
         self.cmdr = cmdr
@@ -28,12 +24,7 @@ class Codex(threading.Thread):
         self.is_beta = is_beta
         self.entry = entry.copy()
         self.client = client
-        
-        
-        
-        
 
-        
     def run(self):
         
         if not Codex.excludecodices:
@@ -42,14 +33,12 @@ class Codex(threading.Thread):
                 for exc in r.json():
                     Codex.excludecodices["${}_name;".format(exc["codexName"])]=True
                 print Codex.excludecodices
-                
-        
+
         if not Codex.excludecodices.get(self.entry.get("codexName")):
             payload={}
             payload["cmdrName"]=self.cmdr  
             payload["systemName"]=self.system
             payload["bodyName"]=self.body
-            
             payload["coordX"]=self.x
             payload["coordY"]=self.y
             payload["coordZ"]=self.z
@@ -69,7 +58,7 @@ class Codex(threading.Thread):
             payload["rawJson"]=self.entry
             payload["isBeta"]=self.is_beta
             payload["clientVersion"]=self.client
-                
+
             try:        
                 r=requests.post("https://api.canonn.tech:2053/codexreports",data=json.dumps(payload),headers={"content-type":"application/json"})  
             except:
@@ -82,13 +71,7 @@ def matches(d, field, value):
 '''
     from canonn import journaldata
     journaldata.submit(cmdr, system, station, entry)
-  
 '''
 def submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
     if entry["event"] == "CodexEntry":
         Codex(cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client).start()   
-    
-    
-
-    
-    
