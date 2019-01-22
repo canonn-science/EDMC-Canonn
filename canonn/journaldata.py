@@ -68,8 +68,10 @@ excluded_events = [
     "CommunityGoalDiscard",    "CrewMemberJoins",    "CrewMemberQuits",    "CrewMemberRoleChange",    "EndCrewSession",    "EngineerContribution",    "EscapeInterdiction",
     "MassModuleStore",    "MiningRefined",    "NewCommander",    "RefuelPartial",    "SelfDestruct",    "ShipyardSell",
 ]
-
-
+'''
+Added the above events to: https://api.canonn.tech:2053/excludeevents
+-DM
+'''
 
 class CanonnJournal(threading.Thread):
     '''
@@ -84,7 +86,6 @@ class CanonnJournal(threading.Thread):
         self.entry = entry.copy()
         self.client = client
 
-        
     def run(self):
         payload={}
         payload["systemname"]=self.system
@@ -92,27 +93,20 @@ class CanonnJournal(threading.Thread):
         payload["jsonData"]=self.entry
         payload["EventName"]=self.entry["event"]
         payload["clientVersion"]= self.client
-        
-        
+
         included_event=(self.entry["event"] not in excluded_events)
         #Music is in the exclusion list but we want unknown music
         unknown_music=(self.entry["event"] == "Music" and "UNKNOWN" in str(self.entry).upper())
-        
-                    
+
         if included_event or unknown_music:
-                        
-            
             try:        
                 requests.post("https://api.canonn.tech:2053/journaldata",data=json.dumps(payload),headers={"content-type":"application/json"})  
             except:
                 print("[EDMC-Canonn] Issue posting CanonnJournal " + str(sys.exc_info()[0]))                            
-        
-        
-            
+
 '''
     from canonn import journaldata
     journaldata.submit(cmdr, system, station, entry)
-  
 '''
 def submit(cmdr, is_beta, system, station, entry,client):
     CanonnJournal(cmdr, is_beta, system, station, entry,client).start()   

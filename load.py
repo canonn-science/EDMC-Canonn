@@ -25,7 +25,6 @@ this.nearloc = {
 }
 this.systemCache={ "Sol": (0,0,0) }
 
-
 myPlugin = "EDMC-Canonn"
 
 #this.debuglevel=2
@@ -94,9 +93,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     
     return journal_entry_wrapper(commander, is_beta, system, station, entry, state,x,y,z,this.body_name,this.nearloc['Latitude'],this.nearloc['Longitude'],this.client_version)    
     
-    
-        
-    
 # Detect journal events
 def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
     factionkill.submit(cmdr, is_beta, system, station, entry,client)
@@ -104,7 +100,6 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     hdreport.submit(cmdr, is_beta, system, station, entry,client)
     codex.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     journaldata.submit(cmdr, is_beta, system, station, entry,client)
-    
     
 def dashboard_entry(cmdr, is_beta, entry):
       
@@ -123,7 +118,6 @@ def dashboard_entry(cmdr, is_beta, entry):
         this.body_name = None
         this.nearloc['Latitude'] = None
         this.nearloc['Longitude'] = None    
-    
     
 def edsmGetSystem(system):
     
