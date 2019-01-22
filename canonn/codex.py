@@ -4,11 +4,16 @@ import sys
 import json
 
 
+            
+            
 
 class Codex(threading.Thread):
     '''
         Should probably make this a heritable class as this is a repeating pattern
     '''
+    
+    excludecodices={}
+    
     def __init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
         threading.Thread.__init__(self)
         self.cmdr = cmdr
@@ -22,7 +27,7 @@ class Codex(threading.Thread):
         self.lon = lon
         self.is_beta = is_beta
         self.entry = entry.copy()
-        seles.client = client
+        self.client = client
         
         
         
@@ -30,36 +35,46 @@ class Codex(threading.Thread):
 
         
     def run(self):
-        payload={}
-        payload["cmdrName"]=self.cmdr  
-        payload["systemName"]=self.system
-        payload["bodyName"]=self.body
         
-        payload["coordX"]=self.x
-        payload["coordY"]=self.y
-        payload["coordZ"]=self.z
-        payload["latitude"]=self.lat
-        payload["longitude"]=self.lon
-        payload["entryId"]=self.entry.get("EntryID")
-        payload["codexName"]=self.entry.get("Name")
-        payload["codexNameLocalised"]=self.entry.get("Name_Localised")
-        payload["subCategory"]=self.entry.get("SubCategory")
-        payload["subCategoryLocalised"]=self.entry.get("SubCategory_Localised")
-        payload["category"]=self.entry.get("Category")
-        payload["categoryLocalised"]=self.entry.get("Category_Localised")
-        payload["regionName"]=self.entry.get("Region")
-        payload["regionLocalised"]=self.entry.get("Region_Localised")
-        payload["systemAddress"]=self.entry.get("SystemAddress")
-        payload["voucherAmount"]=self.entry.get("VoucherAmount")
-        payload["rawJson"]=self.entry
-        payload["isBeta"]=self.is_beta
-        payload["clientVersion"]=self.client
+        if not Codex.excludecodices:
+            r=requests.get("https://api.canonn.tech:2053/excludecodices")  
+            if r.status_code == requests.codes.ok:
+                for exc in r.json():
+                    Codex.excludecodices["${}_name;".format(exc["codexName"])]=True
+                print Codex.excludecodices
+                
+        
+        if not Codex.excludecodices.get(entry.get("codexName")):
+            payload={}
+            payload["cmdrName"]=self.cmdr  
+            payload["systemName"]=self.system
+            payload["bodyName"]=self.body
             
-        try:        
-            r=requests.post("https://api.canonn.tech:2053/codexreports",data=json.dumps(payload),headers={"content-type":"application/json"})  
-        except:
-            print("[EDMC-Canonn] Issue posting codex entry " + str(sys.exc_info()[0]))                            
-            print r
+            payload["coordX"]=self.x
+            payload["coordY"]=self.y
+            payload["coordZ"]=self.z
+            payload["latitude"]=self.lat
+            payload["longitude"]=self.lon
+            payload["entryId"]=self.entry.get("EntryID")
+            payload["codexName"]=self.entry.get("Name")
+            payload["codexNameLocalised"]=self.entry.get("Name_Localised")
+            payload["subCategory"]=self.entry.get("SubCategory")
+            payload["subCategoryLocalised"]=self.entry.get("SubCategory_Localised")
+            payload["category"]=self.entry.get("Category")
+            payload["categoryLocalised"]=self.entry.get("Category_Localised")
+            payload["regionName"]=self.entry.get("Region")
+            payload["regionLocalised"]=self.entry.get("Region_Localised")
+            payload["systemAddress"]=self.entry.get("SystemAddress")
+            payload["voucherAmount"]=self.entry.get("VoucherAmount")
+            payload["rawJson"]=self.entry
+            payload["isBeta"]=self.is_beta
+            payload["clientVersion"]=self.client
+                
+            try:        
+                r=requests.post("https://api.canonn.tech:2053/codexreports",data=json.dumps(payload),headers={"content-type":"application/json"})  
+            except:
+                print("[EDMC-Canonn] Issue posting codex entry " + str(sys.exc_info()[0]))                            
+                print r
         
 def matches(d, field, value):
 	return field in d and value == d[field]	        
@@ -72,5 +87,8 @@ def matches(d, field, value):
 def submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
     if entry["event"] == "CodexEntry":
         Codex(cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client).start()   
+    
+    
+
     
     

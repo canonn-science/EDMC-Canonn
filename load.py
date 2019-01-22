@@ -55,6 +55,7 @@ def plugin_start():
     """
     
     #print this.patrol
+    
     return 'Canonn'
     
 def plugin_app(parent):
@@ -106,7 +107,6 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     
     
 def dashboard_entry(cmdr, is_beta, entry):
-    
       
     
     this.landed = entry['Flags'] & 1<<1 and True or False
@@ -117,8 +117,8 @@ def dashboard_entry(cmdr, is_beta, entry):
       #print entry
     if(entry['Flags'] & 1<<21 and True or False):
         if('Latitude' in entry):
-            this.nearloc['Latitude'] = latitude
-            this.nearloc['Longitude'] = longitude
+            this.nearloc['Latitude'] = entry['Latitude']
+            this.nearloc['Longitude'] = entry['Longitude']
     else:
         this.body_name = None
         this.nearloc['Latitude'] = None
