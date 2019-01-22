@@ -44,7 +44,7 @@ class Codex(threading.Thread):
                 print Codex.excludecodices
                 
         
-        if not Codex.excludecodices.get(entry.get("codexName")):
+        if not Codex.excludecodices.get(self.entry.get("codexName")):
             payload={}
             payload["cmdrName"]=self.cmdr  
             payload["systemName"]=self.system
