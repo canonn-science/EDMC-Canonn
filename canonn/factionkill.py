@@ -4,7 +4,8 @@ import sys
 import json
 
 '''
-    {   "timestamp":"2018-10-07T13:03:47Z", 
+    {   
+        "timestamp":"2018-10-07T13:03:47Z", 
         "event":"FactionKillBond", 
         "Reward":10000, 
         "AwardingFaction":"$faction_PilotsFederation;", 
