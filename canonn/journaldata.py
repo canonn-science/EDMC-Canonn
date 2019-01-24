@@ -38,7 +38,7 @@ class CanonnJournal(threading.Thread):
         payload={}
         payload["systemName"]=self.system
         payload["cmdrName"]=self.cmdr  
-        payload["jsonData"]=self.entry
+        payload["rawJson"]=self.entry
         payload["eventName"]=self.entry["event"]
         payload["clientVersion"]= self.client
         payload["isBeta"]= self.is_beta
@@ -47,7 +47,7 @@ class CanonnJournal(threading.Thread):
         
         if included_event:
                     
-                r=requests.post("https://api.canonn.tech:2053/journaldata",data=json.dumps(payload),headers={"content-type":"application/json"})  
+                r=requests.post("https://api.canonn.tech:2053/eventreports",data=json.dumps(payload),headers={"content-type":"application/json"})  
                 if not r.status_code == requests.codes.ok:
                     print r.status_code
                     print r.json()
