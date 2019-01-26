@@ -32,7 +32,7 @@ class Codex(threading.Thread):
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     Codex.excludecodices["${}_name;".format(exc["codexName"])]=True
-                print Codex.excludecodices
+                #print Codex.excludecodices
 
         if not Codex.excludecodices.get(self.entry.get("codexName")):
             payload={}

@@ -55,7 +55,7 @@ class Emitter(threading.Thread):
     def send(self,payload,url):
         r=requests.post("{}/{}".format(url,self.modelreport),data=json.dumps(payload),headers={"content-type":"application/json"})  
         if not r.status_code == requests.codes.ok:
-            print "{}/{}".format(url,model)
+            print "{}/{}".format(url,self.modelreport)
             print r.status_code
             print r.json()
             print json.dumps(payload)            
@@ -89,20 +89,21 @@ class surfaceEmitter(Emitter):
     
         url=self.getUrl()
         # only need to get the types once doing it here to because it is in its ownthread
-        if not codexEmitter.types:
-            #r=requests.get("{}/cstypes".format(url))  
+        if not surfaceEmitter.types.get(self.modeltype):
             r=requests.get("{}/{}".format(url,self.modeltype))  
+            print "{}/{}".format(url,self.modeltype)
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     if exc.get("journalID"):
-                        codexEmitter.types[exc.get("journalID")]=exc.get("type")
-                print codexEmitter.types
+                        surfaceEmitter.types[self.modeltype]= { exc.get("journalID"): exc.get("type") }
+                print "{} {}".format(self.modeltype, surfaceEmitter.types)
         
-        print ("prep for send csreports")
         
-        if codexEmitter.types and self.entry.get("EntryID") in codexEmitter.types.keys():
-            print ("Send csreports")
-            name=codexEmitter.types.get(self.entry.get("EntryID"))
+        print ("prepping report")
+        print(surfaceEmitter.types.get(self.modeltype).keys())
+        if self.entry.get("EntryID") in surfaceEmitter.types.get(self.modeltype).keys():
+            print ("Send Reports")
+            name=surfaceEmitter.types[self.models].get(self.entry.get("EntryID"))
             payload=self.getPayload(name)      
             url=self.getUrl()
             self.send(payload,url)
