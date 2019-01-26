@@ -9,12 +9,7 @@ class btReports(surfaceEmitter):
         self.modelreport="btreports"
         self.modeltype="bttypes"
             
-'''
-    
-'''
 def submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
-
-    if entry["event"] == "CodexEntry":
-        btReports(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client).start()   
+    btReports(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client).start()   
 
 

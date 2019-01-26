@@ -91,19 +91,22 @@ class surfaceEmitter(Emitter):
         # only need to get the types once doing it here to because it is in its ownthread
         if not surfaceEmitter.types.get(self.modeltype):
             r=requests.get("{}/{}".format(url,self.modeltype))  
-            print "{}/{}".format(url,self.modeltype)
+            #print "{}/{}".format(url,self.modeltype)
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     if exc.get("journalID"):
-                        surfaceEmitter.types[self.modeltype]= { exc.get("journalID"): exc.get("type") }
-                print "{} {}".format(self.modeltype, surfaceEmitter.types)
+                        if surfaceEmitter.types.get(self.modeltype):
+                            surfaceEmitter.types.get(self.modeltype)[exc.get("journalID")] = exc.get("type") 
+                        else:
+                            surfaceEmitter.types[self.modeltype]={ exc.get("journalID"):  exc.get("type") }
+                #print "{} {}".format(self.modeltype, surfaceEmitter.types)
         
         
-        print ("prepping report")
-        print(surfaceEmitter.types.get(self.modeltype).keys())
-        if self.entry.get("EntryID") in surfaceEmitter.types.get(self.modeltype).keys():
+        #print ("prepping report")
+        #print(surfaceEmitter.types.get(self.modeltype).keys())
+        if entry["event"] == "CodexEntry" and self.entry.get("EntryID") in surfaceEmitter.types.get(self.modeltype).keys():
             print ("Send Reports")
-            name=surfaceEmitter.types[self.models].get(self.entry.get("EntryID"))
+            name=surfaceEmitter.types[self.modeltype].get(self.entry.get("EntryID"))
             payload=self.getPayload(name)      
             url=self.getUrl()
             self.send(payload,url)
