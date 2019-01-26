@@ -1,13 +1,13 @@
 from emitter import surfaceEmitter
 
 
-class btReports(surfaceEmitter):
+class csReports(surfaceEmitter):
     types={}
     
     def __init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
         surfaceEmitter.__init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
-        self.modelreport="btreports"
-        self.modeltype="bttypes"
+        self.modelreport="csreports"
+        self.modeltype="cstypes"
             
 '''
     
@@ -15,6 +15,5 @@ class btReports(surfaceEmitter):
 def submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
 
     if entry["event"] == "CodexEntry":
-        btReports(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client).start()   
-
+        csReports(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client).start()   
 

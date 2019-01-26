@@ -9,7 +9,8 @@ from canonn import nhss
 from canonn import codex
 from canonn import hdreport
 from canonn import btreports
-from canonn import fgreports
+#from canonn import fgreports
+from canonn import csreports
 
 
 import ttk
@@ -102,7 +103,8 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     hdreport.submit(cmdr, is_beta, system, station, entry,client)
     codex.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     btreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
-    fgreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
+    #fgreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
+    csreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     journaldata.submit(cmdr, is_beta, system, station, entry,client)
     
 def dashboard_entry(cmdr, is_beta, entry):
