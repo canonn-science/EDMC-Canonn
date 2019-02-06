@@ -67,6 +67,7 @@ class surfaceEmitter(Emitter):
         Emitter.__init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
         self.modelreport="xxreports"
         self.modeltype="xxtypes"
+        
     
     def getPayload(self,name):
         payload=self.setPayload()
@@ -104,12 +105,132 @@ class surfaceEmitter(Emitter):
         
         #print ("prepping report")
         #print(surfaceEmitter.types.get(self.modeltype).keys())
-        if entry["event"] == "CodexEntry" and self.entry.get("EntryID") in surfaceEmitter.types.get(self.modeltype).keys():
+        if self.entry["event"] == "CodexEntry" and self.entry.get("EntryID") in surfaceEmitter.types.get(self.modeltype).keys():
             print ("Send Reports")
             name=surfaceEmitter.types[self.modeltype].get(self.entry.get("EntryID"))
             payload=self.getPayload(name)      
             url=self.getUrl()
             self.send(payload,url)
             
+
+            
+class codexEmitter(Emitter):
+    types={}
+    reporttypes={}
+    excludecodices={}
+    
+    def __init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
+        Emitter.__init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
+        self.modelreport="xxreports"
+        self.modeltype="xxtypes"
+        
+    def getSystemPayload(self,name):
+        payload=self.setPayload()
+        payload["userType"]="pc"
+        payload["reportType"]="new"
+        payload["type"]=name
+        payload["reportStatus"]="pending"
+        payload["isBeta"]=self.is_beta
+        payload["clientVersion"]=self.client
+    
+        return payload           
+
+    def getBodyPayload(self,name):
+        payload=self.getSystemPayload(name)
+        payload["bodyName"]=self.body
+        payload["coordX"]=self.x
+        payload["coordY"]=self.y
+        payload["coordZ"]=self.z
+        payload["latitude"]=self.lat
+        payload["longitude"]=self.lon
+    
+        return payload           
+    
+    def getCodexPayload(self):
+        payload=self.getBodyPayload(self.entry.get("Name"))
+        payload["entryId"]=self.entry.get("EntryID")
+        payload["codexName"]=self.entry.get("Name")
+        payload["codexNameLocalised"]=self.entry.get("Name_Localised")
+        payload["subCategory"]=self.entry.get("SubCategory")
+        payload["subCategoryLocalised"]=self.entry.get("SubCategory_Localised")
+        payload["category"]=self.entry.get("Category")
+        payload["categoryLocalised"]=self.entry.get("Category_Localised")
+        payload["regionName"]=self.entry.get("Region")
+        payload["regionLocalised"]=self.entry.get("Region_Localised")
+        payload["systemAddress"]=self.entry.get("SystemAddress")
+        payload["voucherAmount"]=self.entry.get("VoucherAmount")
+        payload["rawJson"]=self.entry
+        del payload["type"]
+        del payload["reportStatus"]
+        del payload["userType"]
+        del payload["reportType"]
+        
+        return payload
+        
+    
+    def getReportTypes(self,id):
+        if not codexEmitter.reporttypes.get(id):        
+            url="https://api.canonn.tech:2053/reporttypes?journalID={}".format(id)
+            print(url)
+            r=requests.get("https://api.canonn.tech:2053/reporttypes?journalID={}".format(id))    
+            if r.status_code == requests.codes.ok:
+                print("before reporttype")
+                               
+                for exc in r.json():
+                    print("looney")
+                    codexEmitter.reporttypes["{}".format(exc["journalID"])]={ "endpoint": exc["endpoint"], "location": exc["location"], "type": exc["type"]}
+                    print("get reporttype")
+                    print(codexEmitter.reporttypes) 
+            else:
+                print("error")
+                
+                    
+    def getExcluded(self):
+        if not codexEmitter.excludecodices:
+            r=requests.get("https://api.canonn.tech:2053/excludecodices")  
+            if r.status_code == requests.codes.ok:
+                for exc in r.json():
+                    codexEmitter.excludecodices["${}_name;".format(exc["codexName"])]=True
+                    
+    def run(self):
+    
+        
+        self.getExcluded()
+        
+        #is this a code entry and do we want to record it?
+        if self.entry["event"] == "CodexEntry" and not codexEmitter.excludecodices.get(self.entry.get("codexName")):
+            self.getReportTypes(self.entry.get("EntryID"))    
+            url=self.getUrl()
+            
+            print("XXX")
+            print(codexEmitter.reporttypes) 
+            jid=self.entry.get("EntryID")
+            reportType = codexEmitter.reporttypes.get([jid])
+            print(reportType)
+            
+            
+            if self.entry.get("EntryID"):
+                print("XXX")
+                print(self.entry.get("EntryID"))
+            
+            
+            if reportType:
+                print(reportType)
+                if reportType.get("location") == "body":
+                    payload=self.getBodyPayload(reportType.get("type"))
+                    self.modelreport=reportType.get("endpoint")
+                else:
+                    payload=self.getSystemPayload(reportType.get("type"))
+                    self.modelreport=reportType.get("endpoint")
+            else:
+                payload=self.getCodexPayload()
+                self.modelreport="codexreports"
+                   
+            print ("Send Reports {}/{}".format(url,self.modelreport))
+            
+            self.send(payload,url)
+            
+def submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
+    codexEmitter(cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client).start()   
 
             

@@ -9,6 +9,7 @@ class Codex(threading.Thread):
     '''
 
     excludecodices={}
+    reporttypes={}
 
     def __init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
         threading.Thread.__init__(self)
@@ -34,6 +35,13 @@ class Codex(threading.Thread):
                     Codex.excludecodices["${}_name;".format(exc["codexName"])]=True
                 #print Codex.excludecodices
 
+        if not Codex.reporttypes:        
+            r=requests.get("https://api.canonn.tech:2053/reporttypes")    
+            if r.status_code == requests.codes.ok:
+                for exc in r.json():
+                    Codex.reporttypes["".format(exc["journalID"])]={ "endpoint": exc["endpoint"], "location": exc["location"]}
+                    print(Codex.reporttypes)
+                
         if not Codex.excludecodices.get(self.entry.get("codexName")):
             payload={}
             payload["cmdrName"]=self.cmdr  
