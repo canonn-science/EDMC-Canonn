@@ -8,6 +8,7 @@ from canonn import factionkill
 from canonn import nhss
 from canonn import codex
 from canonn import hdreport
+from canonn import news
 
 
 
@@ -62,8 +63,21 @@ def plugin_app(parent):
 
     this.parent = parent
     #create a new frame as a containier for the status
+    padx, pady = 10, 5  # formatting
+    sticky = tk.EW + tk.N  # full width, stuck to the top
+    anchor = tk.NW
+
+    frame = this.frame = tk.Frame(parent)
+    frame.columnconfigure(0, weight=1)
+
+    table = tk.Frame(frame)
+    table.columnconfigure(1, weight=1)
+    table.grid(sticky="NSEW")
     
-    this.frame = tk.Frame(parent)    
+    news.CanonnNews(table).grid(sticky="NSEW")
+    
+    return frame
+    
    
 def journal_entry(cmdr, is_beta, system, station, entry, state):
     '''
