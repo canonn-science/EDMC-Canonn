@@ -9,6 +9,8 @@ from ttkHyperlinkLabel import HyperlinkLabel
 import requests
 import json
 import re
+import myNotebook as nb
+from config import config
 
 REFRESH_CYCLES = 60 ## how many cycles before we refresh
 NEWS_CYCLE=60 * 1000 # 10 seconds
@@ -47,7 +49,7 @@ class NewsLink(HyperlinkLabel):
     
 class CanonnNews(Frame):
 
-    def __init__(self, parent):
+    def __init__(self, parent,gridrow):
         "Initialise the ``News``."
 
         padx, pady = 10, 5  # formatting
@@ -59,8 +61,11 @@ class CanonnNews(Frame):
             parent
         )
                         
+        self.hidden=tk.IntVar(value=config.getint("HideNews"))                
+        
+        
         self.columnconfigure(1, weight=1)
-        self.grid(row = 0, column = 0, sticky="NSEW",columnspan=2)
+        self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         
         self.label=tk.Label(self, text=  "Canonn:")
         self.label.grid(row = 0, column = 0, sticky=sticky)
@@ -71,39 +76,66 @@ class CanonnNews(Frame):
         self.news_count=0
         self.news_pos=0
         self.minutes=0
+        self.visible()
         #self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
         self.after(250, self.news_update)
+        
 
     def news_update(self):
         "Update the news."
         
         #refesh every 60 seconds
         self.after(NEWS_CYCLE, self.news_update)
+        if self.visible():
         
+            if self.news_count == self.news_pos:           
+                self.news_pos=0
+            else:
+                print("decrementing news")
+                self.news_pos+=1
+            
+            if self.minutes==0:
+                self.news_data = requests.get("https://canonn.science/wp-json/wp/v2/posts").json()
+                self.news_count=len(self.news_data)-1
+                self.news_pos=0
+                self.minutes=REFRESH_CYCLES
+            else:
+                self.minutes+=-1        
+                    
+            if self.news_data:
+                news=self.news_data[self.news_pos]
+                self.hyperlink['url'] = news['link']
+                self.hyperlink['text'] = decode_unicode_references(news['title']['rendered'])
 
-        
-        if self.news_count == self.news_pos:           
-            self.news_pos=0
-        else:
-            print("decrementing news")
-            self.news_pos+=1
-        
-        if self.minutes==0:
-            self.news_data = requests.get("https://canonn.science/wp-json/wp/v2/posts").json()
-            self.news_count=len(self.news_data)-1
-            self.news_pos=0
-            self.minutes=REFRESH_CYCLES
-        else:
-            self.minutes+=-1        
-                
-        if self.news_data:
-            news=self.news_data[self.news_pos]
-            self.hyperlink['url'] = news['link']
-            self.hyperlink['text'] = decode_unicode_references(news['title']['rendered'])
-
-        else:
-            self.hyperlink['text'] = "News refresh failed"
+            else:
+                self.hyperlink['text'] = "News refresh failed"
 
     
-    
+    def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
+        "Called to get a tk Frame for the settings dialog."
+
+        self.hidden=tk.IntVar(value=config.getint("HideNews"))
+        
+        #frame = nb.Frame(parent)
+        #frame.columnconfigure(1, weight=1)
+        return nb.Checkbutton(parent, text="Hide Canonn News", variable=self.hidden).grid(row = gridrow, column = 0,sticky="NSEW")
+        
+        #return frame
+
+    def visible(self):
+        if self.hidden.get() == 1:
+            self.grid_remove()
+            return False
+        else:
+            self.grid()
+            return True
+
+    def prefs_changed(self, cmdr, is_beta):
+        "Called when the user clicks OK on the settings dialog."
+        config.set('HideNews', self.hidden.get())      
+        if self.visible():
+            self.news_update()
+        print("Hidden {}".format(self.hidden.get()))
+        
+        
    

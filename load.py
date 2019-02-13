@@ -38,17 +38,18 @@ def plugin_prefs(parent, cmdr, is_beta):
     """
     Return a TK Frame for adding to the EDMC settings dialog.
     """
-    this.anon = tk.IntVar(value=config.getint("Anonymous")) # Retrieve saved value from config
     frame = nb.Frame(parent)
-    frame.columnconfigure(3, weight=1)
-    nb.Checkbutton(frame, text="I want to be anonymous", variable=this.anon).grid(row = 1, column = 0,sticky=tk.W)
+    frame.columnconfigure(1, weight=1)
+    this.news.plugin_prefs(frame, cmdr, is_beta,1)
+    return frame
 
     
 def prefs_changed(cmdr, is_beta):
     """
     Save settings.
     """
-    config.set('Anonymous', this.anon.get())       
+    this.news.prefs_changed(cmdr, is_beta)
+    
    
 def plugin_start():
     """
@@ -74,7 +75,10 @@ def plugin_app(parent):
     table.columnconfigure(1, weight=1)
     table.grid(sticky="NSEW")
     
-    news.CanonnNews(table).grid(sticky="NSEW")
+    
+    this.news = news.CanonnNews(table,0)
+    
+    
     
     return frame
     
