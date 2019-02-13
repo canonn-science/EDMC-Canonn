@@ -11,7 +11,7 @@ import json
 import re
 
 REFRESH_CYCLES = 60 ## how many cycles before we refresh
-NEWS_CYCLE=20 * 1000 # 10 seconds
+NEWS_CYCLE=60 * 1000 # 10 seconds
 DEFAULT_NEWS_URL = 'https://canonn.science/wp-json/wp/v2/posts'
 WRAP_LENGTH = 200
 
