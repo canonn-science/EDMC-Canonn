@@ -59,6 +59,7 @@ class CanonnNews(Frame):
             parent
         )
                         
+        self.columnconfigure(1, weight=1)
         self.grid(row = 0, column = 0, sticky="NSEW",columnspan=2)
         
         self.label=tk.Label(self, text=  "Canonn:")
