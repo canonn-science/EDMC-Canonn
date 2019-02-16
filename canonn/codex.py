@@ -60,9 +60,9 @@ class codexEmitter(Emitter):
     
     def getReportTypes(self,id):
         if not codexEmitter.reporttypes.get(id):        
-            url="https://api.canonn.tech:2053/reporttypes?journalID={}".format(id)
+            url="{}reporttypes?journalID={}".format(self.getUrl(),id)
             print(url)
-            r=requests.get("https://api.canonn.tech:2053/reporttypes?journalID={}".format(id))    
+            r=requests.get("{}/reporttypes?journalID={}".format(self.getUrl(),id))    
             if r.status_code == requests.codes.ok:
 
                 for exc in r.json():
@@ -76,13 +76,12 @@ class codexEmitter(Emitter):
                     
     def getExcluded(self):
         if not codexEmitter.excludecodices:
-            r=requests.get("https://api.canonn.tech:2053/excludecodices")  
+            r=requests.get("{}/excludecodices".format(self.getUrl()))  
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     codexEmitter.excludecodices["${}_name;".format(exc["codexName"])]=True
                     
     def run(self):
-    
         
         self.getExcluded()
         
@@ -104,7 +103,7 @@ class codexEmitter(Emitter):
                     self.modelreport=reportType.get("endpoint")
             else:
                 payload=self.getCodexPayload()
-                self.modelreport="codexreports"
+                self.modelreport="reportcodices"
                    
             print ("Send Reports {}/{}".format(url,self.modelreport))
             

@@ -9,7 +9,14 @@ class Emitter(threading.Thread):
     '''
         Should probably make this a heritable class as this is a repeating pattern
     '''
-              
+    urls={ 
+        "live": "https://api.canonn.tech:2053",
+        "staging": "https://api.canonn.tech:2053",
+        "development":  "https://api.canonn.tech:2083"
+    }               
+        
+    route=""    
+        
     def __init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
         threading.Thread.__init__(self)
         self.cmdr=cmdr
@@ -23,18 +30,30 @@ class Emitter(threading.Thread):
         self.is_beta = is_beta
         self.entry = entry.copy()
         self.client = client
-        self.urls={ 
-        "live": "https://api.canonn.tech:2053",
-        "staging": "https://api.canonn.tech:2053",
-        "development":  "https://api.canonn.tech:2083"
-        }
+        Emitter.setRoute(is_beta,client)
         self.modelreport="breports"
 
+    @classmethod
+    def setRoute(cls,is_beta,client):
+        if Emitter.route:
+            return Emitter.route
+        else:
+            ## this url will need to bechanged to the live server whenready
+            r=requests.get("{}/clientroutes?clientversion={}".format(Emitter.urls.get("live"),client))
+            j = r.json()
+            if not r.status_code == requests.codes.ok or not j:
+                Emitter.route=Emitter.urls.get("development")
+            else:   
+                Emitter.route=j[0].get("route")
+                
+        return Emitter.route
+
+        
     def getUrl(self):
         if self.is_beta:
-            url=self.urls.get("staging")
+            url=Emitter.urls.get("staging")
         else:
-            url=self.urls.get("live")
+            url=Emitter.route
         return url
         
     def setPayload(self):
