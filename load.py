@@ -9,6 +9,7 @@ from canonn import nhss
 from canonn import codex
 from canonn import hdreport
 from canonn import news
+from canonn import release
 
 
 
@@ -30,7 +31,7 @@ this.systemCache={ "Sol": (0,0,0) }
 myPlugin = "EDMC-Canonn"
 
 #this.debuglevel=2
-this.version="4.9.0"
+this.version="1.0.1"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
     
@@ -41,6 +42,7 @@ def plugin_prefs(parent, cmdr, is_beta):
     frame = nb.Frame(parent)
     frame.columnconfigure(1, weight=1)
     this.news.plugin_prefs(frame, cmdr, is_beta,1)
+    this.release.plugin_prefs(frame, cmdr, is_beta,2)
     return frame
 
     
@@ -49,6 +51,7 @@ def prefs_changed(cmdr, is_beta):
     Save settings.
     """
     this.news.prefs_changed(cmdr, is_beta)
+    this.release.prefs_changed(cmdr, is_beta)
     
    
 def plugin_start():
@@ -77,6 +80,7 @@ def plugin_app(parent):
     
     
     this.news = news.CanonnNews(table,0)
+    this.release = release.Release(table,this.version,1)
     
     
     
