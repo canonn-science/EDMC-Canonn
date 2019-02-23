@@ -9,6 +9,9 @@ This plugin is currently only writing to the Canonn API and therefore anything y
 
 # Features
 
+## Canonn New Feed
+See the top stories on rotation
+
 ## Hyperdiction reporting 
 Hyperdiction reporting is logged from the Thargoid Encounter Stats screen. 
 
