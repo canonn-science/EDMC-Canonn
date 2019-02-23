@@ -139,13 +139,9 @@ class Release(Frame):
         download=requests.get("https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name), stream=True)
         z = zipfile.ZipFile(StringIO.StringIO(download.content))
         z.extractall(os.path.dirname(Release.plugin_dir))
+        os.rename(Release.plugin_dir,"{}.disabled".format(Release.plugin_dir))
+        #This is going to require some defensive. In case the extract fails or the rename fails.
         
-        #make a backup of the current plugin -- just in case I haven't checked it in yet
-        recursive_overwrite(Release.plugin_dir,"{}.disabled".format(Release.plugin_dir))
-        #copy the contents of the new release -- we should probably delete everything first
-        recursive_overwrite("{}/EDMC-Canonn-{}".format(os.path.dirname(Release.plugin_dir),tag_name),Release.plugin_dir)
-        #remove the downloaded directory
-        shutil.rmtree("{}/EDMC-Canonn-{}".format(os.path.dirname(Release.plugin_dir),tag_name))
         
     @classmethod    
     def plugin_start(cls,plugin_dir):
