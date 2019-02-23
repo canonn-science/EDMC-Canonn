@@ -31,7 +31,7 @@ this.systemCache={ "Sol": (0,0,0) }
 myPlugin = "EDMC-Canonn"
 
 #this.debuglevel=2
-this.version="1.0.1"
+this.version="0.0.1"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
     
@@ -54,12 +54,13 @@ def prefs_changed(cmdr, is_beta):
     this.release.prefs_changed(cmdr, is_beta)
     
    
-def plugin_start():
+def plugin_start(plugin_dir):
     """
     Load Template plugin into EDMC
     """
     
     #print this.patrol
+    release.Release.plugin_start(plugin_dir)
     
     return 'Canonn'
     
