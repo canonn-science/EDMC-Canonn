@@ -43,7 +43,7 @@ class NewsLink(HyperlinkLabel):
         HyperlinkLabel.__init__(
             self,
             parent,
-            text="Fetching...",
+            text="Fetching News...",
             url=DEFAULT_NEWS_URL,
             wraplength=50,  # updated in __configure_event below
             anchor=tk.NW
@@ -101,7 +101,6 @@ class CanonnNews(Frame):
             if self.news_count == self.news_pos:           
                 self.news_pos=0
             else:
-                print("decrementing news")
                 self.news_pos+=1
             
             if self.minutes==0:
@@ -145,7 +144,7 @@ class CanonnNews(Frame):
         config.set('HideNews', self.hidden.get())      
         if self.visible():
             self.news_update()
-        print("Hidden {}".format(self.hidden.get()))
+        
         
         
    
