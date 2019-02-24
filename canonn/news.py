@@ -11,6 +11,7 @@ import json
 import re
 import myNotebook as nb
 from config import config
+import threading
 
 REFRESH_CYCLES = 60 ## how many cycles before we refresh
 NEWS_CYCLE=60 * 1000 # 10 seconds
@@ -24,6 +25,13 @@ def _callback(matches):
     except:
         return id
 
+class UpdateThread(threading.Thread):
+    def __init__(self,widget):
+        threading.Thread.__init__(self)
+        self.widget=widget
+    
+    def run(self):
+        self.widget.update()        
 
 def decode_unicode_references(data):
     return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
@@ -80,8 +88,10 @@ class CanonnNews(Frame):
         #self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
         self.after(250, self.news_update)
         
-
     def news_update(self):
+        UpdateThread(self).start()
+
+    def update(self):
         "Update the news."
         
         #refesh every 60 seconds

@@ -15,6 +15,7 @@ import zipfile
 import StringIO
 import os
 import shutil
+import threading
 
 NEWS_CYCLE=60 * 1000 * 60 # 1 Hour
 DEFAULT_URL = 'https://github.com/canonn-science/EDMC-Canonn/releases'
@@ -50,6 +51,14 @@ class ReleaseLink(HyperlinkLabel):
 
         self.configure(wraplength=event.width)
     
+class ReleaseThread(threading.Thread):
+    def __init__(self,release):
+        threading.Thread.__init__(self)
+        self.release=release
+    
+    def run(self):
+        self.release.release_update()
+        
 class Release(Frame):
 
     def __init__(self, parent,release,gridrow):
@@ -82,17 +91,20 @@ class Release(Frame):
         self.minutes=0
         
         #self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
-        self.after(250, self.release_update)
+        self.after(250, self.release_thread)
         
     def version2number(self,version):
         major,minor,patch=version.split('.')
         return (int(major)*1000000)+(int(minor)*1000)+int(patch)
 
+    def release_thread(self):    
+        ReleaseThread(self).start()
+        
     def release_update(self):
         "Update the news."
         
         #refesh every 60 seconds
-        self.after(NEWS_CYCLE, self.release_update)
+        self.after(NEWS_CYCLE, self.release_thread)
         
         
         
