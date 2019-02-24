@@ -17,7 +17,7 @@ import os
 import shutil
 import threading
 
-NEWS_CYCLE=60 * 1000 * 60 # 1 Hour
+RELEASE_CYCLE=60 * 1000 * 60 # 1 Hour
 DEFAULT_URL = 'https://github.com/canonn-science/EDMC-Canonn/releases'
 WRAP_LENGTH = 200
 
@@ -101,12 +101,9 @@ class Release(Frame):
         ReleaseThread(self).start()
         
     def release_update(self):
-        "Update the news."
-        
+                
         #refesh every 60 seconds
-        self.after(NEWS_CYCLE, self.release_thread)
-        
-        
+        self.after(RELEASE_CYCLE, self.release_thread)
         
         self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
         
@@ -114,10 +111,12 @@ class Release(Frame):
         release=self.version2number(self.latest.get("tag_name"))
         
         self.hyperlink['url'] = self.latest.get("html_url")
-        self.hyperlink['text'] = self.latest.get("tag_name")
+        self.hyperlink['text'] = "EDMC-Canonn: {}".format(self.latest.get("tag_name"))
 
         if current==release:
-            self.grid_remove()
+            # If we grid_remove in the thread it crashes EDMC
+            # but putting it on a timer doesn't 
+            self.after(5000, self.grid_remove)
         elif current > release:
             self.hyperlink['text'] = "Experimental Release {}".format(self.release)
             self.grid()
