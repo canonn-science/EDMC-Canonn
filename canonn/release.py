@@ -16,6 +16,7 @@ import StringIO
 import os
 import shutil
 import threading
+from  player import Player
 
 RELEASE_CYCLE=60 * 1000 * 60 # 1 Hour
 DEFAULT_URL = 'https://github.com/canonn-science/EDMC-Canonn/releases'
@@ -74,7 +75,8 @@ class Release(Frame):
         )
                         
         self.auto=tk.IntVar(value=config.getint("AutoUpdate"))                
-        
+        self.novoices=tk.IntVar(value=config.getint("NoVoices"))                
+        self.rmbackup=tk.IntVar(value=config.getint("RemoveBackup"))                
         
         self.columnconfigure(1, weight=1)
         self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
@@ -127,6 +129,8 @@ class Release(Frame):
                 self.installer(self.latest.get("tag_name"))
             else:
                 self.hyperlink['text'] = "Please Upgrade {}".format(self.latest.get("tag_name"))
+                if self.novoices.get() != 1:
+                    Player(Release.plugin_dir,["sounds\\nag1.wav"]).start()
             self.grid()            
     
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
@@ -159,7 +163,7 @@ class Release(Frame):
         z.extractall(os.path.dirname(Release.plugin_dir))
         
         #keep a backup of the old release
-        if self.rmbackup.get() = 1:
+        if self.rmbackup.get() == 1:
             shutil.rmtree(Release.plugin_dir)
         else:
             os.rename(Release.plugin_dir,"{}.disabled".format(Release.plugin_dir))

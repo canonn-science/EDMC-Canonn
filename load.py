@@ -31,7 +31,7 @@ this.systemCache={ "Sol": (0,0,0) }
 myPlugin = "EDMC-Canonn"
 
 #this.debuglevel=2
-this.version="1.1.3"
+this.version="1.2.0"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
     
