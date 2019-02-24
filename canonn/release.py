@@ -133,24 +133,37 @@ class Release(Frame):
         "Called to get a tk Frame for the settings dialog."
 
         self.auto=tk.IntVar(value=config.getint("AutoUpdate"))
+        self.rmbackup=tk.IntVar(value=config.getint("RemoveBackup"))
+        self.novoices=tk.IntVar(value=config.getint("NoVoices"))
         
-        #frame = nb.Frame(parent)
-        #frame.columnconfigure(1, weight=1)
-        return nb.Checkbutton(parent, text="Auto Update THis Plugin", variable=self.auto).grid(row = gridrow, column = 0,sticky="NSEW")
+        frame = nb.Frame(parent)
+        frame.columnconfigure(2, weight=1)
+        frame.grid(row = gridrow, column = 0,sticky="NSEW")
+        nb.Checkbutton(frame, text="Auto Update This Plugin", variable=self.auto).grid(row = 0, column = 0,sticky="NW")
+        nb.Checkbutton(frame, text="Remove backup", variable=self.rmbackup).grid(row = 0, column = 1,sticky="NW")
+        nb.Checkbutton(frame, text="Stop talking to me", variable=self.novoices).grid(row = 0, column = 2,sticky="NW")
         
-        #return frame
+        return frame
     
     
     
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
         config.set('AutoUpdate', self.auto.get())      
+        config.set('RemoveBackup', self.rmbackup.get())      
+        config.set('NoVoices', self.novoices.get())      
         
     def installer(self,tag_name):
         download=requests.get("https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name), stream=True)
         z = zipfile.ZipFile(StringIO.StringIO(download.content))
         z.extractall(os.path.dirname(Release.plugin_dir))
-        os.rename(Release.plugin_dir,"{}.disabled".format(Release.plugin_dir))
+        
+        #keep a backup of the old release
+        if self.rmbackup.get() = 1:
+            shutil.rmtree(Release.plugin_dir)
+        else:
+            os.rename(Release.plugin_dir,"{}.disabled".format(Release.plugin_dir))
+                
         #This is going to require some defensive. In case the extract fails or the rename fails.
         
         
