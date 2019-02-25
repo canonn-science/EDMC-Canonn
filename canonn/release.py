@@ -130,7 +130,7 @@ class Release(Frame):
             else:
                 self.hyperlink['text'] = "Please Upgrade {}".format(self.latest.get("tag_name"))
                 if self.novoices.get() != 1:
-                    Player(Release.plugin_dir,["sounds\\nag1.wav"]).start()
+                    Player(Release.plugin_dir,["sounds\\prefix.wav","sounds\\nag1.wav"]).start()
             self.grid()            
     
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
