@@ -10,7 +10,7 @@ class Emitter(threading.Thread):
         Should probably make this a heritable class as this is a repeating pattern
     '''
     urls={ 
-        "live": "https://api.canonn.tech:2053",
+        "live": "https://api.canonn.tech",
         "staging": "https://api.canonn.tech:2053",
         "development":  "https://api.canonn.tech:2083"
     }               

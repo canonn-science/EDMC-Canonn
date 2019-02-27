@@ -47,8 +47,9 @@ class CanonnJournal(threading.Thread):
         
         if included_event:
                     
-                r=requests.post("https://api.canonn.tech:2053/eventreports",data=json.dumps(payload),headers={"content-type":"application/json"})  
+                r=requests.post("https://api.canonn.tech:2053/reportevents",data=json.dumps(payload),headers={"content-type":"application/json"})  
                 if not r.status_code == requests.codes.ok:
+                    print 
                     print r.status_code
                     print r.json()
                     print json.dumps(payload)

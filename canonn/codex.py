@@ -3,6 +3,7 @@ import requests
 import sys
 import json
 from emitter import Emitter
+from urllib import quote_plus
 
 class codexEmitter(Emitter):
     types={}
@@ -60,7 +61,7 @@ class codexEmitter(Emitter):
     
     def getReportTypes(self,id):
         if not codexEmitter.reporttypes.get(id):        
-            url="{}reporttypes?journalID={}".format(self.getUrl(),id)
+            url="{}/reporttypes?journalID={}".format(self.getUrl(),id)
             print(url)
             r=requests.get("{}/reporttypes?journalID={}".format(self.getUrl(),id))    
             if r.status_code == requests.codes.ok:

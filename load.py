@@ -10,6 +10,8 @@ from canonn import codex
 from canonn import hdreport
 from canonn import news
 from canonn import release
+from canonn import legacy
+
 
 
 
@@ -31,7 +33,7 @@ this.systemCache={ "Sol": (0,0,0) }
 myPlugin = "EDMC-Canonn"
 
 #this.debuglevel=2
-this.version="1.2.1"
+this.version="1.3.0"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
     
@@ -90,20 +92,12 @@ def plugin_app(parent):
    
 def journal_entry(cmdr, is_beta, system, station, entry, state):
     '''
-    Commanders may want to be anonymous so we we have a journal entry anonymiser
-    that passes the journale entry to the one that does all the real work
+    
     '''
     # capture some stats when we launch not read for that yet
     # startup_stats(cmdr)
 
-    if config.getint("Anonymous") >0:
-        commander="Anonymous"
-        if cmdr in str(entry):
-            #entry["cmdrName"]="Anonymous"
-            s = str(entry).replace(cmdr,"Anonymous")
-            entry=eval(s)
-    else:
-        commander=cmdr
+    
         
     if ('Body' in entry):
             this.body_name = entry['Body']        
@@ -115,7 +109,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         y=None
         z=None    
     
-    return journal_entry_wrapper(commander, is_beta, system, station, entry, state,x,y,z,this.body_name,this.nearloc['Latitude'],this.nearloc['Longitude'],this.client_version)    
+    return journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,this.body_name,this.nearloc['Latitude'],this.nearloc['Longitude'],this.client_version)    
     
 # Detect journal events
 def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
@@ -128,6 +122,11 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     #csreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     codex.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     journaldata.submit(cmdr, is_beta, system, station, entry,client)
+    
+    # legacy logging to google sheets
+    legacy.CodexEntry(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
+    legacy.AXZone(cmdr, is_beta, system,x,y,z, station, entry, state)
+    legacy.faction_kill(cmdr, is_beta, system, station, entry, state)
     
 def dashboard_entry(cmdr, is_beta, entry):
       
