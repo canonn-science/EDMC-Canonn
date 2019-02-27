@@ -133,10 +133,10 @@ class CanonnNews(Frame):
 
     def visible(self):
         if self.hidden.get() == 1:
-            self.grid_remove()
+            self.after(100,self.grid_remove)
             return False
         else:
-            self.grid()
+            self.after(100,self.grid)
             return True
 
     def prefs_changed(self, cmdr, is_beta):
