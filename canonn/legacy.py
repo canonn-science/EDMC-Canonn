@@ -3,6 +3,7 @@ import threading
 import requests
 from urllib import quote_plus
 import sys
+from  math import sqrt,pow,trunc
 
 class Reporter(threading.Thread):
     def __init__(self, payload):
@@ -379,4 +380,101 @@ def statistics(cmdr, is_beta, system, station, entry, state):
         
         
  
+class NHSS(threading.Thread):
+
+    fss= {}
     
+    '''
+        Should probably make this a heritable class as this is a repeating pattern
+    '''
+    def __init__(self,cmdr, is_beta, system, x,y,z,station, entry,client):
+        threading.Thread.__init__(self)
+        self.system = system
+        self.cmdr = cmdr
+        self.station = station
+        self.is_beta = is_beta
+        self.entry = entry.copy()
+        self.client=client
+        self.x=x
+        self.y=y
+        self.z=z
+
+    def run(self):
+        payload={}
+
+        if self.entry["event"] == 'FSSSignalDiscovered':
+            threatLevel=self.entry.get("ThreatLevel")
+            type="FSS"
+        else:
+            threatLevel=self.entry.get("USSThreat")
+            type="Drop"
+
+        payload["systemName"]=self.system
+        payload["cmdrName"]=self.cmdr  
+        payload["nhssRawJson"]=self.entry
+        payload["threatLevel"]=threatLevel
+        payload["isbeta"]= self.is_beta
+        payload["clientVersion"]= self.client
+        payload["reportStatus"]="accepted"
+        payload["reportComment"]=type
+
+        dsol=getDistance(0,0,0,self.x,self.y,self.z)
+        dmerope=getDistance(-78.59375,149.625,-340.53125,self.x,self.y,self.z)
+        
+        
+        url = "https://docs.google.com/forms/d/e/1FAIpQLScVk2LW6EkIW3hL8EhuLVI5j7jQ1ZmsYCLRxgCZlpHiN8JdcA/formResponse?usp=pp_url"
+        url+="&entry.106150081="+quote_plus(self.cmdr)
+        url+="&entry.582675236="+quote_plus(self.system)
+        url+="&entry.158339236="+str(self.x)
+        url+="&entry.608639155="+str(self.y)
+        url+="&entry.1737639503="+str(self.z)
+        url+="&entry.1398738264="+str(dsol)
+        url+="&entry.922392846="+str(dmerope)
+        url+="&entry.218543806="+quote_plus("$USS_Type_NonHuman;")
+        url+="&entry.455413428="+quote_plus("Non-Human signal source")
+        url+="&entry.790504343="+str(threatLevel)
+        r=requests.post(url)  
+        
+        url="https://docs.google.com/forms/d/e/1FAIpQLSeOBbUTiD64FyyzkIeZfO5UMfqeuU2lsRf3_Ulh7APddd91JA/formResponse?usp=pp_url"
+        url+="&entry.306505776="+quote_plus(self.system)
+        url+="&entry.1559250350=Non Human Signal"
+        url+="&entry.1031843658="+str(threatLevel)
+        url+="&entry.1519036101="+quote_plus(self.cmdr)
+        r=requests.post(url)  
+
+
+
+    @classmethod
+    def submit(cls,cmdr, is_beta, system,x,y,z, station, entry,client):
+
+        #USS and FFS
+        if entry["event"] in ("USSDrop",'FSSSignalDiscovered') and entry.get("USSType") == "$USS_Type_NonHuman;" : 
+
+            # The have different names for teh same thing so normalise
+            if entry["event"] == 'FSSSignalDiscovered':
+                threatLevel=entry.get("ThreatLevel")
+            else:
+                threatLevel=entry.get("USSThreat")
+
+            # see if you have system and threat levels store
+            # Thsi will fail if it a new threat level in the current system
+            try:
+                globalfss=NHSS.fss.get(system)
+                oldthreat=globalfss.get(threatLevel)
+                #print(globalfss)
+            except:
+                oldthreat=False
+
+            if oldthreat:
+                print("Threat level already recorded here "+str(threatLevel))
+
+            else:
+                #print("Threat {}".format(threatLevel))
+                try:
+                    #set the threatlevel for the system
+                    NHSS.fss[system][threatLevel] =  True
+                except:
+                    #we couldnt find teh system so lets define it
+                    NHSS.fss[system]={ threatLevel: True}
+
+                NHSS(cmdr, is_beta, system,x,y,z, station, entry,client).start()    

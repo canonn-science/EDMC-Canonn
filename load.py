@@ -127,6 +127,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     legacy.CodexEntry(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     legacy.AXZone(cmdr, is_beta, system,x,y,z, station, entry, state)
     legacy.faction_kill(cmdr, is_beta, system, station, entry, state)
+    legacy.NHSS.submit(cmdr, is_beta, system,x,y,z, station, entry,client)
     
 def dashboard_entry(cmdr, is_beta, entry):
       
