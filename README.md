@@ -19,7 +19,7 @@ Hyperdiction reporting is logged from the Thargoid Encounter Stats screen.
 This captures NHSS information from the FSS scanner and USS Drops. Only logs one instance of each threat level per system
 
 ## Codex
-This records the codex entries and a bit of extra info about body and lat lon. The codex entries are routed to teh appropriate CAPI report. eg fgreports btreports etc.
+This records the codex entries and a bit of extra info about body and lat lon. The codex entries are routed to the appropriate CAPI report. eg fgreports btreports etc.
 
 ## Thargoid Kills 
 This records Thargoids kils. What else did you expect herds of wilderbeast running through the serengeti?
