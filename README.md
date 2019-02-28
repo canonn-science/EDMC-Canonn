@@ -26,3 +26,6 @@ This records Thargoids kils. What else did you expect herds of wilderbeast runni
 
 ## Journal Data
 This records all journal entries that haven't specifically been excluded. NB the exclusion list needs to be bigger.
+
+## Legacy Reporting
+In the interests of launching the new plugin quicker I have integrated the legacy code that is used to opulate the spreadheets this will allow us to run reports in parallel. 
