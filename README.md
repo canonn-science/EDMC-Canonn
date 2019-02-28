@@ -9,7 +9,7 @@ This plugin is currently only writing to the Canonn API and therefore anything y
 
 # Features
 
-## Canonn New Feed
+## Canonn News Feed
 See the top stories on rotation
 
 ## Hyperdiction reporting 
