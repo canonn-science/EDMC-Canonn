@@ -9,7 +9,7 @@ This plugin is currently only writing to the Canonn API and therefore anything y
 
 # Features
 
-## Canonn New Feed
+## Canonn News Feed
 See the top stories on rotation
 
 ## Hyperdiction reporting 
@@ -19,10 +19,13 @@ Hyperdiction reporting is logged from the Thargoid Encounter Stats screen.
 This captures NHSS information from the FSS scanner and USS Drops. Only logs one instance of each threat level per system
 
 ## Codex
-This records the codex entries and a bit of extra info about body and lat lon. The codex entries are routed to teh appropriate CAPI report. eg fgreports btreports etc.
+This records the codex entries and a bit of extra info about body and lat lon. The codex entries are routed to the appropriate CAPI report. eg fgreports btreports etc.
 
 ## Thargoid Kills 
-This records Thargoids kils. What else did you expect herds of wilderbeast running through the serengeti?
+This records Thargoids kills. What else did you expect herds of wilderbeast running through the serengeti?
 
 ## Journal Data
 This records all journal entries that haven't specifically been excluded. NB the exclusion list needs to be bigger.
+
+## Legacy Reporting
+In the interests of launching the new plugin quicker I have integrated the legacy code that is used to opulate the spreadheets this will allow us to run reports in parallel. 
