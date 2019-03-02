@@ -14,7 +14,7 @@ from config import config
 import threading
 
 REFRESH_CYCLES = 60 ## how many cycles before we refresh
-NEWS_CYCLE=60 * 1000 # 10 seconds
+NEWS_CYCLE=60 * 1000 # 60 seconds
 DEFAULT_NEWS_URL = 'https://canonn.science/wp-json/wp/v2/posts'
 WRAP_LENGTH = 200
 
@@ -31,7 +31,10 @@ class UpdateThread(threading.Thread):
         self.widget=widget
     
     def run(self):
-        self.widget.update()        
+        # download cannot contain any tkinter changes
+        self.widget.download()
+        # trigger a tkinter update after 1 second
+        self.widget.after(1000,self.widget.update) 
 
 def decode_unicode_references(data):
     return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
@@ -92,11 +95,21 @@ class CanonnNews(Frame):
         UpdateThread(self).start()
 
     def update(self):
+        if self.visible():
+            if self.news_data:
+                    news=self.news_data[self.news_pos]
+                    self.hyperlink['url'] = news['link']
+                    self.hyperlink['text'] = decode_unicode_references(news['title']['rendered'])
+
+            else:
+                self.hyperlink['text'] = "News refresh failed"
+        
+    def download(self):
         "Update the news."
         
         #refesh every 60 seconds
         self.after(NEWS_CYCLE, self.news_update)
-        if self.visible():
+        if self.isvisible:
         
             if self.news_count == self.news_pos:           
                 self.news_pos=0
@@ -110,14 +123,6 @@ class CanonnNews(Frame):
                 self.minutes=REFRESH_CYCLES
             else:
                 self.minutes+=-1        
-                    
-            if self.news_data:
-                news=self.news_data[self.news_pos]
-                self.hyperlink['url'] = news['link']
-                self.hyperlink['text'] = decode_unicode_references(news['title']['rendered'])
-
-            else:
-                self.hyperlink['text'] = "News refresh failed"
 
     
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
@@ -133,10 +138,12 @@ class CanonnNews(Frame):
 
     def visible(self):
         if self.hidden.get() == 1:
-            self.after(100,self.grid_remove)
+            self.grid_remove()
+            self.isvisible=False;
             return False
         else:
-            self.after(100,self.grid)
+            self.grid()
+            self.isvisible=True;
             return True
 
     def prefs_changed(self, cmdr, is_beta):
