@@ -28,7 +28,8 @@ class Emitter(threading.Thread):
         self.lat = lat
         self.lon = lon
         self.is_beta = is_beta
-        self.entry = entry.copy()
+        if entry:
+            self.entry = entry.copy()
         self.client = client
         Emitter.setRoute(is_beta,client)
         self.modelreport="breports"

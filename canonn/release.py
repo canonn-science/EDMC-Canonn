@@ -58,7 +58,8 @@ class ReleaseThread(threading.Thread):
         self.release=release
     
     def run(self):
-        self.release.release_update()
+        self.release.release_pull();
+        self.release.after(1000,self.release.release_update)
         
 class Release(Frame):
 
@@ -102,12 +103,15 @@ class Release(Frame):
     def release_thread(self):    
         ReleaseThread(self).start()
         
+    def release_pull(self):
+        self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
+        
     def release_update(self):
                 
         #refesh every 60 seconds
         self.after(RELEASE_CYCLE, self.release_thread)
         
-        self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
+        #self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
         
         current=self.version2number(self.release)
         release=self.version2number(self.latest.get("tag_name"))
@@ -116,12 +120,10 @@ class Release(Frame):
         self.hyperlink['text'] = "EDMC-Canonn: {}".format(self.latest.get("tag_name"))
 
         if current==release:
-            # If we grid_remove in the thread it crashes EDMC
-            # but putting it on a timer doesn't 
-            self.after(5000, self.grid_remove)
+            self.grid_remove()
         elif current > release:
             self.hyperlink['text'] = "Experimental Release {}".format(self.release)
-            self.after(100,self.grid)
+            self.grid()
         else:
             
             if self.auto.get() == 1:
@@ -131,7 +133,7 @@ class Release(Frame):
                 self.hyperlink['text'] = "Please Upgrade {}".format(self.latest.get("tag_name"))
                 if self.novoices.get() != 1:
                     Player(Release.plugin_dir,["sounds\\prefix.wav","sounds\\nag1.wav"]).start()
-            self.after(100,self.grid)
+            self.grid()
     
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."

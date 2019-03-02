@@ -12,6 +12,7 @@ from canonn import hdreport
 from canonn import news
 from canonn import release
 from canonn import legacy
+from canonn import clientreport
 
 
 
@@ -65,6 +66,8 @@ def plugin_start(plugin_dir):
     #print this.patrol
     release.Release.plugin_start(plugin_dir)
     
+    
+    
     return 'Canonn'
     
 def plugin_app(parent):
@@ -117,12 +120,9 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     factionkill.submit(cmdr, is_beta, system, station, entry,client)
     nhss.submit(cmdr, is_beta, system, station, entry,client)
     hdreport.submit(cmdr, is_beta, system, station, entry,client)
-    #codex.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
-    #btreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
-    #fgreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
-    #csreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     codex.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     journaldata.submit(cmdr, is_beta, system, station, entry,client)
+    clientreport.submit(cmdr,is_beta,client)
     
     # legacy logging to google sheets
     legacy.statistics(cmdr, is_beta, system, station, entry, state)
