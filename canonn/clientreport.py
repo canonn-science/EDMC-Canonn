@@ -10,8 +10,9 @@ class clientReport(Emitter):
     done=False    
         
     def __init__(self,cmdr, is_beta,client):
-        if not clientReport.done:
-            Emitter.__init__(self,cmdr, is_beta, None, None,None,None, None, None,None,None,client)
+        
+        Emitter.__init__(self,cmdr, is_beta, None, None,None,None, None, None,None,None,client)
+        if not clientReport.done:            
             self.modelreport="clientreports"
             clientReport.done=True;
         

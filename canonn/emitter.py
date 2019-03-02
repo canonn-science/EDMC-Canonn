@@ -32,7 +32,7 @@ class Emitter(threading.Thread):
             self.entry = entry.copy()
         self.client = client
         Emitter.setRoute(is_beta,client)
-        self.modelreport="breports"
+        self.modelreport="clientreports"
 
     @classmethod
     def setRoute(cls,is_beta,client):
