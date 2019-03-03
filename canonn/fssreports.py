@@ -52,7 +52,7 @@ class fssEmitter(Emitter):
         
         #is this a code entry and do we want to record it?
         if self.entry["event"] == "FSSSignalDiscovered" and not fssEmitter.excludefss.get(self.entry.get("SignalName")) and not self.entry.get("SignalName") == "$USS;" and not self.entry.get("IsStation"):
-            print("FSS")
+            
             url=self.getUrl()
             
             if self.entry.get("SignalName") == "$Warzone_TG;":
@@ -63,7 +63,7 @@ class fssEmitter(Emitter):
                 self.modelreport="reportfsses"
             
                    
-            print ("Send Reports {}/{}".format(url,self.modelreport))
+            
             
             
             
