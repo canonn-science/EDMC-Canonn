@@ -11,10 +11,10 @@ class clientReport(Emitter):
         
     def __init__(self,cmdr, is_beta,client):
         
+        self.modelreport="clientreports" 
         Emitter.__init__(self,cmdr, is_beta, None, None,None,None, None, None,None,None,client)
-        if not clientReport.done:            
-            self.modelreport="clientreports"
-            clientReport.done=True;
+       
+            
         
     def setPayload(self):
         payload={}
@@ -22,7 +22,15 @@ class clientReport(Emitter):
         payload["isBeta"]=self.is_beta
         payload["clientVersion"]=self.client
         return payload  
-        
+
+    def run(self):
+        if not clientReport.done:           
+            print("sending client report")    
+            #configure the payload       
+            payload=self.setPayload()
+            url=self.getUrl()
+            self.send(payload,url)        
+            clientReport.done=True;
             
 def submit(cmdr, is_beta, client):   
     clientReport(cmdr, is_beta, client).start()   
