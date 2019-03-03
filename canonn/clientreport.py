@@ -32,5 +32,7 @@ class clientReport(Emitter):
             self.send(payload,url)        
             clientReport.done=True;
             
-def submit(cmdr, is_beta, client):   
-    clientReport(cmdr, is_beta, client).start()   
+def submit(cmdr, is_beta, client,entry):  
+    print(entry.get("event"))
+    if entry.get("event") in ("Location","StartUp"):
+        clientReport(cmdr, is_beta, client).start()   

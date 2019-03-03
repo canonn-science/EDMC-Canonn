@@ -36,7 +36,7 @@ this.systemCache={ "Sol": (0,0,0) }
 myPlugin = "EDMC-Canonn"
 
 #this.debuglevel=2
-this.version="1.4.0"
+this.version="1.5.0"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
     
@@ -124,7 +124,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     codex.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     fssreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     journaldata.submit(cmdr, is_beta, system, station, entry,client)
-    clientreport.submit(cmdr,is_beta,client)
+    clientreport.submit(cmdr,is_beta,client,entry)
     
     # legacy logging to google sheets
     legacy.statistics(cmdr, is_beta, system, station, entry, state)
