@@ -27,5 +27,8 @@ This records Thargoids kills. What else did you expect herds of wilderbeast runn
 ## Journal Data
 This records all journal entries that haven't specifically been excluded. NB the exclusion list needs to be bigger.
 
+## FSS Data
+This records FSSSignalDicovered Messages that havent beenexcluded. Also records AX Conflict Zones in their own model
+
 ## Legacy Reporting
 In the interests of launching the new plugin quicker I have integrated the legacy code that is used to opulate the spreadheets this will allow us to run reports in parallel. 
