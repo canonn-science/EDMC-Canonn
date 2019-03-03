@@ -13,6 +13,7 @@ from canonn import news
 from canonn import release
 from canonn import legacy
 from canonn import clientreport
+from canonn import fssreports
 
 
 
@@ -121,6 +122,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     nhss.submit(cmdr, is_beta, system, station, entry,client)
     hdreport.submit(cmdr, is_beta, system, station, entry,client)
     codex.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
+    fssreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     journaldata.submit(cmdr, is_beta, system, station, entry,client)
     clientreport.submit(cmdr,is_beta,client)
     
