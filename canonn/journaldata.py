@@ -2,14 +2,14 @@ import threading
 import requests
 import sys
 import json
-
+from emitter import Emitter
 
 '''
 Added the above events to: https://api.canonn.tech:2053/excludeevents
 -DM
 '''
 
-class CanonnJournal(threading.Thread):
+class CanonnJournal(Emitter):
     '''
         Should probably make this a heritable class as this is a repeating pattern
     '''
@@ -17,18 +17,30 @@ class CanonnJournal(threading.Thread):
     exclusions={}
     
     def __init__(self,cmdr, is_beta, system, station, entry,client):
-        threading.Thread.__init__(self)
+        Emitter.__init__(self,cmdr, is_beta, system, None,None,None, entry, None,None,None,client)
         self.system = system
         self.cmdr = cmdr
         self.station = station
         self.is_beta = is_beta
         self.entry = entry.copy()
         self.client = client
+        self.modelreport="reportevents"
 
+    def setPayload(self):        
+        payload={}
+        payload["systemName"]=self.system
+        payload["cmdrName"]=self.cmdr  
+        payload["rawJson"]=self.entry
+        payload["eventName"]=self.entry["event"]
+        payload["clientVersion"]= self.client
+        payload["isBeta"]= self.is_beta
+        return payload
+        
     def run(self):
-    
+        url=self.getUrl()
         if not CanonnJournal.exclusions:
-            r=requests.get("https://api.canonn.tech:2053/excludeevents")  
+            
+            r=requests.get("{}/excludeevents".format(url))  
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     CanonnJournal.exclusions[exc["eventName"]]=True
@@ -47,12 +59,8 @@ class CanonnJournal(threading.Thread):
         
         if included_event:
                     
-                r=requests.post("https://api.canonn.tech:2053/reportevents",data=json.dumps(payload),headers={"content-type":"application/json"})  
-                if not r.status_code == requests.codes.ok:
-                    print 
-                    print r.status_code
-                    print r.json()
-                    print json.dumps(payload)
+            payload=self.setPayload()
+            self.send(payload,url)
                     
         else:
             print("excluding {}".format(self.entry.get("event")))
