@@ -2,6 +2,7 @@ import threading
 import requests
 import sys
 import json
+from emitter import Emitter
 
 '''
     { 
@@ -13,21 +14,20 @@ import json
     }
 '''
 
-class NHSS(threading.Thread):
+class NHSS(Emitter):
 
     fss= {}
     
-    '''
-        Should probably make this a heritable class as this is a repeating pattern
-    '''
-    def __init__(self,cmdr, is_beta, system, station, entry,client):
+    
+    def __init__(self,cmdr, is_beta, system,entry,client):
+        Emitter.__init__(self,cmdr, is_beta, system, None,None,None, entry, None,None,None,client)
         threading.Thread.__init__(self)
         self.system = system
         self.cmdr = cmdr
-        self.station = station
         self.is_beta = is_beta
         self.entry = entry.copy()
         self.client=client
+        self.modelreport="nhssreports"
 
     def run(self):
         payload={}
@@ -48,26 +48,16 @@ class NHSS(threading.Thread):
         payload["reportStatus"]="accepted"
         payload["reportComment"]=type
 
-        try:        
-            r=requests.post("https://api.canonn.tech:2053/nhssreports",data=json.dumps(payload),headers={"content-type":"application/json"})  
-            #print payload
-            #print r
-        except:
-            print("[EDMC-Canonn] Issue posting ussReport " + str(sys.exc_info()[0]))                            
-            print r
+        url=self.getUrl()
+        self.send(payload,url)
 
-def matches(d, field, value):
-	return field in d and value == d[field]	        
 
-'''
-    from canonn import journaldata
-    journaldata.submit(cmdr, system, station, entry)
-'''
+
 def submit(cmdr, is_beta, system, station, entry,client):
-
+    
     #USS and FFS
     if entry["event"] in ("USSDrop",'FSSSignalDiscovered') and entry.get("USSType") == "$USS_Type_NonHuman;" : 
-
+        
         # The have different names for teh same thing so normalise
         if entry["event"] == 'FSSSignalDiscovered':
             threatLevel=entry.get("ThreatLevel")
@@ -95,4 +85,4 @@ def submit(cmdr, is_beta, system, station, entry,client):
                 #we couldnt find teh system so lets define it
                 NHSS.fss[system]={ threatLevel: True}
 
-            NHSS(cmdr, is_beta, system, station, entry,client).start()
+            NHSS(cmdr, is_beta, system,  entry,client).start()
