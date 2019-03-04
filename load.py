@@ -14,6 +14,8 @@ from canonn import release
 from canonn import legacy
 from canonn import clientreport
 from canonn import fssreports
+from canonn import patrol
+from canonn.systems import edsmGetSystem,dumpSystemCache
 
 
 
@@ -31,11 +33,11 @@ this.nearloc = {
    'Heading' : None,
    'Time' : None
 }
-this.systemCache={ "Sol": (0,0,0) }
+
 
 myPlugin = "EDMC-Canonn"
 
-#this.debuglevel=2
+
 this.version="1.5.0"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
@@ -46,8 +48,11 @@ def plugin_prefs(parent, cmdr, is_beta):
     """
     frame = nb.Frame(parent)
     frame.columnconfigure(1, weight=1)
+    
     this.news.plugin_prefs(frame, cmdr, is_beta,1)
     this.release.plugin_prefs(frame, cmdr, is_beta,2)
+    #this.patrol.plugin_prefs(frame, cmdr, is_beta,3)
+    
     return frame
 
     
@@ -57,6 +62,7 @@ def prefs_changed(cmdr, is_beta):
     """
     this.news.prefs_changed(cmdr, is_beta)
     this.release.prefs_changed(cmdr, is_beta)
+    this.patrol.prefs_changed(cmdr, is_beta)
     
    
 def plugin_start(plugin_dir):
@@ -89,6 +95,7 @@ def plugin_app(parent):
     
     this.news = news.CanonnNews(table,0)
     this.release = release.Release(table,this.version,1)
+    #this.patrol = patrol.CanonnPatrol(table,2)
     
     
     
@@ -152,18 +159,3 @@ def dashboard_entry(cmdr, is_beta, entry):
         this.nearloc['Latitude'] = None
         this.nearloc['Longitude'] = None    
     
-def edsmGetSystem(system):
-    
-    if this.systemCache.has_key(system):
-    
-        return this.systemCache[system]
-        
-    else:
-        url = 'https://www.edsm.net/api-v1/system?systemName='+quote_plus(system)+'&showCoordinates=1'      
-        #print url
-        r = requests.get(url)
-        s =  r.json()
-        #print s
-    
-        this.systemCache[system]=(s["coords"]["x"],s["coords"]["y"],s["coords"]["z"])
-        return s["coords"]["x"],s["coords"]["y"],s["coords"]["z"]    
