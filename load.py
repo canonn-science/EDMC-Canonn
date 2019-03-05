@@ -15,7 +15,7 @@ from canonn import legacy
 from canonn import clientreport
 from canonn import fssreports
 from canonn import patrol
-from canonn.systems import edsmGetSystem,dumpSystemCache
+from canonn.systems import Systems
 
 
 
@@ -95,7 +95,7 @@ def plugin_app(parent):
     
     this.news = news.CanonnNews(table,0)
     this.release = release.Release(table,this.version,1)
-    #this.patrol = patrol.CanonnPatrol(table,2)
+    this.patrol = patrol.CanonnPatrol(table,2)
     
     
     
@@ -115,7 +115,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             this.body_name = entry['Body']        
         
     if system:
-        x,y,z=edsmGetSystem(system)
+        x,y,z=Systems.edsmGetSystem(system)
     else:
         x=None
         y=None
@@ -132,6 +132,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     fssreports.submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
     journaldata.submit(cmdr, is_beta, system, station, entry,client)
     clientreport.submit(cmdr,is_beta,client,entry)
+    this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
     
     # legacy logging to google sheets
     legacy.statistics(cmdr, is_beta, system, station, entry, state)

@@ -13,6 +13,7 @@ import myNotebook as nb
 from config import config
 import threading
 from systems import Systems
+import math
 
 
 
@@ -52,6 +53,27 @@ class PatrolLink(HyperlinkLabel):
             parent,
             text="Fetching Patrol...",
             url=DEFAULT_URL,
+            popup_copy = True,
+            #wraplength=50,  # updated in __configure_event below
+            anchor=tk.NW
+        )
+        #self.bind('<Configure>', self.__configure_event)
+ 
+    def __configure_event(self, event):
+        "Handle resizing."
+
+        self.configure(wraplength=event.width)
+    
+class InfoLink(HyperlinkLabel):
+
+    def __init__(self, parent):
+
+        HyperlinkLabel.__init__(
+            self,
+            parent,
+            text="Fetching Patrol...",
+            url=DEFAULT_URL,
+            popup_copy = True,
             wraplength=50,  # updated in __configure_event below
             anchor=tk.NW
         )
@@ -60,7 +82,7 @@ class PatrolLink(HyperlinkLabel):
     def __configure_event(self, event):
         "Handle resizing."
 
-        self.configure(wraplength=event.width)
+        self.configure(wraplength=event.width)    
     
 class CanonnPatrol(Frame):
 
@@ -88,14 +110,21 @@ class CanonnPatrol(Frame):
         
         self.hyperlink=PatrolLink(self)
         self.hyperlink.grid(row = 0, column = 1,sticky="NSEW")
+        self.distance=tk.Label(self, text=  "...")         
+        self.distance.grid(row = 0, column = 2,sticky="NSEW")
         
+        self.infolink=InfoLink(self)
+        self.infolink.grid(row = 1, column = 0,sticky="NSEW",columnspan=3)
+        self.infolink.grid_remove()
+        
+        self.patrollist=[]
         self.patrol_count=0
         self.patrol_pos=0
         self.minutes=0
         self.visible()
         self.download()
         
-    
+        self.system=""
         # 
         #self.after(250, self.patrol_update)
         
@@ -114,30 +143,28 @@ class CanonnPatrol(Frame):
                 
                 
     def getBGSInstructions(self,bgs):
-        target=50 <= float(bgs.get("influence")) <= 65
-        over=float(bgs.get("influence"))>65
-        under=float(bgs.get("influence"))<50
+        target=0.50 <= float(bgs.get("influence")) <= 0.65
+        over=float(bgs.get("influence"))>0.65
+        under=float(bgs.get("influence"))<0.50
         
         if target:
-            return "On target"
+            return "Canonn Influence {}% Influence is on target ".format(round(float(bgs.get("influence")*100),2))
         if  over:
-            return  "Unless this is a low priority system you will need to work for the other factions, hand in data to non-Canonn stations or even smuggle illegal goods to Canonn Black Markets. Check #mission_minor_faction"
+            return  "Canonn Influence {}% Check #mission_minor_faction on discord for instructions.".format(round(float(bgs.get("influence")*100),2))
         if under:
-            return "Please complete missions for canonn to increase our influence"
+            return "Canonn Influence {}% Please complete missions for Canonn to increase our influence".format(round(float(bgs.get("influence")*100),2))
         
         
         
     
     def getBGSPatrol(self,bgs):
-        print(bgs.get("system_name"))
+        
         
         x,y,z=Systems.edsmGetSystem(bgs.get("system_name"))
         r = {
             "type": "BGS",
             "system": bgs.get("system_name"),
-            "x": x,
-            "y": y,
-            "z": z,
+            "coords": (x,y,z),
             "instructions": self.getBGSInstructions(bgs),
             "url":  "https://elitebgs.app/system/{}".format(bgs.get("system_id"))
         }
@@ -155,16 +182,21 @@ class CanonnPatrol(Frame):
         j = requests.get(url).json()
         if j:
             for bgs in j.get("docs")[0].get("faction_presence"):
-                print(bgs.get("system_name"))
-                patrol.append(self.getBGSPatrol(bgs))
                 
-        #print(patrol) 
+                patrol.append(self.getBGSPatrol(bgs))
+        
+        
+        return patrol
         
     def download(self):
         "Update the patrol."
         
-        self.getFactionData("Canonn")
-        self.getFactionData("Canonn Deep Space Research")
+        patrol_list=[]
+        patrol_list.extend(self.getFactionData("Canonn"))
+        patrol_list.extend(self.getFactionData("Canonn Deep Space Research"))
+        
+        self.patrol_list=patrol_list
+        
         
         #refesh every 60 seconds
         # self.after(PATROL_CYCLE, self.patrol_update)
@@ -212,6 +244,20 @@ class CanonnPatrol(Frame):
             self.isvisible=True;
             return True        
             
+    def getNearest(self,location):
+        nearest=""
+        for patrol in self.patrol_list:
+            if nearest != "":           
+                
+                if getDistance(location,patrol.get("coords")) < getDistance(location,nearest.get("coords")): 
+                    nearest=patrol
+            else:        
+                
+                nearest=patrol
+            
+        return nearest
+            
+            
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
         config.set('HideCanonn', self.canonn.get())      
@@ -219,6 +265,27 @@ class CanonnPatrol(Frame):
         if self.visible():
             self.patrol_update()
         
+    def journal_entry(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
+        # We don't care what the journal entry is as long as the system has changed.
         
         
+        if self.system != system:
+            print("doing it")
+            self.system=system
+            self.nearest=self.getNearest((x,y,z))
+            self.hyperlink['text']=self.nearest.get("system")
+            self.hyperlink['url']=self.nearest.get("url")
+            self.distance['text']="{}ly".format(round(getDistance((x,y,z),self.nearest.get("coords")),2))
+            self.infolink['text']=self.nearest.get("instructions")
+            self.infolink['url']=self.nearest.get("url")
+            self.infolink.grid()
+        else:
+            print("nope {}".format(entry.get("event")))
+            print(system)
+            print(self.system)
+            
+            
+def getDistance(p,g):
+    # gets the distance between two systems
+    return math.sqrt(sum(tuple([math.pow(p[i]-g[i],2)  for i in range(3)])))
    
