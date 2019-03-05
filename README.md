@@ -9,6 +9,9 @@ This plugin is currently only writing to the Canonn API and therefore anything y
 
 # Features
 
+## Patrol System
+Currently the patrols are limited to systems with Canonn Influence. This will be extended to include the current patrol system temporarily untila decision if made on how wedo it from strapi
+
 ## Canonn News Feed
 See the top stories on rotation
 
