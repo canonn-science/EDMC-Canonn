@@ -12,7 +12,10 @@ import re
 import myNotebook as nb
 from config import config
 import threading
-from systems import edsmGetSystem
+from systems import Systems
+
+
+
 
 REFRESH_CYCLES = 60 ## how many cycles before we refresh
 CYCLE=60 * 1000 # 60 seconds
@@ -109,18 +112,53 @@ class CanonnPatrol(Frame):
             else:
                 self.hyperlink['text'] = "Patrol refresh failed"
                 
+                
+    def getBGSInstructions(self,bgs):
+        target=50 <= float(bgs.get("influence")) <= 65
+        over=float(bgs.get("influence"))>65
+        under=float(bgs.get("influence"))<50
+        
+        if target:
+            return "On target"
+        if  over:
+            return  "Unless this is a low priority system you will need to work for the other factions, hand in data to non-Canonn stations or even smuggle illegal goods to Canonn Black Markets. Check #mission_minor_faction"
+        if under:
+            return "Please complete missions for canonn to increase our influence"
+        
+        
+        
+    
+    def getBGSPatrol(self,bgs):
+        print(bgs.get("system_name"))
+        
+        x,y,z=Systems.edsmGetSystem(bgs.get("system_name"))
+        r = {
+            "type": "BGS",
+            "system": bgs.get("system_name"),
+            "x": x,
+            "y": y,
+            "z": z,
+            "instructions": self.getBGSInstructions(bgs),
+            "url":  "https://elitebgs.app/system/{}".format(bgs.get("system_id"))
+        }
+        return r
+                
     def getFactionData(self,faction):
         '''
            We will get Canonn faction data using an undocumented elitebgs api
            NB: It is possible this could get broken so need to contact CMDR Garud 
         '''
+        
+        patrol=[]
+        
         url="https://elitebgs.app/frontend/factions?name={}".format(faction)
         j = requests.get(url).json()
         if j:
-            for s in j.get("docs")[0].get("faction_presence"):
-                print(s.get("system_name"))
-                edsmGetSystem(s.get("system_name"))
+            for bgs in j.get("docs")[0].get("faction_presence"):
+                print(bgs.get("system_name"))
+                patrol.append(self.getBGSPatrol(bgs))
                 
+        #print(patrol) 
         
     def download(self):
         "Update the patrol."
