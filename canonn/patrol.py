@@ -18,8 +18,8 @@ import math
 
 
 
-REFRESH_CYCLES = 60 ## how many cycles before we refresh
-CYCLE=60 * 1000 # 60 seconds
+
+CYCLE=60 * 1000 * 60 # 60 minutes
 DEFAULT_URL = ""
 WRAP_LENGTH = 200
 
@@ -38,8 +38,8 @@ class UpdateThread(threading.Thread):
     def run(self):
         # download cannot contain any tkinter changes
         self.widget.download()
-        # trigger a tkinter update after 1 second
-        self.widget.after(1000,self.widget.update) 
+        # update can't be inside a thread
+        self.widget.after(500,self.widget.update) 
 
 def decode_unicode_references(data):
     return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
@@ -117,42 +117,73 @@ class CanonnPatrol(Frame):
         self.infolink.grid(row = 1, column = 0,sticky="NSEW",columnspan=3)
         self.infolink.grid_remove()
         
-        self.patrollist=[]
+        self.patrol_list=[]
+        
         self.patrol_count=0
         self.patrol_pos=0
         self.minutes=0
         self.visible()
-        self.download()
+        
         
         self.system=""
         # 
-        #self.after(250, self.patrol_update)
+        self.after(250, self.patrol_update)
         
     def patrol_update(self):
         UpdateThread(self).start()
+        self.after(CYCLE, self.patrol_update)
 
     def update(self):
         if self.visible():
-            if self.patrol_data:
-                # patrol=self.patrol_data[self.patrol_pos]
-                # self.hyperlink['url'] = patrol['link']
-                # self.hyperlink['text'] = decode_unicode_references(patrol['title']['rendered'])
-                print("errm")
+            if self.patrol_list:
+                p=Systems.edsmGetSystem(self.system)
+                self.nearest=self.getNearest(p)
+                self.hyperlink['text']=self.nearest.get("system")
+                self.hyperlink['url']=self.nearest.get("url")
+                self.distance['text']="{}ly".format(round(getDistance(p,self.nearest.get("coords")),2))
+                self.infolink['text']=self.nearest.get("instructions")
+                self.infolink['url']=self.nearest.get("url")
+                self.infolink.grid()            
             else:
-                self.hyperlink['text'] = "Patrol refresh failed"
-                
+                self.hyperlink['text'] = "Fetching patrols"
+                self.infolink.grid_remove()            
+        
+    def getStates(self,state_name,bgs):
+        sa=[]
+        active_states=bgs.get(state_name)
+        if active_states:
+            sa=active_states[0].values()
+        
+        if sa:
+            states=","
+            states=states.join(sa)
+            return states
+        else:
+            return None
+            
                 
     def getBGSInstructions(self,bgs):
         target=0.50 <= float(bgs.get("influence")) <= 0.65
         over=float(bgs.get("influence"))>0.65
         under=float(bgs.get("influence"))<0.50
         
+        if  self.getStates("active_states",bgs):       
+            states=" States: {}".format(self.getStates("active_states",bgs))
+        else:
+            states=""
+        
+        # if  self.getStates("pending_states",bgs):       
+            # pstates=" Pending: {}".format(self.getStates("pending_states",bgs))
+        # else:
+            # pstates=""
+        
+        print(bgs)
         if target:
-            return "Canonn Influence {}% Influence is on target ".format(round(float(bgs.get("influence")*100),2))
+            return "Canonn Influence {}%{}".format(round(float(bgs.get("influence")*100),2),states)
         if  over:
-            return  "Canonn Influence {}% Check #mission_minor_faction on discord for instructions.".format(round(float(bgs.get("influence")*100),2))
+            return  "Canonn Influence {}%{} Check #mission_minor_faction on discord for instructions.".format(round(float(bgs.get("influence")*100),2),states)
         if under:
-            return "Canonn Influence {}% Please complete missions for Canonn to increase our influence".format(round(float(bgs.get("influence")*100),2))
+            return "Canonn Influence {}%{} Please complete missions for Canonn to increase our influence".format(round(float(bgs.get("influence")*100),2),states)
         
         
         
@@ -196,25 +227,7 @@ class CanonnPatrol(Frame):
         patrol_list.extend(self.getFactionData("Canonn Deep Space Research"))
         
         self.patrol_list=patrol_list
-        
-        
-        #refesh every 60 seconds
-        # self.after(PATROL_CYCLE, self.patrol_update)
-        # if self.isvisible:
-        
-            # if self.patrol_count == self.patrol_pos:           
-                # self.patrol_pos=0
-            # else:
-                # self.patrol_pos+=1
-            
-            # if self.minutes==0:
-                # self.patrol_data = requests.get("https://canonn.science/wp-json/wp/v2/posts").json()
-                # self.patrol_count=len(self.patrol_data)-1
-                # self.patrol_pos=0
-                # self.minutes=REFRESH_CYCLES
-            # else:
-                # self.minutes+=-1        
-
+       
     
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
@@ -272,13 +285,14 @@ class CanonnPatrol(Frame):
         if self.system != system:
             print("doing it")
             self.system=system
-            self.nearest=self.getNearest((x,y,z))
-            self.hyperlink['text']=self.nearest.get("system")
-            self.hyperlink['url']=self.nearest.get("url")
-            self.distance['text']="{}ly".format(round(getDistance((x,y,z),self.nearest.get("coords")),2))
-            self.infolink['text']=self.nearest.get("instructions")
-            self.infolink['url']=self.nearest.get("url")
-            self.infolink.grid()
+            # self.nearest=self.getNearest((x,y,z))
+            # self.hyperlink['text']=self.nearest.get("system")
+            # self.hyperlink['url']=self.nearest.get("url")
+            # self.distance['text']="{}ly".format(round(getDistance((x,y,z),self.nearest.get("coords")),2))
+            # self.infolink['text']=self.nearest.get("instructions")
+            # self.infolink['url']=self.nearest.get("url")
+            # self.infolink.grid()
+            self.update()
         else:
             print("nope {}".format(entry.get("event")))
             print(system)
