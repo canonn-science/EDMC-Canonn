@@ -114,6 +114,7 @@ class CanonnPatrol(Frame):
         self.hyperlink.grid(row = 0, column = 1,sticky="NSEW")
         self.distance=tk.Label(self, text=  "...")         
         self.distance.grid(row = 0, column = 2,sticky="NSEW")
+        self.distance.grid_remove()
         
         self.infolink=InfoLink(self)
         self.infolink.grid(row = 1, column = 0,sticky="NSEW",columnspan=3)
@@ -145,10 +146,12 @@ class CanonnPatrol(Frame):
                 self.distance['text']="{}ly".format(round(getDistance(p,self.nearest.get("coords")),2))
                 self.infolink['text']=self.nearest.get("instructions")
                 self.infolink['url']=self.nearest.get("url")
-                self.infolink.grid()            
+                self.infolink.grid()
+                self.distance.grid()
             else:
                 self.hyperlink['text'] = "Fetching patrols"
-                self.infolink.grid_remove()            
+                self.infolink.grid_remove()
+                self.distance.grid_remove()
         
     def getStates(self,state_name,bgs):
         sa=[]
