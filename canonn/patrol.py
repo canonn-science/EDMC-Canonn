@@ -14,6 +14,8 @@ from config import config
 import threading
 from systems import Systems
 import math
+from debug import Debug
+from debug import debug,error
 
 
 
@@ -135,7 +137,7 @@ class CanonnPatrol(Frame):
 
     def update(self):
         if self.visible():
-            if self.patrol_list:
+            if self.patrol_list and self.system:
                 p=Systems.edsmGetSystem(self.system)
                 self.nearest=self.getNearest(p)
                 self.hyperlink['text']=self.nearest.get("system")
@@ -177,7 +179,7 @@ class CanonnPatrol(Frame):
         # else:
             # pstates=""
         
-        print(bgs)
+        debug(bgs)
         if target:
             return "Canonn Influence {}%{}".format(round(float(bgs.get("influence")*100),2),states)
         if  over:
@@ -283,7 +285,7 @@ class CanonnPatrol(Frame):
         
         
         if self.system != system:
-            print("doing it")
+            debug("Refresshing Patrol")
             self.system=system
             # self.nearest=self.getNearest((x,y,z))
             # self.hyperlink['text']=self.nearest.get("system")
@@ -294,9 +296,9 @@ class CanonnPatrol(Frame):
             # self.infolink.grid()
             self.update()
         else:
-            print("nope {}".format(entry.get("event")))
-            print(system)
-            print(self.system)
+            error("nope {}".format(entry.get("event")))
+            error(system)
+            error(self.system)
             
             
 def getDistance(p,g):

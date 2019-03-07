@@ -16,6 +16,8 @@ from canonn import clientreport
 from canonn import fssreports
 from canonn import patrol
 from canonn.systems import Systems
+from canonn.debug import Debug
+from canonn.debug import debug
 
 
 
@@ -51,7 +53,10 @@ def plugin_prefs(parent, cmdr, is_beta):
     
     this.news.plugin_prefs(frame, cmdr, is_beta,1)
     this.release.plugin_prefs(frame, cmdr, is_beta,2)
-    #this.patrol.plugin_prefs(frame, cmdr, is_beta,3)
+    this.patrol.plugin_prefs(frame, cmdr, is_beta,3)
+    Debug.plugin_prefs(frame,this.client_version,4)
+    
+    
     
     return frame
 
@@ -63,6 +68,7 @@ def prefs_changed(cmdr, is_beta):
     this.news.prefs_changed(cmdr, is_beta)
     this.release.prefs_changed(cmdr, is_beta)
     this.patrol.prefs_changed(cmdr, is_beta)
+    Debug.prefs_changed()
     
    
 def plugin_start(plugin_dir):
@@ -72,6 +78,7 @@ def plugin_start(plugin_dir):
     
     #print this.patrol
     release.Release.plugin_start(plugin_dir)
+    Debug.setClient(this.client_version)
     
     
     
