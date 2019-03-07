@@ -75,10 +75,10 @@ class Emitter(threading.Thread):
     def send(self,payload,url):
         r=requests.post("{}/{}".format(url,self.modelreport),data=json.dumps(payload),headers={"content-type":"application/json"})  
         if not r.status_code == requests.codes.ok:
-            print "{}/{}".format(url,self.modelreport)
-            print r.status_code
-            print r.json()
-            print json.dumps(payload)            
+            error("{}/{}".format(url,self.modelreport))
+            error(r.status_code)
+            error(r.json())
+            error(json.dumps(payload))
 
 
             

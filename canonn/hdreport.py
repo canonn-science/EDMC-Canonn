@@ -52,7 +52,7 @@ class HDReport(Emitter):
                 HDReport.hdsystem=j[0].get("fromSystemName")
         
         if self.entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM") == HDReport.hdsystem:
-            print("Hyperdiction already recorded here - server")
+            debug("Hyperdiction already recorded here - server")
         else:
         
             payload=self.setPayload()
@@ -68,7 +68,7 @@ def submit(cmdr, is_beta, system, station, entry,client):
         
             lastsystem=entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM")   
             if HDReport.hdsystem == lastsystem:
-                print("Hyperdiction already recorded here - session ")
+                debug("Hyperdiction already recorded here - session ")
             else:
                 HDReport(cmdr, is_beta, lastsystem,  entry,client).start()   
             

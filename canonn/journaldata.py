@@ -44,7 +44,7 @@ class CanonnJournal(Emitter):
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     CanonnJournal.exclusions[exc["eventName"]]=True
-                print CanonnJournal.exclusions
+                debug(CanonnJournal.exclusions)
     
             
         payload={}
@@ -63,7 +63,7 @@ class CanonnJournal(Emitter):
             self.send(payload,url)
                     
         else:
-            print("excluding {}".format(self.entry.get("event")))
+            debug("excluding {}".format(self.entry.get("event")))
 
 '''
     from canonn import journaldata

@@ -4,6 +4,8 @@ import sys
 import json
 from emitter import Emitter
 from urllib import quote_plus
+from debug import Debug
+from debug import debug,error
 
 class clientReport(Emitter):
        
@@ -25,7 +27,7 @@ class clientReport(Emitter):
 
     def run(self):
         if not clientReport.done:           
-            print("sending client report")    
+            debug("sending client report")    
             #configure the payload       
             payload=self.setPayload()
             url=self.getUrl()
@@ -33,6 +35,6 @@ class clientReport(Emitter):
             clientReport.done=True;
             
 def submit(cmdr, is_beta, client,entry):  
-    print(entry.get("event"))
+    debug(entry.get("event"))
     if entry.get("event") in ("Location","StartUp"):
         clientReport(cmdr, is_beta, client).start()   

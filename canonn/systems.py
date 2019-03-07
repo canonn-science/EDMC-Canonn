@@ -81,7 +81,7 @@ class Systems():
     @classmethod      
     def dump(cls):
         for x in cls.systemCache.keys():
-            print('"{}":[{},{},{}],'.format(x, cls.systemCache.get(x)[0],cls.systemCache.get(x)[1],cls.systemCache.get(x)[2]))
+            debug('"{}":[{},{},{}],'.format(x, cls.systemCache.get(x)[0],cls.systemCache.get(x)[1],cls.systemCache.get(x)[2]))
         
 
 def edsmGetSystem(system):

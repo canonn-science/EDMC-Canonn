@@ -62,17 +62,17 @@ class codexEmitter(Emitter):
     def getReportTypes(self,id):
         if not codexEmitter.reporttypes.get(id):        
             url="{}/reporttypes?journalID={}".format(self.getUrl(),id)
-            print(url)
+            debug(url)
             r=requests.get("{}/reporttypes?journalID={}".format(self.getUrl(),id))    
             if r.status_code == requests.codes.ok:
 
                 for exc in r.json():
 
                     codexEmitter.reporttypes["{}".format(exc["journalID"])]={ "endpoint": exc["endpoint"], "location": exc["location"], "type": exc["type"]}
-                    print("get reporttype")
-                    print(codexEmitter.reporttypes.get("1400306")) 
+                    debug("get reporttype")
+                    debug(codexEmitter.reporttypes.get("1400306")) 
             else:
-                print("error")
+                error("error in getReportTypes")
                 
                     
     def getExcluded(self):
@@ -95,7 +95,7 @@ class codexEmitter(Emitter):
             reportType = codexEmitter.reporttypes.get(str(jid))
             
             if reportType:
-                print(reportType)
+                debug(reportType)
                 if reportType.get("location") == "body":
                     payload=self.getBodyPayload(reportType.get("type"))
                     self.modelreport=reportType.get("endpoint")
@@ -106,7 +106,7 @@ class codexEmitter(Emitter):
                 payload=self.getCodexPayload()
                 self.modelreport="reportcodices"
                    
-            print ("Send Reports {}/{}".format(url,self.modelreport))
+            debug("Send Reports {}/{}".format(url,self.modelreport))
             
             self.send(payload,url)
             
