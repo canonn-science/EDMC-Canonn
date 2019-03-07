@@ -86,8 +86,8 @@ class codexEmitter(Emitter):
         
         self.getExcluded()
         
-        #is this a code entry and do we want to record it?
-        if self.entry["event"] == "CodexEntry" and not codexEmitter.excludecodices.get(self.entry.get("codexName")):
+        #is this a code entry and do we want to record it? 
+        if self.entry["event"] == "CodexEntry" and not codexEmitter.excludecodices.get(self.entry.get("codexName").lower()):
             self.getReportTypes(self.entry.get("EntryID"))    
             url=self.getUrl()
             
