@@ -236,15 +236,15 @@ class NHSS(threading.Thread):
             try:
                 globalfss=NHSS.fss.get(system)
                 oldthreat=globalfss.get(threatLevel)
-                #print(globalfss)
+                #debug(globalfss)
             except:
                 oldthreat=False
 
             if oldthreat:
-                print("Threat level already recorded here "+str(threatLevel))
+                debug("Threat level already recorded here "+str(threatLevel))
 
             else:
-                #print("Threat {}".format(threatLevel))
+                #debug("Threat {}".format(threatLevel))
                 try:
                     #set the threatlevel for the system
                     NHSS.fss[system][threatLevel] =  True
