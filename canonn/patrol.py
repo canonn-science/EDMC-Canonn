@@ -182,7 +182,7 @@ class CanonnPatrol(Frame):
         # else:
             # pstates=""
         
-        debug(bgs)
+        #debug(bgs)
         if target:
             return "Canonn Influence {}%{}".format(round(float(bgs.get("influence")*100),2),states)
         if  over:
@@ -236,13 +236,13 @@ class CanonnPatrol(Frame):
     
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
-
+        
         self.canonn=tk.IntVar(value=config.getint("HideCanonn"))
         self.faction=tk.IntVar(value=config.getint("HideFaction"))
         
         frame = nb.Frame(parent)
         frame.columnconfigure(1, weight=1)
-        frame.grid(row = 0, column = 0,sticky="NSEW")
+        frame.grid(row = gridrow, column = 0,sticky="NSEW")
         
         nb.Checkbutton(frame, text="Hide Canonn Patrols", variable=self.canonn).grid(row = 0, column = 0,sticky="NW")
         nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.faction).grid(row = 0, column = 2,sticky="NW")
