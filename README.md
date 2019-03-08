@@ -10,7 +10,12 @@ This plugin is currently only writing to the Canonn API and therefore anything y
 # Features
 
 ## Patrol System
-Currently the patrols are limited to systems with Canonn Influence. This will be extended to include the current patrol system temporarily until a decision is made on how we do it from strapi
+The Patrol system will eventualy be used for directing people to places of interest to Canonn. This will be based on the legacy patrol system for now. In addition we now have two extra patrol types. 
+ 
+ * Canonn Influence Patrol: This tells you where systems have a Canonn Presence and gives some informatio about the current state
+ * Ship Locations: This tells you where your ships are located
+ 
+ ToDo: Controls to cycle through patrols.
 
 ## Canonn News Feed
 See the top stories on rotation
