@@ -3,6 +3,9 @@ import requests
 import sys
 import json
 from emitter import Emitter
+from debug import Debug
+from debug import debug,error
+
 
 '''
 Added the above events to: https://api.canonn.tech:2053/excludeevents

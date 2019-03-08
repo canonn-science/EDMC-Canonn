@@ -2,7 +2,7 @@ from config import config
 import myNotebook as nb
 from urllib import quote_plus
 import requests
-
+import json
 
 from canonn import journaldata
 from canonn import factionkill
@@ -167,3 +167,9 @@ def dashboard_entry(cmdr, is_beta, entry):
         this.nearloc['Latitude'] = None
         this.nearloc['Longitude'] = None    
     
+def cmdr_data(data, is_beta):
+    """
+    We have new data on our commander
+    """
+    #debug(json.dumps(data,indent=4))
+    this.patrol.cmdr_data(data, is_beta)

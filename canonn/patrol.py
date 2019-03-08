@@ -25,6 +25,77 @@ CYCLE=60 * 1000 * 60 # 60 minutes
 DEFAULT_URL = ""
 WRAP_LENGTH = 200
 
+ship_types={   
+        'adder': 'Adder',
+        'typex_3': 'Alliance Challenger',
+        'typex': 'Alliance Chieftain',
+        'typex_2': 'Alliance Crusader',
+        'anaconda': 'Anaconda',
+        'asp explorer': 'Asp Explorer',
+        'asp': 'Asp Explorer',
+        'asp scout': 'Asp Scout',
+        'asp_scout': 'Asp Scout',
+        'beluga liner': 'Beluga Liner',
+        'belugaliner': 'Beluga Liner',
+        'cobra mk. iii': 'Cobra MkIII',
+        'cobramkiii':  'Cobra MkIII',
+        'cobra mk. iv': 'Cobra MkIV',
+        'cobramkiv': 'Cobra MkIV',
+        'diamondback explorer': 'Diamondback Explorer',
+        'diamondbackxl': 'Diamondback Explorer',
+        'diamondback scout': 'Diamondback Scout',
+        'diamondback': 'Diamondback Scout',
+        'dolphin': 'Dolphin',
+        'eagle': 'Eagle',
+        'federal assault ship': 'Federal Assault Ship',
+        'federation_dropship_mkii': 'Federal Assault Ship',       
+        'federal corvette': 'Federal Corvette',
+        'federation_corvette': 'Federal Corvette',
+        'federal dropship': 'Federal Dropship',
+        'federation_dropship': 'Federal Dropship',
+        'federal gunship': 'Federal Gunship',
+        'federation_gunship': 'Federal Gunship',
+        'fer-de-lance': 'Fer-de-Lance',
+        'ferdelance': 'Fer-de-Lance',
+        'hauler': 'Hauler',
+        'imperial clipper': 'Imperial Clipper',
+        'empire_trader': 'Imperial Clipper',
+        'imperial courier': 'Imperial Courier',
+        'empire_courier': 'Imperial Courier',
+        'imperial cutter': 'Imperial Cutter',
+        'cutter': 'Imperial Cutter',
+        'imperial eagle': 'Imperial Eagle',
+        'empire_eagle': 'Imperial Eagle',
+        'keelback': 'Keelback',
+        'independant_trader': 'Keelback',
+        'krait_mkii': 'Krait MkII',
+        'krait_light': 'Krait Phantom',
+        'mamba': 'Mamba',
+        'orca': 'Orca',
+        'python': 'Python',
+        'sidewinder': 'Sidewinder',
+        'type 6 transporter': 'Type-6 Transporter',
+        'type6': 'Type-6 Transporter',
+        'type 7 transporter': 'Type-7 Transporter',
+        'type7':'Type-7 Transporter',
+        'type 9 heavy': 'Type-9 Heavy',
+        'type9': 'Type-9 Heavy',
+        'type 10 defender': 'Type-10 Defender',
+        'type9_military': 'Type-10 Defender',
+        'viper mk. iii': 'Viper MkIII',
+        'viper': 'Viper MkIII',
+        'viper mk. iv': 'Viper MkIV',
+        'viper_mkiv': 'Viper MkIV',
+        'vulture': 'Vulture'
+}
+
+def getShipType(key):
+    name=ship_types.get(key.lower())
+    if name:
+        return name
+    else:
+        return key
+
 def _callback(matches):
     id = matches.group(1)
     try:
@@ -99,10 +170,11 @@ class CanonnPatrol(Frame):
             self,
             parent
         )
-                        
+        self.ships=[]
+        
         self.canonn=tk.IntVar(value=config.getint("HideCanonn"))
         self.faction=tk.IntVar(value=config.getint("HideFaction"))              
-        
+        self.hideships=tk.IntVar(value=config.getint("HideShips"))              
         
         self.columnconfigure(1, weight=1)
         self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
@@ -149,7 +221,10 @@ class CanonnPatrol(Frame):
                 self.infolink.grid()
                 self.distance.grid()
             else:
-                self.hyperlink['text'] = "Fetching patrols"
+                if self.system:
+                    self.hyperlink['text'] = "Fetching patrols..."
+                else:
+                    self.hyperlink['text'] = "Waiting for location"
                 self.infolink.grid_remove()
                 self.distance.grid_remove()
         
@@ -191,20 +266,13 @@ class CanonnPatrol(Frame):
             return "Canonn Influence {}%{} Please complete missions for Canonn to increase our influence".format(round(float(bgs.get("influence")*100),2),states)
         
         
-        
+    
     
     def getBGSPatrol(self,bgs):
-        
-        
         x,y,z=Systems.edsmGetSystem(bgs.get("system_name"))
-        r = {
-            "type": "BGS",
-            "system": bgs.get("system_name"),
-            "coords": (x,y,z),
-            "instructions": self.getBGSInstructions(bgs),
-            "url":  "https://elitebgs.app/system/{}".format(bgs.get("system_id"))
-        }
-        return r
+        return newPatrol("BGS",bgs.get("system_name"),(x,y,z),self.getBGSInstructions(bgs),"https://elitebgs.app/system/{}".format(bgs.get("system_id")))
+            
+        
                 
     def getFactionData(self,faction):
         '''
@@ -225,12 +293,17 @@ class CanonnPatrol(Frame):
         return patrol
         
     def download(self):
-        "Update the patrol."
+        debug("Download Patrol Data")
         
         patrol_list=[]
-        patrol_list.extend(self.getFactionData("Canonn"))
-        patrol_list.extend(self.getFactionData("Canonn Deep Space Research"))
-        
+        if self.faction.get() != 1:
+            debug("Getting Faction Data")
+            patrol_list.extend(self.getFactionData("Canonn"))
+            patrol_list.extend(self.getFactionData("Canonn Deep Space Research"))
+            
+        if self.ships and self.hideships.get() != 1:
+            patrol_list.extend(self.ships)
+
         self.patrol_list=patrol_list
        
     
@@ -239,6 +312,7 @@ class CanonnPatrol(Frame):
         
         self.canonn=tk.IntVar(value=config.getint("HideCanonn"))
         self.faction=tk.IntVar(value=config.getint("HideFaction"))
+        self.hideships=tk.IntVar(value=config.getint("HideShips"))
         
         frame = nb.Frame(parent)
         frame.columnconfigure(1, weight=1)
@@ -246,12 +320,13 @@ class CanonnPatrol(Frame):
         
         nb.Checkbutton(frame, text="Hide Canonn Patrols", variable=self.canonn).grid(row = 0, column = 0,sticky="NW")
         nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.faction).grid(row = 0, column = 2,sticky="NW")
+        nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideships).grid(row = 0, column = 3,sticky="NW")
         
         return frame
 
     def visible(self):
         
-        nopatrols=self.canonn.get() == 1 and self.faction.get() ==1
+        nopatrols=self.canonn.get() == 1 and self.faction.get() ==1 and self.hideships.get() ==1
         
         if nopatrols:
             self.grid_remove()
@@ -280,6 +355,7 @@ class CanonnPatrol(Frame):
         "Called when the user clicks OK on the settings dialog."
         config.set('HideCanonn', self.canonn.get())      
         config.set('HideFaction', self.faction.get())      
+        config.set('HideShips', self.hideships.get())      
         if self.visible():
             self.patrol_update()
         
@@ -302,9 +378,42 @@ class CanonnPatrol(Frame):
             error("nope {}".format(entry.get("event")))
             error(system)
             error(self.system)
-            
+
+    def cmdr_data(self,data, is_beta):
+        """
+        We have new data on our commander
+        
+        Lets get a list of ships
+        """
+        self.ships=[]
+        self.system=data.get("lastSystem").get("name")
+        
+        current_ship=data.get("commander").get("currentShipId")
+        
+        for ship in data.get("ships").keys():
+            debug(ship)
+            debug(current_ship)
+            if int(ship) != int(current_ship):
+                ship_system=data.get("ships").get(ship).get("starsystem").get("name")
+                ship_pos=Systems.edsmGetSystem(ship_system)
+                ship_type=getShipType(data.get("ships").get(ship).get("name"))
+                ship_name=data.get("ships").get(ship).get("shipName")
+                ship_station=data.get("ships").get(ship).get("station").get("name")
+                ship_info="Your {}, {} is docked at {}".format(ship_type,ship_name,ship_station)
+                self.ships.append(newPatrol("SHIPS",ship_system,ship_pos,ship_info,None))
+                debug(json.dumps(data.get("ships").get(ship),indent=4))
+        UpdateThread(self).start()
+        debug(json.dumps(data,indent=4))
             
 def getDistance(p,g):
     # gets the distance between two systems
     return math.sqrt(sum(tuple([math.pow(p[i]-g[i],2)  for i in range(3)])))
    
+def newPatrol(type,system,coords,instructions,url):
+    return {
+        "type": type,
+        "system": system,
+        "coords": coords,
+        "instructions": instructions,
+        "url":  url
+    }
