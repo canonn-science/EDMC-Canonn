@@ -391,8 +391,7 @@ class CanonnPatrol(Frame):
         current_ship=data.get("commander").get("currentShipId")
         
         for ship in data.get("ships").keys():
-            debug(ship)
-            debug(current_ship)
+
             if int(ship) != int(current_ship):
                 ship_system=data.get("ships").get(ship).get("starsystem").get("name")
                 ship_pos=Systems.edsmGetSystem(ship_system)
@@ -401,9 +400,9 @@ class CanonnPatrol(Frame):
                 ship_station=data.get("ships").get(ship).get("station").get("name")
                 ship_info="Your {}, {} is docked at {}".format(ship_type,ship_name,ship_station)
                 self.ships.append(newPatrol("SHIPS",ship_system,ship_pos,ship_info,None))
-                debug(json.dumps(data.get("ships").get(ship),indent=4))
+                
         UpdateThread(self).start()
-        debug(json.dumps(data,indent=4))
+        
             
 def getDistance(p,g):
     # gets the distance between two systems
