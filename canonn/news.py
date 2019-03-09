@@ -37,8 +37,8 @@ class UpdateThread(threading.Thread):
         debug("News: UpdateThread")
         # download cannot contain any tkinter changes
         self.widget.download()
-        # trigger a tkinter update after 1 second
-        self.widget.after(1000,self.widget.update) 
+        
+        
 
 def decode_unicode_references(data):
     return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
@@ -78,7 +78,7 @@ class CanonnNews(Frame):
                         
         self.hidden=tk.IntVar(value=config.getint("HideNews"))                
         
-        
+        self.news_data=[]
         self.columnconfigure(1, weight=1)
         self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         
@@ -97,7 +97,20 @@ class CanonnNews(Frame):
         self.after(250, self.news_update)
         
     def news_update(self):
-        UpdateThread(self).start()
+    
+        if self.isvisible:
+        
+            if self.news_count == self.news_pos:           
+                self.news_pos=0
+            else:
+                self.news_pos+=1
+            
+            if self.minutes==0:
+                UpdateThread(self).start()
+            else:
+                self.minutes+=-1        
+
+        self.update()                 
         #refesh every 60 seconds
         self.after(NEWS_CYCLE, self.news_update)
 
@@ -107,9 +120,11 @@ class CanonnNews(Frame):
                     news=self.news_data[self.news_pos]
                     self.hyperlink['url'] = news['link']
                     self.hyperlink['text'] = decode_unicode_references(news['title']['rendered'])
-
             else:
-                self.hyperlink['text'] = "News refresh failed"
+                #keep trying until we have some data
+                #elf.hyperlink['text'] = "Fetching News..."
+                self.after(1000, self.update)
+                
                 
     def click_news(self,event):
         if self.news_count == self.news_pos:           
@@ -117,7 +132,7 @@ class CanonnNews(Frame):
         else:
             self.news_pos+=1
             
-        self.news_update()
+        self.update()
         
     def download(self):
         "Update the news."
@@ -125,20 +140,13 @@ class CanonnNews(Frame):
         
         if self.isvisible:
         
-            if self.news_count == self.news_pos:           
-                self.news_pos=0
-            else:
-                self.news_pos+=1
-            
-            if self.minutes==0:
-                debug("Fetching News")
-                self.news_data = requests.get("https://canonn.science/wp-json/wp/v2/posts").json()
-                self.news_count=len(self.news_data)-1
-                self.news_pos=0
-                self.minutes=REFRESH_CYCLES
-            else:
-                self.minutes+=-1        
-
+        
+            debug("Fetching News")
+            self.news_data = requests.get("https://canonn.science/wp-json/wp/v2/posts").json()
+            self.news_count=len(self.news_data)-1
+            self.news_pos=0
+            self.minutes=REFRESH_CYCLES
+    
     
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
