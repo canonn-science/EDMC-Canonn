@@ -80,6 +80,7 @@ class CanonnNews(Frame):
         
         self.label=tk.Label(self, text=  "Canonn:")
         self.label.grid(row = 0, column = 0, sticky=sticky)
+        self.label.bind("<Button-1>",self.click_news)
         
         self.hyperlink=NewsLink(self)
         self.hyperlink.grid(row = 0, column = 1,sticky="NSEW")
@@ -103,6 +104,14 @@ class CanonnNews(Frame):
 
             else:
                 self.hyperlink['text'] = "News refresh failed"
+                
+    def click_news(self,event):
+        if self.news_count == self.news_pos:           
+            self.news_pos=0
+        else:
+            self.news_pos+=1
+            
+        self.news_update()
         
     def download(self):
         "Update the news."
