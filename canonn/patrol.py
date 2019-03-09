@@ -16,8 +16,8 @@ from systems import Systems
 import math
 from debug import Debug
 from debug import debug,error
-
-
+import csv
+from contextlib import closing
 
 
 
@@ -193,12 +193,12 @@ class CanonnPatrol(Frame):
         self.infolink.grid_remove()
         
         self.patrol_list=[]
-        
+        self.capi_update=False
         self.patrol_count=0
         self.patrol_pos=0
         self.minutes=0
         self.visible()
-        
+        self.cmdr=""
         
         self.system=""
         # 
@@ -210,7 +210,12 @@ class CanonnPatrol(Frame):
 
     def update(self):
         if self.visible():
-            if self.patrol_list and self.system:
+                        
+            capi_update=self.patrol_list and self.system and self.capi_update
+            journal_update=self.patrol_list and self.system
+            
+            
+            if journal_update or capi_update:
                 p=Systems.edsmGetSystem(self.system)
                 self.nearest=self.getNearest(p)
                 self.hyperlink['text']=self.nearest.get("system")
@@ -220,6 +225,7 @@ class CanonnPatrol(Frame):
                 self.infolink['url']=self.nearest.get("url")
                 self.infolink.grid()
                 self.distance.grid()
+                self.capi_update=False
             else:
                 if self.system:
                     self.hyperlink['text'] = "Fetching patrols..."
@@ -227,6 +233,9 @@ class CanonnPatrol(Frame):
                     self.hyperlink['text'] = "Waiting for location"
                 self.infolink.grid_remove()
                 self.distance.grid_remove()
+                
+        
+            
         
     def getStates(self,state_name,bgs):
         sa=[]
@@ -292,6 +301,26 @@ class CanonnPatrol(Frame):
         
         return patrol
         
+    def parseurl(self,url):
+        '''
+        We will provided some sunstitute variables for the urls
+        '''
+        r = url.replace('{CMDR}',self.cmdr)
+        
+        return r
+        
+    def getCanonnPatrol(self):    
+        canonnpatrol=[]
+        url="https://docs.google.com/spreadsheets/d/e/2PACX-1vSajXMr5oP4nw0GO1L8ikuKhLkGJWMgdj8wfXvhY6K1iL3SyuAqQAd8-mwyajuw88A7tQAkmMB718A0/pub?gid=0&single=true&output=tsv"
+        with closing(requests.get(url, stream=True)) as r:
+            reader = csv.reader(r.iter_lines(), delimiter='\t')
+            next(reader)
+            for row in reader:
+                type,system,x,y,z,instructions,url=row
+                canonnpatrol.append(newPatrol(type,system,(float(x),float(y),float(z)),instructions,self.parseurl(url)))
+                
+        return canonnpatrol
+        
     def download(self):
         debug("Download Patrol Data")
         
@@ -304,6 +333,11 @@ class CanonnPatrol(Frame):
         if self.ships and self.hideships.get() != 1:
             patrol_list.extend(self.ships)
 
+        self.canonnpatrol=self.getCanonnPatrol()
+            
+        if self.canonnpatrol:
+            patrol_list.extend(self.canonnpatrol)
+            
         self.patrol_list=patrol_list
        
     
@@ -340,6 +374,7 @@ class CanonnPatrol(Frame):
     def getNearest(self,location):
         nearest=""
         for patrol in self.patrol_list:
+            
             if nearest != "":           
                 
                 if getDistance(location,patrol.get("coords")) < getDistance(location,nearest.get("coords")): 
@@ -362,17 +397,12 @@ class CanonnPatrol(Frame):
     def journal_entry(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
         # We don't care what the journal entry is as long as the system has changed.
         
-        
+        if cmdr:
+            self.cmdr=cmdr
+          
         if self.system != system:
             debug("Refresshing Patrol")
             self.system=system
-            # self.nearest=self.getNearest((x,y,z))
-            # self.hyperlink['text']=self.nearest.get("system")
-            # self.hyperlink['url']=self.nearest.get("url")
-            # self.distance['text']="{}ly".format(round(getDistance((x,y,z),self.nearest.get("coords")),2))
-            # self.infolink['text']=self.nearest.get("instructions")
-            # self.infolink['url']=self.nearest.get("url")
-            # self.infolink.grid()
             self.update()
         else:
             error("nope {}".format(entry.get("event")))
@@ -385,23 +415,51 @@ class CanonnPatrol(Frame):
         
         Lets get a list of ships
         """
+        self.cmdr=data.get('commander').get('name')
+        
         self.ships=[]
         self.system=data.get("lastSystem").get("name")
         
         current_ship=data.get("commander").get("currentShipId")
         
+        shipsystems={}
+        
+        # reorganise the list into a lits of systems
         for ship in data.get("ships").keys():
-
+            
             if int(ship) != int(current_ship):
                 ship_system=data.get("ships").get(ship).get("starsystem").get("name")
-                ship_pos=Systems.edsmGetSystem(ship_system)
-                ship_type=getShipType(data.get("ships").get(ship).get("name"))
-                ship_name=data.get("ships").get(ship).get("shipName")
-                ship_station=data.get("ships").get(ship).get("station").get("name")
+                if not shipsystems.get(ship_system):
+                    #debug("first: {}".format(ship_system))
+                    shipsystems[ship_system]=[]
+                #else:
+                #    debug("second: {}".format(ship_system))
+                    
+                shipsystems[ship_system].append(data.get("ships").get(ship))    
+        
+        for system in shipsystems.keys():
+            ship_pos=Systems.edsmGetSystem(system)
+            ship_count=len(shipsystems.get(system))
+            if ship_count == 1:
+                ship_type=getShipType(shipsystems.get(system)[0].get("name"))
+                ship_name=shipsystems.get(system)[0].get("shipName")
+                ship_station=shipsystems.get(system)[0].get("station").get("name")
                 ship_info="Your {}, {} is docked at {}".format(ship_type,ship_name,ship_station)
-                self.ships.append(newPatrol("SHIPS",ship_system,ship_pos,ship_info,None))
-                
-        UpdateThread(self).start()
+            elif ship_count == 2:
+                if shipsystems.get(system)[0].get("station").get("name") == shipsystems.get(system)[1].get("station").get("name"):
+                    ship_info="Your {} ({}) and {} ({}) are docked at {}".format(getShipType(shipsystems.get(system)[0].get("name")),getShipType(shipsystems.get(system)[0].get("shipName")),getShipType(shipsystems.get(system)[1].get("name")),getShipType(shipsystems.get(system)[1].get("shipName")),shipsystems.get(system)[0].get("station").get("name"))        
+                else:
+                    ship_info="Your {} ({}) is docked at {} and your {} ({}) is docked at {}".format(getShipType(shipsystems.get(system)[0].get("name")),getShipType(shipsystems.get(system)[0].get("shipName")),shipsystems.get(system)[1].get("station").get("name"),getShipType(shipsystems.get(system)[1].get("name")),getShipType(shipsystems.get(system)[1].get("shipName")),shipsystems.get(system)[0].get("station").get("name"))        
+            else:
+                ship_info="You have {} ships stored in this system".format(ship_count)
+
+            self.ships.append(newPatrol("SHIPS",system,ship_pos,ship_info,None))
+            
+        self.capi_update=True
+                    
+        
+        UpdateThread(self).start()            
+        
         
             
 def getDistance(p,g):
