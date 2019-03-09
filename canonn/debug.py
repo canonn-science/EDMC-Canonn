@@ -2,6 +2,7 @@ import Tkinter as tk
 from Tkinter import Frame
 import myNotebook as nb
 from config import config
+import datetime 
 
 class Debug:
         
@@ -14,7 +15,7 @@ class Debug:
             
     @classmethod
     def p(cls,value):
-        print("[{}] {}".format(Debug.client,str(value)))
+        print("{} [{}] {}".format(datetime.datetime.now(),Debug.client,str(value)))
             
     @classmethod
     def debug(cls,value):

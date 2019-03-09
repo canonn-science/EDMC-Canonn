@@ -109,6 +109,7 @@ class UpdateThread(threading.Thread):
         self.widget=widget
     
     def run(self):
+        debug("Patrol: UpdateThread")
         # download cannot contain any tkinter changes
         self.widget.download()
         # update can't be inside a thread

@@ -12,6 +12,9 @@ import re
 import myNotebook as nb
 from config import config
 import threading
+from debug import Debug
+from debug import debug,error
+
 
 REFRESH_CYCLES = 60 ## how many cycles before we refresh
 NEWS_CYCLE=60 * 1000 # 60 seconds
@@ -31,6 +34,7 @@ class UpdateThread(threading.Thread):
         self.widget=widget
     
     def run(self):
+        debug("News: UpdateThread")
         # download cannot contain any tkinter changes
         self.widget.download()
         # trigger a tkinter update after 1 second
@@ -126,6 +130,7 @@ class CanonnNews(Frame):
                 self.news_pos+=1
             
             if self.minutes==0:
+                debug("Fetching News")
                 self.news_data = requests.get("https://canonn.science/wp-json/wp/v2/posts").json()
                 self.news_count=len(self.news_data)-1
                 self.news_pos=0

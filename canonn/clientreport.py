@@ -6,6 +6,7 @@ from emitter import Emitter
 from urllib import quote_plus
 from debug import Debug
 from debug import debug,error
+from release import Release
 
 class clientReport(Emitter):
        
@@ -23,6 +24,11 @@ class clientReport(Emitter):
         payload["cmdrName"]=self.cmdr  
         payload["isBeta"]=self.is_beta
         payload["clientVersion"]=self.client
+        if Release.get_auto() == 1:
+            payload["AutoUpdateDisabled"]=False
+        else:
+            payload["AutoUpdateDisabled"]=True
+            
         return payload  
 
     def run(self):

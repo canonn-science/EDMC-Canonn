@@ -17,6 +17,8 @@ import os
 import shutil
 import threading
 from  player import Player
+from debug import Debug
+from debug import debug,error
 
 RELEASE_CYCLE=60 * 1000 * 60 # 1 Hour
 DEFAULT_URL = 'https://github.com/canonn-science/EDMC-Canonn/releases'
@@ -58,6 +60,7 @@ class ReleaseThread(threading.Thread):
         self.release=release
     
     def run(self):
+        debug("Release: UpdateThread")
         self.release.release_pull();
         self.release.after(1000,self.release.release_update)
         
@@ -172,6 +175,9 @@ class Release(Frame):
                 
         #This is going to require some defensive. In case the extract fails or the rename fails.
         
+    @classmethod            
+    def get_auto(cls):
+        return tk.IntVar(value=config.getint("AutoUpdate")).get()
         
     @classmethod    
     def plugin_start(cls,plugin_dir):
