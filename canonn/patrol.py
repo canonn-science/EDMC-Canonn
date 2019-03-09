@@ -172,9 +172,12 @@ class CanonnPatrol(Frame):
         )
         self.ships=[]
         
-        self.canonn=tk.IntVar(value=config.getint("HideCanonn"))
-        self.faction=tk.IntVar(value=config.getint("HideFaction"))              
-        self.hideships=tk.IntVar(value=config.getint("HideShips"))              
+        self.canonnbtn=tk.IntVar(value=config.getint("HideCanonn"))
+        self.factionbtn=tk.IntVar(value=config.getint("HideFaction"))
+        self.hideshipsbtn=tk.IntVar(value=config.getint("HideShips"))
+        self.canonn=self.canonnbtn.get()
+        self.faction=self.factionbtn.get()
+        self.hideships=self.hideshipsbtn.get()
         
         self.columnconfigure(1, weight=1)
         self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
@@ -210,7 +213,9 @@ class CanonnPatrol(Frame):
 
     def update(self):
         if self.visible():
-                        
+
+            debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
+            
             capi_update=self.patrol_list and self.system and self.capi_update
             journal_update=self.patrol_list and self.system
             
@@ -323,19 +328,18 @@ class CanonnPatrol(Frame):
         
     def download(self):
         debug("Download Patrol Data")
-        
+        debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
         patrol_list=[]
-        if self.faction.get() != 1:
+        if self.faction != 1:
             debug("Getting Faction Data")
             patrol_list.extend(self.getFactionData("Canonn"))
             patrol_list.extend(self.getFactionData("Canonn Deep Space Research"))
             
-        if self.ships and self.hideships.get() != 1:
+        if self.ships and self.hideships != 1:
             patrol_list.extend(self.ships)
 
-        self.canonnpatrol=self.getCanonnPatrol()
-            
-        if self.canonnpatrol:
+        if self.canonn != 1:
+            self.canonnpatrol=self.getCanonnPatrol()
             patrol_list.extend(self.canonnpatrol)
             
         self.patrol_list=patrol_list
@@ -344,23 +348,32 @@ class CanonnPatrol(Frame):
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
         
-        self.canonn=tk.IntVar(value=config.getint("HideCanonn"))
-        self.faction=tk.IntVar(value=config.getint("HideFaction"))
-        self.hideships=tk.IntVar(value=config.getint("HideShips"))
+        self.canonnbtn=tk.IntVar(value=config.getint("HideCanonn"))
+        self.factionbtn=tk.IntVar(value=config.getint("HideFaction"))
+        self.hideshipsbtn=tk.IntVar(value=config.getint("HideShips"))
+        self.canonn=self.canonnbtn.get()
+        self.faction=self.factionbtn.get()
+        self.hideships=self.hideshipsbtn.get()
+        
         
         frame = nb.Frame(parent)
         frame.columnconfigure(1, weight=1)
         frame.grid(row = gridrow, column = 0,sticky="NSEW")
         
-        nb.Checkbutton(frame, text="Hide Canonn Patrols", variable=self.canonn).grid(row = 0, column = 0,sticky="NW")
-        nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.faction).grid(row = 0, column = 2,sticky="NW")
-        nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideships).grid(row = 0, column = 3,sticky="NW")
+        nb.Checkbutton(frame, text="Hide Canonn Patrols", variable=self.canonnbtn).grid(row = 0, column = 0,sticky="NW")
+        nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.factionbtn).grid(row = 0, column = 2,sticky="NW")
+        nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideshipsbtn).grid(row = 0, column = 3,sticky="NW")
+        
+        
+        debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
         
         return frame
 
     def visible(self):
         
-        nopatrols=self.canonn.get() == 1 and self.faction.get() ==1 and self.hideships.get() ==1
+        debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
+        
+        nopatrols=self.canonn == 1 and self.faction ==1 and self.hideships ==1
         
         if nopatrols:
             self.grid_remove()
@@ -388,11 +401,17 @@ class CanonnPatrol(Frame):
             
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
-        config.set('HideCanonn', self.canonn.get())      
-        config.set('HideFaction', self.faction.get())      
-        config.set('HideShips', self.hideships.get())      
+        config.set('HideCanonn', self.canonnbtn.get())      
+        config.set('HideFaction', self.factionbtn.get())      
+        config.set('HideShips', self.hideshipsbtn.get())      
+        self.canonn=self.canonnbtn.get()
+        self.faction=self.factionbtn.get()
+        self.hideships=self.hideshipsbtn.get()
+        
         if self.visible():
             self.patrol_update()
+            
+        debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
         
     def journal_entry(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
         # We don't care what the journal entry is as long as the system has changed.
