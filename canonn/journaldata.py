@@ -63,10 +63,7 @@ class CanonnJournal(Emitter):
         if included_event:
                     
             payload=self.setPayload()
-            self.send(payload,url)
-                    
-        else:
-            debug("excluding {}".format(self.entry.get("event")))
+            self.send(payload,url)           
 
 '''
     from canonn import journaldata

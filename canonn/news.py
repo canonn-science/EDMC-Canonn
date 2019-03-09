@@ -98,6 +98,8 @@ class CanonnNews(Frame):
         
     def news_update(self):
         UpdateThread(self).start()
+        #refesh every 60 seconds
+        self.after(NEWS_CYCLE, self.news_update)
 
     def update(self):
         if self.visible():
@@ -120,8 +122,7 @@ class CanonnNews(Frame):
     def download(self):
         "Update the news."
         
-        #refesh every 60 seconds
-        self.after(NEWS_CYCLE, self.news_update)
+        
         if self.isvisible:
         
             if self.news_count == self.news_pos:           

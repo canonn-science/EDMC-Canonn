@@ -444,34 +444,47 @@ class CanonnPatrol(Frame):
         
         shipsystems={}
         
-        # reorganise the list into a lits of systems
+        #debug(json.dumps(data.get("ships"),indent=4))
+        
         for ship in data.get("ships").keys():
             
             if int(ship) != int(current_ship):
                 ship_system=data.get("ships").get(ship).get("starsystem").get("name")
                 if not shipsystems.get(ship_system):
-                    #debug("first: {}".format(ship_system))
+                    debug("first: {}".format(ship_system))
                     shipsystems[ship_system]=[]
                 #else:
                 #    debug("second: {}".format(ship_system))
-                    
+                
                 shipsystems[ship_system].append(data.get("ships").get(ship))    
+                #if ship_system == "Celaeno":
+                #    debug(json.dumps(shipsystems[ship_system],indent=4))                    
+            #else:
+                #debug("skipping {}".format(ship))
         
         for system in shipsystems.keys():
             ship_pos=Systems.edsmGetSystem(system)
             ship_count=len(shipsystems.get(system))
+            #if system == "Celaeno":
+            #    debug(json.dumps(shipsystems.get(system),indent=4))
             if ship_count == 1:
+                #debug(shipsystems.get(system))
                 ship_type=getShipType(shipsystems.get(system)[0].get("name"))
                 ship_name=shipsystems.get(system)[0].get("shipName")
                 ship_station=shipsystems.get(system)[0].get("station").get("name")
                 ship_info="Your {}, {} is docked at {}".format(ship_type,ship_name,ship_station)
             elif ship_count == 2:
+                
                 if shipsystems.get(system)[0].get("station").get("name") == shipsystems.get(system)[1].get("station").get("name"):
                     ship_info="Your {} ({}) and {} ({}) are docked at {}".format(getShipType(shipsystems.get(system)[0].get("name")),getShipType(shipsystems.get(system)[0].get("shipName")),getShipType(shipsystems.get(system)[1].get("name")),getShipType(shipsystems.get(system)[1].get("shipName")),shipsystems.get(system)[0].get("station").get("name"))        
+                    debug(ship_info)
                 else:
+                   
                     ship_info="Your {} ({}) is docked at {} and your {} ({}) is docked at {}".format(getShipType(shipsystems.get(system)[0].get("name")),getShipType(shipsystems.get(system)[0].get("shipName")),shipsystems.get(system)[1].get("station").get("name"),getShipType(shipsystems.get(system)[1].get("name")),getShipType(shipsystems.get(system)[1].get("shipName")),shipsystems.get(system)[0].get("station").get("name"))        
+                    debug(ship_info)
             else:
                 ship_info="You have {} ships stored in this system".format(ship_count)
+                debug(ship_info)
 
             self.ships.append(newPatrol("SHIPS",system,ship_pos,ship_info,None))
             
