@@ -18,7 +18,7 @@ from debug import Debug
 from debug import debug,error
 import csv
 from contextlib import closing
-
+from urllib import quote_plus
 
 
 CYCLE=60 * 1000 * 60 # 60 minutes
@@ -225,7 +225,7 @@ class CanonnPatrol(Frame):
                 p=Systems.edsmGetSystem(self.system)
                 self.nearest=self.getNearest(p)
                 self.hyperlink['text']=self.nearest.get("system")
-                self.hyperlink['url']=self.nearest.get("url")
+                self.hyperlink['url']="https://www.edsm.net/en/system?systemName={}".format(quote_plus(self.nearest.get("system")))
                 self.distance['text']="{}ly".format(round(getDistance(p,self.nearest.get("coords")),2))
                 self.infolink['text']=self.nearest.get("instructions")
                 self.infolink['url']=self.nearest.get("url")
