@@ -9,15 +9,13 @@ from debug import debug,error
 from release import Release
 
 class clientReport(Emitter):
-       
+    
     done=False    
         
     def __init__(self,cmdr, is_beta,client):
         
         self.modelreport="clientreports" 
         Emitter.__init__(self,cmdr, is_beta, None, None,None,None, None, None,None,None,client)
-       
-            
         
     def setPayload(self):
         payload={}
@@ -38,8 +36,8 @@ class clientReport(Emitter):
             payload=self.setPayload()
             url=self.getUrl()
             self.send(payload,url)        
-            clientReport.done=True;
-            
+            clientReport.done=True
+
 def submit(cmdr, is_beta, client,entry):  
     
     if entry.get("event") in ("Location","StartUp"):

@@ -48,7 +48,7 @@ class ReleaseLink(HyperlinkLabel):
             anchor=tk.NW
         )
         self.bind('<Configure>', self.__configure_event)
- 
+
     def __configure_event(self, event):
         "Handle resizing."
 
@@ -61,7 +61,7 @@ class ReleaseThread(threading.Thread):
     
     def run(self):
         debug("Release: UpdateThread")
-        self.release.release_pull();
+        self.release.release_pull()
         self.release.after(1000,self.release.release_update)
         
 class Release(Frame):
@@ -77,7 +77,7 @@ class Release(Frame):
             self,
             parent
         )
-                        
+        
         self.auto=tk.IntVar(value=config.getint("AutoUpdate"))                
         self.novoices=tk.IntVar(value=config.getint("NoVoices"))                
         self.rmbackup=tk.IntVar(value=config.getint("RemoveBackup"))                
@@ -153,9 +153,7 @@ class Release(Frame):
         nb.Checkbutton(frame, text="Stop talking to me", variable=self.novoices).grid(row = 0, column = 2,sticky="NW")
         
         return frame
-    
-    
-    
+
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
         config.set('AutoUpdate', self.auto.get())      
@@ -183,7 +181,6 @@ class Release(Frame):
     def plugin_start(cls,plugin_dir):
         cls.plugin_dir=plugin_dir
 
-        
 def recursive_overwrite(src, dest, ignore=None):
     if os.path.isdir(src):
         if not os.path.isdir(dest):

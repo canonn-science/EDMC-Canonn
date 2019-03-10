@@ -48,8 +48,7 @@ class CanonnJournal(Emitter):
                 for exc in r.json():
                     CanonnJournal.exclusions[exc["eventName"]]=True
                 debug(CanonnJournal.exclusions)
-    
-            
+
         payload={}
         payload["systemName"]=self.system
         payload["cmdrName"]=self.cmdr  

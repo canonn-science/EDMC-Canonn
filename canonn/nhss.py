@@ -18,7 +18,6 @@ class NHSS(Emitter):
 
     fss= {}
     
-    
     def __init__(self,cmdr, is_beta, system,entry,client):
         Emitter.__init__(self,cmdr, is_beta, system, None,None,None, entry, None,None,None,client)
         threading.Thread.__init__(self)

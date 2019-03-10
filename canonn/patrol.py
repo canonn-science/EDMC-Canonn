@@ -132,12 +132,12 @@ class PatrolLink(HyperlinkLabel):
             anchor=tk.NW
         )
         #self.bind('<Configure>', self.__configure_event)
- 
+
     def __configure_event(self, event):
         "Handle resizing."
 
         self.configure(wraplength=event.width)
-    
+
 class InfoLink(HyperlinkLabel):
 
     def __init__(self, parent):
@@ -152,7 +152,7 @@ class InfoLink(HyperlinkLabel):
             anchor=tk.NW
         )
         self.bind('<Configure>', self.__configure_event)
- 
+
     def __configure_event(self, event):
         "Handle resizing."
 
@@ -205,7 +205,7 @@ class CanonnPatrol(Frame):
         self.cmdr=""
         
         self.system=""
-        # 
+        
         self.after(250, self.patrol_update)
         
     def patrol_update(self):
@@ -239,10 +239,7 @@ class CanonnPatrol(Frame):
                     self.hyperlink['text'] = "Waiting for location"
                 self.infolink.grid_remove()
                 self.distance.grid_remove()
-                
-        
-            
-        
+
     def getStates(self,state_name,bgs):
         sa=[]
         active_states=bgs.get(state_name)
@@ -255,8 +252,7 @@ class CanonnPatrol(Frame):
             return states
         else:
             return None
-            
-                
+
     def getBGSInstructions(self,bgs):
         target=0.50 <= float(bgs.get("influence")) <= 0.65
         over=float(bgs.get("influence"))>0.65
@@ -279,10 +275,7 @@ class CanonnPatrol(Frame):
             return  "Canonn Influence {}%{} Check #mission_minor_faction on discord for instructions.".format(round(float(bgs.get("influence")*100),2),states)
         if under:
             return "Canonn Influence {}%{} Please complete missions for Canonn to increase our influence".format(round(float(bgs.get("influence")*100),2),states)
-        
-        
-    
-    
+
     def getBGSPatrol(self,bgs):
         x,y,z=Systems.edsmGetSystem(bgs.get("system_name"))
         return newPatrol("BGS",bgs.get("system_name"),(x,y,z),self.getBGSInstructions(bgs),"https://elitebgs.app/system/{}".format(bgs.get("system_id")))
@@ -291,8 +284,8 @@ class CanonnPatrol(Frame):
                 
     def getFactionData(self,faction):
         '''
-           We will get Canonn faction data using an undocumented elitebgs api
-           NB: It is possible this could get broken so need to contact CMDR Garud 
+            We will get Canonn faction data using an undocumented elitebgs api
+            NB: It is possible this could get broken so need to contact CMDR Garud 
         '''
         
         patrol=[]
@@ -344,8 +337,7 @@ class CanonnPatrol(Frame):
             patrol_list.extend(self.canonnpatrol)
             
         self.patrol_list=patrol_list
-       
-    
+
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
         
@@ -378,11 +370,11 @@ class CanonnPatrol(Frame):
         
         if nopatrols:
             self.grid_remove()
-            self.isvisible=False;
+            self.isvisible=False
             return False
         else:
             self.grid()
-            self.isvisible=True;
+            self.isvisible=True
             return True        
             
     def getNearest(self,location):
@@ -419,7 +411,7 @@ class CanonnPatrol(Frame):
         
         if cmdr:
             self.cmdr=cmdr
-          
+        
         if self.system != system:
             debug("Refresshing Patrol")
             self.system=system
@@ -479,7 +471,7 @@ class CanonnPatrol(Frame):
                     ship_info="Your {} ({}) and {} ({}) are docked at {}".format(getShipType(shipsystems.get(system)[0].get("name")),getShipType(shipsystems.get(system)[0].get("shipName")),getShipType(shipsystems.get(system)[1].get("name")),getShipType(shipsystems.get(system)[1].get("shipName")),shipsystems.get(system)[0].get("station").get("name"))        
                     debug(ship_info)
                 else:
-                   
+                
                     ship_info="Your {} ({}) is docked at {} and your {} ({}) is docked at {}".format(getShipType(shipsystems.get(system)[0].get("name")),getShipType(shipsystems.get(system)[0].get("shipName")),shipsystems.get(system)[1].get("station").get("name"),getShipType(shipsystems.get(system)[1].get("name")),getShipType(shipsystems.get(system)[1].get("shipName")),shipsystems.get(system)[0].get("station").get("name"))        
                     debug(ship_info)
             else:
@@ -489,16 +481,13 @@ class CanonnPatrol(Frame):
             self.ships.append(newPatrol("SHIPS",system,ship_pos,ship_info,None))
             
         self.capi_update=True
-                    
-        
+
         UpdateThread(self).start()            
-        
-        
-            
+
 def getDistance(p,g):
     # gets the distance between two systems
     return math.sqrt(sum(tuple([math.pow(p[i]-g[i],2)  for i in range(3)])))
-   
+
 def newPatrol(type,system,coords,instructions,url):
     return {
         "type": type,

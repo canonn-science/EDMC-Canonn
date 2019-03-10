@@ -62,7 +62,6 @@ class Systems():
         "Lumaragro":[-162.28125,33.0625,-92],
     }
 
-        
     @classmethod
     def edsmGetSystem(cls,system):
         
@@ -82,7 +81,6 @@ class Systems():
     def dump(cls):
         for x in cls.systemCache.keys():
             debug('"{}":[{},{},{}],'.format(x, cls.systemCache.get(x)[0],cls.systemCache.get(x)[1],cls.systemCache.get(x)[2]))
-        
 
 def edsmGetSystem(system):
     Systems.edsmGetSystem(system)

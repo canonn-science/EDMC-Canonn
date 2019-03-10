@@ -23,7 +23,6 @@ class FactionKill(Emitter):
         Emitter.__init__(self,cmdr, is_beta, system, None,None,None, entry, None,None,None,client)
         self.modelreport="killreports"
         
-            
     def setPayload(self):
         payload={}
         payload["systemname"]=self.system
@@ -37,10 +36,9 @@ class FactionKill(Emitter):
             
         return payload
 
-                
 def matches(d, field, value):
     return field in d and value == d[field]    
-           
+    
 '''
     from canonn import journaldata
     journaldata.submit(cmdr, system, station, entry)

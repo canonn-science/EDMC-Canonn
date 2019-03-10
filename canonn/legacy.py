@@ -36,7 +36,7 @@ def faction_kill(cmdr, is_beta, system, station, entry, state):
         factionMatch=(matches(entry, 'VictimFaction', '$faction_Thargoid;') or matches(entry, 'VictimFaction', '$faction_Guardian;'))
         if factionMatch and 'Reward' in entry:
             url="https://docs.google.com/forms/d/e/1FAIpQLSevc8RrhOzOq9U0a2VC29N_lgjRfVU9vlF-oKdjhvZu6YnLvw/formResponse?usp=pp_url"
-            url+="&entry.567957318="+quote_plus(cmdr);
+            url+="&entry.567957318="+quote_plus(cmdr)
             if is_beta:
                 beta='Y'
             else: 
@@ -56,7 +56,7 @@ def CodexEntry(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
     if entry['event'] == "CodexEntry":
         url="https://docs.google.com/forms/d/e/1FAIpQLSfdr7GFj6JJ1ubeRXP_uZu3Xx9HPYT6507lRLqqC0oUZyj-Jg/formResponse?usp=pp_url"
 
-        url+="&entry.1415400073="+quote_plus(cmdr);
+        url+="&entry.1415400073="+quote_plus(cmdr)
         url+="&entry.1860059185="+quote_plus(system)
         url+="&entry.810133478="+str(x)
         url+="&entry.226558470="+str(y)
@@ -88,33 +88,29 @@ def AXZone(cmdr, is_beta, system,x,y,z,station, entry, state):
     if entry['event'] == "FSSSignalDiscovered" and entry["SignalName"] == "$Warzone_TG;":
         
         url="https://docs.google.com/forms/d/e/1FAIpQLSdHFZ8Mp4EHsJH6gUqXyeWkeEUt3YOGEaOO3X8H4m-gHNYzdQ/formResponse?usp=pp_url"
-       
+
         
-        url+="&entry.1257612503="+quote_plus(cmdr);
+        url+="&entry.1257612503="+quote_plus(cmdr)
         url+="&entry.1541680555="+quote_plus(system)
         url+="&entry.484596368="+str(x)
         url+="&entry.1443755704="+str(y)
         url+="&entry.1285491432="+str(z)
         url+="&entry.837147926="+str(entry.get("SystemAddress"))
         
-        Reporter(url).start()        
-
-            
+        Reporter(url).start()
 
 ## I want to avoid sending this event if there has not been any change
 ## so we will have a global dict
 
-
-
 class Stats():
-          
+    
     tg_stats = {
-     "tg_encounter_wakes": 0,
-     "tg_encounter_imprint": 0,
-     "tg_encounter_total": 0,
-     "tg_timestamp": 'x',
-     "tg_scout_count": 0,
-     "tg_last_system": "x"
+        "tg_encounter_wakes": 0,
+        "tg_encounter_imprint": 0,
+        "tg_encounter_total": 0,
+        "tg_timestamp": 'x',
+        "tg_scout_count": 0,
+        "tg_last_system": "x"
     }
     
     @classmethod    
@@ -153,8 +149,7 @@ class Stats():
         
 def statistics(cmdr, is_beta, system, station, entry, state):  
     Stats.statistics(cmdr, is_beta, system, station, entry, state)
-        
- 
+
 class NHSS(threading.Thread):
 
     fss= {}
@@ -195,7 +190,6 @@ class NHSS(threading.Thread):
 
         dsol=getDistance(0,0,0,self.x,self.y,self.z)
         dmerope=getDistance(-78.59375,149.625,-340.53125,self.x,self.y,self.z)
-        
         
         url = "https://docs.google.com/forms/d/e/1FAIpQLScVk2LW6EkIW3hL8EhuLVI5j7jQ1ZmsYCLRxgCZlpHiN8JdcA/formResponse?usp=pp_url"
         url+="&entry.106150081="+quote_plus(self.cmdr)
@@ -252,6 +246,4 @@ class NHSS(threading.Thread):
                     #we couldnt find teh system so lets define it
                     NHSS.fss[system]={ threatLevel: True}
 
-                NHSS(cmdr, is_beta, system,x,y,z, station, entry,client).start()    
-                
-                
+                NHSS(cmdr, is_beta, system,x,y,z, station, entry,client).start()

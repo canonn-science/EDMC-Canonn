@@ -57,7 +57,6 @@ class codexEmitter(Emitter):
         del payload["reportType"]
         
         return payload
-        
     
     def getReportTypes(self,id):
         if not codexEmitter.reporttypes.get(id):        
@@ -74,7 +73,6 @@ class codexEmitter(Emitter):
             else:
                 error("error in getReportTypes")
                 
-                    
     def getExcluded(self):
         if not codexEmitter.excludecodices:
             r=requests.get("{}/excludecodices".format(self.getUrl()))  
@@ -105,7 +103,7 @@ class codexEmitter(Emitter):
             else:
                 payload=self.getCodexPayload()
                 self.modelreport="reportcodices"
-                   
+                
             debug("Send Reports {}/{}".format(url,self.modelreport))
             
             self.send(payload,url)

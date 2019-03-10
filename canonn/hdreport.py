@@ -73,6 +73,3 @@ def submit(cmdr, is_beta, system, station, entry,client):
                 debug("Hyperdiction already recorded here - session ")
             else:
                 HDReport(cmdr, is_beta, lastsystem,  entry,client).start()   
-            
-            
-            

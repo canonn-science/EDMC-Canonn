@@ -56,12 +56,12 @@ class NewsLink(HyperlinkLabel):
             anchor=tk.NW
         )
         self.bind('<Configure>', self.__configure_event)
- 
+
     def __configure_event(self, event):
         "Handle resizing."
 
         self.configure(wraplength=event.width)
-    
+
 class CanonnNews(Frame):
 
     def __init__(self, parent,gridrow):
@@ -75,7 +75,7 @@ class CanonnNews(Frame):
             self,
             parent
         )
-                        
+
         self.hidden=tk.IntVar(value=config.getint("HideNews"))                
         
         self.news_data=[]
@@ -124,8 +124,7 @@ class CanonnNews(Frame):
                 #keep trying until we have some data
                 #elf.hyperlink['text'] = "Fetching News..."
                 self.after(1000, self.update)
-                
-                
+
     def click_news(self,event):
         if self.news_count == self.news_pos:           
             self.news_pos=0
@@ -137,17 +136,14 @@ class CanonnNews(Frame):
     def download(self):
         "Update the news."
         
-        
         if self.isvisible:
-        
         
             debug("Fetching News")
             self.news_data = requests.get("https://canonn.science/wp-json/wp/v2/posts").json()
             self.news_count=len(self.news_data)-1
             self.news_pos=0
             self.minutes=REFRESH_CYCLES
-    
-    
+
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
 
@@ -162,11 +158,11 @@ class CanonnNews(Frame):
     def visible(self):
         if self.hidden.get() == 1:
             self.grid_remove()
-            self.isvisible=False;
+            self.isvisible=False
             return False
         else:
             self.grid()
-            self.isvisible=True;
+            self.isvisible=True
             return True
 
     def prefs_changed(self, cmdr, is_beta):
@@ -174,7 +170,3 @@ class CanonnNews(Frame):
         config.set('HideNews', self.hidden.get())      
         if self.visible():
             self.news_update()
-        
-        
-        
-   

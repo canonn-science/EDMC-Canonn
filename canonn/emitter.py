@@ -64,14 +64,14 @@ class Emitter(threading.Thread):
         payload["isBeta"]=self.is_beta
         payload["clientVersion"]=self.client
         return payload   
-      
+    
     def run(self):
     
         #configure the payload       
         payload=self.setPayload()
         url=self.getUrl()
         self.send(payload,url)
-       
+    
     def send(self,payload,url):
         r=requests.post("{}/{}".format(url,self.modelreport),data=json.dumps(payload),headers={"content-type":"application/json"})  
         if not r.status_code == requests.codes.ok:

@@ -6,7 +6,6 @@ class Player(threading.Thread):
         threading.Thread.__init__(self)
         self.sounds = sounds
         self.plugin_dir = plugin_dir
-        
 
     def run(self):
         
