@@ -7,6 +7,9 @@ assignees: NoFoolLikeOne
 
 ---
 
+** What version are you running **
+
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 
@@ -18,6 +21,9 @@ A clear and concise description of what you expected to happen.
 
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
+
+** Log Files **
+Look for error messages in AppData\Local\Temp\EDMarketConnector.log
 
 **Additional context**
 Add any other context about the problem here.
