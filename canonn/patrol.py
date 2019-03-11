@@ -210,7 +210,7 @@ class CanonnPatrol(Frame):
         self.prev.grid(row = 0, column = 1,sticky="W")
         
         #self.submit.grid(row = 2, column = 1,sticky="NSW")
-        self.next.grid(row = 0, column = 4,sticky="W")
+        self.next.grid(row = 0, column = 4,sticky="E")
         self.next.bind('<Button-1>',self.patrol_next)
         self.prev.bind('<Button-1>',self.patrol_prev)
         
