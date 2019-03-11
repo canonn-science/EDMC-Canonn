@@ -257,10 +257,13 @@ class CanonnPatrol(Frame):
         It does this by unsetting the excluded flag on the previous patrol
         '''
         index=self.nearest.get("index")
+        debug("prev {}".format(index))
         if index > 0:
             self.patrol_list[index-1]["excluded"]=False
             self.update()        
-        
+            debug("index>0")
+        else:
+            debug("index<")
         #how will we deal with it if we are the last item?
         #should we cycle to the furthest?
         #if index-1 == 0:
@@ -280,6 +283,7 @@ class CanonnPatrol(Frame):
             
             
             if journal_update or capi_update:
+                self.sort_patrol()
                 p=Systems.edsmGetSystem(self.system)
                 self.nearest=self.getNearest(p)               
                 self.hyperlink['text']=self.nearest.get("system")
@@ -387,6 +391,14 @@ class CanonnPatrol(Frame):
         x,y,z=Systems.edsmGetSystem(self.system)
         return getDistance((x,y,z),k.get("coords"))
         
+    def sort_patrol(self):
+        patrol_list=sorted(self.patrol_list, key=self.keyval)
+            
+        for num,val in enumerate(patrol_list):
+            patrol_list[num]["index"]=num
+        
+        self.patrol_list=patrol_list
+    
     def download(self):
         debug("Download Patrol Data")
         debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
@@ -405,8 +417,11 @@ class CanonnPatrol(Frame):
                 self.canonnpatrol=self.getCanonnPatrol()
                 patrol_list.extend(self.canonnpatrol)
                 
-            # we will sort the patrol list                 
-            self.patrol_list=sorted(patrol_list, key=self.keyval)
+            # we will sort the patrol list     
+             
+            self.patrol_list=patrol_list
+            
+            self.sort_patrol()
 
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
@@ -451,7 +466,8 @@ class CanonnPatrol(Frame):
         nearest=""
         for num,patrol in enumerate(self.patrol_list):
             # add the index to the patrol so we can navigate
-            patrol["index"]=num
+            patrol["index"]=int(num)
+            
             if not patrol.get("excluded"):
                 if nearest != "":           
                     
@@ -490,10 +506,10 @@ class CanonnPatrol(Frame):
             debug("Refresshing Patrol")
             self.system=system
             self.update()
-        else:
-            error("nope {}".format(entry.get("event")))
-            error(system)
-            error(self.system)
+        # else:
+            # error("nope {}".format(entry.get("event")))
+            # error(system)
+            # error(self.system)
 
     def cmdr_data(self,data, is_beta):
         """
