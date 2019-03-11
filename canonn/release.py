@@ -62,7 +62,7 @@ class ReleaseThread(threading.Thread):
     def run(self):
         debug("Release: UpdateThread")
         self.release.release_pull()
-        self.release.after(1000,self.release.release_update)
+        
         
 class Release(Frame):
 
@@ -95,9 +95,14 @@ class Release(Frame):
         self.news_count=0
         self.news_pos=0
         self.minutes=0
-        
+        self.release_latest={}
+        self.update()
         #self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
-        self.after(250, self.release_thread)
+        
+        
+    def update(self):    
+        self.release_thread()
+        self.after(1000, self.release_update)
         
     def version2number(self,version):
         major,minor,patch=version.split('.')
@@ -108,35 +113,46 @@ class Release(Frame):
         
     def release_pull(self):
         self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
+        debug("latest release downloaded")
         
     def release_update(self):
-                
-        #refesh every 60 seconds
-        self.after(RELEASE_CYCLE, self.release_thread)
-        
-        #self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
-        
-        current=self.version2number(self.release)
-        release=self.version2number(self.latest.get("tag_name"))
-        
-        self.hyperlink['url'] = self.latest.get("html_url")
-        self.hyperlink['text'] = "EDMC-Canonn: {}".format(self.latest.get("tag_name"))
 
-        if current==release:
-            self.grid_remove()
-        elif current > release:
-            self.hyperlink['text'] = "Experimental Release {}".format(self.release)
-            self.grid()
-        else:
+        
+        
             
-            if self.auto.get() == 1:
-                self.hyperlink['text'] = "Release {}  Installed Please Restart".format(self.latest.get("tag_name"))     
-                self.installer(self.latest.get("tag_name"))
+        if self.latest:
+            debug("Latest is not null")
+            
+            
+            #checjed again in an hour
+            self.after(RELEASE_CYCLE, self.update)    
+            
+            #self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
+            
+            current=self.version2number(self.release)
+            release=self.version2number(self.latest.get("tag_name"))
+            
+            self.hyperlink['url'] = self.latest.get("html_url")
+            self.hyperlink['text'] = "EDMC-Canonn: {}".format(self.latest.get("tag_name"))
+
+            if current==release:
+                self.grid_remove()
+            elif current > release:
+                self.hyperlink['text'] = "Experimental Release {}".format(self.release)
+                self.grid()
             else:
-                self.hyperlink['text'] = "Please Upgrade {}".format(self.latest.get("tag_name"))
-                if self.novoices.get() != 1:
-                    Player(Release.plugin_dir,["sounds\\prefix.wav","sounds\\nag1.wav"]).start()
-            self.grid()
+                
+                if self.auto.get() == 1:
+                    self.hyperlink['text'] = "Release {}  Installed Please Restart".format(self.latest.get("tag_name"))     
+                    self.installer(self.latest.get("tag_name"))
+                else:
+                    self.hyperlink['text'] = "Please Upgrade {}".format(self.latest.get("tag_name"))
+                    if self.novoices.get() != 1:
+                        Player(Release.plugin_dir,["sounds\\prefix.wav","sounds\\nag1.wav"]).start()
+                self.grid()
+        else:
+            debug("Latest is null")
+            self.release.after(1000,self.release.release_update)
     
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
