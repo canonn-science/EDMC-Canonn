@@ -4,6 +4,8 @@ import sys
 import json
 from emitter import Emitter
 from urllib import quote_plus
+from debug import Debug
+from debug import debug,error
 
 class codexEmitter(Emitter):
     types={}
@@ -84,8 +86,10 @@ class codexEmitter(Emitter):
         
         self.getExcluded()
         
+        
+        
         #is this a code entry and do we want to record it? 
-        if self.entry["event"] == "CodexEntry" and not codexEmitter.excludecodices.get(self.entry.get("codexName").lower()):
+        if not codexEmitter.excludecodices.get(self.entry.get("Name").lower()):
             self.getReportTypes(self.entry.get("EntryID"))    
             url=self.getUrl()
             
@@ -109,4 +113,5 @@ class codexEmitter(Emitter):
             self.send(payload,url)
             
 def submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
-    codexEmitter(cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client).start()   
+    if entry["event"] == "CodexEntry" :
+        codexEmitter(cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client).start()   

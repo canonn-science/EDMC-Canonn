@@ -2,6 +2,8 @@ import threading
 import requests
 import sys
 import json
+from debug import Debug
+from debug import debug,error
 
 
 

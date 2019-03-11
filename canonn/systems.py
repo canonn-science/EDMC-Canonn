@@ -1,6 +1,8 @@
 from urllib import quote_plus
 import requests
 import json
+from debug import Debug
+from debug import debug,error
 
 class Systems():
 

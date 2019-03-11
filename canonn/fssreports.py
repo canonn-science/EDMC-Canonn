@@ -4,6 +4,9 @@ import sys
 import json
 from emitter import Emitter
 from urllib import quote_plus
+from debug import Debug
+from debug import debug,error
+
 
 class fssEmitter(Emitter):
     types={}

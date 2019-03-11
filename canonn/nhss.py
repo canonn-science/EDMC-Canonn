@@ -3,6 +3,9 @@ import requests
 import sys
 import json
 from emitter import Emitter
+from debug import Debug
+from debug import debug,error
+
 
 '''
     { 

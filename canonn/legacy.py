@@ -4,6 +4,8 @@ import requests
 from urllib import quote_plus
 import sys
 from  math import sqrt,pow,trunc
+from debug import Debug
+from debug import debug,error
 
 class Reporter(threading.Thread):
     def __init__(self, payload):
