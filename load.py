@@ -22,6 +22,7 @@ from canonn.debug import debug
 
 
 
+
 import ttk
 import Tkinter as tk
 import sys
@@ -40,7 +41,7 @@ this.nearloc = {
 myPlugin = "EDMC-Canonn"
 
 
-this.version="1.6.0"
+this.version="1.7.0"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
     
@@ -79,6 +80,7 @@ def plugin_start(plugin_dir):
     #print this.patrol
     release.Release.plugin_start(plugin_dir)
     Debug.setClient(this.client_version)
+    patrol.CanonnPatrol.plugin_start(plugin_dir)
     
     
     
