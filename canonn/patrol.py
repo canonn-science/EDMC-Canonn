@@ -185,6 +185,7 @@ class CanonnPatrol(Frame):
         self.hideships=self.hideshipsbtn.get()
         
         self.columnconfigure(1, weight=1)
+        self.columnconfigure(4, weight=4)
         self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         
         ## Text Instructions for the patrol
@@ -192,7 +193,7 @@ class CanonnPatrol(Frame):
         self.label.grid(row = 0, column = 0, sticky=sticky)
         
         self.hyperlink=PatrolLink(self)
-        self.hyperlink.grid(row = 0, column = 2,sticky="NSEW")
+        self.hyperlink.grid(row = 0, column = 2)
         self.distance=tk.Label(self, text=  "...")         
         self.distance.grid(row = 0, column = 3,sticky="NSEW")
         self.distance.grid_remove()

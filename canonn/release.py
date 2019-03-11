@@ -95,7 +95,7 @@ class Release(Frame):
         self.news_count=0
         self.news_pos=0
         self.minutes=0
-        self.release_latest={}
+        self.latest={}
         self.update()
         #self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
         
