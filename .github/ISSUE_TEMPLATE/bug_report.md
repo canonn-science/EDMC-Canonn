@@ -7,7 +7,7 @@ assignees: NoFoolLikeOne
 
 ---
 
-** What version are you running **
+**What version are you running**
 
 
 **Describe the bug**
