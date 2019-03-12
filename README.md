@@ -5,7 +5,7 @@ Features will be added in the Project Board
 
 # Important
 
-This plugin is currently only writing to the Canonn API and therefore anything you log may not end up being captured at this current time. Use the USS Survey plugin for the time being. NB The USS Survey and Canonn survey are not compatible when run together unless you are on the same version
+The USS Survey and EDMC-Canonn are no longer compatible. However EDMC-Canonn now writes to the same google sheets as the USS-Survey so if you are using this plugin, then please disable the USS-Survey
 
 # Features
 
