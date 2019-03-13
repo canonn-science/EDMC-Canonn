@@ -58,8 +58,8 @@ class CanonnJournal(Emitter):
         payload["clientVersion"]= self.client
         payload["isBeta"]= self.is_beta
         
-        debug(self.entry.get("event"))
-        debug(CanonnJournal.exclusions.get(self.entry.get("event")))
+        
+        
         included_event = not CanonnJournal.exclusions.get(self.entry.get("event"))
         
         if included_event:
