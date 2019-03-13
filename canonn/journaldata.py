@@ -42,12 +42,13 @@ class CanonnJournal(Emitter):
     def run(self):
         url=self.getUrl()
         if not CanonnJournal.exclusions:
-            
-            r=requests.get("{}/excludeevents".format(url))  
+            r=requests.get("{}/excludeevents?_limit=1000".format(url))  
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     CanonnJournal.exclusions[exc["eventName"]]=True
-                debug(CanonnJournal.exclusions)
+                
+            else:
+                error("{}/excludeevents".format(url))
 
         payload={}
         payload["systemName"]=self.system
@@ -57,6 +58,8 @@ class CanonnJournal(Emitter):
         payload["clientVersion"]= self.client
         payload["isBeta"]= self.is_beta
         
+        debug(self.entry.get("event"))
+        debug(CanonnJournal.exclusions.get(self.entry.get("event")))
         included_event = not CanonnJournal.exclusions.get(self.entry.get("event"))
         
         if included_event:
