@@ -381,8 +381,12 @@ class CanonnPatrol(Frame):
             reader = csv.reader(r.iter_lines(), delimiter='\t')
             next(reader)
             for row in reader:
+                
                 type,system,x,y,z,instructions,url=row
-                canonnpatrol.append(newPatrol(type,system,(float(x),float(y),float(z)),instructions,self.parseurl(url)))
+                if system != '':
+                    canonnpatrol.append(newPatrol(type,system,(float(x),float(y),float(z)),instructions,self.parseurl(url)))
+                else:
+                    error("Patrol contains blank lines")
                 
         return canonnpatrol
         
