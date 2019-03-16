@@ -21,7 +21,7 @@ The Patrol system will eventualy be used for directing people to places of inter
 See the top stories on rotation
 
 ## Hyperdiction reporting 
-Hyperdiction reporting is logged from the Thargoid Encounter Stats screen. 
+Hyperdiction reporting is logged from the Thargoid Encounter Stats screen. There is also a button in the settings which will allow you to upload all hyperdictions from your journal. 
 
 ## NHSS Reporting
 This captures NHSS information from the FSS scanner and USS Drops. Only logs one instance of each threat level per system
