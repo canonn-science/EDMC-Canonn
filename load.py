@@ -41,7 +41,7 @@ this.nearloc = {
 myPlugin = "EDMC-Canonn"
 
 
-this.version="1.7.3"
+this.version="1.8.0"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
     
@@ -56,6 +56,7 @@ def plugin_prefs(parent, cmdr, is_beta):
     this.release.plugin_prefs(frame, cmdr, is_beta,2)
     this.patrol.plugin_prefs(frame, cmdr, is_beta,3)
     Debug.plugin_prefs(frame,this.client_version,4)
+    hdreport.HDInspector(frame,cmdr, is_beta,this.client_version,5)
     
     
     
