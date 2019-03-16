@@ -33,6 +33,20 @@ class fssEmitter(Emitter):
             
         return payload           
         
+    def getLcPayload(self):
+        payload=self.setPayload()
+        payload["reportStatus"]="pending"
+        payload["systemAddress"]=self.entry.get("SystemAddress")
+        payload["signalName"]=self.entry.get("SignalName")
+        payload["signalNameLocalised"]=self.entry.get("SignalName_Localised")
+        
+        
+        debug(payload)
+        
+        payload["rawJson"]=self.entry
+            
+        return payload                   
+        
     def getAXPayload(self):
         payload=self.setPayload()
         payload["reportStatus"]="pending"
@@ -61,6 +75,10 @@ class fssEmitter(Emitter):
             if self.entry.get("SignalName") == "$Warzone_TG;":
                 payload=self.getAXPayload()
                 self.modelreport-"axczfssreports"
+            elif self.entry.get("SignalName") == "$Fixed_Event_Life_Cloud;":
+                debug("Life Cloud")
+                payload=self.getLcPayload()
+                self.modelreport="lcfssreports"
             else: 
                 payload=self.getFssPayload()
                 self.modelreport="reportfsses"
