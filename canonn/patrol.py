@@ -275,12 +275,13 @@ class CanonnPatrol(Frame):
         #if index-1 == 0:
         #    self.prev.grid(remove)
         
-        
-        
-    def update_ui(self):
+    def update_ui(self):        
         # rerun every 10 seconds
         self.after(10000, self.update_ui)
+        self.update()
         
+    def update(self):
+                        
         if self.visible():
             
             capi_update=self.patrol_list and self.system and self.capi_update
