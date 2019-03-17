@@ -112,8 +112,8 @@ class UpdateThread(threading.Thread):
         debug("Patrol: UpdateThread")
         # download cannot contain any tkinter changes
         self.widget.download()
-        # update can't be inside a thread
-        self.widget.after(500,self.widget.update) 
+        
+        
 
 def decode_unicode_references(data):
     return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
@@ -226,13 +226,19 @@ class CanonnPatrol(Frame):
         self.cmdr=""
         
         self.system=""
+        self.started=False
         
-        self.after(250, self.patrol_update)
+        # wait 10 seconds before updatinb the ui
+        self.after(10000, self.update_ui)
+        
 
     @classmethod    
     def plugin_start(cls,plugin_dir):
         cls.plugin_dir=plugin_dir
         
+    '''
+    Every hour we will download the latest data
+    '''
     def patrol_update(self):
         UpdateThread(self).start()
         self.after(CYCLE, self.patrol_update)
@@ -271,16 +277,14 @@ class CanonnPatrol(Frame):
         
         
         
-    def update(self):
-    
+    def update_ui(self):
+        # rerun every 10 seconds
+        self.after(10000, self.update_ui)
         
         if self.visible():
-                
-            debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
             
             capi_update=self.patrol_list and self.system and self.capi_update
             journal_update=self.patrol_list and self.system
-            
             
             if journal_update or capi_update:
                 self.sort_patrol()
@@ -405,7 +409,7 @@ class CanonnPatrol(Frame):
     
     def download(self):
         debug("Download Patrol Data")
-        debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
+        
         # no point if we have no idea where we are
         if self.system:
             patrol_list=[]
@@ -426,6 +430,7 @@ class CanonnPatrol(Frame):
             self.patrol_list=patrol_list
             
             self.sort_patrol()
+            debug("download done")
 
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
@@ -452,8 +457,6 @@ class CanonnPatrol(Frame):
         return frame
 
     def visible(self):
-        
-        debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
         
         nopatrols=self.canonn == 1 and self.faction ==1 and self.hideships ==1
         
@@ -496,12 +499,19 @@ class CanonnPatrol(Frame):
         self.hideships=self.hideshipsbtn.get()
         
         if self.visible():
-            self.patrol_update()
+            # we should fire off an extra download
+            UpdateThread(self).start()
+            self.update_ui()
             
         debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
         
     def journal_entry(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
         # We don't care what the journal entry is as long as the system has changed.
+        
+        if system and not self.started:
+            debug("Patrol download cycle commencing")
+            self.started=True
+            self.patrol_update()
         
         if cmdr:
             self.cmdr=cmdr
@@ -509,7 +519,7 @@ class CanonnPatrol(Frame):
         if self.system != system:
             debug("Refresshing Patrol")
             self.system=system
-            self.update()
+            self.update_ui()
         # else:
             # error("nope {}".format(entry.get("event")))
             # error(system)
@@ -530,7 +540,7 @@ class CanonnPatrol(Frame):
         
         shipsystems={}
         
-        #debug(json.dumps(data.get("ships"),indent=4))
+        debug(json.dumps(data.get("ships"),indent=4))
         
         for ship in data.get("ships").keys():
             
@@ -576,7 +586,7 @@ class CanonnPatrol(Frame):
             
         self.capi_update=True
 
-        UpdateThread(self).start()            
+        
 
 def getDistance(p,g):
     # gets the distance between two systems
