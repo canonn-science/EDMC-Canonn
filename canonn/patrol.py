@@ -151,12 +151,19 @@ class InfoLink(HyperlinkLabel):
             wraplength=50,  # updated in __configure_event below
             anchor=tk.NW
         )
+        self.resized=False
         self.bind('<Configure>', self.__configure_event)
 
+    def __reset(self):
+        self.resized=False;
+        
     def __configure_event(self, event):
         "Handle resizing."
 
-        self.configure(wraplength=event.width)    
+        if not self.resized:
+            self.resized=True
+            self.configure(wraplength=event.width)    
+            self.after(500,self.__reset)
     
 class CanonnPatrol(Frame):
 
@@ -517,8 +524,8 @@ class CanonnPatrol(Frame):
         if cmdr:
             self.cmdr=cmdr
         
-        if self.system != system:
-            debug("Refresshing Patrol")
+        if self.system != system and entry.get("event") in ("Location","FSDJump","StartUp") :
+            debug("Refresshing Patrol ({})".format(entry.get("event")))
             self.system=system
             self.update_ui()
         # else:
@@ -586,6 +593,10 @@ class CanonnPatrol(Frame):
             self.ships.append(newPatrol("SHIPS",system,ship_pos,ship_info,None))
             
         self.capi_update=True
+        if self.system and not self.started:
+            debug("Patrol download cycle commencing")
+            self.started=True
+            self.patrol_update()
 
         
 
