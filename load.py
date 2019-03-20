@@ -87,6 +87,13 @@ def plugin_start(plugin_dir):
     
     return 'Canonn'
     
+def plugin_stop():
+    """
+    EDMC is closing
+    """
+    debug("Stopping the plugin")
+    this.patrol.plugin_stop()
+    
 def plugin_app(parent):
 
     this.parent = parent

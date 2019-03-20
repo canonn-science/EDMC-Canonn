@@ -17,6 +17,7 @@ import math
 from debug import Debug
 from debug import debug,error
 import csv
+import os
 from contextlib import closing
 from urllib import quote_plus
 
@@ -183,6 +184,8 @@ class CanonnPatrol(Frame):
         self.IMG_PREV = tk.PhotoImage(file = '{}\\icons\\left_arrow.gif'.format(CanonnPatrol.plugin_dir))
         self.IMG_NEXT = tk.PhotoImage(file = '{}\\icons\\right_arrow.gif'.format(CanonnPatrol.plugin_dir))
         
+        self.patrol_config=os.path.join(os.path.dirname(CanonnPatrol.plugin_dir),'EDMC-Canonn.patrol')
+        
         
         self.canonnbtn=tk.IntVar(value=config.getint("HideCanonn"))
         self.factionbtn=tk.IntVar(value=config.getint("HideFaction"))
@@ -260,6 +263,7 @@ class CanonnPatrol(Frame):
         if index+1 < len(self.patrol_list):
             debug("len {} ind {}".format(len(self.patrol_list),index))
             self.nearest["excluded"]=True
+            self.patrol_list[index]["excluded"]=True
             self.update()
             #if there are excluded closer then we might need to deal with it
             #self.prev.grid()
@@ -410,13 +414,25 @@ class CanonnPatrol(Frame):
     def sort_patrol(self):
         patrol_list=sorted(self.patrol_list, key=self.keyval)
             
+            
         for num,val in enumerate(patrol_list):
+            system=val.get("system")
+            type=val.get("type")
+            
             patrol_list[num]["index"]=num
+            
         
         self.patrol_list=patrol_list
     
     def download(self):
         debug("Download Patrol Data")
+        
+        # if patrol list is populated then was can save
+        if self.patrol_list:
+            self.save_excluded()
+        else:
+            self.load_excluded()
+        
         
         # no point if we have no idea where we are
         if self.system:
@@ -433,11 +449,19 @@ class CanonnPatrol(Frame):
                 self.canonnpatrol=self.getCanonnPatrol()
                 patrol_list.extend(self.canonnpatrol)
                 
+            # add exclusions from configuration
+            for num,val in enumerate(patrol_list):
+                system=val.get("system")
+                type=val.get("type")
+                
+                if self.excluded.get(type):
+                    if self.excluded.get(type).get(system):                   
+                        patrol_list[num]["excluded"]=self.excluded.get(type).get(system)             
+                        
             # we will sort the patrol list     
-             
             self.patrol_list=patrol_list
-            
             self.sort_patrol()
+            
             debug("download done")
 
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
@@ -481,7 +505,7 @@ class CanonnPatrol(Frame):
         nearest=""
         for num,patrol in enumerate(self.patrol_list):
             # add the index to the patrol so we can navigate
-            patrol["index"]=int(num)
+            self.patrol_list[num]["index"]=int(num)
             
             if not patrol.get("excluded"):
                 if nearest != "":           
@@ -532,7 +556,35 @@ class CanonnPatrol(Frame):
             # error("nope {}".format(entry.get("event")))
             # error(system)
             # error(self.system)
-
+    
+    def load_excluded(self):
+        debug("loading excluded")
+        try:
+            with open(self.patrol_config) as json_file:  
+                self.excluded = json.load(json_file)
+        except:
+            debug("no config file")
+            
+            
+    def save_excluded(self):
+        excluded={}
+        for patrol in self.patrol_list:
+            if patrol.get("excluded") and not patrol.get("type") in ('BGS','SHIPS'):
+                if not excluded.get(patrol.get("type")):
+                    excluded[patrol.get("type")]={}
+                excluded[patrol.get("type")][patrol.get("system")]=True
+                
+        
+        with open(self.patrol_config, 'w+') as outfile:  
+            json.dump(excluded, outfile)
+            
+    def plugin_stop(self):
+        '''
+        When the plugin stops we want to save the patrols where excluded = True
+        We will not inclde ships or BGS in this as they can be excluded in other ways. 
+        '''
+        self.save_excluded()
+        
     def cmdr_data(self,data, is_beta):
         """
         We have new data on our commander
@@ -548,7 +600,7 @@ class CanonnPatrol(Frame):
         
         shipsystems={}
         
-        debug(json.dumps(data.get("ships"),indent=4))
+        #debug(json.dumps(data.get("ships"),indent=4))
         
         for ship in data.get("ships").keys():
             
