@@ -22,6 +22,7 @@ from contextlib import closing
 from urllib import quote_plus
 
 
+
 CYCLE=60 * 1000 * 60 # 60 minutes
 DEFAULT_URL = ""
 WRAP_LENGTH = 200
@@ -190,9 +191,12 @@ class CanonnPatrol(Frame):
         self.canonnbtn=tk.IntVar(value=config.getint("HideCanonn"))
         self.factionbtn=tk.IntVar(value=config.getint("HideFaction"))
         self.hideshipsbtn=tk.IntVar(value=config.getint("HideShips"))
+        self.copypatrolbtn=tk.IntVar(value=config.getint("CopyPatrol"))
+        
         self.canonn=self.canonnbtn.get()
         self.faction=self.factionbtn.get()
         self.hideships=self.hideshipsbtn.get()
+        self.copypatrol=self.copypatrolbtn.get()
         
         self.columnconfigure(1, weight=1)
         self.columnconfigure(4, weight=4)
@@ -234,6 +238,7 @@ class CanonnPatrol(Frame):
         self.minutes=0
         self.visible()
         self.cmdr=""
+        self.nearest={}
         
         self.system=""
         self.started=False
@@ -265,6 +270,8 @@ class CanonnPatrol(Frame):
             self.nearest["excluded"]=True
             self.patrol_list[index]["excluded"]=True
             self.update()
+            if self.copypatrol ==1:
+                copyclip(self.nearest.get("system"))
             #if there are excluded closer then we might need to deal with it
             #self.prev.grid()
         
@@ -277,14 +284,10 @@ class CanonnPatrol(Frame):
         debug("prev {}".format(index))
         if index > 0:
             self.patrol_list[index-1]["excluded"]=False
-            self.update()        
-            debug("index>0")
-        else:
-            debug("index<")
-        #how will we deal with it if we are the last item?
-        #should we cycle to the furthest?
-        #if index-1 == 0:
-        #    self.prev.grid(remove)
+            self.update()          
+            if self.copypatrol ==1:
+                copyclip(self.nearest.get("system"))
+        
         
     def update_ui(self):        
         # rerun every 10 seconds
@@ -307,11 +310,13 @@ class CanonnPatrol(Frame):
                 self.distance['text']="{}ly".format(round(getDistance(p,self.nearest.get("coords")),2))
                 self.infolink['text']=self.nearest.get("instructions")
                 self.infolink['url']=self.nearest.get("url")
+                
                 self.infolink.grid()
                 self.distance.grid()
                 self.prev.grid()
                 self.next.grid()
                 self.capi_update=False
+                
             else:
                 if self.system:
                     self.hyperlink['text'] = "Fetching patrols..."
@@ -470,18 +475,24 @@ class CanonnPatrol(Frame):
         self.canonnbtn=tk.IntVar(value=config.getint("HideCanonn"))
         self.factionbtn=tk.IntVar(value=config.getint("HideFaction"))
         self.hideshipsbtn=tk.IntVar(value=config.getint("HideShips"))
+        self.copypatrolbtn=tk.IntVar(value=config.getint("CopyPatrol"))
+        
         self.canonn=self.canonnbtn.get()
         self.faction=self.factionbtn.get()
         self.hideships=self.hideshipsbtn.get()
+        self.copypatrol=self.copypatrolbtn.get()
+        
         
         
         frame = nb.Frame(parent)
         frame.columnconfigure(1, weight=1)
         frame.grid(row = gridrow, column = 0,sticky="NSEW")
         
-        nb.Checkbutton(frame, text="Hide Canonn Patrols", variable=self.canonnbtn).grid(row = 0, column = 0,sticky="NW")
-        nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.factionbtn).grid(row = 0, column = 2,sticky="NW")
-        nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideshipsbtn).grid(row = 0, column = 3,sticky="NW")
+        nb.Label(frame,text="Patrol Settings").grid(row=0,column=0,sticky="NW")
+        nb.Checkbutton(frame, text="Hide Canonn Patrols", variable=self.canonnbtn).grid(row = 1, column = 0,sticky="NW")
+        nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.factionbtn).grid(row = 1, column = 2,sticky="NW")
+        nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideshipsbtn).grid(row = 1, column = 3,sticky="NW")
+        nb.Checkbutton(frame, text="Automatically copy the patrol to the clipboard", variable=self.copypatrolbtn).grid(row = 2, column = 0,sticky="NW",)
         
         
         debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
@@ -526,9 +537,12 @@ class CanonnPatrol(Frame):
         config.set('HideCanonn', self.canonnbtn.get())      
         config.set('HideFaction', self.factionbtn.get())      
         config.set('HideShips', self.hideshipsbtn.get())      
+        config.set('CopyPatrol', self.copypatrolbtn.get())      
+        
         self.canonn=self.canonnbtn.get()
         self.faction=self.factionbtn.get()
         self.hideships=self.hideshipsbtn.get()
+        self.copypatrol=self.copypatrolbtn.get()
         
         if self.visible():
             # we should fire off an extra download
@@ -552,10 +566,17 @@ class CanonnPatrol(Frame):
             debug("Refresshing Patrol ({})".format(entry.get("event")))
             self.system=system
             self.update_ui()
+            if self.nearest and self.copypatrol == 1:
+                copyclip(self.nearest.get("system"))
         # else:
             # error("nope {}".format(entry.get("event")))
             # error(system)
             # error(self.system)
+            
+        #If we have visted a system and then jump out then lets clicknext
+        if system and self.nearest:
+            if self.nearest.get("system").upper() == system.upper() and entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
+                self.patrol_next(None)
     
     def load_excluded(self):
         debug("loading excluded")
@@ -650,7 +671,12 @@ class CanonnPatrol(Frame):
             self.started=True
             self.patrol_update()
 
-        
+def copyclip(value):
+    window=tk.Tk()
+    window.withdraw()
+    window.clipboard_clear()  # clear clipboard contents
+    window.clipboard_append(value)      
+    window.destroy()
 
 def getDistance(p,g):
     # gets the distance between two systems
