@@ -244,7 +244,7 @@ class CanonnPatrol(Frame):
         self.started=False
         
         # wait 10 seconds before updatinb the ui
-        self.after(10000, self.update_ui)
+        self.after(1000, self.update_ui)
         
 
     @classmethod    
@@ -291,7 +291,7 @@ class CanonnPatrol(Frame):
         
     def update_ui(self):        
         # rerun every 10 seconds
-        self.after(10000, self.update_ui)
+        self.after(1000, self.update_ui)
         self.update()
         
     def update(self):
@@ -397,15 +397,15 @@ class CanonnPatrol(Frame):
         
     def getCanonnPatrol(self):    
         canonnpatrol=[]
-        url="https://docs.google.com/spreadsheets/d/e/2PACX-1vSajXMr5oP4nw0GO1L8ikuKhLkGJWMgdj8wfXvhY6K1iL3SyuAqQAd8-mwyajuw88A7tQAkmMB718A0/pub?gid=0&single=true&output=tsv"
+        url="https://docs.google.com/spreadsheets/d/e/2PACX-1vQgIlIQE8XMugQVchWr417uB9yvOcgn1ak0LGxwmNnGg2wjJudNXrntpppcH_KFR_xTuPsKPS6uBvSb/pub?gid=0&single=true&output=tsv"        
         with closing(requests.get(url, stream=True)) as r:
             reader = csv.reader(r.iter_lines(), delimiter='\t')
             next(reader)
             for row in reader:
                 
-                type,system,x,y,z,instructions,url=row
+                type,system,x,y,z,instructions,url,event=row
                 if system != '':
-                    canonnpatrol.append(newPatrol(type,system,(float(x),float(y),float(z)),instructions,self.parseurl(url)))
+                    canonnpatrol.append(newPatrol(type,system,(float(x),float(y),float(z)),instructions,self.parseurl(url),event))
                 else:
                     error("Patrol contains blank lines")
                 
@@ -551,8 +551,26 @@ class CanonnPatrol(Frame):
             
         debug("canonn: {}, faction: {} hideships {}".format(self.canonn,self.faction,self.hideships))
         
+    def trigger(self,system,entry):
+        # exit if the events dont match
+        
+        event=json.loads(self.nearest.get("event"))
+        for key in event.keys():
+            if not entry.get(key) == event.get(key):
+                return False
+        
+        debug("triggered")
+        #autosubmit the form -- allowing for google forms
+        if self.nearest.get("url"):
+            j = requests.get(self.nearest.get("url").replace('viewform','formResponse'))
+        self.patrol_next(None)
+        
+        
+        
     def journal_entry(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
         # We don't care what the journal entry is as long as the system has changed.
+        
+        
         
         if system and not self.started:
             debug("Patrol download cycle commencing")
@@ -577,6 +595,14 @@ class CanonnPatrol(Frame):
         if system and self.nearest:
             if self.nearest.get("system").upper() == system.upper() and entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
                 self.patrol_next(None)
+                
+        #After we have done everything else let's see if we can automatically submit and move on
+        if self.nearest.get("event") and self.nearest.get("system").upper() == system.upper():
+            self.trigger(system,entry)
+                
+            
+            
+        
     
     def load_excluded(self):
         debug("loading excluded")
@@ -682,11 +708,12 @@ def getDistance(p,g):
     # gets the distance between two systems
     return math.sqrt(sum(tuple([math.pow(p[i]-g[i],2)  for i in range(3)])))
 
-def newPatrol(type,system,coords,instructions,url):
+def newPatrol(type,system,coords,instructions,url,event=None):
     return {
         "type": type,
         "system": system,
         "coords": coords,
         "instructions": instructions,
-        "url":  url
+        "url":  url,
+        "event": event,
     }
