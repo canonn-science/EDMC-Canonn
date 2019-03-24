@@ -362,7 +362,7 @@ class CanonnPatrol(Frame):
         elif last_updated < 7:    
             update_text=". Last updated {} days ago".format(last_updated)
         elif last_updated > 6:    
-            update_text=". Last updated 1 days ago. Please jump into the system to update the stats"
+            update_text=". Last updated {} days ago. Please jump into the system to update the stats".format(last_updated)
         
         # if  self.getStates("pending_states",bgs):       
             # pstates=" Pending: {}".format(self.getStates("pending_states",bgs))
