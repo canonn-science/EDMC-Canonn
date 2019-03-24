@@ -178,17 +178,17 @@ class Release(Frame):
         config.set('NoVoices', self.novoices.get())      
         
     def installer(self,tag_name):
+        # need to add some defensive code around this
         download=requests.get("https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name), stream=True)
         z = zipfile.ZipFile(StringIO.StringIO(download.content))
         z.extractall(os.path.dirname(Release.plugin_dir))
         
+        #disable first in case we can't delete it
+        os.rename(Release.plugin_dir,"{}.disabled".format(Release.plugin_dir))
+        
         #keep a backup of the old release
         if self.rmbackup.get() == 1:
-            shutil.rmtree(Release.plugin_dir)
-        else:
-            os.rename(Release.plugin_dir,"{}.disabled".format(Release.plugin_dir))
-                
-        #This is going to require some defensive. In case the extract fails or the rename fails.
+            shutil.rmtree("{}.disabled".format(Release.plugin_dir))
         
         Release.plugin_dir=os.path.join(os.path.dirname(Release.plugin_dir),"EDMC-Canonn-{}".format(tag_name))
         
