@@ -190,6 +190,8 @@ class Release(Frame):
                 
         #This is going to require some defensive. In case the extract fails or the rename fails.
         
+        Release.plugin_dir=os.path.join(os.path.dirname(Release.plugin_dir),"EDMC-Canonn.{}".format(tag_name))
+        
     @classmethod            
     def get_auto(cls):
         return tk.IntVar(value=config.getint("AutoUpdate")).get()

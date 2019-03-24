@@ -21,6 +21,8 @@ import os
 from contextlib import closing
 from urllib import quote_plus
 from datetime import datetime
+from release import Release
+
 
 
 CYCLE=60 * 1000 * 60 # 60 minutes
@@ -185,7 +187,7 @@ class CanonnPatrol(Frame):
         self.IMG_PREV = tk.PhotoImage(file = '{}\\icons\\left_arrow.gif'.format(CanonnPatrol.plugin_dir))
         self.IMG_NEXT = tk.PhotoImage(file = '{}\\icons\\right_arrow.gif'.format(CanonnPatrol.plugin_dir))
         
-        self.patrol_config=os.path.join(os.path.dirname(CanonnPatrol.plugin_dir),'EDMC-Canonn.patrol')
+        self.patrol_config=os.path.join(Release.plugin_dir,'EDMC-Canonn.patrol')
         
         
         self.canonnbtn=tk.IntVar(value=config.getint("HideCanonn"))
@@ -230,6 +232,8 @@ class CanonnPatrol(Frame):
         
         self.prev.grid_remove()
         self.next.grid_remove()
+        
+        self.excluded={}
         
         self.patrol_list=[]
         self.capi_update=False
@@ -625,14 +629,16 @@ class CanonnPatrol(Frame):
     
     def load_excluded(self):
         debug("loading excluded")
+        self.patrol_config=os.path.join(Release.plugin_dir,'data/EDMC-Canonn.patrol')
         try:
             with open(self.patrol_config) as json_file:  
                 self.excluded = json.load(json_file)
         except:
-            debug("no config file")
+            debug("no config file {}".format(self.patrol_config))
             
             
     def save_excluded(self):
+        self.patrol_config=os.path.join(Release.plugin_dir,'data/EDMC-Canonn.patrol')
         excluded={}
         for patrol in self.patrol_list:
             if patrol.get("excluded") and not patrol.get("type") in ('BGS','SHIPS'):
