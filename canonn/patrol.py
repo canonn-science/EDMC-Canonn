@@ -20,7 +20,7 @@ import csv
 import os
 from contextlib import closing
 from urllib import quote_plus
-
+from datetime import datetime
 
 
 CYCLE=60 * 1000 * 60 # 60 minutes
@@ -349,20 +349,39 @@ class CanonnPatrol(Frame):
             states=" States: {}".format(self.getStates("active_states",bgs))
         else:
             states=""
+            
+        #2019-03-24T11:14:38.000Z
+        d1=datetime.strptime(bgs.get("updated_at"), '%Y-%m-%dT%H:%M:%S.%fZ')
+        d2=datetime.now()
+        
+        last_updated=(d2-d1).days
+        if last_updated == 0:
+            update_text=""
+        elif last_updated == 1:
+            update_text=". Last updated 1 day ago"
+        elif last_updated < 7:    
+            update_text=". Last updated {} days ago".format(last_updated)
+        elif last_updated > 6:    
+            update_text=". Last updated 1 days ago. Please jump into the system to update the stats"
         
         # if  self.getStates("pending_states",bgs):       
             # pstates=" Pending: {}".format(self.getStates("pending_states",bgs))
         # else:
             # pstates=""
         
+        
+        
         #debug(bgs)
         if target:
-            return "Canonn Influence {}%{}".format(round(float(bgs.get("influence")*100),2),states)
+            retval =  "Canonn Influence {}%{}{}".format(round(float(bgs.get("influence")*100),2),states,update_text)
         if  over:
-            return  "Canonn Influence {}%{} Check #mission_minor_faction on discord for instructions.".format(round(float(bgs.get("influence")*100),2),states)
+            retval =   "Canonn Influence {}%{} Check #mission_minor_faction on discord for instructions.{}".format(round(float(bgs.get("influence")*100),2),states,update_text)
         if under:
-            return "Canonn Influence {}%{} Please complete missions for Canonn to increase our influence".format(round(float(bgs.get("influence")*100),2),states)
+            retval =  "Canonn Influence {}%{} Please complete missions for Canonn to increase our influence{}".format(round(float(bgs.get("influence")*100),2),states,update_text)
 
+        debug("{}: {}".format(bgs.get("system_name"),retval))
+        return retval    
+            
     def getBGSPatrol(self,bgs):
         x,y,z=Systems.edsmGetSystem(bgs.get("system_name"))
         return newPatrol("BGS",bgs.get("system_name"),(x,y,z),self.getBGSInstructions(bgs),"https://elitebgs.app/system/{}".format(bgs.get("system_id")))
