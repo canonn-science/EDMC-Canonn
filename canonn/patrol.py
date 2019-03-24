@@ -629,7 +629,7 @@ class CanonnPatrol(Frame):
     
     def load_excluded(self):
         debug("loading excluded")
-        self.patrol_config=os.path.join(Release.plugin_dir,'data/EDMC-Canonn.patrol')
+        self.patrol_config=os.path.join(Release.plugin_dir,'data','EDMC-Canonn.patrol')
         try:
             with open(self.patrol_config) as json_file:  
                 self.excluded = json.load(json_file)
@@ -638,7 +638,7 @@ class CanonnPatrol(Frame):
             
             
     def save_excluded(self):
-        self.patrol_config=os.path.join(Release.plugin_dir,'data/EDMC-Canonn.patrol')
+        self.patrol_config=os.path.join(Release.plugin_dir,'data','EDMC-Canonn.patrol')
         excluded={}
         for patrol in self.patrol_list:
             if patrol.get("excluded") and not patrol.get("type") in ('BGS','SHIPS'):
