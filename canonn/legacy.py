@@ -76,7 +76,7 @@ def CodexEntry(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
         url+="&entry.198049318="+quote_plus(entry["Category"])
         url+="&entry.348683576="+quote_plus(entry["Category_Localised"])
         url+="&entry.761612585="+quote_plus(entry["Region"])
-        url+="&entry.216399442="+quote_plus(entry["Region_Localised"])
+        url+="&entry.216399442="+quote_plus(entry.get("Region_Localised").encode('utf8'))
         url+="&entry.1236018468="+quote_plus(str(entry["SystemAddress"]))
         if('VoucherAmount' in entry):
             url+="&entry.1250864566="+quote_plus(str(entry["VoucherAmount"]))
