@@ -43,12 +43,16 @@ class CanonnJournal(Emitter):
     def run(self):
         url=self.getUrl()
         if not CanonnJournal.exclusions:
+            debug("getting journal excludes")
+            tempexcludes={}
             r=requests.get("{}/excludeevents?_limit=1000".format(url))
-            time.sleep(3)
+            
             if r.status_code == requests.codes.ok:
+                # populate a local variable so other threads dont see incomplete results
                 for exc in r.json():
-                    CanonnJournal.exclusions[exc["eventName"]]=True
-                
+                    tempexcludes[exc["eventName"]]=True
+                CanonnJournal.exclusions=tempexcludes
+                debug("Jouurnal excludes got")
             else:
                 error("{}/excludeevents".format(url))
 
