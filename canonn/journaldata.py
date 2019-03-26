@@ -2,6 +2,7 @@ import threading
 import requests
 import sys
 import json
+import time
 from emitter import Emitter
 from debug import Debug
 from debug import debug,error
@@ -42,7 +43,8 @@ class CanonnJournal(Emitter):
     def run(self):
         url=self.getUrl()
         if not CanonnJournal.exclusions:
-            r=requests.get("{}/excludeevents?_limit=1000".format(url))  
+            r=requests.get("{}/excludeevents?_limit=1000".format(url))
+            time.sleep(3)
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     CanonnJournal.exclusions[exc["eventName"]]=True
