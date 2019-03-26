@@ -58,6 +58,7 @@ class fssEmitter(Emitter):
                 
     def getExcluded(self):
         if not fssEmitter.excludefss:
+            debug("Getting FSS excludes")
             r=requests.get("{}/excludefssess?_limit=1000".format(self.getUrl()))  
             if r.status_code == requests.codes.ok:
                 for exc in r.json():

@@ -76,10 +76,13 @@ class codexEmitter(Emitter):
                 
     def getExcluded(self):
         if not codexEmitter.excludecodices:
+            tempexclude={}
             r=requests.get("{}/excludecodices&_limit=1000".format(self.getUrl()))  
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
-                    codexEmitter.excludecodices["${}_name;".format(exc["codexName"])]=True
+                    tempexclude["${}_name;".format(exc["codexName"])]=True
+                
+                codexEmitter.excludecodices=tempexclude
                     
     def run(self):
         
