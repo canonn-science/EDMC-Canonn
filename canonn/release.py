@@ -153,7 +153,7 @@ class Release(Frame):
                 self.grid()
         else:
             debug("Latest is null")
-            self.release.after(1000,self.release.release_update)
+            self.after(1000,self.release.release_update)
     
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
