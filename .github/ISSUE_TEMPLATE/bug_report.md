@@ -22,7 +22,7 @@ assignees: NoFoolLikeOne
 **Screenshots**
 <!-- If applicable, add screenshots to help explain your problem.-->
 
-** Log Files **
+**Log Files**
 <!-- Look for error messages in AppData\Local\Temp\EDMarketConnector.log-->
 
 **Additional context**

@@ -7,5 +7,5 @@ assignees: NoFoolLikeOne
 
 ---
 
-**Describe Your Reques**
+**Describe Your Request**
 <!-- A clear and concise description of what you want to know -->
