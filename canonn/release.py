@@ -113,7 +113,9 @@ class Release(Frame):
         
     def release_pull(self):
         self.latest=False
-        self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
+        
+        latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
+        self.latest=latest
         debug("latest release downloaded")
         
     def release_update(self):
