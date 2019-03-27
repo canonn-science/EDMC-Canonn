@@ -114,9 +114,10 @@ class Release(Frame):
     def release_pull(self):
         self.latest=False
         r = requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest")
+        latest=r.json
         
         if not r.status_code == requests.codes.ok:
-            latest=r.json
+            
             error("Error fetching release from github")
             error(r.status_code)
             error(r.json())
