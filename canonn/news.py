@@ -55,12 +55,19 @@ class NewsLink(HyperlinkLabel):
             wraplength=50,  # updated in __configure_event below
             anchor=tk.NW
         )
+        self.resized=False
         self.bind('<Configure>', self.__configure_event)
 
+    def __reset(self):
+        self.resized=False;
+        
     def __configure_event(self, event):
         "Handle resizing."
 
-        self.configure(wraplength=event.width)
+        if not self.resized:
+            self.resized=True
+            self.configure(wraplength=event.width)    
+            self.after(500,self.__reset)
 
 class CanonnNews(Frame):
 
