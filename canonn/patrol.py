@@ -620,7 +620,7 @@ class CanonnPatrol(Frame):
                 self.patrol_next(None)
                 
         #After we have done everything else let's see if we can automatically submit and move on
-        if self.nearest.get("event") and self.nearest.get("system").upper() == system.upper():
+        if system and self.nearest.get("event") and self.nearest.get("system").upper() == system.upper():
             self.trigger(system,entry)
                 
             
