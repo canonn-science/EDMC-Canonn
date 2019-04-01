@@ -7,8 +7,11 @@ assignees: NoFoolLikeOne
 
 ---
 
-**What version are you running**
+**What is your commander name**
+<!-- with you commander name we can search the database for your events -->
 
+**What version are you running**
+<!-- If you are auto updating then look at the directory name in your plugins folder -->
 
 **Describe the bug**
 <!-- A clear and concise description of what the bug is.-->
