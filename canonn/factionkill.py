@@ -18,6 +18,33 @@ from debug import debug,error
     }
 '''
 
+# experimental
+# submitting to a google cloud function
+class gSubmitKill((threading.Thread):
+    def __init__(self,cmdr, is_beta, system, reward,victimFaction):
+        threading.Thread.__init__(self)
+        self.cmdr=quote_plus(cmdr.encode('utf8'))
+        self.system=quote_plus(system.encode('utf8'))
+        if is_beta:
+            self.is_beta = 'Y'
+        else:
+            self.is_beta = 'N'    
+        self.reward=str(reward)
+        self.victimFaction=quote_plus(victimFaction.encode('utf8'))
+
+    def run(self):
+        # don't bother sending beta
+        if not isBeta:
+            url="https://us-central1-canonn-api-236217.cloudfunctions.net/submitKills?cmdrName={}&systemName={}&isBeta={}&reward={}&victimFaction={}"    
+            
+            r=requests.get(url.format()  
+        
+            if not r.status_code == requests.codes.ok:
+                error("gSubmitKills {} ".format(url))
+                error(r.status_code)
+                error(r.json())
+                        
+                
 
 class FactionKill(Emitter):
     
@@ -51,4 +78,5 @@ def submit(cmdr, is_beta, system, station, entry,client):
         matches(entry, 'VictimFaction', '$faction_Guardian;')
     ):
         FactionKill(cmdr, is_beta, system,  entry, client).start()   
+        gSubmitKill(cmdr, is_beta, system, entry.get("reward"),entry,get("VictimFaction")).start();
 
