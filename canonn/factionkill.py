@@ -20,7 +20,7 @@ from debug import debug,error
 
 # experimental
 # submitting to a google cloud function
-class gSubmitKill((threading.Thread):
+class gSubmitKill(threading.Thread):
     def __init__(self,cmdr, is_beta, system, reward,victimFaction):
         threading.Thread.__init__(self)
         self.cmdr=quote_plus(cmdr.encode('utf8'))
@@ -37,7 +37,7 @@ class gSubmitKill((threading.Thread):
         if not isBeta:
             url="https://us-central1-canonn-api-236217.cloudfunctions.net/submitKills?cmdrName={}&systemName={}&isBeta={}&reward={}&victimFaction={}"    
             
-            r=requests.get(url.format()  
+            r=requests.get(url.format())
         
             if not r.status_code == requests.codes.ok:
                 error("gSubmitKills {} ".format(url))
