@@ -1,5 +1,6 @@
 import threading
 import requests
+from urllib import quote_plus
 import sys
 import json
 from emitter import Emitter
@@ -34,10 +35,11 @@ class gSubmitKill(threading.Thread):
 
     def run(self):
         # don't bother sending beta
-        if not isBeta:
-            url="https://us-central1-canonn-api-236217.cloudfunctions.net/submitKills?cmdrName={}&systemName={}&isBeta={}&reward={}&victimFaction={}"    
+        if self.is_beta == 'N':
+            debug("sending gSubmitKill")
+            url="https://us-central1-canonn-api-236217.cloudfunctions.net/submitKills?cmdrName={}&systemName={}&isBeta={}&reward={}&victimFaction={}".format(self.cmdr,self.system,self.is_beta,self.reward,self.victimFaction)    
             
-            r=requests.get(url.format())
+            r=requests.get(url)
         
             if not r.status_code == requests.codes.ok:
                 error("gSubmitKills {} ".format(url))
@@ -78,5 +80,5 @@ def submit(cmdr, is_beta, system, station, entry,client):
         matches(entry, 'VictimFaction', '$faction_Guardian;')
     ):
         FactionKill(cmdr, is_beta, system,  entry, client).start()   
-        gSubmitKill(cmdr, is_beta, system, entry.get("reward"),entry,get("VictimFaction")).start();
+        gSubmitKill(cmdr, is_beta, system, entry.get("Reward"),entry.get("VictimFaction")).start();
 
