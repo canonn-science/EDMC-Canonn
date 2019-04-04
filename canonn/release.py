@@ -19,6 +19,7 @@ import threading
 from  player import Player
 from debug import Debug
 from debug import debug,error
+import plug
 
 RELEASE_CYCLE=60 * 1000 * 60 # 1 Hour
 DEFAULT_URL = 'https://github.com/canonn-science/EDMC-Canonn/releases'
@@ -99,6 +100,20 @@ class Release(Frame):
         self.update()
         #self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
         
+        debug(config.get('Canonn:RemoveBackup'))
+        
+        if self.rmbackup.get() == 1  and config.get('Canonn:RemoveBackup') != "None":
+            delete_dir=config.get('Canonn:RemoveBackup')
+            debug('Canonn:RemoveBackup {}'.format(delete_dir))
+            try:
+                shutil.rmtree(delete_dir)
+                
+            except:
+                error("Cant delete {}".format(delete_dir))
+                
+            ## lets not keep trying
+            config.set('Canonn:RemoveBackup',"None")
+            
         
     def update(self):    
         self.release_thread()
@@ -157,7 +172,12 @@ class Release(Frame):
                 
                 if self.auto.get() == 1:
                     self.hyperlink['text'] = "Release {}  Installed Please Restart".format(self.latest.get("tag_name"))     
-                    self.installer(self.latest.get("tag_name"))
+                    
+                    if self.installer(self.latest.get("tag_name")):
+                        self.hyperlink['text'] = "Release {}  Installed Please Restart".format(self.latest.get("tag_name"))     
+                    else:
+                        self.hyperlink['text'] = "Release {}  Upgrade Failed".format(self.latest.get("tag_name"))     
+                    
                 else:
                     self.hyperlink['text'] = "Please Upgrade {}".format(self.latest.get("tag_name"))
                     if self.novoices.get() != 1:
@@ -191,18 +211,53 @@ class Release(Frame):
         
     def installer(self,tag_name):
         # need to add some defensive code around this
-        download=requests.get("https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name), stream=True)
-        z = zipfile.ZipFile(StringIO.StringIO(download.content))
-        z.extractall(os.path.dirname(Release.plugin_dir))
         
-        #disable first in case we can't delete it
-        os.rename(Release.plugin_dir,"{}.disabled".format(Release.plugin_dir))
+        new_plugin_dir=os.path.join(os.path.dirname(Release.plugin_dir),"EDMC-Canonn-{}".format(tag_name))
         
-        #keep a backup of the old release
+        
+        if os.path.isdir(new_plugin_dir):
+            error("Download already exists: {}".format(new_plugin_dir))
+            plug.show_error("Canonn upgrade failed")
+            return False
+                
+        try:
+            download=requests.get("https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name), stream=True)
+            z = zipfile.ZipFile(StringIO.StringIO(download.content))
+            z.extractall(os.path.dirname(Release.plugin_dir))
+        except:
+            error("Download failed: {}".format(new_plugin_dir))
+            plug.show_error("Canonn upgrade failed")
+            return False
+        
+        #If we got this far then we have a new plugin so any failures and we will need to delete it
+        
+        #disable the current plugin 
+        try:
+            os.rename(Release.plugin_dir,"{}.disabled".format(Release.plugin_dir))
+            debug("Renamed {} to {}".format(Release.plugin_dir,"{}.disabled".format(Release.plugin_dir)))
+        except:
+            error("Upgrade failed reverting: {}".format(new_plugin_dir))
+            plug.show_error("Canonn upgrade failed")
+            shutil.rmtree(new_plugin_dir)
+            return False
+        
+        
         if self.rmbackup.get() == 1:
-            shutil.rmtree("{}.disabled".format(Release.plugin_dir))
+            config.set('Canonn:RemoveBackup',"{}.disabled".format(Release.plugin_dir))
+            # try:
+                # shutil.rmtree("{}.disabled".format(Release.plugin_dir))
+            # except:
+                # #remove new plugin and name the old one back
+                # error("Deletion failed reverting: {}".format(new_plugin_dir))
+                # plug.show_error("Canonn upgrade failed")
+                # shutil.rmtree(new_plugin_dir)
+                # os.rename("{}.disabled".format(Release.plugin_dir),Release.plugin_dir)
+                # return False
+                
         
-        Release.plugin_dir=os.path.join(os.path.dirname(Release.plugin_dir),"EDMC-Canonn-{}".format(tag_name))
+        Release.plugin_dir=new_plugin_dir
+        
+        return True
         
     @classmethod            
     def get_auto(cls):
@@ -211,20 +266,5 @@ class Release(Frame):
     @classmethod    
     def plugin_start(cls,plugin_dir):
         cls.plugin_dir=plugin_dir
+        
 
-def recursive_overwrite(src, dest, ignore=None):
-    if os.path.isdir(src):
-        if not os.path.isdir(dest):
-            os.makedirs(dest)
-        files = os.listdir(src)
-        if ignore is not None:
-            ignored = ignore(src, files)
-        else:
-            ignored = set()
-        for f in files:
-            if f not in ignored:
-                recursive_overwrite(os.path.join(src, f), 
-                                    os.path.join(dest, f), 
-                                    ignore)
-    else:
-        shutil.copyfile(src, dest)    
