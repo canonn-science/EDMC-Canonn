@@ -6,6 +6,158 @@ from emitter import Emitter
 from urllib import quote_plus
 from debug import Debug
 from debug import debug,error
+from Tkinter import Frame
+import Tkinter as tk
+from config import config
+import os
+import myNotebook as nb
+
+class poiTypes(threading.Thread):
+    def __init__(self,system,callback):
+        threading.Thread.__init__(self)
+        self.system=quote_plus(system.encode('utf8'))
+        self.callback=callback
+
+    def run(self):
+        debug("running poitypes")
+        self.callback(self.system)
+
+
+class CodexTypes(Frame):
+
+    
+
+    def __init__(self, parent,gridrow):
+        "Initialise the ``Patrol``."
+        Frame.__init__(
+            self,
+            parent
+        )
+        
+        self.hidecodexbtn=tk.IntVar(value=config.getint("Canonn:HideCodex"))
+        self.hidecodex=self.hidecodexbtn.get()        
+        
+        self.container=Frame(self)
+        self.container.columnconfigure(1, weight=1)
+        
+        self.images={}
+        self.labels={}
+        
+        self.addimage("Geology",0)
+        self.addimage("Cloud",1)
+        self.addimage("Anomaly",2)
+        self.addimage("Thargoid",3)
+        self.addimage("Biology",4)
+        self.addimage("Guardian",5)
+        self.addimage("None",6)
+        
+        self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
+        self.container.grid(row = 0, column = 0, sticky="NSEW")
+        self.poidata=[]
+        
+    def getdata(self,system):
+    
+        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiTypes?system={}".format(system)
+        debug(url)
+        r = requests.get(url)
+        if r.status_code == requests.codes.ok:
+            self.poidata=r.json()
+        
+                    
+    def addimage(self,name,col):
+        debug("Adding Image {}.gif".format(name))
+        grey="{}_grey".format(name)
+        self.images[name] = tk.PhotoImage(file = os.path.join(CodexTypes.plugin_dir,"icons","{}.gif".format(name)))
+        self.images[grey] = tk.PhotoImage(file = os.path.join(CodexTypes.plugin_dir,"icons","{}.gif".format(grey)))
+        self.labels[name]=tk.Label(self.container,image=self.images.get(grey))
+        self.labels[name].grid(row=0,column=col)
+        
+    def set_label(self,name,enabled):
+        grey="{}_grey".format(name)
+        
+        if enabled:
+            debug("enabling: {}".format(name))
+            setting=name
+        else:
+            setting=grey
+            debug("disabling: {}".format(name))
+            
+        self.labels[name]["image"]=self.images.get(setting)
+        
+    def journal_entry(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
+        if entry.get("event") == "FSDJump":
+            #To avoid having check data we will assume we have some by now
+     
+            self.set_label("Geology",False)
+            self.set_label("Cloud",False)
+            self.set_label("Anomaly",False)
+            self.set_label("Thargoid",False)
+            self.set_label("Biology",False)
+            self.set_label("Guardian",False)
+            self.set_label("None",False)
+
+            if self.poidata:
+                self.grid()
+                for r in self.poidata:
+                    debug(r)
+                    self.set_label(r.get("hud_category"),True)
+            else:
+                self.grid_remove()
+                    
+                
+        
+        if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
+            # go fetch some data.It will 
+            poiTypes(entry.get("StarSystem"),self.getdata).start()
+            self.grid_remove()
+            
+            
+    
+    @classmethod    
+    def plugin_start(cls,plugin_dir):
+        cls.plugin_dir=plugin_dir
+        
+        
+    def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
+        "Called to get a tk Frame for the settings dialog."
+        
+        self.hidecodexbtn=tk.IntVar(value=config.getint("Canonn:HideCodex"))
+        
+        self.hidecodex=self.hidecodexbtn.get()
+                        
+        frame = nb.Frame(parent)
+        frame.columnconfigure(1, weight=1)
+        frame.grid(row = gridrow, column = 0,sticky="NSEW")
+        
+        nb.Label(frame,text="Codex Settings").grid(row=0,column=0,sticky="NW")
+        nb.Checkbutton(frame, text="Hide Codex Icons", variable=self.hidecodexbtn).grid(row = 1, column = 0,sticky="NW")
+        
+        return frame        
+        
+    def prefs_changed(self, cmdr, is_beta):
+        "Called when the user clicks OK on the settings dialog."
+        config.set('Canonn:HideCodex', self.hidecodexbtn.get())      
+        
+        self.hidecodex=self.hidecodexbtn.get()
+                
+        #dont check the retval 
+        self.visible()
+        
+
+    def visible(self):
+        
+        noicons=(self.hidecodex == 1)
+        
+        if noicons:
+            debug("Hiding Codex Icons")
+            self.grid_remove()
+            self.isvisible=False
+            return False
+        else:
+            debug("Showing Codex Icons")
+            self.grid()
+            self.isvisible=True
+            return True                
 
 # experimental
 # submitting to a google cloud function
