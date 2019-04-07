@@ -51,7 +51,8 @@ class CodexTypes(Frame):
         self.addimage("Guardian",5)
         self.addimage("None",6)
         
-        self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
+        #self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
+        self.grid(row = gridrow, column = 0)
         self.container.grid(row = 0, column = 0)
         self.poidata=[]
         self.grid_remove()
