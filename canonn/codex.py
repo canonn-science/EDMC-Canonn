@@ -39,9 +39,12 @@ class CodexTypes(Frame):
         
         self.container=Frame(self)
         self.container.columnconfigure(1, weight=1)
+        self.tooltip=tk.Label(self,text="")
+        self.tooltip.grid(row = 1, column = 0)
         
         self.images={}
         self.labels={}
+        
         
         self.addimage("Geology",0)
         self.addimage("Cloud",1)
@@ -55,7 +58,9 @@ class CodexTypes(Frame):
         self.grid(row = gridrow, column = 0)
         self.container.grid(row = 0, column = 0)
         self.poidata=[]
+        self.tooltip.grid_remove()
         self.grid_remove()
+        
         
     def getdata(self,system):
     
@@ -64,6 +69,22 @@ class CodexTypes(Frame):
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
             self.poidata=r.json()
+            
+    def enter(self,event):
+        tooltips={
+            "Geology": "Geology: Vents and fumeroles",
+            "Cloud": "Lagrange Clouds",
+            "Anomaly": "Anomalous stellar phenomena",
+            "Thargoid": "Thargoid sites or barnacles",
+            "Biology": "Biological surface signals",
+            "Guardian": "Guardian sites",
+            "None": "Unclassified codex entry",
+        }
+        self.tooltip.grid()
+        self.tooltip["text"]=tooltips.get(event.widget["text"])
+        
+    def leave(self,event):
+        self.tooltip.grid_remove()
         
                     
     def addimage(self,name,col):
@@ -71,8 +92,13 @@ class CodexTypes(Frame):
         grey="{}_grey".format(name)
         self.images[name] = tk.PhotoImage(file = os.path.join(CodexTypes.plugin_dir,"icons","{}.gif".format(name)))
         self.images[grey] = tk.PhotoImage(file = os.path.join(CodexTypes.plugin_dir,"icons","{}.gif".format(grey)))
-        self.labels[name]=tk.Label(self.container,image=self.images.get(grey))
+        self.labels[name]=tk.Label(self.container,image=self.images.get(grey),text=name)
         self.labels[name].grid(row=0,column=col)
+        
+        self.labels[name].bind("<Enter>", self.enter)
+        self.labels[name].bind("<Leave>", self.leave)
+        self.labels[name].bind("<ButtonPress>", self.enter)
+        
         
     def set_label(self,name,enabled):
         grey="{}_grey".format(name)
