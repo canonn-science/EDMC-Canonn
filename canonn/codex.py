@@ -52,8 +52,9 @@ class CodexTypes(Frame):
         self.addimage("None",6)
         
         self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
-        self.container.grid(row = 0, column = 0, sticky="NSEW")
+        self.container.grid(row = 0, column = 0)
         self.poidata=[]
+        self.grid_remove()
         
     def getdata(self,system):
     
@@ -141,7 +142,7 @@ class CodexTypes(Frame):
         self.hidecodex=self.hidecodexbtn.get()
                 
         #dont check the retval 
-        self.visible()
+        #self.visible()
         
 
     def visible(self):
