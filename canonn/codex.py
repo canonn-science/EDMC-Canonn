@@ -302,6 +302,9 @@ class codexEmitter(Emitter):
         if not codexEmitter.excludecodices.get(self.entry.get("Name").lower()) and not self.entry.get("Category") == '$Codex_Category_StellarBodies;':
             self.getReportTypes(self.entry.get("EntryID"))    
             url=self.getUrl()
+       
+            # going to take advantage of strapi and execute our google function here
+            gSubmitCodex(self.cmdr, self.is_beta, self.system, self.x,self.y,self.z,self.entry, self.body,self.lat,self.lon,self.client).start()   
             
             jid=self.entry.get("EntryID")
             reportType = codexEmitter.reporttypes.get(str(jid))
@@ -325,4 +328,4 @@ class codexEmitter(Emitter):
 def submit(cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
     if entry["event"] == "CodexEntry" :
         codexEmitter(cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client).start()   
-        gSubmitCodex(cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client).start()   
+       
