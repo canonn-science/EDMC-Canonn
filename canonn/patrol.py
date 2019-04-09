@@ -184,8 +184,8 @@ class CanonnPatrol(Frame):
         )
         self.ships=[]
         
-        self.IMG_PREV = tk.PhotoImage(file = '{}\\icons\\left_arrow.gif'.format(CanonnPatrol.plugin_dir))
-        self.IMG_NEXT = tk.PhotoImage(file = '{}\\icons\\right_arrow.gif'.format(CanonnPatrol.plugin_dir))
+        self.IMG_PREV = tk.PhotoImage(file = u'{}\\icons\\left_arrow.gif'.format(CanonnPatrol.plugin_dir))
+        self.IMG_NEXT = tk.PhotoImage(file = u'{}\\icons\\right_arrow.gif'.format(CanonnPatrol.plugin_dir))
         
         self.patrol_config=os.path.join(Release.plugin_dir,'data','EDMC-Canonn.patrol')
         
