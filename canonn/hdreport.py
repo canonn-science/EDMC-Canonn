@@ -9,9 +9,11 @@ from config import config
 import Tkinter as tk
 from Tkinter import Button
 from Tkinter import Frame
+from systems import Systems
+from urllib import quote_plus
 import glob
 import os
-
+import time
 
 '''
 
@@ -21,6 +23,45 @@ returns from the main menu. We want to record
 
 
 '''
+
+
+class gSubmitHD(threading.Thread):
+    def __init__(self,cmdr,x,y,z,entry):
+        threading.Thread.__init__(self)
+        self.cmdr=quote_plus(cmdr.encode('utf8'))
+        self.system=quote_plus(entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM").encode('utf8'))
+        self.x=x
+        self.y=y
+        self.z=z
+        ts=entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_TIMESTAMP")
+        year=int(ts[0:4])-1286
+        self.eddatetime="{}-{}:00".format(year,ts[4:])
+        debug(self.eddatetime)
+        
+                            
+        self.entry=entry
+        
+        
+
+    def run(self):
+        
+        
+        debug("sending gSubmitCodex")
+        url="https://us-central1-canonn-api-236217.cloudfunctions.net/submitHD?cmdrName={}".format(self.cmdr)
+        url=url+"&systemName={}".format(self.system)
+        url=url+"&x={}".format(self.x)
+        url=url+"&y={}".format(self.y)
+        url=url+"&z={}".format(self.z)
+        url=url+"&z={}".format(self.eddatetime)
+        
+        
+                    
+        r=requests.get(url)
+    
+        if not r.status_code == requests.codes.ok:
+            error("gSubmitHD {} ".format(url))
+            error(r.status_code)
+            error(r.json())
 
 class HDReport(Emitter):
 
@@ -140,6 +181,7 @@ class HDInspector(Frame):
         if entry.get("event") == "Statistics":
             debug("detected")
             submit(self.commander,self.is_beta,None,None,entry,self.client)
+            time.sleep(0.1)
         # else:
             # debug(entry.get("event"))
             
@@ -173,3 +215,5 @@ def submit(cmdr, is_beta, system, station, entry,client):
                     debug("Hyperdiction already recorded here - session ")
                 else:
                     HDReport(cmdr, is_beta, lastsystem,  entry,client).start()   
+                    x,y,z=Systems.edsmGetSystem(lastsystem)
+                    gSubmitHD(cmdr,x,y,z,entry).start()

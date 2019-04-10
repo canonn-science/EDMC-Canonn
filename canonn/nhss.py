@@ -5,6 +5,41 @@ import json
 from emitter import Emitter
 from debug import Debug
 from debug import debug,error
+from systems import Systems
+from urllib import quote_plus
+
+class gSubmitNHSS(threading.Thread):
+    def __init__(self,cmdr,system,x,y,z,threat_level):
+        threading.Thread.__init__(self)
+        self.cmdr=quote_plus(cmdr.encode('utf8'))
+        self.system=quote_plus(system.encode('utf8'))
+        self.x=x
+        self.y=y
+        self.z=z
+        self.threat_level=threat_level
+        
+                            
+        
+        
+        
+
+    def run(self):
+        
+        
+        debug("sending gSubmitCodex")
+        url="https://us-central1-canonn-api-236217.cloudfunctions.net/submitNHSS?cmdrName={}".format(self.cmdr)
+        url=url+"&systemName={}".format(self.system)
+        url=url+"&x={}".format(self.x)
+        url=url+"&y={}".format(self.y)
+        url=url+"&z={}".format(self.z)
+        url=url+"&threat_level={}".format(self.threat_level)
+        
+        r=requests.get(url)
+    
+        if not r.status_code == requests.codes.ok:
+            error("gSubmitHD {} ".format(url))
+            error(r.status_code)
+            error(r.json())
 
 
 '''
@@ -52,6 +87,9 @@ class NHSS(Emitter):
 
         url=self.getUrl()
         self.send(payload,url)
+        
+        x,y,z=Systems.edsmGetSystem(self.system)
+        gSubmitNHSS(self.cmdr,self.system,x,y,z,threatLevel).start()
 
 
 
@@ -87,4 +125,6 @@ def submit(cmdr, is_beta, system, station, entry,client):
                 #we couldnt find teh system so lets define it
                 NHSS.fss[system]={ threatLevel: True}
 
+            
             NHSS(cmdr, is_beta, system,  entry,client).start()
+            
