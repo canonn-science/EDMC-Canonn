@@ -64,7 +64,7 @@ class CodexTypes(Frame):
         
     def getdata(self,system):
     
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiTypes?system={}".format(system)
+        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiList?system={}".format(system)
         debug(url)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
@@ -113,7 +113,7 @@ class CodexTypes(Frame):
         self.labels[name]["image"]=self.images.get(setting)
         
     def journal_entry(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
-        if entry.get("event") == "FSDJump":
+        if entry.get("event")in ("FSDJump") :
             #To avoid having check data we will assume we have some by now
      
             self.set_label("Geology",False)
@@ -139,7 +139,7 @@ class CodexTypes(Frame):
             poiTypes(entry.get("StarSystem"),self.getdata).start()
             self.grid_remove()
             
-            
+        
     
     @classmethod    
     def plugin_start(cls,plugin_dir):
