@@ -18,7 +18,7 @@ from canonn import patrol
 from canonn.systems import Systems
 from canonn.debug import Debug
 from canonn.debug import debug
-
+from canonn.whitelist import whiteList
 
 
 
@@ -88,6 +88,7 @@ def plugin_start(plugin_dir):
     
     
     
+    
     return 'Canonn'
     
 def plugin_stop():
@@ -117,6 +118,8 @@ def plugin_app(parent):
     this.release = release.Release(table,this.version,1)
     this.codexcontrol = codex.CodexTypes(table,2)
     this.patrol = patrol.CanonnPatrol(table,3)
+    whitelist=whiteList(parent)
+    whitelist.fetchData()
     
     
     
@@ -156,6 +159,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     clientreport.submit(cmdr,is_beta,client,entry)
     this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
     this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
+    whiteList.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
     
     # legacy logging to google sheets
     legacy.statistics(cmdr, is_beta, system, station, entry, state)
