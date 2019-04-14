@@ -60,11 +60,12 @@ class CodexTypes(Frame):
         
         self.container=Frame(self)
         self.container.columnconfigure(1, weight=1)
-        self.tooltip=Frame(self)
-        self.tooltip.columnconfigure(1, weight=1)
-        self.tooltip.grid(row = 1, column = 0,sticky="NSEW")
+        #self.tooltip=Frame(self)
+        #self.tooltip.columnconfigure(1, weight=1)
+        #self.tooltip.grid(row = 1, column = 0,sticky="NSEW")
         
-        self.tooltiplist=tk.Frame(self.tooltip)
+        #self.tooltiplist=tk.Frame(self.tooltip)
+        self.tooltiplist=tk.Frame(self)
         
         self.images={}
         self.labels={}
@@ -84,7 +85,8 @@ class CodexTypes(Frame):
         self.grid(row = gridrow, column = 0)
         self.container.grid(row = 0, column = 0)
         self.poidata=[]
-        self.tooltip.grid_remove()
+        #self.tooltip.grid_remove()
+        self.tooltiplist.grid_remove()
         self.grid_remove()
         
         
@@ -104,8 +106,10 @@ class CodexTypes(Frame):
         type=event.widget["text"]
         #clear it if it exists
         for col in self.tooltipcol1:
+            col["text"]=""
             col.grid_remove()
         for col in self.tooltipcol2:
+            col["text"]=""
             col.grid_remove()            
         
         poicount=0
@@ -127,8 +131,8 @@ class CodexTypes(Frame):
                     self.tooltipcol2[poicount]["text"]=poi.get("body")
                     
                 #remember to grid them    
-                self.tooltipcol1[poicount].grid(row=poicount,column=0,columnspan=1)
-                self.tooltipcol2[poicount].grid(row=poicount,column=2)
+                self.tooltipcol1[poicount].grid(row=poicount,column=0,columnspan=1,sticky="NSEW")
+                self.tooltipcol2[poicount].grid(row=poicount,column=1,sticky="NSEW")
                 poicount=poicount+1
                 
                 
@@ -138,12 +142,14 @@ class CodexTypes(Frame):
             self.tooltipcol1[poicount].grid(row=poicount,column=0,columnspan=2)
             self.tooltipcol2[poicount].grid_remove()
         
-        self.tooltip.grid()
-        self.tooltiplist.grid()
+        #self.tooltip.grid(sticky="NSEW")
+        self.tooltiplist.grid(sticky="NSEW")
+        
         ##self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
         
     def leave(self,event):
-        self.tooltip.grid_remove()
+        #self.tooltip.grid_remove()
+        self.tooltiplist.grid_remove()
         
                     
     def addimage(self,name,col):
@@ -263,7 +269,9 @@ class CodexTypes(Frame):
 # submitting to a google cloud function
 class gSubmitCodex(threading.Thread):
     def __init__(self,cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client):
+        
         threading.Thread.__init__(self)
+        #debug("gSubmitCodex({},{},{},{},{},{},{},{},{},{},{})".format((self,cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client)))
         self.cmdr=quote_plus(cmdr.encode('utf8'))
         self.system=quote_plus(system.encode('utf8'))
         self.x=x
@@ -288,6 +296,7 @@ class gSubmitCodex(threading.Thread):
         debug("sending gSubmitCodex")
         url="https://us-central1-canonn-api-236217.cloudfunctions.net/submitCodex?cmdrName={}".format(self.cmdr)
         url=url+"&system={}".format(self.system)
+        url=url+"&body={}".format(self.body)
         url=url+"&x={}".format(self.x)
         url=url+"&y={}".format(self.y)
         url=url+"&z={}".format(self.z)
@@ -304,6 +313,7 @@ class gSubmitCodex(threading.Thread):
         url=url+"&region_name_localised={}".format(self.entry.get("Region_Localised").encode('utf8'))
         url=url+"&is_beta={}".format(self.is_beta)
         
+        debug(url)
                     
         r=requests.get(url)
     
