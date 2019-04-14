@@ -22,10 +22,29 @@ class poiTypes(threading.Thread):
         debug("running poitypes")
         self.callback(self.system)
 
-
+            
+    def recycle(self):
+        print "Recycling Labels"
+        
+        for label in self.lt:
+            label.grid_remove()
+        for label in self.lp:
+            label.grid_remove()            
+            
+        #Frame.destroy(self)
+        
+        
 class CodexTypes(Frame):
 
-    
+    tooltips={
+            "Geology": "Geology: Vents and fumeroles",
+            "Cloud": "Lagrange Clouds",
+            "Anomaly": "Anomalous stellar phenomena",
+            "Thargoid": "Thargoid sites or barnacles",
+            "Biology": "Biological surface signals",
+            "Guardian": "Guardian sites",
+            "None": "Unclassified codex entry",
+    }
 
     def __init__(self, parent,gridrow):
         "Initialise the ``Patrol``."
@@ -34,16 +53,23 @@ class CodexTypes(Frame):
             parent
         )
         
+        self.waiting=True
+        
         self.hidecodexbtn=tk.IntVar(value=config.getint("Canonn:HideCodex"))
         self.hidecodex=self.hidecodexbtn.get()        
         
         self.container=Frame(self)
         self.container.columnconfigure(1, weight=1)
-        self.tooltip=tk.Label(self,text="")
-        self.tooltip.grid(row = 1, column = 0)
+        self.tooltip=Frame(self)
+        self.tooltip.columnconfigure(1, weight=1)
+        self.tooltip.grid(row = 1, column = 0,sticky="NSEW")
+        
+        self.tooltiplist=tk.Frame(self.tooltip)
         
         self.images={}
         self.labels={}
+        self.tooltipcol1=[]
+        self.tooltipcol2=[]
         
         
         self.addimage("Geology",0)
@@ -69,26 +95,59 @@ class CodexTypes(Frame):
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
             self.poidata=r.json()
+            self.waiting=False
+            
+            
             
     def enter(self,event):
-        tooltips={
-            "Geology": "Geology: Vents and fumeroles",
-            "Cloud": "Lagrange Clouds",
-            "Anomaly": "Anomalous stellar phenomena",
-            "Thargoid": "Thargoid sites or barnacles",
-            "Biology": "Biological surface signals",
-            "Guardian": "Guardian sites",
-            "None": "Unclassified codex entry",
-        }
+    
+        type=event.widget["text"]
+        #clear it if it exists
+        for col in self.tooltipcol1:
+            col.grid_remove()
+        for col in self.tooltipcol2:
+            col.grid_remove()            
+        
+        poicount=0
+        
+        # need to initialise if not exists
+        if len(self.tooltipcol1) == 0:
+            self.tooltipcol1.append(tk.Label(self.tooltiplist,text=""))
+            self.tooltipcol2.append(tk.Label(self.tooltiplist,text=""))
+        
+        
+        for poi in self.poidata:
+            if poi.get("hud_category") == type:
+                ## add a new label if it dont exist
+                if len(self.tooltipcol1)==poicount:
+                    self.tooltipcol1.append(tk.Label(self.tooltiplist,text=poi.get("english_name")))
+                    self.tooltipcol2.append(tk.Label(self.tooltiplist,text=poi.get("body")))
+                else:    ## just set the label
+                    self.tooltipcol1[poicount]["text"]=poi.get("english_name")
+                    self.tooltipcol2[poicount]["text"]=poi.get("body")
+                    
+                #remember to grid them    
+                self.tooltipcol1[poicount].grid(row=poicount,column=0,columnspan=1)
+                self.tooltipcol2[poicount].grid(row=poicount,column=2)
+                poicount=poicount+1
+                
+                
+                
+        if poicount ==0:
+            self.tooltipcol1[poicount]["text"]=CodexTypes.tooltips.get(type)
+            self.tooltipcol1[poicount].grid(row=poicount,column=0,columnspan=2)
+            self.tooltipcol2[poicount].grid_remove()
+        
         self.tooltip.grid()
-        self.tooltip["text"]=tooltips.get(event.widget["text"])
+        self.tooltiplist.grid()
+        ##self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
         
     def leave(self,event):
         self.tooltip.grid_remove()
         
                     
     def addimage(self,name,col):
-        debug("Adding Image {}.gif".format(name))
+        
         grey="{}_grey".format(name)
         self.images[name] = tk.PhotoImage(file = os.path.join(CodexTypes.plugin_dir,"icons","{}.gif".format(name)))
         self.images[grey] = tk.PhotoImage(file = os.path.join(CodexTypes.plugin_dir,"icons","{}.gif".format(grey)))
@@ -100,45 +159,60 @@ class CodexTypes(Frame):
         self.labels[name].bind("<ButtonPress>", self.enter)
         
         
-    def set_label(self,name,enabled):
+    def set_image(self,name,enabled):
         grey="{}_grey".format(name)
         
         if enabled:
-            debug("enabling: {}".format(name))
             setting=name
         else:
-            setting=grey
-            debug("disabling: {}".format(name))
+            setting=grey          
             
         self.labels[name]["image"]=self.images.get(setting)
         
-    def journal_entry(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
-        if entry.get("event")in ("FSDJump") :
-            #To avoid having check data we will assume we have some by now
-     
-            self.set_label("Geology",False)
-            self.set_label("Cloud",False)
-            self.set_label("Anomaly",False)
-            self.set_label("Thargoid",False)
-            self.set_label("Biology",False)
-            self.set_label("Guardian",False)
-            self.set_label("None",False)
+    def visualise(self):
+            
+        #we may want to try again if the data hasn't been fetched yet
+        if self.waiting:
+            debug("Still waiting");
+            self.after(1000,self.visualise)
+        else:    
+            
+            self.set_image("Geology",False)
+            self.set_image("Cloud",False)
+            self.set_image("Anomaly",False)
+            self.set_image("Thargoid",False)
+            self.set_image("Biology",False)
+            self.set_image("Guardian",False)
+            self.set_image("None",False)
 
             if self.poidata:
                 self.grid()
                 for r in self.poidata:
                     debug(r)
-                    self.set_label(r.get("hud_category"),True)
+                    self.set_image(r.get("hud_category"),True)
             else:
                 self.grid_remove()
-                    
-                
+            
+            
+        
+    def journal_entry(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
+        debug("CodeTypes journal_entry")
+    
+        if entry.get("event")in ("FSDJump") :
+            #To avoid having check data we will assume we have some by now
+     
+            self.visualise()
         
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             # go fetch some data.It will 
             poiTypes(entry.get("StarSystem"),self.getdata).start()
             self.grid_remove()
             
+        if entry.get("event") in ("Location","StartUp"):
+            debug("Looking for POI data in {}".format(system))
+            poiTypes(system,self.getdata).start()
+            ## lets give it 1 seconds 
+            self.after(1000,self.visualise)
         
     
     @classmethod    
@@ -177,12 +251,10 @@ class CodexTypes(Frame):
         noicons=(self.hidecodex == 1)
         
         if noicons:
-            debug("Hiding Codex Icons")
             self.grid_remove()
             self.isvisible=False
             return False
         else:
-            debug("Showing Codex Icons")
             self.grid()
             self.isvisible=True
             return True                
@@ -236,7 +308,7 @@ class gSubmitCodex(threading.Thread):
         r=requests.get(url)
     
         if not r.status_code == requests.codes.ok:
-            error("gSubmitKills {} ".format(url))
+            error("gSubmitCodex {} ".format(url))
             error(r.status_code)
             error(r.json())
 
