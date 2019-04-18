@@ -22,6 +22,7 @@ from contextlib import closing
 from urllib import quote_plus
 from datetime import datetime
 from release import Release
+from l10n import Locale
 
 
 
@@ -311,7 +312,7 @@ class CanonnPatrol(Frame):
                 self.nearest=self.getNearest(p)               
                 self.hyperlink['text']=self.nearest.get("system")
                 self.hyperlink['url']="https://www.edsm.net/en/system?systemName={}".format(quote_plus(self.nearest.get("system")))
-                self.distance['text']="{}ly".format(round(getDistance(p,self.nearest.get("coords")),2))
+                self.distance['text']="{}ly".format(Locale.stringFromNumber(getDistance(p,self.nearest.get("coords")),2))
                 self.infolink['text']=self.nearest.get("instructions")
                 self.infolink['url']=self.nearest.get("url")
                 
@@ -377,11 +378,11 @@ class CanonnPatrol(Frame):
         
         #debug(bgs)
         if target:
-            retval =  "Canonn Influence {}%{}{}".format(round(float(bgs.get("influence")*100),2),states,update_text)
+            retval =  "Canonn Influence {}%{}{}".format(Locale.stringFromNumber(float(bgs.get("influence")*100),2),states,update_text)
         if  over:
-            retval =   "Canonn Influence {}%{} Check #mission_minor_faction on discord for instructions.{}".format(round(float(bgs.get("influence")*100),2),states,update_text)
+            retval =   "Canonn Influence {}%{} Check #mission_minor_faction on discord for instructions.{}".format(Locale.stringFromNumber(float(bgs.get("influence")*100),2),states,update_text)
         if under:
-            retval =  "Canonn Influence {}%{} Please complete missions for Canonn to increase our influence{}".format(round(float(bgs.get("influence")*100),2),states,update_text)
+            retval =  "Canonn Influence {}%{} Please complete missions for Canonn to increase our influence{}".format(Locale.stringFromNumber(float(bgs.get("influence")*100),2),states,update_text)
 
         debug("{}: {}".format(bgs.get("system_name"),retval))
         return retval    
