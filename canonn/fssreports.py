@@ -76,10 +76,10 @@ class fssEmitter(Emitter):
             
             url=self.getUrl()
             
-            if self.entry.get("SignalName") == "$Warzone_TG;":
+            if  "$Warzone_TG" in self.entry.get("SignalName"):
                 payload=self.getAXPayload()
                 self.modelreport="axczfssreports"
-            elif self.entry.get("SignalName") == "$Fixed_Event_Life_Cloud;":
+            elif "$Fixed_Event_Life_Cloud" in self.entry.get("SignalName"):
                 debug("Life Cloud")
                 payload=self.getLcPayload()
                 self.modelreport="lcfssreports"
