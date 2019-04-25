@@ -104,11 +104,13 @@ class whiteList(Frame):
         
     @classmethod 
     def journal_entry(cls,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
-        
+               
         for event in whiteList.whitelist:
            
-           if cls.matchkeys(event.get("definition"),entry):
+            if cls.matchkeys(event.get("definition"),entry):
+                debug("Match {}".format(entry.get("event")))
                 whiteListSetter(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client).start()
+            
     
     '''
       We will fetch the whitelist on the hour
