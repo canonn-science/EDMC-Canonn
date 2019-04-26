@@ -65,10 +65,17 @@ class Systems():
     }
 
     @classmethod
+    def storeSystem(cls,system,pos):
+        if cls.systemCache.has_key(system):
+            debug("system {} already in cache".format(system))
+        else: 
+            cls.systemCache[system]=pos
+            
+    @classmethod
     def edsmGetSystem(cls,system):
         
         if cls.systemCache.has_key(system):
-        
+            #debug(cls.systemCache[system])
             return cls.systemCache[system]
             
         else:
