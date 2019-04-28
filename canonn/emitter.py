@@ -55,7 +55,7 @@ class Emitter(threading.Thread):
                 debug("Release in github")
                 Emitter.route=Emitter.urls.get("live")
             
-            r=requests.get("{}/clientroutes?clientversion={}".format(Emitter.urls.get("live"),client))
+            r=requests.get("{}/clientroutes?clientVersion={}".format(Emitter.urls.get("live"),client))
             j = r.json()
             if not r.status_code == requests.codes.ok or not j:
                 debug("Using {}".format(Emitter.route))
