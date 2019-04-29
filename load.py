@@ -41,7 +41,7 @@ this.nearloc = {
 myPlugin = "EDMC-Canonn"
 
 
-this.version="2.0.0"
+this.version="2.0.1"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
     
@@ -134,7 +134,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     # capture some stats when we launch not read for that yet
     # startup_stats(cmdr)
 
-    
+    if entry.get("event") == "FSDJump":
+        Systems.storeSystem(system,entry.get("StarPos"))
         
     if ('Body' in entry):
             this.body_name = entry['Body']        
