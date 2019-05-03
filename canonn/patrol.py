@@ -580,8 +580,9 @@ class CanonnPatrol(Frame):
         
         event=json.loads(self.nearest.get("event"))
         for key in event.keys():
-            if not entry.get(key) == event.get(key):
-                return False
+            if event.get(key):
+                if not entry.get(key).upper() == event.get(key).upper():
+                    return False
         
         debug("triggered")
         #autosubmit the form -- allowing for google forms
