@@ -94,7 +94,7 @@ class HDReport(Emitter):
         url=self.getUrl()
         if not HDReport.hdsystems:
             debug("getting old hdsystems")
-            r = requests.get("{}/{}?cmdrName={}&_sort=created_at:DESC&_limit=2000".format(url,self.modelreport,self.cmdr))           
+            r = requests.get("{}/{}?cmdrName={}&_sort=created_at:DESC&_limit=100".format(url,self.modelreport,self.cmdr))           
             for hd in r.json():
                 debug("excluding: {}".format(hd.get("fromSystemName")))
                 HDReport.hdsystems[hd.get("fromSystemName")]=hd.get("fromSystemName")
@@ -157,7 +157,7 @@ class HDInspector(Frame):
         url=self.getUrl()
         if not HDReport.hdsystems:
             debug("getting old hdsystems")
-            r = requests.get("{}/{}?cmdrName={}&_sort=created_at:DESC&_limit=2000".format(url,"hdreports",self.commander))           
+            r = requests.get("{}/{}?cmdrName={}&_sort=created_at:DESC&_limit=100".format(url,"hdreports",self.commander))           
             for hd in r.json():
                 debug("excluding: {}".format(hd.get("fromSystemName")))
                 HDReport.hdsystems[hd.get("fromSystemName")]=hd.get("fromSystemName")
