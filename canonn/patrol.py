@@ -429,7 +429,10 @@ class CanonnPatrol(Frame):
                 
                 type,system,x,y,z,instructions,url,event=row
                 if system != '':
-                    canonnpatrol.append(newPatrol(type,system,(float(x),float(y),float(z)),instructions,self.parseurl(url),event))
+                    try:
+                        canonnpatrol.append(newPatrol(type,system,(float(x),float(y),float(z)),instructions,self.parseurl(url),event))
+                    except:
+                        error("patrol {},{},{},{},{},{},{},{}".format(type,system,x,y,z,instructions,self.parseurl(url),event))
                 else:
                     error("Patrol contains blank lines")
                 
