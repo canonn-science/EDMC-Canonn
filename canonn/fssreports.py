@@ -4,8 +4,10 @@ import sys
 import json
 from emitter import Emitter
 from urllib import quote_plus
+import urllib
 from debug import Debug
 from debug import debug,error
+from systems import Systems
 
 
 class fssEmitter(Emitter):
@@ -34,7 +36,7 @@ class fssEmitter(Emitter):
         return payload           
         
     def getLcPayload(self):
-        payload=self.setPayload()
+        payload=self.setPayload ()
         payload["reportStatus"]="pending"
         payload["systemAddress"]=self.entry.get("SystemAddress")
         payload["signalName"]=self.entry.get("SignalName")
@@ -58,6 +60,30 @@ class fssEmitter(Emitter):
         
         return payload                   
                 
+    def gSubmitAXCZ(self,payload):
+        p=payload.copy()
+        p["x"],p["y"],p["z"]=Systems.edsmGetSystem(payload.get("systemName"))
+        if p.get("isBeta"):
+            p["isBeta"]='Y'
+        else:
+            p["isBeta"]='N'
+           
+        p["rawJson"]=json.dumps(payload.get("rawJson"), ensure_ascii=False).encode('utf8')
+        
+        url="https://us-central1-canonn-api-236217.cloudfunctions.net/submitAXCZ"
+        debug("gSubmitAXCZ {}".format(p.get("systemName")))
+        
+        getstr="{}?{}".format(url,urllib.urlencode(p))
+        
+        debug("gsubmit {}".format(getstr))
+        r=requests.get(getstr)
+        
+        if not r.status_code == requests.codes.ok:
+            error(getstr)
+            error(r.status_code)
+            
+        
+                
     def getExcluded(self):
         if not fssEmitter.excludefss:
             
@@ -78,6 +104,7 @@ class fssEmitter(Emitter):
             
             if  "$Warzone_TG" in self.entry.get("SignalName"):
                 payload=self.getAXPayload()
+                self.gSubmitAXCZ(payload)
                 self.modelreport="axczfssreports"
             elif "$Fixed_Event_Life_Cloud" in self.entry.get("SignalName"):
                 debug("Life Cloud")
