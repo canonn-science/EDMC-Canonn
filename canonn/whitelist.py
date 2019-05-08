@@ -7,7 +7,7 @@ import sys
 import json
 from Tkinter import Frame
 import Tkinter as tk
-
+from urllib import quote_plus
 
 
 class whiteListGetter(threading.Thread):
@@ -62,7 +62,7 @@ class whiteListSetter(threading.Thread):
         url=url+"&lat={}".format(self.lat)        
         url=url+"&lon={}".format(self.lon)        
         url=url+"&is_beta={}".format(self.is_beta)        
-        url=url+"&raw_event={}".format(json.dumps(self.entry))
+        url=url+"&raw_event={}".format(quote_plus(json.dumps(self.entry, ensure_ascii=False).encode('utf8')))
         
         r=requests.get(url)
             
