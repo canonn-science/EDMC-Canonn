@@ -63,6 +63,7 @@ class whiteListSetter(threading.Thread):
         url=url+"&lon={}".format(self.lon)        
         url=url+"&is_beta={}".format(self.is_beta)        
         url=url+"&raw_event={}".format(quote_plus(json.dumps(self.entry, ensure_ascii=False).encode('utf8')))
+        url=url+"&clientVersion={}".format(self.client)
         
         r=requests.get(url)
             
