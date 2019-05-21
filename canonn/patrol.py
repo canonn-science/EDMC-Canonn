@@ -386,10 +386,40 @@ class CanonnPatrol(Frame):
 
         debug("{}: {}".format(bgs.get("system_name"),retval))
         return retval    
-            
-    def getBGSPatrol(self,bgs):
+    
+    
+
+
+        def getBGSOveride(self):    
+        BGSOveride=[]
+        url=""#Set your BGS override link(tsv)        
+        with closing(requests.get(url, stream=True)) as r:
+            reader = csv.reader(r.iter_lines(), delimiter='\t')
+            next(reader)
+            for row in reader:
+                
+                system,x,y,z,TINF,TFAC,Description=row
+                instructions=   Description.format(TFAC,TINF)
+                SystemsOvireden=[]
+               
+                if system != '':
+                    try:
+                        BGSOveride.append(newPatrol("BGSO",system,(float(x),float(y),float(z)),instructions,None,None))
+                        SystemsOvireden.append(system)
+                    except:
+                        error("patrol {},{},{},{},{},{},{},{}".format("BGSO",system,x,y,z,instructions,None,None))
+                else:
+                    error("Patrol contains blank lines")
+        debug(BGSOveride)        
+        return BGSOveride   , SystemsOvireden
+
+
+    def getBGSPatrol(self,bgs,BGSOSys):
         x,y,z=Systems.edsmGetSystem(bgs.get("system_name"))
-        return newPatrol("BGS",bgs.get("system_name"),(x,y,z),self.getBGSInstructions(bgs),"https://elitebgs.app/system/{}".format(bgs.get("system_id")))
+        if bgs.get("system_name") in BGSOSys:
+            return 
+        else:
+            return newPatrol("BGS",bgs.get("system_name"),(x,y,z),self.getBGSInstructions(bgs),"https://elitebgs.app/system/{}".format(bgs.get("system_id")))
             
         
                 
@@ -471,8 +501,11 @@ class CanonnPatrol(Frame):
             patrol_list=[]
             if self.faction != 1:
                 debug("Getting Faction Data")
-                patrol_list.extend(self.getFactionData("Canonn"))
-                patrol_list.extend(self.getFactionData("Canonn Deep Space Research"))
+                BGSO,BGSOSys=self.getBGSOveride()#first variable- for patrol_list, second-for ignore existant systems
+                patrol_list.extend(BGSO)
+                
+                patrol_list.extend(self.getFactionData("Canonn",BGSOSys))
+                patrol_list.extend(self.getFactionData("Canonn Deep Space Research",BGSOSys))
                 
             if self.ships and self.hideships != 1:
                 patrol_list.extend(self.ships)
