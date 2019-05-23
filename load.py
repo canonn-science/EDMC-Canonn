@@ -19,7 +19,8 @@ from canonn.systems import Systems
 from canonn.debug import Debug
 from canonn.debug import debug
 from canonn.whitelist import whiteList
-from canonn import materialReport
+
+from canonn import  materialReport
 
 
 
@@ -161,7 +162,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
     this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
     whiteList.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
-    materialReport.submit(cmdr, is_beta, system, station, entry,client,lat,lon,body,state)
+    materialReport.submit (cmdr, is_beta, system, station, entry,client,lat,lon,body,state)
     
     # legacy logging to google sheets
     legacy.statistics(cmdr, is_beta, system, station, entry, state)
