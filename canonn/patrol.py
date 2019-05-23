@@ -506,6 +506,7 @@ class CanonnPatrol(Frame):
                 
                 patrol_list.extend(self.getFactionData("Canonn",BGSOSys))
                 patrol_list.extend(self.getFactionData("Canonn Deep Space Research",BGSOSys))
+                patrol_list.remove(None)
                 
             if self.ships and self.hideships != 1:
                 patrol_list.extend(self.ships)
