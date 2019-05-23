@@ -9,7 +9,7 @@ from debug import Debug
 from debug import debug,error
 
 '''
-{      Схема у каноннов
+{      
   "system": "string",
   "body": "string",
   "latitude": 0,
@@ -57,7 +57,7 @@ class MeterialsCollected(Emitter):
         #payload["playMode"] = #TODO find method to see play mode
         payload["isbeta"]= self.is_beta
         payload["clientVersion"]= self.client
-        #pauload["state"]=self.state #TODO Дождаться добавления столбца в схему
+        #payload["state"]=self.state 
 
         return payload
 
