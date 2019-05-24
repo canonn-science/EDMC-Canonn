@@ -8,33 +8,7 @@ from emitter import Emitter
 from debug import Debug
 from debug import debug,error
 
-'''
-{      
-  "system": "string",
-  "body": "string",
-  "latitude": 0,
-  "longitude": 0,
-  "category": "string",
-  "journalName": "string",
-  "journalLocalised": "string",
-  "count": 0,
-  "distanceFromMainStar": 0,
-  "playMode": "string",
-  "isBeta": false,
-  "clientVersion": "string"
-}
-{ "timestamp":"2019-05-16T10:59:15Z", 
-"event":"MaterialCollected", 
-"Category":"Encoded", 
-"Name":"compactemissionsdata", 
-"Name_Localised":"Аномальные компактные данные об излучении", 
-"Count":3 }
-'''
 
-# experimental
-# submitting to a google cloud function
-
-                        
               
 
 class MeterialsCollected(Emitter):
@@ -54,7 +28,6 @@ class MeterialsCollected(Emitter):
         #payload["journalLocalised"]=unicode(self.entry.get(u"Name_Localised"))
         payload["count"]=self.entry["Count"]
         #payload["distanceFromMainStar"] = #TODO find method to calculate distance
-        #payload["playMode"] = #TODO find method to see play mode
         payload["isbeta"]= self.is_beta
         payload["clientVersion"]= self.client
         #payload["state"]=self.state 
