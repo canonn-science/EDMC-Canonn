@@ -14,7 +14,7 @@ from debug import debug,error
 class MeterialsCollected(Emitter):
     
     def __init__(self,cmdr, is_beta, system, station, entry,client,lat,lon,body,state,x,y,z):
-        Emitter.__init__(self,cmdr, is_beta, system, None,None,None, entry, body, lat, lon,client)
+        Emitter.__init__(self,cmdr, is_beta, system, x,y,z, entry, body, lat, lon,client)
         self.modelreport="materialreports"
         
     def setPayload(self):
