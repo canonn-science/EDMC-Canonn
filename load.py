@@ -19,8 +19,7 @@ from canonn.systems import Systems
 from canonn.debug import Debug
 from canonn.debug import debug
 from canonn.whitelist import whiteList
-
-from canonn import  materialReport
+from canonn import materialReport
 
 
 
@@ -41,7 +40,8 @@ this.nearloc = {
 
 myPlugin = "EDMC-Canonn"
 
-
+this.SysFactionState=None #variable for state of controling faction
+this.DistFromStarLS=None #take distance to star
 this.version="2.2.0"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
@@ -140,7 +140,26 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         
     if ('Body' in entry):
             this.body_name = entry['Body']        
-        
+    
+            
+    if "SystemFaction" in entry:
+        ''' "SystemFaction": { “Name”:"Mob of Eranin", "FactionState":"CivilLiberty" } }'''
+        SystemFaction=entry.get("SystemFaction")
+        debug(SystemFaction)
+        try:
+            this.SysFactionState= SystemFaction["FactionState"]
+        except: 
+            this.SysFactionState=None
+        debug("SysFaction's state is"+str(this.SysFactionState))
+    
+    if "DistFromStarLS" in entry:
+        '''"DistFromStarLS":144.821411'''
+        try:
+            this.DistFromStarLS=entry.get("DistFromStarLS")
+        except:
+            this.DistFromStarLS=entry.get("DistFromStarLS")
+        debug("DistFromStarLS="+str(this.DistFromStarLS))
+       
     if system:
         x,y,z=Systems.edsmGetSystem(system)
     else:
@@ -148,10 +167,11 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         y=None
         z=None    
     
-    return journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,this.body_name,this.nearloc['Latitude'],this.nearloc['Longitude'],this.client_version)    
-    
+    return journal_entry_wrapper(cmdr, is_beta, system,this.SysFactionState,this.DistFromStarLS, station, entry, state,x,y,z,this.body_name,this.nearloc['Latitude'],this.nearloc['Longitude'],this.client_version)   
+    #Now Journal_entry_wrapper take additional variable this.SysFactionState and  this.DistFromStarLS
+
 # Detect journal events
-def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
+def journal_entry_wrapper(cmdr, is_beta, system,SysFactionState,DistFromStarLS, station, entry, state,x,y,z,body,lat,lon,client):
     factionkill.submit(cmdr, is_beta, system, station, entry,client)
     nhss.submit(cmdr, is_beta, system, station, entry,client)
     hdreport.submit(cmdr, is_beta, system, station, entry,client)
@@ -162,7 +182,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, station, entry, state,x,y,z,bod
     this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
     this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
     whiteList.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
-    materialReport.submit (cmdr, is_beta, system, station, entry,client,lat,lon,body,state,x,y,z)
+    materialReport.submit(cmdr, is_beta, system, station, entry,client,lat,lon,body,SysFactionState,DistFromStarLS,x,y,z)
     
     # legacy logging to google sheets
     legacy.statistics(cmdr, is_beta, system, station, entry, state)

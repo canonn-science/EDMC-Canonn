@@ -13,8 +13,12 @@ from debug import debug,error
 
 class MeterialsCollected(Emitter):
     
-    def __init__(self,cmdr, is_beta, system, station, entry,client,lat,lon,body,state,x,y,z):
-        Emitter.__init__(self,cmdr, is_beta, system, x,y,z, entry, body, lat, lon,client)
+    def __init__(cmdr, is_beta, system, station, entry,client,lat,lon,body,state,x,y,z,DistFromStarLS):
+        self.state=state
+        self.DistFromStarLS=DistFromStarLS
+        debug("MAterial rep FacState "+str(self.state))
+        Emitter.__init__(self,cmdr, is_beta, system, x,y,z, entry, body, lat, lon,client)       
+
         self.modelreport="materialreports"
         
     def setPayload(self):
@@ -24,16 +28,15 @@ class MeterialsCollected(Emitter):
         payload["latitude"]=  self.lat
         payload["longitude"]=  self.lon
         payload["category"]=self.entry["Category"]
-        payload["journalName"]=self.entry["Name"]
-        #payload["journalLocalised"]=unicode(self.entry.get(u"Name_Localised"))
+        payload["journalName"]=self.entry["Name"]        
+        payload["count"]=self.entry["Count"]
+        payload["distanceFromMainStar"] = self.DistFromStarLS
         payload["coordX"] = self.x
         payload["coordY"] = self.y
         payload["coordZ"] = self.z
-        payload["count"]=self.entry["Count"]
-        #payload["distanceFromMainStar"] = #TODO find method to calculate distance
         payload["isbeta"]= self.is_beta
         payload["clientVersion"]= self.client
-        #payload["state"]=self.state 
+        payload["factionState"]=self.state
 
         return payload
 
@@ -41,11 +44,8 @@ class MeterialsCollected(Emitter):
 def matches(d, field, value):
     return field in d and value == d[field]    
     
-'''
-    from canonn import journaldata
-    journaldata.submit(cmdr, system, station, entry)
-'''
-def submit(cmdr, is_beta, system, station, entry,client,lat,lon,body,state):
+
+def submit(cmdr, is_beta, system,SysFactionState,DistFromStarLS, station, entry, state,x,y,z,body,lat,lon,client):
     if entry["event"] == "MaterialCollected" :
-        MeterialsCollected(cmdr, is_beta, system, station, entry,client,lat,lon,body,state).start()   
+        MeterialsCollected(cmdr, is_beta, system, station, entry,client,lat,lon,body,state,x,y,z,DistFromStarLS).start()   
         
