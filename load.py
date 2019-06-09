@@ -134,14 +134,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     '''
     # capture some stats when we launch not read for that yet
     # startup_stats(cmdr)
-
-    if entry.get("event") == "FSDJump":
-        Systems.storeSystem(system,entry.get("StarPos"))
-        
-    if ('Body' in entry):
-            this.body_name = entry['Body']        
-    
-            
     if "SystemFaction" in entry:
         ''' "SystemFaction": { “Name”:"Mob of Eranin", "FactionState":"CivilLiberty" } }'''
         SystemFaction=entry.get("SystemFaction")
@@ -157,8 +149,20 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         try:
             this.DistFromStarLS=entry.get("DistFromStarLS")
         except:
-            this.DistFromStarLS=entry.get("DistFromStarLS")
+            this.DistFromStarLS=None
         debug("DistFromStarLS="+str(this.DistFromStarLS))
+
+
+
+    if entry.get("event") == "FSDJump":
+        Systems.storeSystem(system,entry.get("StarPos"))
+        this.DistFromStarLS=None
+        
+    if ('Body' in entry):
+            this.body_name = entry['Body']        
+    
+            
+
        
     if system:
         x,y,z=Systems.edsmGetSystem(system)
@@ -182,7 +186,7 @@ def journal_entry_wrapper(cmdr, is_beta, system,SysFactionState,DistFromStarLS, 
     this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
     this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
     whiteList.journal_entry(cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client)
-    materialReport.submit(cmdr, is_beta, system, station, entry,client,lat,lon,body,SysFactionState,DistFromStarLS,x,y,z)
+    materialReport.submit(cmdr, is_beta, system,SysFactionState,DistFromStarLS, station, entry, x,y,z,body,lat,lon,client)
     
     # legacy logging to google sheets
     legacy.statistics(cmdr, is_beta, system, station, entry, state)
