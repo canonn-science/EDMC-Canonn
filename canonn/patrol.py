@@ -392,6 +392,7 @@ class CanonnPatrol(Frame):
 
     def getBGSOveride(self):    
         BGSOveride=[]
+        SystemsOvireden=[]
         url="https://docs.google.com/spreadsheets/d/e/2PACX-1vTqwb4MYDrfSuBzRRGpA3R1u0kzKzSPuPBudVukWm4_Ti9G9KPaW2hWdwxwOJ2vHybywVOb-O2-tTBH/pub?gid=0&single=true&output=tsv"#Set your BGS override link(tsv)        
         with closing(requests.get(url, stream=True)) as r:
             reader = csv.reader(r.iter_lines(), delimiter='\t')
@@ -410,7 +411,7 @@ class CanonnPatrol(Frame):
                         error("patrol {},{},{},{},{},{},{},{}".format("BGSO",system,x,y,z,instructions,None,None))
                 else:
                     error("Patrol contains blank lines")
-        debug(BGSOveride)        
+                debug(BGSOveride)           
         return BGSOveride   , SystemsOvireden
 
 
@@ -423,7 +424,7 @@ class CanonnPatrol(Frame):
             
         
                 
-    def getFactionData(self,faction):
+    def getFactionData(self,faction,BGSOSys):
         '''
             We will get Canonn faction data using an undocumented elitebgs api
             NB: It is possible this could get broken so need to contact CMDR Garud 
@@ -435,10 +436,10 @@ class CanonnPatrol(Frame):
         j = requests.get(url).json()
         if j:
             for bgs in j.get("docs")[0].get("faction_presence"):
-                
-                patrol.append(self.getBGSPatrol(bgs))
-        
-        
+                 
+                patrol.append(self.getBGSPatrol(bgs,BGSOSys))
+
+
         return patrol
         
     def parseurl(self,url):
