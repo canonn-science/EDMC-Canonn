@@ -135,7 +135,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     # capture some stats when we launch not read for that yet
     # startup_stats(cmdr)
     if "SystemFaction" in entry:
-        ''' "SystemFaction": { “Name”:"Mob of Eranin", "FactionState":"CivilLiberty" } }'''
+        
         SystemFaction=entry.get("SystemFaction")
         debug(SystemFaction)
         try:

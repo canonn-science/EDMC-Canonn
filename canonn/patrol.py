@@ -390,7 +390,7 @@ class CanonnPatrol(Frame):
     
 
 
-        def getBGSOveride(self):    
+    def getBGSOveride(self):    
         BGSOveride=[]
         url="https://docs.google.com/spreadsheets/d/e/2PACX-1vTqwb4MYDrfSuBzRRGpA3R1u0kzKzSPuPBudVukWm4_Ti9G9KPaW2hWdwxwOJ2vHybywVOb-O2-tTBH/pub?gid=0&single=true&output=tsv"#Set your BGS override link(tsv)        
         with closing(requests.get(url, stream=True)) as r:
