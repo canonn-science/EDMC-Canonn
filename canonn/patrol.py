@@ -392,7 +392,7 @@ class CanonnPatrol(Frame):
 
         def getBGSOveride(self):    
         BGSOveride=[]
-        url=""#Set your BGS override link(tsv)        
+        url="https://docs.google.com/spreadsheets/d/e/2PACX-1vTqwb4MYDrfSuBzRRGpA3R1u0kzKzSPuPBudVukWm4_Ti9G9KPaW2hWdwxwOJ2vHybywVOb-O2-tTBH/pub?gid=0&single=true&output=tsv"#Set your BGS override link(tsv)        
         with closing(requests.get(url, stream=True)) as r:
             reader = csv.reader(r.iter_lines(), delimiter='\t')
             next(reader)
