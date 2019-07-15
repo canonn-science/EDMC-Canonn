@@ -246,6 +246,11 @@ class CanonnPatrol(Frame):
         self.nearest={}
         
         self.system=""
+        
+        self.body=""
+        self.lat=""
+        self.lon=""
+        
         self.started=False
         
         # wait 10 seconds before updatinb the ui
@@ -314,7 +319,7 @@ class CanonnPatrol(Frame):
                 self.hyperlink['url']="https://www.edsm.net/en/system?systemName={}".format(quote_plus(self.nearest.get("system")))
                 self.distance['text']="{}ly".format(Locale.stringFromNumber(getDistance(p,self.nearest.get("coords")),2))
                 self.infolink['text']=self.nearest.get("instructions")
-                self.infolink['url']=self.nearest.get("url")
+                self.infolink['url']=self.parseurl(self.nearest.get("url"))
                 
                 self.infolink.grid()
                 self.distance.grid()
@@ -448,6 +453,21 @@ class CanonnPatrol(Frame):
         '''
         r = url.replace('{CMDR}',self.cmdr)
         
+        # We will need to initialise to "" if not 
+        
+        if not self.lat:
+            self.lat = ""
+        if not self.lon:
+            self.lon = ""            
+        if not self.body:
+            self.body = ""                        
+        
+        r = r.replace('{LAT}',str(self.lat))
+        r = r.replace('{LON}',str(self.lon))
+        r = r.replace('{BODY}',self.body)
+        
+        
+        
         return r
         
     def getCanonnPatrol(self):    
@@ -461,9 +481,9 @@ class CanonnPatrol(Frame):
                 type,system,x,y,z,instructions,url,event=row
                 if system != '':
                     try:
-                        canonnpatrol.append(newPatrol(type,system,(float(x),float(y),float(z)),instructions,self.parseurl(url),event))
+                        canonnpatrol.append(newPatrol(type,system,(float(x),float(y),float(z)),instructions,url,event))
                     except:
-                        error("patrol {},{},{},{},{},{},{},{}".format(type,system,x,y,z,instructions,self.parseurl(url),event))
+                        error("patrol {},{},{},{},{},{},{},{}".format(type,system,x,y,z,instructions,url,event))
                 else:
                     error("Patrol contains blank lines")
                 
@@ -634,7 +654,12 @@ class CanonnPatrol(Frame):
     def journal_entry(self,cmdr, is_beta, system, station, entry, state,x,y,z,body,lat,lon,client):
         # We don't care what the journal entry is as long as the system has changed.
         
-        
+        self.body=body
+        self.lat=lat
+        self.lon=lon
+        self.x=x
+        self.y=y
+        self.z=z
         
         if system and not self.started:
             debug("Patrol download cycle commencing")
@@ -650,6 +675,9 @@ class CanonnPatrol(Frame):
             self.update_ui()
             if self.nearest and self.copypatrol == 1:
                 copyclip(self.nearest.get("system"))
+        
+        if body:
+            self.update_ui()
         # else:
             # error("nope {}".format(entry.get("event")))
             # error(system)
