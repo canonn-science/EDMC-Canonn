@@ -277,9 +277,14 @@ class gSubmitCodex(threading.Thread):
         self.x=x
         self.y=y
         self.z=z
-        self.body=quote_plus(body.encode('utf8'))
-        self.lat=lat
-        self.lon=lon
+        self.body=""
+        self.lat=""
+        self.lon=""
+        if body:
+            self.body=quote_plus(body.encode('utf8'))
+        if lat:    
+            self.lat=lat
+            self.lon=lon
         
         if is_beta:
             self.is_beta = 'Y'

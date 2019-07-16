@@ -42,7 +42,7 @@ myPlugin = "EDMC-Canonn"
 
 this.SysFactionState=None #variable for state of controling faction
 this.DistFromStarLS=None #take distance to star
-this.version="2.3.0"
+this.version="2.3.1"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
     
