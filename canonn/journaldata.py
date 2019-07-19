@@ -36,6 +36,7 @@ class CanonnJournal(Emitter):
         payload["cmdrName"]=self.cmdr  
         payload["rawJson"]=self.entry
         payload["eventName"]=self.entry["event"]
+        payload["eventAltName"]=self.entry["Name"]
         payload["clientVersion"]= self.client
         payload["isBeta"]= self.is_beta
         return payload
@@ -61,6 +62,7 @@ class CanonnJournal(Emitter):
         payload["cmdrName"]=self.cmdr  
         payload["rawJson"]=self.entry
         payload["eventName"]=self.entry["event"]
+        payload["eventAltName"]=self.entry["Name"]
         payload["clientVersion"]= self.client
         payload["isBeta"]= self.is_beta
         
