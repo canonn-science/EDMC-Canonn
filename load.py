@@ -42,7 +42,7 @@ myPlugin = "EDMC-Canonn"
 
 this.SysFactionState=None #variable for state of controling faction
 this.DistFromStarLS=None #take distance to star
-this.version="2.2.1"
+this.version="2.3.1"
 this.client_version="{}.{}".format(myPlugin,this.version)
 this.body_name=None
     
@@ -210,9 +210,13 @@ def dashboard_entry(cmdr, is_beta, entry):
             this.nearloc['Latitude'] = entry['Latitude']
             this.nearloc['Longitude'] = entry['Longitude']
     else:
-        this.body_name = None
         this.nearloc['Latitude'] = None
         this.nearloc['Longitude'] = None    
+        
+    if entry.get("BodyName"):
+        this.body_name=entry.get("BodyName")
+    else:
+        this.body_name = None        
     
 def cmdr_data(data, is_beta):
     """

@@ -83,7 +83,7 @@ class CodexTypes(Frame):
         
         #self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.grid(row = gridrow, column = 0)
-        self.container.grid(row = 0, column = 0)
+        self.container.grid(row = 0, column = 0, sticky="W")
         self.poidata=[]
         #self.tooltip.grid_remove()
         self.tooltiplist.grid_remove()
@@ -277,9 +277,14 @@ class gSubmitCodex(threading.Thread):
         self.x=x
         self.y=y
         self.z=z
-        self.body=quote_plus(body.encode('utf8'))
-        self.lat=lat
-        self.lon=lon
+        self.body=""
+        self.lat=""
+        self.lon=""
+        if body:
+            self.body=quote_plus(body.encode('utf8'))
+        if lat:    
+            self.lat=lat
+            self.lon=lon
         
         if is_beta:
             self.is_beta = 'Y'
