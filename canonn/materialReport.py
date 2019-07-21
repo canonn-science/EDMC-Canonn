@@ -34,9 +34,9 @@ class MaterialsCollected(Emitter):
             payload["latitude"]=  self.lat
             payload["longitude"]=  self.lon
         if self.entry["Category"]=="Encoded":
-            payload["enum"]="scanned"
+            payload["collectedFrom"]="scanned"
         else: 
-            payload["enum"]="collected"
+            payload["collectedFrom"]="collected"
         payload["category"]=self.entry["Category"]
         payload["journalName"]=self.entry["Name"]        
         payload["count"]=self.entry["Count"]
@@ -73,7 +73,7 @@ class MaterialsReward(Emitter):
             payload["body"]=  None
             payload["latitude"]=  self.lat
             payload["longitude"]=  self.lon
-        payload["enum"]="missionReward"
+        payload["collectedFrom"]="missionReward"
         payload["category"]=self.entry["MaterialsReward"][0]["Category"]
         payload["journalName"]=self.entry["MaterialsReward"][0]["Name"]
         #payload["journalLocalised"]=unicode(self.entry["MaterialsReward"][0].get("Name_Localised"))
