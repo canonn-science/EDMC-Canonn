@@ -83,7 +83,7 @@ class CodexTypes(Frame):
         
         #self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.grid(row = gridrow, column = 0)
-        self.container.grid(row = 0, column = 0)
+        self.container.grid(row = 0, column = 0, sticky="W")
         self.poidata=[]
         #self.tooltip.grid_remove()
         self.tooltiplist.grid_remove()
