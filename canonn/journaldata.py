@@ -31,6 +31,14 @@ class CanonnJournal(Emitter):
         payload["rawJson"] = self.entry
         payload["eventName"] = self.entry["event"]
         payload["eventAltName"] = self.entry.get("Name")
+        if self.entry.get("BodyName") != None:
+            payload["bodyName"] = self.entry.get("BodyName")
+            payload["latitude"] = self.entry.get("Latitude")
+            payload["longitude"] = self.entry.get("Longitude")
+        else:
+            payload["bodyName"] = None
+            payload["latitude"] = None
+            payload["longitude"] = None
         payload["clientVersion"] = self.client
         payload["isBeta"] = self.is_beta
         return payload
@@ -57,6 +65,14 @@ class CanonnJournal(Emitter):
         payload["rawJson"] = self.entry
         payload["eventName"] = self.entry["event"]
         payload["eventAltName"] = self.entry.get("Name")
+        if self.entry.get("BodyName") != None:
+            payload["bodyName"] = self.entry.get("BodyName")
+            payload["latitude"] = self.entry.get("Latitude")
+            payload["longitude"] = self.entry.get("Longitude")
+        else:
+            payload["bodyName"] = None
+            payload["latitude"] = None
+            payload["longitude"] = None
         payload["clientVersion"] = self.client
         payload["isBeta"] = self.is_beta
 
