@@ -52,7 +52,10 @@ class MaterialsCollected(Emitter):
 
 
 class MaterialsReward(Emitter):
-    
+    Category={
+        "$MICRORESOURCE_CATEGORY_Manufactured;":"Manufactured",
+        "$MICRORESOURCE_CATEGORY_Encoded;":"Encoded",
+        "$MICRORESOURCE_CATEGORY_Raw;":"Raw",}
     def __init__(self,cmdr, is_beta, system, station, entry,client,lat,lon,body,state,x,y,z,DistFromStarLS):
         self.state=state
         self.DistFromStarLS=DistFromStarLS
@@ -74,7 +77,7 @@ class MaterialsReward(Emitter):
             payload["latitude"]=  self.lat
             payload["longitude"]=  self.lon
         payload["collectedFrom"]="missionReward"
-        payload["category"]=self.entry["MaterialsReward"][0]["Category"]
+        payload["category"]=Category[self.entry["MaterialsReward"][0]["Category"]]
         payload["journalName"]=self.entry["MaterialsReward"][0]["Name"]
         #payload["journalLocalised"]=unicode(self.entry["MaterialsReward"][0].get("Name_Localised"))
         payload["count"]=self.entry["MaterialsReward"][0]["Count"]
