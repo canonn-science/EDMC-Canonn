@@ -454,25 +454,29 @@ class CanonnPatrol(Frame):
         '''
         We will provided some sunstitute variables for the urls
         '''
-        r = url.replace('{CMDR}',self.cmdr)
+        if url:
+            r = url.replace('{CMDR}',self.cmdr)
 
-        # We will need to initialise to "" if not
+            # We will need to initialise to "" if not
 
-        if not self.lat:
-            self.lat = ""
-        if not self.lon:
-            self.lon = ""
-        if not self.body:
-            self.body = ""
+            if not self.lat:
+                self.lat = ""
+            if not self.lon:
+                self.lon = ""
+            if not self.body:
+                self.body = ""
 
-        r = r.replace('{LAT}',str(self.lat))
-        r = r.replace('{LON}',str(self.lon))
-        r = r.replace('{BODY}',self.body)
+            r = r.replace('{LAT}',str(self.lat))
+            r = r.replace('{LON}',str(self.lon))
+            r = r.replace('{BODY}',self.body)
 
 
 
-        return r
-
+            return r
+        else:
+            return url
+            
+            
     def getCanonnPatrol(self):
         canonnpatrol=[]
         url="https://docs.google.com/spreadsheets/d/e/2PACX-1vQgIlIQE8XMugQVchWr417uB9yvOcgn1ak0LGxwmNnGg2wjJudNXrntpppcH_KFR_xTuPsKPS6uBvSb/pub?gid=0&single=true&output=tsv"
