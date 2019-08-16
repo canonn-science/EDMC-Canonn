@@ -134,6 +134,16 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             this.SysFactionState = None
         debug("SysFaction's state is" + str(this.SysFactionState))
 
+    if "SystemAllegiance" in entry:
+
+        SystemAllegiance = entry.get("SystemAllegiance")
+        debug(SystemAllegiance)
+        try:
+            this.SysFactionAllegiance = SystemAllegiance
+        except:
+            this.SysFactionAllegiance = None
+        debug("SysFaction's allegiance is" + str(this.SysFactionAllegiance))
+
     if "DistFromStarLS" in entry:
         '''"DistFromStarLS":144.821411'''
         try:
@@ -156,14 +166,14 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         y = None
         z = None
 
-    return journal_entry_wrapper(cmdr, is_beta, system, this.SysFactionState, this.DistFromStarLS, station, entry,
+    return journal_entry_wrapper(cmdr, is_beta, system, this.SysFactionState, this.SysFactionAllegiance, this.DistFromStarLS, station, entry,
                                  state, x, y, z, this.body_name, this.nearloc['Latitude'], this.nearloc['Longitude'],
                                  this.client_version)
-    # Now Journal_entry_wrapper take additional variable this.SysFactionState and  this.DistFromStarLS
+    # Now Journal_entry_wrapper take additional variable this.SysFactionState, this.SysFactionAllegiance, and this.DistFromStarLS
 
 
 # Detect journal events
-def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, DistFromStarLS, station, entry, state, x, y, z, body,
+def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, state, x, y, z, body,
                           lat, lon, client):
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
@@ -175,7 +185,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, DistFromStarLS
     this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
     this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
     whiteList.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    materialReport.submit(cmdr, is_beta, system, SysFactionState, DistFromStarLS, station, entry, x, y, z, body, lat,
+    materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, x, y, z, body, lat,
                           lon, client)
 
     # legacy logging to google sheets
