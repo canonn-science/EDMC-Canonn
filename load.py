@@ -38,6 +38,7 @@ this.nearloc = {
 myPlugin = "EDMC-Canonn"
 
 this.SysFactionState = None  # variable for state of controling faction
+this.SysFactionAllegiance = None # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 this.version = "2.3.2"
 this.client_version = "{}.{}".format(myPlugin, this.version)
