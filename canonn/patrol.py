@@ -126,6 +126,11 @@ class UpdateThread(threading.Thread):
 def decode_unicode_references(data):
     return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
 
+def get(list,index):
+    try:
+        return list[index]
+    except:
+        return None
 
 class PatrolLink(HyperlinkLabel):
 
@@ -257,6 +262,7 @@ class CanonnPatrol(Frame):
         self.started = False
 
         # wait 10 seconds before updatinb the ui
+        debug('self.after(1000, self.update_ui)')
         self.after(1000, self.update_ui)
 
     @classmethod
@@ -269,6 +275,7 @@ class CanonnPatrol(Frame):
 
     def patrol_update(self):
         UpdateThread(self).start()
+        debug('self.after(CYCLE, self.patrol_update)')
         self.after(CYCLE, self.patrol_update)
 
     def patrol_next(self, event):
@@ -302,8 +309,9 @@ class CanonnPatrol(Frame):
                 copyclip(self.nearest.get("system"))
 
     def update_ui(self):
-        # rerun every 10 seconds
-        self.after(1000, self.update_ui)
+        # rerun every 5 seconds
+        debug('in update_ui self.after(5000, self.update_ui)')
+        self.after(5000, self.update_ui)
         self.update()
 
     def update(self):
@@ -499,15 +507,23 @@ class CanonnPatrol(Frame):
 
         return canonnpatrol
 
-    def getCanonnPatrol(self):
+    def getTsvPatrol(self,url):
         canonnpatrol = []
-        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgIlIQE8XMugQVchWr417uB9yvOcgn1ak0LGxwmNnGg2wjJudNXrntpppcH_KFR_xTuPsKPS6uBvSb/pub?gid=0&single=true&output=tsv"
+
         with closing(requests.get(url, stream=True)) as r:
             reader = csv.reader(r.iter_lines(), delimiter='\t')
             next(reader)
             for row in reader:
 
-                type, system, x, y, z, instructions, url, event = row
+
+                type=get(row,0)
+                system=get(row,1)
+                x=get(row,2)
+                y=get(row,3)
+                z=get(row,4)
+                instructions=get(row,5)
+                url=get(row,6)
+                event=get(row,7)
                 if system != '':
                     try:
                         canonnpatrol.append(
@@ -517,8 +533,30 @@ class CanonnPatrol(Frame):
                 else:
                     error("Patrol contains blank lines")
 
-        canonnpatrol = canonnpatrol+self.getJsonPatrol("https://us-central1-canonn-api-236217.cloudfunctions.net/codex_gap_patrol")
-        canonnpatrol = canonnpatrol + self.getJsonPatrol("https://us-central1-canonn-api-236217.cloudfunctions.net/edsm_gap_patrol")
+        return canonnpatrol
+
+    def getCanonnPatrol(self):
+        canonnpatrol = []
+        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsi1Vbfx4Sk2msNYiqo0PVnW3VHSrvvtIRkjT-JvH_oG9fP67TARWX2jIjehFHKLwh4VXdSh0atk3J/pub?gid=0&single=true&output=tsv"
+        with closing(requests.get(url, stream=True)) as r:
+            reader = csv.reader(r.iter_lines(), delimiter='\t')
+            next(reader)
+            for row in reader:
+
+                id,	enabled, description, type, link = row
+                if enabled == 'Y':
+                    if type == 'json':
+                        debug("{} Patrol enabled".format(description))
+                        canonnpatrol = canonnpatrol + self.getJsonPatrol(link)
+                    elif  type == 'tsv':
+                        debug("{} Patrol enabled".format(description))
+                        canonnpatrol = canonnpatrol + self.getTsvPatrol(link)
+                    else:
+                        debug("no patrol {}".format(row))
+                else:
+                    debug("{} Patrol disabled".format(description))
+
+
         return canonnpatrol
 
     def keyval(self, k):
