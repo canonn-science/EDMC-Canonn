@@ -703,9 +703,12 @@ class CanonnPatrol(Frame):
         # exit if the events dont match
 
         event = json.loads(self.nearest.get("event"))
+        debug("event {}".format(event))
         for key in event.keys():
             if event.get(key):
-                if not entry.get(key).upper() == event.get(key).upper():
+                debug("event key {} value {}".format(key,event.get(key)))
+                debug("entry key {} value {}".format(key, entry.get(key)))
+                if not str(entry.get(key)).upper() == str(event.get(key)).upper():
                     return False
 
         debug("triggered")
