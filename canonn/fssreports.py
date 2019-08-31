@@ -8,12 +8,17 @@ import urllib
 from debug import Debug
 from debug import debug,error
 from systems import Systems
+import random
+import time
+
+
 
 
 class fssEmitter(Emitter):
     types={}
     reporttypes={}
     excludefss={}
+    fssFlag=False
     
     def __init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client):
         Emitter.__init__(self,cmdr, is_beta, system, x,y,z, entry, body,lat,lon,client)
@@ -85,12 +90,21 @@ class fssEmitter(Emitter):
         
                 
     def getExcluded(self):
-        if not fssEmitter.excludefss:
-            
-            r=requests.get("{}/excludefsses?_limit=1000".format(self.getUrl()))  
+
+        # sleep a random amount of time to avoid race conditions
+        timeDelay = random.randrange(0, 100)
+        time.sleep(1/timeDelay)
+        if not fssEmitter.fssFlag:
+            fssEmitter.fssFlag=True
+            debug("Getting FSS exclusions")
+            r=requests.get("{}/excludefsses?_limit=1000".format(self.getUrl()))
+            debug("{}/excludefsses?_limit=1000".format(self.getUrl()))
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     fssEmitter.excludefss[exc.get("fssName")]=True
+            else:
+                debug("FFS exclusion failed")
+                debug("status: {}".format(r.status_code))
                     
     def run(self):
         
