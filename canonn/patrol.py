@@ -707,7 +707,7 @@ class CanonnPatrol(Frame):
         for key in event.keys():
             if event.get(key):
                 debug("event key {} value {}".format(key,event.get(key)))
-                debug("entry key {} value {}".format(key, entry.get(key)))
+                
                 if not str(entry.get(key)).upper() == str(event.get(key)).upper():
                     return False
 
