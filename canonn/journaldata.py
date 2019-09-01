@@ -28,6 +28,7 @@ class CanonnJournal(Emitter):
         self.is_beta = is_beta
         self.entry = entry.copy()
         self.client = client
+        self.eventAltName = entry.get("Name")
         if entry.get("bodyName"):
             self.body = entry.get("BodyName")
         else:
@@ -50,6 +51,7 @@ class CanonnJournal(Emitter):
         payload["cmdrName"] = self.cmdr
         payload["rawJson"] = self.entry
         payload["eventName"] = self.entry["event"]
+        payload["eventAltName"] = self.eventAltName
         payload["clientVersion"] = self.client
         payload["isBeta"] = self.is_beta
         if self.body:
@@ -60,6 +62,7 @@ class CanonnJournal(Emitter):
 
     def run(self):
         url = self.getUrl()
+        # Plan to migrate this over to use eventAltName in the future, no ETA yet pending CAPIv2 changes
         if not CanonnJournal.exclusions:
             debug("getting journal excludes")
             tempexcludes = {}
@@ -79,6 +82,7 @@ class CanonnJournal(Emitter):
         payload["cmdrName"] = self.cmdr
         payload["rawJson"] = self.entry
         payload["eventName"] = self.entry["event"]
+        payload["eventAltName"] = self.eventAltName
         payload["clientVersion"] = self.client
         if self.body:
             payload["BodyName"] = self.body
