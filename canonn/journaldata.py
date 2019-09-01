@@ -28,6 +28,7 @@ class CanonnJournal(Emitter):
         self.is_beta = is_beta
         self.entry = entry.copy()
         self.client = client
+        self.eventAltName = entry.get("Name")
         if entry.get("bodyName"):
             self.body = entry.get("BodyName")
         else:
@@ -50,7 +51,7 @@ class CanonnJournal(Emitter):
         payload["cmdrName"] = self.cmdr
         payload["rawJson"] = self.entry
         payload["eventName"] = self.entry["event"]
-        payload["eventAltName"] = self.entry["Name"]
+        payload["eventAltName"] = self.eventAltName
         payload["clientVersion"] = self.client
         payload["isBeta"] = self.is_beta
         if self.body:
@@ -81,7 +82,7 @@ class CanonnJournal(Emitter):
         payload["cmdrName"] = self.cmdr
         payload["rawJson"] = self.entry
         payload["eventName"] = self.entry["event"]
-        payload["eventAltName"] = self.entry["Name"]
+        payload["eventAltName"] = self.eventAltName
         payload["clientVersion"] = self.client
         if self.body:
             payload["BodyName"] = self.body
