@@ -5,7 +5,27 @@ import json
 from debug import Debug
 from debug import debug,error
 
+class postJson(threading.Thread):
+    def __init__(self, url,payload):
+        threading.Thread.__init__(self)
+        self.url=url
+        self.payload=payload
 
+    def run(self):
+        debug("emitter.post")
+
+        r = requests.post(self.url, data=json.dumps(self.payload, ensure_ascii=False).encode('utf8'),
+        headers={"content-type": "application/json"})
+        if not r.status_code == requests.codes.ok:
+            error(json.dumps(self.payload))
+            error(r.status_code)
+            error(r.json())
+        else:
+            debug("emitter.post success")
+            debug(json.dumps(r.json(),indent=4))
+
+def post(url,payload):
+    postJson(url,payload).start()
 
 class Emitter(threading.Thread):
     '''
