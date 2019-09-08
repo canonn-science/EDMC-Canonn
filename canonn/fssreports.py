@@ -92,7 +92,7 @@ class fssEmitter(Emitter):
     def getExcluded(self):
 
         # sleep a random amount of time to avoid race conditions
-        timeDelay = random.randrange(0, 100)
+        timeDelay = random.randrange(1, 100)
         time.sleep(1/timeDelay)
         if not fssEmitter.fssFlag:
             fssEmitter.fssFlag=True
