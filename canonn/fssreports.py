@@ -88,7 +88,8 @@ class fssEmitter(Emitter):
 
         # sleep a random amount of time to avoid race conditions
         timeDelay = random.randrange(1, 100)
-        time.sleep(1 / timeDelay)
+        time.sleep(1/timeDelay)
+
         if not fssEmitter.fssFlag:
             fssEmitter.fssFlag = True
             debug("Getting FSS exclusions")
@@ -119,6 +120,7 @@ class fssEmitter(Emitter):
                 self.modelreport = "axczfssreports"
             elif "$Fixed_Event_Life_Cloud" in self.entry.get("SignalName"):
                 debug("Life Cloud")
+
                 payload = self.getLcPayload()
                 self.modelreport = "lcfssreports"
             else:
