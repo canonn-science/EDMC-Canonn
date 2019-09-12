@@ -1,17 +1,17 @@
-import threading
+import Tkinter as tk
+import emitter
+import json
+import myNotebook as nb
+import os
 import requests
 import sys
-import json
-from emitter import Emitter
-import emitter
-from urllib import quote_plus
+import threading
+from Tkinter import Frame
+from config import config
 from debug import Debug
 from debug import debug, error
-from Tkinter import Frame
-import Tkinter as tk
-from config import config
-import os
-import myNotebook as nb
+from emitter import Emitter
+from urllib import quote_plus
 
 
 class poiTypes(threading.Thread):
@@ -358,6 +358,14 @@ class codexEmitter(Emitter):
 
         return payload
 
+    def split_nearest_destination(self, nearest_destination):
+        dummy, b, c = nearest_destination.split('#')
+        dummy, signal_type = b.split("=")
+        dummy, index_id = c.split("=")
+        signal_type = signal_type[:-1]
+        index_id = index_id[:-1]
+        return signal_type, index_id
+
     def getBodyPayload(self, name):
         payload = self.getSystemPayload(name)
         payload["bodyName"] = self.body
@@ -366,6 +374,11 @@ class codexEmitter(Emitter):
         payload["coordZ"] = self.z
         payload["latitude"] = self.lat
         payload["longitude"] = self.lon
+
+        nearest_destination = self.entry.get("NearestDestination")
+        if nearest_destination:
+            signal_type, index = self.split_nearest_destination(nearest_destination)
+            payload["frontierID"] = index
 
         return payload
 
