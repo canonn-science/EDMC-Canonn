@@ -342,6 +342,12 @@ class codexEmitter(Emitter):
     reporttypes = {}
     excludecodices = {}
 
+    def split_region(self,region):
+        if region:
+            return region.replace("$Codex_RegionName_","").replace(';','')
+        else:
+            return None
+
     def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
         Emitter.__init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
         self.modelreport = "xxreports"
@@ -355,6 +361,7 @@ class codexEmitter(Emitter):
         payload["reportStatus"] = "pending"
         payload["isBeta"] = self.is_beta
         payload["clientVersion"] = self.client
+        payload["regionID"]=self.split_region(self.entry.get("Region"))
 
         return payload
 
@@ -374,6 +381,7 @@ class codexEmitter(Emitter):
         payload["coordZ"] = self.z
         payload["latitude"] = self.lat
         payload["longitude"] = self.lon
+        payload["regionID"] = self.split_region(self.entry.get("Region"))
 
         nearest_destination = self.entry.get("NearestDestination")
         if nearest_destination:
@@ -396,10 +404,12 @@ class codexEmitter(Emitter):
         payload["systemAddress"] = self.entry.get("SystemAddress")
         payload["voucherAmount"] = self.entry.get("VoucherAmount")
         payload["rawJson"] = self.entry
+
         del payload["type"]
         del payload["reportStatus"]
         del payload["userType"]
         del payload["reportType"]
+        del payload["regionID"]
 
         return payload
 
@@ -476,3 +486,46 @@ class codexEmitter(Emitter):
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     if entry["event"] == "CodexEntry":
         codexEmitter(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
+
+    if entry.get("event") == "SendText" and entry.get("Message") == "codextest":
+        debug("detected test request")
+        testentry = {
+            "timestamp": "2019-09-12T09:01:35Z", "event": "CodexEntry", "EntryID": 2100101,
+            "Name": "$Codex_Ent_Thargoid_Barnacle_01_Name;", "Name_Localised": "Common Thargoid Barnacle",
+            "SubCategory": "$Codex_SubCategory_Organic_Structures;",
+            "SubCategory_Localised": "Organic structures", "Category": "$Codex_Category_Biology;",
+            "Category_Localised": "Biological and Geological", "Region": "$Codex_RegionName_18;",
+            "Region_Localised": "Inner Orion Spur", "System": "Merope", "SystemAddress": 224644818084,
+            "NearestDestination": "$SAA_Unknown_Signal:#type=$SAA_SignalType_Thargoid;:#index=1;",
+            "NearestDestination_Localised": "Surface signal: Thargoid (1)"
+        }
+        submit("Factabulous Altimus", False, 'Merope', -78.59375, -149.625, -340.53125, testentry,
+               'Merope 2 a', 2.656142, 143.024597, client)
+        testentry = {
+            "timestamp": "2019-09-12T14:46:03Z", "event": "CodexEntry", "EntryID": 2205002,
+             "Name": "$Codex_Ent_S_Seed_SdTp05_Bl_Name;", "Name_Localised": "Caeruleum Chalice Pod",
+             "SubCategory": "$Codex_SubCategory_Organic_Structures;", "SubCategory_Localised": "Organic structures",
+             "Category": "$Codex_Category_Biology;", "Category_Localised": "Biological and Geological",
+             "Region": "$Codex_RegionName_23;", "Region_Localised": "Acheron", "System": "Pyra Dryoae ET-O d7-7",
+             "SystemAddress": 252639699395, "IsNewEntry": True
+        }
+        submit(cmdr, False, "Pyra Dryoae ET-O d7-7", 7825.40625 , -101.96875 , 62316.9375, testentry,
+               None, None, None, client)
+
+        testentry = {
+            "Name_Localised": "Purpureum Metallic Crystals",
+            "SystemAddress": 355710669314,
+            "Region_Localised": "Inner Orion Spur",
+            "Name": "$Codex_Ent_L_Cry_MetCry_Pur_Name;",
+            "EntryID": 2100802,
+            "System": "Plaa Eurk MU-A c1",
+            "SubCategory_Localised": "Organic structures",
+            "Category_Localised": "Biological and Geological",
+            "Region": "$Codex_RegionName_18;",
+            "timestamp": "2019-09-12T15:28:19Z",
+            "event": "CodexEntry",
+            "Category": "$Codex_Category_Biology;",
+            "SubCategory": "$Codex_SubCategory_Organic_Structures;"
+        }
+        submit("The_Martus", False, "Plaa Eurk MU-A c1",  -1807.4375 , 174.84375 , -1058.5, testentry,
+               None, None, None, client)
