@@ -366,11 +366,20 @@ class codexEmitter(Emitter):
         return payload
 
     def split_nearest_destination(self, nearest_destination):
-        dummy, b, c = nearest_destination.split('#')
-        dummy, signal_type = b.split("=")
-        dummy, index_id = c.split("=")
-        signal_type = signal_type[:-1]
-        index_id = index_id[:-1]
+        ndarray=[]
+        signal_type=None
+        ndarray=nearest_destination.split('#')
+        if len(ndarray) == 2:
+            dummy, c = nearest_destination.split('#')
+            dummy, index_id = c.split("=")
+            index_id = index_id[:-1]
+        else:
+            dummy, b, c = ndarray
+            dummy, signal_type = b.split("=")
+            dummy, index_id = c.split("=")
+            signal_type = signal_type[:-1]
+            index_id = index_id[:-1]
+        debug("signal {} index {}".format(signal_type, index_id))
         return signal_type, index_id
 
     def getBodyPayload(self, name):
@@ -528,4 +537,22 @@ def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
             "SubCategory": "$Codex_SubCategory_Organic_Structures;"
         }
         submit("The_Martus", False, "Plaa Eurk MU-A c1",  -1807.4375 , 174.84375 , -1058.5, testentry,
+               None, None, None, client)
+
+        testentry = {
+            "Name_Localised": "Test Data",
+            "SystemAddress": 355710669314,
+            "Region_Localised": "Andromeda Wormhole",
+            "Name": "$tet_test_test;",
+                "EntryID": 9999999999,
+            "System": "Raxxla",
+            "SubCategory_Localised": "Imaginary structures",
+            "Category_Localised": "Insanity",
+            "Region": "$Codex_RegionName_00;",
+            "timestamp": "2019-09-12T15:28:19Z",
+            "event": "CodexEntry",
+            "Category": "$Codex_Category_Insanity;",
+            "SubCategory": "$Codex_SubCategory_Imaginary_Structures;"
+        }
+        submit("Test Date", False, "Raxxla", -1807.4375, 174.84375, -1058.5, testentry,
                None, None, None, client)
