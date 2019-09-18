@@ -366,8 +366,14 @@ class codexEmitter(Emitter):
         return payload
 
     def split_nearest_destination(self, nearest_destination):
+
+        #abort if no index
+        if not "index" in nearest_destination:
+            return None, None
+
         ndarray=[]
         signal_type=None
+
         ndarray=nearest_destination.split('#')
         if len(ndarray) == 2:
             dummy, c = nearest_destination.split('#')
