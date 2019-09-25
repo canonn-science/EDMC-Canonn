@@ -446,7 +446,7 @@ class codexEmitter(Emitter):
     def getExcluded(self):
         if not codexEmitter.excludecodices:
             tempexclude = {}
-            r = requests.get("{}/excludecodices&_limit=1000".format(self.getUrl()))
+            r = requests.get("{}/excludecodices?_limit=1000".format(self.getUrl()))
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     tempexclude["${}_name;".format(exc["codexName"])] = True
