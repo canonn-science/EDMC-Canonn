@@ -190,6 +190,11 @@ class CodexTypes(Frame):
 
         self.labels[name]["image"] = self.images.get(setting)
 
+        if enabled:
+            self.labels[name].grid()
+        else:
+            self.labels[name].grid_remove()
+
     def visualise(self):
 
         # we may want to try again if the data hasn't been fetched yet
