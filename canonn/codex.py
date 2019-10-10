@@ -395,7 +395,7 @@ class guardianSites(Emitter):
             if prefix == 'ancient':
                 # this is s guardian ruin
                 #self.gstype = 1
-                self.gstype = prefix
+                self.gstype = 'Unknown'
                 self.modelreport = 'grreports'
 
 
