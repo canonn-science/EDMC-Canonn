@@ -68,6 +68,8 @@ class CodexTypes(Frame):
         "Biology": "Biological surface signals",
         "Guardian": "Guardian sites",
         "None": "Unclassified codex entry",
+        "Human": "Human Sites",
+        "Ring": "Planetary Ring Resources"
     }
 
     def __init__(self, parent, gridrow):
@@ -102,7 +104,9 @@ class CodexTypes(Frame):
         self.addimage("Thargoid", 3)
         self.addimage("Biology", 4)
         self.addimage("Guardian", 5)
-        self.addimage("None", 6)
+        self.addimage("Human", 6)
+        self.addimage("Ring", 7)
+        self.addimage("None", 8)
 
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.grid(row=gridrow, column=0)
@@ -209,6 +213,8 @@ class CodexTypes(Frame):
             self.set_image("Thargoid", False)
             self.set_image("Biology", False)
             self.set_image("Guardian", False)
+            self.set_image("Human", False)
+            self.set_image("Ring", False)
             self.set_image("None", False)
 
             if self.poidata:
