@@ -401,7 +401,7 @@ class guardianSites(Emitter):
 
 
     def run(self):
-        if self.modelreport:
+        if self.modelreport and self.system:
             payload = self.setPayload()
             payload["userType"] = 'pc'
             payload["reportType"] = 'new'
