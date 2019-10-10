@@ -342,6 +342,88 @@ class gSubmitCodex(threading.Thread):
             error(r.json())
 
 
+class guardianSites(Emitter):
+    gstypes = {
+        "ancient_tiny_001": 2,
+        "ancient_tiny_002": 3,
+        "ancient_tiny_003": 4,
+        "ancient_small_001": 5,
+        "ancient_small_002": 6,
+        "ancient_small_003": 7,
+        "ancient_small_005": 8,
+        "ancient_medium_001": 9,
+        "ancient_medium_002": 10,
+        "ancient_medium_003": 11
+    }
+
+    def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
+
+        Emitter.__init__(self, cmdr, is_beta, system, x, y, z, entry, entry.get("BodyName"), entry.get("Latitude"),
+                         entry.get("Longitude"), client)
+
+        example = {"timestamp": "2019-10-10T10:23:32Z",
+                   "event": "ApproachSettlement",
+                   "Name": "$Ancient_Tiny_003:#index=1;", "Name_Localised": "Guardian Structure",
+                   "SystemAddress": 5079737705833,
+                   "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
+                   "Latitude": 52.681084, "Longitude": 115.240822}
+
+        example = {
+            "timestamp": "2019-10-10T10:21:36Z",
+            "event": "ApproachSettlement",
+            "Name": "$Ancient:#index=2;", "Name_Localised": "Ancient Ruins (2)",
+            "SystemAddress": 5079737705833,
+            "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
+            "Latitude": -10.090128, "Longitude": 114.505409}
+
+        prefix, suffix = entry.get("Name").split(':')
+        self.index = self.get_index(entry.get("Name"))
+
+        self.modelreport = None
+
+        if prefix:
+            prefix = prefix.lower()[1:]
+            debug("prefix {}".format(prefix))
+            if prefix in guardianSites.gstypes:
+                # This is a guardian structure
+                self.gstype = guardianSites.gstypes.get(prefix)
+                debug("gstype {} {}".format(prefix,self.gstype))
+                self.modelreport = 'gsreports'
+            if prefix == 'ancient':
+                # this is s guardian ruin
+                self.gstype = 1
+                self.modelreport = 'grreports'
+
+    def run(self):
+        if self.modelreport:
+            payload = self.setPayload()
+            payload["userType"] = 'pc'
+            payload["reportType"] = 'new'
+            payload["reportStatus"] = 'pending'
+            payload["type"]=self.gstype
+            payload["systemAddress"] = self.entry.get("SystemAddress")
+            payload["bodyName"] = self.body
+            payload["latitude"] = self.lat
+            payload["longitude"] = self.lon
+            payload["reportComment"]=json.dumps(self.entry,indent=4)
+            payload["frontierID"] = self.index
+
+            url = self.getUrl()
+            debug(payload)
+
+            debug(url)
+            self.send(payload, url)
+
+    def get_index(self, value):
+        a = []
+        a = value.split('#')
+        if len(a) == 2:
+            dummy, c = value.split('#')
+            dummy, index_id = c.split("=")
+            index_id = index_id[:-1]
+            return index_id
+
+
 class codexEmitter(Emitter):
     types = {}
     reporttypes = {}
@@ -505,69 +587,90 @@ class codexEmitter(Emitter):
 
 def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     debug("detected test request")
-    testentry = {
-        "timestamp": "2019-09-12T09:01:35Z", "event": "CodexEntry", "EntryID": 2100101,
-        "Name": "$Codex_Ent_Thargoid_Barnacle_01_Name;", "Name_Localised": "Common Thargoid Barnacle",
-        "SubCategory": "$Codex_SubCategory_Organic_Structures;",
-        "SubCategory_Localised": "Organic structures", "Category": "$Codex_Category_Biology;",
-        "Category_Localised": "Biological and Geological", "Region": "$Codex_RegionName_18;",
-        "Region_Localised": "Inner Orion Spur", "System": "Merope", "SystemAddress": 224644818084,
-        "NearestDestination": "$SAA_Unknown_Signal:#type=$SAA_SignalType_Thargoid;:#index=1;",
-        "NearestDestination_Localised": "Surface signal: Thargoid (1)"
-    }
-    submit("Factabulous Altimus", False, 'Merope', -78.59375, -149.625, -340.53125, testentry,
-           'Merope 2 a', 2.656142, 143.024597, client)
-    testentry = {
-        "timestamp": "2019-09-12T14:46:03Z", "event": "CodexEntry", "EntryID": 2205002,
-        "Name": "$Codex_Ent_S_Seed_SdTp05_Bl_Name;", "Name_Localised": "Caeruleum Chalice Pod",
-        "SubCategory": "$Codex_SubCategory_Organic_Structures;", "SubCategory_Localised": "Organic structures",
-        "Category": "$Codex_Category_Biology;", "Category_Localised": "Biological and Geological",
-        "Region": "$Codex_RegionName_23;", "Region_Localised": "Acheron", "System": "Pyra Dryoae ET-O d7-7",
-        "SystemAddress": 252639699395, "IsNewEntry": True
-    }
-    submit(cmdr, False, "Pyra Dryoae ET-O d7-7", 7825.40625, -101.96875, 62316.9375, testentry,
-           None, None, None, client)
+    # testentry = {
+    #     "timestamp": "2019-09-12T09:01:35Z", "event": "CodexEntry", "EntryID": 2100101,
+    #     "Name": "$Codex_Ent_Thargoid_Barnacle_01_Name;", "Name_Localised": "Common Thargoid Barnacle",
+    #     "SubCategory": "$Codex_SubCategory_Organic_Structures;",
+    #     "SubCategory_Localised": "Organic structures", "Category": "$Codex_Category_Biology;",
+    #     "Category_Localised": "Biological and Geological", "Region": "$Codex_RegionName_18;",
+    #     "Region_Localised": "Inner Orion Spur", "System": "Merope", "SystemAddress": 224644818084,
+    #     "NearestDestination": "$SAA_Unknown_Signal:#type=$SAA_SignalType_Thargoid;:#index=1;",
+    #     "NearestDestination_Localised": "Surface signal: Thargoid (1)"
+    # }
+    # submit("Factabulous Altimus", False, 'Merope', -78.59375, -149.625, -340.53125, testentry,
+    #        'Merope 2 a', 2.656142, 143.024597, client)
+    # testentry = {
+    #     "timestamp": "2019-09-12T14:46:03Z", "event": "CodexEntry", "EntryID": 2205002,
+    #     "Name": "$Codex_Ent_S_Seed_SdTp05_Bl_Name;", "Name_Localised": "Caeruleum Chalice Pod",
+    #     "SubCategory": "$Codex_SubCategory_Organic_Structures;", "SubCategory_Localised": "Organic structures",
+    #     "Category": "$Codex_Category_Biology;", "Category_Localised": "Biological and Geological",
+    #     "Region": "$Codex_RegionName_23;", "Region_Localised": "Acheron", "System": "Pyra Dryoae ET-O d7-7",
+    #     "SystemAddress": 252639699395, "IsNewEntry": True
+    # }
+    # submit(cmdr, False, "Pyra Dryoae ET-O d7-7", 7825.40625, -101.96875, 62316.9375, testentry,
+    #        None, None, None, client)
+    #
+    # testentry = {
+    #     "Name_Localised": "Purpureum Metallic Crystals",
+    #     "SystemAddress": 355710669314,
+    #     "Region_Localised": "Inner Orion Spur",
+    #     "Name": "$Codex_Ent_L_Cry_MetCry_Pur_Name;",
+    #     "EntryID": 2100802,
+    #     "System": "Plaa Eurk MU-A c1",
+    #     "SubCategory_Localised": "Organic structures",
+    #     "Category_Localised": "Biological and Geological",
+    #     "Region": "$Codex_RegionName_18;",
+    #     "timestamp": "2019-09-12T15:28:19Z",
+    #     "event": "CodexEntry",
+    #     "Category": "$Codex_Category_Biology;",
+    #     "SubCategory": "$Codex_SubCategory_Organic_Structures;"
+    # }
+    # submit("The_Martus", False, "Plaa Eurk MU-A c1", -1807.4375, 174.84375, -1058.5, testentry,
+    #        None, None, None, client)
+    #
+    # testentry = {
+    #     "Name_Localised": "Test Data",
+    #     "SystemAddress": 355710669314,
+    #     "Region_Localised": "Andromeda Wormhole",
+    #     "Name": "$tet_test_test;",
+    #     "EntryID": 9999999999,
+    #     "System": "Raxxla",
+    #     "SubCategory_Localised": "Imaginary structures",
+    #     "Category_Localised": "Insanity",
+    #     "Region": "$Codex_RegionName_00;",
+    #     "timestamp": "2019-09-12T15:28:19Z",
+    #     "event": "CodexEntry",
+    #     "Category": "$Codex_Category_Insanity;",
+    #     "SubCategory": "$Codex_SubCategory_Imaginary_Structures;"
+    # }
+    # submit("Test Date", False, "Raxxla", -1807.4375, 174.84375, -1058.5, testentry,
+    #        None, None, None, client)
 
     testentry = {
-        "Name_Localised": "Purpureum Metallic Crystals",
-        "SystemAddress": 355710669314,
-        "Region_Localised": "Inner Orion Spur",
-        "Name": "$Codex_Ent_L_Cry_MetCry_Pur_Name;",
-        "EntryID": 2100802,
-        "System": "Plaa Eurk MU-A c1",
-        "SubCategory_Localised": "Organic structures",
-        "Category_Localised": "Biological and Geological",
-        "Region": "$Codex_RegionName_18;",
-        "timestamp": "2019-09-12T15:28:19Z",
-        "event": "CodexEntry",
-        "Category": "$Codex_Category_Biology;",
-        "SubCategory": "$Codex_SubCategory_Organic_Structures;"
-    }
-    submit("The_Martus", False, "Plaa Eurk MU-A c1", -1807.4375, 174.84375, -1058.5, testentry,
-           None, None, None, client)
+        "timestamp": "2019-10-10T10:21:36Z",
+        "event": "ApproachSettlement",
+        "Name": "$Ancient:#index=2;", "Name_Localised": "Ancient Ruins (2)",
+        "SystemAddress": 5079737705833,
+        "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
+        "Latitude": -10.090128, "Longitude": 114.505409}
+    submit("LCU No Fool Like One", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
+           "Synuefe LY-I b42-2 C 2", -10.090128, 114.505409, client)
 
-    testentry = {
-        "Name_Localised": "Test Data",
-        "SystemAddress": 355710669314,
-        "Region_Localised": "Andromeda Wormhole",
-        "Name": "$tet_test_test;",
-        "EntryID": 9999999999,
-        "System": "Raxxla",
-        "SubCategory_Localised": "Imaginary structures",
-        "Category_Localised": "Insanity",
-        "Region": "$Codex_RegionName_00;",
-        "timestamp": "2019-09-12T15:28:19Z",
-        "event": "CodexEntry",
-        "Category": "$Codex_Category_Insanity;",
-        "SubCategory": "$Codex_SubCategory_Imaginary_Structures;"
-    }
-    submit("Test Date", False, "Raxxla", -1807.4375, 174.84375, -1058.5, testentry,
-           None, None, None, client)
-
+    testentry = {"timestamp": "2019-10-10T10:23:32Z",
+                   "event": "ApproachSettlement",
+                   "Name": "$Ancient_Tiny_003:#index=1;", "Name_Localised": "Guardian Structure",
+                   "SystemAddress": 5079737705833,
+                   "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
+                   "Latitude": 52.681084, "Longitude": 115.240822}
+    submit("LCU No Fool Like One", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
+           "Synuefe LY-I b42-2 C 2", 52.681084, 115.240822, client)
 
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     if entry["event"] == "CodexEntry":
         codexEmitter(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
+
+    if entry["event"] == "ApproachSettlement":
+        guardianSites(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
 
     if entry.get("event") == "SendText" and entry.get("Message") == "codextest":
         test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
