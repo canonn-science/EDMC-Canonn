@@ -343,6 +343,8 @@ class gSubmitCodex(threading.Thread):
 
 
 class guardianSites(Emitter):
+
+    #this is no longer used but might come back
     gstypes = {
         "ancient_tiny_001": 2,
         "ancient_tiny_002": 3,
@@ -386,13 +388,17 @@ class guardianSites(Emitter):
             debug("prefix {}".format(prefix))
             if prefix in guardianSites.gstypes:
                 # This is a guardian structure
-                self.gstype = guardianSites.gstypes.get(prefix)
+                #self.gstype = guardianSites.gstypes.get(prefix)
+                self.gstype = prefix
                 debug("gstype {} {}".format(prefix,self.gstype))
                 self.modelreport = 'gsreports'
             if prefix == 'ancient':
                 # this is s guardian ruin
-                self.gstype = 1
+                #self.gstype = 1
+                self.gstype = prefix
                 self.modelreport = 'grreports'
+
+
 
     def run(self):
         if self.modelreport:
