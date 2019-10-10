@@ -114,7 +114,7 @@ class CodexTypes(Frame):
 
     def getdata(self, system):
 
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiList?system={}".format(system)
+        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(system)
         debug(url)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
