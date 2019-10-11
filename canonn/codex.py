@@ -225,6 +225,7 @@ class CodexTypes(Frame):
             else:
                 self.grid_remove()
 
+
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         debug("CodeTypes journal_entry")
 
@@ -243,6 +244,53 @@ class CodexTypes(Frame):
             poiTypes(system, self.getdata).start()
             ## lets give it 1 seconds 
             self.after(1000, self.visualise)
+
+        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('$Fixed_Event_Life_Ring;','$Fixed_Event_Life_Cloud;'):
+            found=False
+            if not self.waiting:
+                signals = self.poidata
+                for i, v in enumerate(signals):
+                    if signals[i].get("english_name") =='Life Cloud' and  entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
+                        found=True
+                    if signals[i].get("english_name") == 'Life Ring' and  entry.get("SignalName") == '$Fixed_Event_Life_Ring;':
+                        found=True
+                if not found:
+                    if  entry.get("SignalName") == '$Fixed_Event_Life_Ring;':
+                        cloudtype='Life Ring'
+                    else:
+                        cloudtype = 'Life Cloud'
+                    self.poidata.append({ "hud_category": 'Cloud', "english_name": cloudtype})
+                    debug(poidata)
+                    self.visualise()
+
+        if entry.get("event") == "SAASignalsFound":
+            # if we arent waiting for new data
+            bodyName = entry.get("BodyName")
+            bodyVal = bodyName.replace(system, '').replace(' Ring','')
+
+            debug("SAASignalsFound")
+
+            if not self.waiting:
+                signals = entry.get("Signals")
+                for i, v in enumerate(signals):
+                    found=False
+                    type=signals[i].get("Type")
+                    english_name=type.replace("$SAA_SignalType_","").replace("ical;","y")
+                    if " Ring" in bodyName:
+                        cat="Ring"
+                    if "$SAA_SignalType_" in type:
+                        cat=english_name
+                    for x,r in enumerate(self.poidata):
+                        if r.get("hud_category") == cat and r.get("english_name") == english_name:
+                            found=True
+                            if not bodyVal in r.get("body"):
+                                self.poidata[x]["body"]="{},{}".format(self.poidata[x]["body"],bodyVal)
+                    if not found:
+                        self.set_image(cat, True)
+                        self.poidata.append({'body': bodyVal, 'hud_category': cat, 'english_name': english_name})
+                        self.visualise()
+                    debug(self.poidata)
+                    debug("cat {} name  {} body {}".format(cat,english_name,bodyVal))
 
     @classmethod
     def plugin_start(cls, plugin_dir):
