@@ -242,8 +242,10 @@ class CodexTypes(Frame):
         if entry.get("event") in ("Location", "StartUp"):
             debug("Looking for POI data in {}".format(system))
             poiTypes(system, self.getdata).start()
-            ## lets give it 1 seconds 
+            ## lets give it 1 seconds
             self.after(1000, self.visualise)
+            #try again in 5
+            self.after(5000, self.visualise)
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('$Fixed_Event_Life_Ring;','$Fixed_Event_Life_Cloud;'):
             found=False
@@ -266,7 +268,7 @@ class CodexTypes(Frame):
         if entry.get("event") == "SAASignalsFound":
             # if we arent waiting for new data
             bodyName = entry.get("BodyName")
-            bodyVal = bodyName.replace(system, '').replace(' Ring','')
+            bodyVal = bodyName.replace(system, '')
 
             debug("SAASignalsFound")
 
