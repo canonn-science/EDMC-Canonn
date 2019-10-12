@@ -69,7 +69,8 @@ class CodexTypes(Frame):
         "Guardian": "Guardian sites",
         "None": "Unclassified codex entry",
         "Human": "Human Sites",
-        "Ring": "Planetary Ring Resources"
+        "Ring": "Planetary Ring Resources",
+        "Other": "Other Sites"
     }
 
     def __init__(self, parent, gridrow):
@@ -107,6 +108,7 @@ class CodexTypes(Frame):
         self.addimage("Human", 6)
         self.addimage("Ring", 7)
         self.addimage("None", 8)
+        self.addimage("Other", 9)
 
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.grid(row=gridrow, column=0)
@@ -216,6 +218,7 @@ class CodexTypes(Frame):
             self.set_image("Human", False)
             self.set_image("Ring", False)
             self.set_image("None", False)
+            self.set_image("Other", False)
 
             if self.poidata:
                 self.grid()
@@ -434,25 +437,26 @@ class guardianSites(Emitter):
             "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
             "Latitude": -10.090128, "Longitude": 114.505409}
 
-        prefix, suffix = entry.get("Name").split(':')
-        self.index = self.get_index(entry.get("Name"))
+        if ":" in entry.get("Name"):
+            prefix, suffix = entry.get("Name").split(':')
+            self.index = self.get_index(entry.get("Name"))
 
-        self.modelreport = None
+            self.modelreport = None
 
-        if prefix:
-            prefix = prefix.lower()[1:]
-            debug("prefix {}".format(prefix))
-            if prefix in guardianSites.gstypes:
-                # This is a guardian structure
-                #self.gstype = guardianSites.gstypes.get(prefix)
-                self.gstype = prefix
-                debug("gstype {} {}".format(prefix,self.gstype))
-                self.modelreport = 'gsreports'
-            if prefix == 'ancient':
-                # this is s guardian ruin
-                #self.gstype = 1
-                self.gstype = 'Unknown'
-                self.modelreport = 'grreports'
+            if prefix:
+                prefix = prefix.lower()[1:]
+                debug("prefix {}".format(prefix))
+                if prefix in guardianSites.gstypes:
+                    # This is a guardian structure
+                    #self.gstype = guardianSites.gstypes.get(prefix)
+                    self.gstype = prefix
+                    debug("gstype {} {}".format(prefix,self.gstype))
+                    self.modelreport = 'gsreports'
+                if prefix == 'ancient':
+                    # this is s guardian ruin
+                    #self.gstype = 1
+                    self.gstype = 'Unknown'
+                    self.modelreport = 'grreports'
 
 
 
