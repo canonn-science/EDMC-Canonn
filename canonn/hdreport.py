@@ -199,7 +199,8 @@ class HDInspector(Frame):
 def submit(cmdr, is_beta, system, station, entry, client):
     hdsystems = ("Delphi","Merope", "Celaeno", "Maia", "HR 1185","HIP 23759","Witch Head Sector DL-Y d17","Pleiades Sector HR-W d1-79","Pleione")
     if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace" and system in hdsystems:
-        emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postTraffic", {"system": system})
+
+        emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postTraffic", {"system": system, "timestamp": entry.get("timestamp")})
 
     if entry["event"] == "Statistics" and entry.get("TG_ENCOUNTERS"):
         # there is no guarentee TG_ENCOUNTER_TOTAL_LAST_SYSTEM will have a value
