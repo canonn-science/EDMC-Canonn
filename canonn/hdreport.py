@@ -207,7 +207,14 @@ def submit(cmdr, is_beta, system, station, entry, client):
         if entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM"):
 
             lastsystem = entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM")
-            tgtime = entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_TIMESTAMP")
+            gametime = entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_TIMESTAMP")
+            year,remainder=gametime.split("-",1)
+            tgtime="{}-{}".format(str(int(year)-1286),remainder)
+
+            if lastsystem == "Pleiades Sector IR-W d1-55":
+                lastsystem="Delphi"
+
+            debug({"cmdr": cmdr, "system": lastsystem, "timestamp": tgtime})
 
             # we are going to submit the hyperdiction here.
             emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHD",
