@@ -197,7 +197,7 @@ class HDInspector(Frame):
 
 
 def submit(cmdr, is_beta, system, station, entry, client):
-    hdsystems = ("Delphi","Merope", "Celaeno", "Maia", "HR 1185","HIP 23759","Witch Head Sector DL-Y d17","Pleiades Sector HR-W d1-79","Pleione")
+    hdsystems = ("Asterope","Delphi","Merope", "Celaeno", "Maia", "HR 1185","HIP 23759","Witch Head Sector DL-Y d17","Pleiades Sector HR-W d1-79","Pleione","Witch Head Sector GW-W c1-4")
     if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace" and system in hdsystems:
 
         emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postTraffic", {"system": system, "timestamp": entry.get("timestamp")})
