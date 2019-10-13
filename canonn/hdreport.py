@@ -19,9 +19,8 @@ from urllib import quote_plus
 '''
 
 We want to record the system where the user was last hyperdicted
-Ths is in the statistics event which appears evert time the user
-returns from the main menu. We want to record   
-
+Ths is in the statistics event which appears every time the user
+returns from the main menu.    
 
 '''
 
