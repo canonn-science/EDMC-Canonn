@@ -268,6 +268,17 @@ class CodexTypes(Frame):
                     debug(poidata)
                     self.visualise()
 
+        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
+            found=False
+            if not self.waiting:
+                signals = self.poidata
+                for i, v in enumerate(signals):
+                    if signals[i].get("english_name") =='Guardian Beacon':
+                        found=True
+                if not found:
+                    self.poidata.append({ "hud_category": 'Guardian', "english_name": 'Guardian Beacon'})
+                    self.visualise()
+
         if entry.get("event") == "SAASignalsFound":
             # if we arent waiting for new data
             bodyName = entry.get("BodyName")
@@ -280,7 +291,7 @@ class CodexTypes(Frame):
                 for i, v in enumerate(signals):
                     found=False
                     type=signals[i].get("Type")
-                    english_name=type.replace("$SAA_SignalType_","").replace("ical;","y")
+                    english_name=type.replace("$SAA_SignalType_","").replace("ical;","y").replace(";",'')
                     if " Ring" in bodyName:
                         cat="Ring"
                     if "$SAA_SignalType_" in type:
