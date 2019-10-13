@@ -15,6 +15,7 @@ from debug import debug, error
 from emitter import Emitter
 from systems import Systems
 from urllib import quote_plus
+import plug
 
 '''
 
@@ -194,8 +195,60 @@ class HDInspector(Frame):
         for filename in glob.glob(os.path.join(config.default_journal_dir, 'journal*.log')):
             self.scan_file(filename)
 
+class hyperdictionDetector():
+
+    state=0
+    target_system=""
+
+    @classmethod
+    def startJump(cls,target_system):
+        debug("startJump setting state 1 {}".format(target_system))
+        cls.state = 1
+        cls.target_system=target_system
+
+    @classmethod
+    def FSDJump(cls,system):
+        if cls.state == 1 and not system == cls.target_system:
+            debug("FSDJump setting state 2 {} {}".format(system,cls.target_system))
+            cls.state =2;
+        else:
+            debug("FSDJUMP resetting state back {} {}".format(system,cls.target_system))
+            cls.state = 0
+
+    @classmethod
+    def Music(cls,system,cmdr,timestamp):
+        if cls.state == 2:
+            debug("Hyperdiction Detected")
+            x, y, z = Systems.edsmGetSystem(system)
+            emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHDDetected",
+                         {"cmdr": cmdr, "system": system, "timestamp": timestamp, "x": x, "y": y, "z": z })
+            plug.show_error("Hyperdiction: Exit to main menu")
+        else:
+            debug("FSDJUMP resetting state back")
+            cls.state == 0
+
+    @classmethod
+    def SupercruiseExit(selfcls):
+        state = 0
+
+    @classmethod
+    def submit(cls,cmdr, is_beta, system, station, entry, client):
+        if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
+            cls.startJump(entry.get("StarSystem"))
+
+        if entry.get("event") == "FSDJump":
+            cls.FSDJump(entry.get("StarSystem"))
+
+        if entry.get("event") == "Music" and entry.get("MusicTrack") in ("Unknown_Encounter"):
+            cls.Music(system,cmdr,entry.get("timestamp"))
+
+        if entry.get("event") == "SupercruiseExit":
+            cls.SupercruiseExit()
 
 def submit(cmdr, is_beta, system, station, entry, client):
+
+    hyperdictionDetector.submit(cmdr, is_beta, system, station, entry, client)
+
     hdsystems = ("Asterope","Delphi","Merope", "Celaeno", "Maia", "HR 1185","HIP 23759","Witch Head Sector DL-Y d17","Pleiades Sector HR-W d1-79","Pleione","Witch Head Sector GW-W c1-4")
     if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace" and system in hdsystems:
 
