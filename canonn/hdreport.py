@@ -16,6 +16,7 @@ from emitter import Emitter
 from systems import Systems
 from urllib import quote_plus
 import plug
+import math
 
 '''
 
@@ -245,14 +246,42 @@ class hyperdictionDetector():
         if entry.get("event") == "SupercruiseExit":
             cls.SupercruiseExit()
 
+def post_traffic(system,entry):
+    debug("posting traffic {} ".format(system))
+    try:
+        emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postTraffic",
+                 {"system": system, "timestamp": entry.get("timestamp")})
+    except:
+        plug.show_error("Failed to post traffic")
+        debug("Failed to post traffic for {}".format(system))
+
+
+def get_distance(a,b):
+    x, y, z = Systems.edsmGetSystem(a)
+    a, b, c = Systems.edsmGetSystem(b)
+    return math.sqrt(math.pow(x-a,2)+math.pow(y-b,2)+math.pow(z-c,2))
+
+def post_distance(system,centre,entry):
+    d = int(get_distance(system,centre)/50)
+    debug("distance {}".format(d*50))
+    if d < 6:
+        tag="{} ({})".format(centre,int(d*50))
+        post_traffic(tag,entry)
+
+
 def submit(cmdr, is_beta, system, station, entry, client):
 
     hyperdictionDetector.submit(cmdr, is_beta, system, station, entry, client)
 
-    hdsystems = ("Asterope","Delphi","Merope", "Celaeno", "Maia", "HR 1185","HIP 23759","Witch Head Sector DL-Y d17","Pleiades Sector HR-W d1-79","Pleione","Witch Head Sector GW-W c1-4")
-    if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace" and system in hdsystems:
+    hdsystems = ("Electra","Asterope","Delphi","Merope", "Celaeno", "Maia", "HR 1185","HIP 23759","Witch Head Sector DL-Y d17","Pleiades Sector HR-W d1-79","Pleione","Witch Head Sector GW-W c1-4")
 
-        emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postTraffic", {"system": system, "timestamp": entry.get("timestamp")})
+    if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
+        #post traffic from reference systems
+        if system in hdsystems:
+            post_traffic(system,entry)
+
+        post_distance(system,'Merope',entry)
+        post_distance(system, 'Witch Head Sector IR-W c1-9', entry)
 
     if entry["event"] == "Statistics" and entry.get("TG_ENCOUNTERS"):
         # there is no guarentee TG_ENCOUNTER_TOTAL_LAST_SYSTEM will have a value
