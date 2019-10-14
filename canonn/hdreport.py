@@ -296,15 +296,14 @@ def submit(cmdr, is_beta, system, station, entry, client):
                 lastsystem="Delphi"
 
             debug({"cmdr": cmdr, "system": lastsystem, "timestamp": tgtime})
-
+            x, y, z = Systems.edsmGetSystem(lastsystem)
             # we are going to submit the hyperdiction here.
             emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHD",
-                         {"cmdr": cmdr, "system": lastsystem, "timestamp": tgtime})
+                         {"cmdr": cmdr, "system": lastsystem, "timestamp": tgtime, "x": x, "y": y, "z": z })
 
             if lastsystem:
                 if HDReport.hdsystems.get(lastsystem) == lastsystem:
                     debug("Hyperdiction already recorded here - session ")
                 else:
                     HDReport(cmdr, is_beta, lastsystem, entry, client).start()
-                    x, y, z = Systems.edsmGetSystem(lastsystem)
                     gSubmitHD(cmdr, x, y, z, entry).start()
