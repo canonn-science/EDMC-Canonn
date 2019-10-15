@@ -245,10 +245,10 @@ class CodexTypes(Frame):
         if entry.get("event") in ("Location", "StartUp"):
             debug("Looking for POI data in {}".format(system))
             poiTypes(system, self.getdata).start()
-            ## lets give it 1 seconds
-            self.after(1000, self.visualise)
-            #try again in 5
+            ## lets give it 5 seconds
             self.after(5000, self.visualise)
+
+
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('$Fixed_Event_Life_Ring;','$Fixed_Event_Life_Cloud;'):
             found=False
