@@ -119,13 +119,14 @@ class CodexTypes(Frame):
         self.grid_remove()
 
     def getdata(self, system):
-
+        self.waiting=True
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(system)
         debug(url)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
             self.poidata = r.json()
             self.waiting = False
+        self.waiting = False
 
     def enter(self, event):
 
@@ -203,6 +204,7 @@ class CodexTypes(Frame):
 
     def visualise(self):
 
+        debug("visualise")
         # we may want to try again if the data hasn't been fetched yet
         if self.waiting:
             debug("Still waiting");
@@ -234,7 +236,6 @@ class CodexTypes(Frame):
 
         if entry.get("event") in ("FSDJump"):
             # To avoid having check data we will assume we have some by now
-
             self.visualise()
 
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
