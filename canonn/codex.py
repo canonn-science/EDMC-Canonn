@@ -74,6 +74,13 @@ class CodexTypes(Frame):
         "Planets": "Valuable Planets"
     }
 
+    body_types = {
+        'Metal-rich body': 'Metal-Rich Body',
+        'Earth-like world': 'Earthlike World',
+        'Water world': 'Water World',
+        'Ammonia world': 'Ammonia World'
+    }
+
     def __init__(self, parent, gridrow):
         "Initialise the ``Patrol``."
         Frame.__init__(
@@ -243,6 +250,17 @@ class CodexTypes(Frame):
         else:
             self.labels[name].grid_remove()
 
+    def merge_poi(self,hud_category,english_name,body):
+        found=False
+        signals = self.poidata
+        for i, v in enumerate(signals):
+            if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
+                if not body in signals[i].get("body").split(','):
+                    self.poidata[i]["body"]="{},{}".format(signals[i].get("body"),body)
+                found=True
+        if not found:
+            self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
+
     def visualise(self):
 
         debug("visualise")
@@ -322,7 +340,18 @@ class CodexTypes(Frame):
                     self.poidata.append({ "hud_category": 'Guardian', "english_name": 'Guardian Beacon'})
                     self.visualise()
 
-
+        if entry.get("event") == "Scan" and entry.get("ScanType") == "Detailed":
+            body=entry.get("BodyName").replace(system,'')
+            english_name=CodexTypes.body_types.get(entry.get("PlanetClass"))
+            if entry.get("PlanetClass") in CodexTypes.body_types.keys():
+                self.merge_poi("Planets",english_name,body)
+            debug("Volcanism {} landable {}".format(entry.get("Volcanism"),entry.get("Landable")))
+            if entry.get("Volcanism") != "" and entry.get("Landable"):
+                debug("oh come on!")
+                self.merge_poi("Geology", entry.get("Volcanism"), body)
+            if entry.get('TerraformState') == 'Terraformable':
+                self.merge_poi("Planet", "Terraformable", body)
+            self.visualise()
 
         if entry.get("event") == "SAASignalsFound":
             # if we arent waiting for new data
