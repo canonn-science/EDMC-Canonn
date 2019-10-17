@@ -202,8 +202,34 @@ class hyperdictionDetector():
     target_system=""
 
     @classmethod
+    def hide(cls):
+        cls.frame.grid_remove()
+
+    @classmethod
+    def show(cls):
+        cls.frame.grid()
+        cls.frame.after(120000,cls.hide)
+
+    @classmethod
+    def setup(cls,parent,gridrow):
+        cls.frame=tk.Frame(parent)
+        cls.frame.grid(row=gridrow)
+        cls.container = tk.Frame(cls.frame)
+        cls.container.columnconfigure(1, weight=1)
+        cls.container.grid(row=1)
+        cls.banner=tk.Label(cls.container,text="HYPERDICTION",fg="red")
+        cls.banner.grid(row=0, column=0, columnspan=1, sticky="NSEW")
+        cls.banner.config(font=("Arial Black", 22))
+        cls.instructions=tk.Label(cls.container,text="Please exit to main menu for confirmation",fg="red")
+        cls.instructions.grid(row=1, column=0, columnspan=1, sticky="NSEW")
+        cls.instructions.config(font=("Arial Black", 8))
+        cls.hide()
+        return cls.frame
+
+    @classmethod
     def startJump(cls,target_system):
         debug("startJump setting state 1 {}".format(target_system))
+        cls.hide()
         cls.state = 1
         cls.target_system=target_system
 
@@ -220,16 +246,19 @@ class hyperdictionDetector():
     def Music(cls,system,cmdr,timestamp):
         if cls.state == 2:
             debug("Hyperdiction Detected")
+            cls.show()
             x, y, z = Systems.edsmGetSystem(system)
             emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHDDetected",
                          {"cmdr": cmdr, "system": system, "timestamp": timestamp, "x": x, "y": y, "z": z })
             plug.show_error("Hyperdiction: Exit to main menu")
         else:
             debug("FSDJUMP resetting state back")
+            cls.hide()
             cls.state == 0
 
     @classmethod
     def SupercruiseExit(selfcls):
+        cls.hide()
         state = 0
 
     @classmethod
@@ -262,10 +291,10 @@ def get_distance(a,b):
     return math.sqrt(math.pow(x-a,2)+math.pow(y-b,2)+math.pow(z-c,2))
 
 def post_distance(system,centre,entry):
-    d = int(get_distance(system,centre)/50)
-    debug("distance {}".format(d*50))
-    if d < 6:
-        tag="{} ({})".format(centre,int(d*50))
+    d = int(get_distance(system,centre)/10)*10
+    debug("distance {}".format(d))
+    if d <= 250:
+        tag="{} ({})".format(centre,int(d))
         post_traffic(tag,entry)
 
 

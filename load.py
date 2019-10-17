@@ -110,6 +110,8 @@ def plugin_app(parent):
     this.release = release.Release(table, this.version, 1)
     this.codexcontrol = codex.CodexTypes(table, 2)
     this.patrol = patrol.CanonnPatrol(table, 3)
+    this.hyperdiction = hdreport.hyperdictionDetector.setup(table,4)
+
     whitelist = whiteList(parent)
     whitelist.fetchData()
 
