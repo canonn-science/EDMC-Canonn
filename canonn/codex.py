@@ -76,7 +76,9 @@ class CodexTypes(Frame):
 
     body_types = {
         'Metal-rich body': 'Metal-Rich Body',
+        'Metal rich body': 'Metal-Rich Body',
         'Earth-like world': 'Earthlike World',
+        'Earthlike body': 'Earthlike World',
         'Water world': 'Water World',
         'Ammonia world': 'Ammonia World'
     }
@@ -251,6 +253,7 @@ class CodexTypes(Frame):
             self.labels[name].grid_remove()
 
     def merge_poi(self,hud_category,english_name,body):
+        debug("Merge POI")
         found=False
         signals = self.poidata
         for i, v in enumerate(signals):
@@ -344,13 +347,14 @@ class CodexTypes(Frame):
             body=entry.get("BodyName").replace(system,'')
             english_name=CodexTypes.body_types.get(entry.get("PlanetClass"))
             if entry.get("PlanetClass") in CodexTypes.body_types.keys():
+                debug("PlanetClass".format(entry.get("PlanetClass")))
                 self.merge_poi("Planets",english_name,body)
             debug("Volcanism {} landable {}".format(entry.get("Volcanism"),entry.get("Landable")))
             if entry.get("Volcanism") != "" and entry.get("Landable"):
                 debug("oh come on!")
                 self.merge_poi("Geology", entry.get("Volcanism"), body)
             if entry.get('TerraformState') == 'Terraformable':
-                self.merge_poi("Planet", "Terraformable", body)
+                self.merge_poi("Planets", "Terraformable", body)
             self.visualise()
 
         if entry.get("event") == "SAASignalsFound":
