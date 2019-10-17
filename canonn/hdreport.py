@@ -257,7 +257,7 @@ class hyperdictionDetector():
             cls.state == 0
 
     @classmethod
-    def SupercruiseExit(selfcls):
+    def SupercruiseExit(cls):
         cls.hide()
         state = 0
 

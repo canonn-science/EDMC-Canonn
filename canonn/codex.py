@@ -12,12 +12,12 @@ from debug import Debug
 from debug import debug, error
 from emitter import Emitter
 from urllib import quote_plus
-
+import urllib2
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
         threading.Thread.__init__(self)
-        self.system = quote_plus(system.encode('utf8'))
+        self.system = system
         self.callback = callback
 
     def run(self):
@@ -70,7 +70,8 @@ class CodexTypes(Frame):
         "None": "Unclassified codex entry",
         "Human": "Human Sites",
         "Ring": "Planetary Ring Resources",
-        "Other": "Other Sites"
+        "Other": "Other Sites",
+        "Planets": "Valuable Planets"
     }
 
     def __init__(self, parent, gridrow):
@@ -109,6 +110,7 @@ class CodexTypes(Frame):
         self.addimage("Ring", 7)
         self.addimage("None", 8)
         self.addimage("Other", 9)
+        self.addimage("Planets", 10)
 
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.grid(row=gridrow, column=0)
@@ -120,12 +122,51 @@ class CodexTypes(Frame):
 
     def getdata(self, system):
         self.waiting=True
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(system)
+        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(quote_plus(system.encode('utf8')))
         debug(url)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
             self.poidata = r.json()
-            self.waiting = False
+
+        bodytypes={'Metal-rich body': [],'Earth-like world': [],'Water world': [],'Ammonia world': []}
+
+        tform=[]
+
+        usystem=urllib2.unquote(system)
+
+        edsm="https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
+        debug(edsm)
+        r = requests.get(edsm)
+        if r.status_code == requests.codes.ok:
+            debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+            bodies=r.json().get("bodies")
+            if bodies:
+                for b in bodies:
+                    debug(b.get("subType"))
+
+                    if b.get("subType") in bodytypes.keys():
+                        debug(" NAME {}".format(b.get("name")))
+                        debug(usystem)
+                        debug(b.get("name").replace(usystem, ''))
+                        bodytypes[b.get("subType")].append(b.get("name").replace(usystem,''))
+
+                    if b.get('terraformingState') == 'Candidate for terraforming':
+                        tform.append(b.get("name").replace(usystem,''))
+
+            if len(bodytypes.get('Ammonia world')) > 0:
+                self.poidata.append({ "hud_category": "Planets", "english_name": "Ammonia World", "body": ",".join(bodytypes.get('Ammonia world'))})
+            if len(bodytypes.get('Earth-like world')) > 0:
+                self.poidata.append({ "hud_category": "Planets", "english_name": "Earthlike World", "body": ",".join(bodytypes.get('Earth-like world'))})
+            if len(bodytypes.get('Metal-rich body')) > 0:
+                self.poidata.append({ "hud_category": "Planets", "english_name": "Metal-Rich Body", "body": ",".join(bodytypes.get('Metal-rich body'))})
+            if len(bodytypes.get('Water world')) > 0:
+                self.poidata.append({ "hud_category": "Planets", "english_name": "Water World", "body": ",".join(bodytypes.get('Water world'))})
+            if len(tform) > 0:
+                self.poidata.append({"hud_category": "Planets", "english_name": "Terraformable", "body": ",".join(tform)})
+
+        debug(bodytypes)
+        debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+
         self.waiting = False
 
     def enter(self, event):
@@ -221,6 +262,7 @@ class CodexTypes(Frame):
             self.set_image("Ring", False)
             self.set_image("None", False)
             self.set_image("Other", False)
+            self.set_image("Planets", False)
 
             if self.poidata:
                 self.grid()
@@ -279,6 +321,8 @@ class CodexTypes(Frame):
                 if not found:
                     self.poidata.append({ "hud_category": 'Guardian', "english_name": 'Guardian Beacon'})
                     self.visualise()
+
+
 
         if entry.get("event") == "SAASignalsFound":
             # if we arent waiting for new data
