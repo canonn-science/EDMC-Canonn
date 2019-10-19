@@ -84,6 +84,8 @@ class CodexTypes(Frame):
         'Ammonia world': 'Ammonia World'
     }
 
+    bodycount = 0
+
     def __init__(self, parent, gridrow):
         "Initialise the ``Patrol``."
         Frame.__init__(
@@ -152,6 +154,8 @@ class CodexTypes(Frame):
 
             bodies = r.json().get("bodies")
             if bodies:
+                CodexTypes.bodycount=len(bodies)
+                debug("bodycount: {}".format(CodexTypes.bodycount))
                 for b in bodies:
                     debug(b.get("subType"))
 
@@ -167,9 +171,13 @@ class CodexTypes(Frame):
                     if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism':
                         self.merge_poi("Geology", b.get('volcanismType'), b.get("name").replace(usystem, ''))
 
+                    # water ammonia etc
                     if b.get('subType') in CodexTypes.body_types.keys():
                         self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')),
                                        b.get("name").replace(usystem, ''))
+        else:
+            CodexTypes.bodycount=0
+            debug("bodycount: {}".format(CodexTypes.bodycount))
 
         self.waiting = False
 
@@ -259,6 +267,14 @@ class CodexTypes(Frame):
         if not found:
             self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
 
+    def remove_poi(self,hud_category,english_name):
+        signals = self.poidata
+        for i, v in enumerate(signals):
+            if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
+                del self.poidata[i]
+                self.visualise()
+
+
     def visualise(self):
 
         debug("visualise")
@@ -306,6 +322,13 @@ class CodexTypes(Frame):
             ## lets give it 5 seconds
             self.after(5000, self.visualise)
 
+        if entry.get("event") in ("FSSDiscoveryScan"):
+            CodexTypes.fsscount=entry.get("BodyCount")
+            debug("body reconciliation: {} {}".format(CodexTypes.bodycount,CodexTypes.fsscount))
+            if CodexTypes.fsscount > CodexTypes.bodycount:
+                self.merge_poi("Planets", "Unexplored Bodies","")
+                self.visualise()
+
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
                 '$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
             found = False
@@ -339,6 +362,7 @@ class CodexTypes(Frame):
                     self.visualise()
 
         if entry.get("event") == "Scan" and entry.get("ScanType") == "Detailed":
+            self.remove_poi("Planets","Unexplored Bodies")
             body = entry.get("BodyName").replace(system, '')
             english_name = CodexTypes.body_types.get(entry.get("PlanetClass"))
             if entry.get("PlanetClass") in CodexTypes.body_types.keys():
