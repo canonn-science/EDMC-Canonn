@@ -12,12 +12,12 @@ from debug import Debug
 from debug import debug, error
 from emitter import Emitter
 from urllib import quote_plus
-
+import urllib2
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
         threading.Thread.__init__(self)
-        self.system = quote_plus(system.encode('utf8'))
+        self.system = system
         self.callback = callback
 
     def run(self):
@@ -68,6 +68,19 @@ class CodexTypes(Frame):
         "Biology": "Biological surface signals",
         "Guardian": "Guardian sites",
         "None": "Unclassified codex entry",
+        "Human": "Human Sites",
+        "Ring": "Planetary Ring Resources",
+        "Other": "Other Sites",
+        "Planets": "Valuable Planets"
+    }
+
+    body_types = {
+        'Metal-rich body': 'Metal-Rich Body',
+        'Metal rich body': 'Metal-Rich Body',
+        'Earth-like world': 'Earthlike World',
+        'Earthlike body': 'Earthlike World',
+        'Water world': 'Water World',
+        'Ammonia world': 'Ammonia World'
     }
 
     def __init__(self, parent, gridrow):
@@ -102,7 +115,11 @@ class CodexTypes(Frame):
         self.addimage("Thargoid", 3)
         self.addimage("Biology", 4)
         self.addimage("Guardian", 5)
-        self.addimage("None", 6)
+        self.addimage("Human", 6)
+        self.addimage("Ring", 7)
+        self.addimage("None", 8)
+        self.addimage("Other", 9)
+        self.addimage("Planets", 10)
 
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.grid(row=gridrow, column=0)
@@ -113,13 +130,53 @@ class CodexTypes(Frame):
         self.grid_remove()
 
     def getdata(self, system):
-
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiList?system={}".format(system)
+        self.waiting=True
+        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(quote_plus(system.encode('utf8')))
         debug(url)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
             self.poidata = r.json()
-            self.waiting = False
+
+        bodytypes={'Metal-rich body': [],'Earth-like world': [],'Water world': [],'Ammonia world': []}
+
+        tform=[]
+
+        usystem=urllib2.unquote(system)
+
+        edsm="https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
+        debug(edsm)
+        r = requests.get(edsm)
+        if r.status_code == requests.codes.ok:
+            debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+            bodies=r.json().get("bodies")
+            if bodies:
+                for b in bodies:
+                    debug(b.get("subType"))
+
+                    if b.get("subType") in bodytypes.keys():
+                        debug(" NAME {}".format(b.get("name")))
+                        debug(usystem)
+                        debug(b.get("name").replace(usystem, ''))
+                        bodytypes[b.get("subType")].append(b.get("name").replace(usystem,''))
+
+                    if b.get('terraformingState') == 'Candidate for terraforming':
+                        tform.append(b.get("name").replace(usystem,''))
+
+            if len(bodytypes.get('Ammonia world')) > 0:
+                self.poidata.append({ "hud_category": "Planets", "english_name": "Ammonia World", "body": ",".join(bodytypes.get('Ammonia world'))})
+            if len(bodytypes.get('Earth-like world')) > 0:
+                self.poidata.append({ "hud_category": "Planets", "english_name": "Earthlike World", "body": ",".join(bodytypes.get('Earth-like world'))})
+            if len(bodytypes.get('Metal-rich body')) > 0:
+                self.poidata.append({ "hud_category": "Planets", "english_name": "Metal-Rich Body", "body": ",".join(bodytypes.get('Metal-rich body'))})
+            if len(bodytypes.get('Water world')) > 0:
+                self.poidata.append({ "hud_category": "Planets", "english_name": "Water World", "body": ",".join(bodytypes.get('Water world'))})
+            if len(tform) > 0:
+                self.poidata.append({"hud_category": "Planets", "english_name": "Terraformable", "body": ",".join(tform)})
+
+        debug(bodytypes)
+        debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+
+        self.waiting = False
 
     def enter(self, event):
 
@@ -190,8 +247,26 @@ class CodexTypes(Frame):
 
         self.labels[name]["image"] = self.images.get(setting)
 
+        if enabled:
+            self.labels[name].grid()
+        else:
+            self.labels[name].grid_remove()
+
+    def merge_poi(self,hud_category,english_name,body):
+        debug("Merge POI")
+        found=False
+        signals = self.poidata
+        for i, v in enumerate(signals):
+            if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
+                if not body in signals[i].get("body").split(','):
+                    self.poidata[i]["body"]="{},{}".format(signals[i].get("body"),body)
+                found=True
+        if not found:
+            self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
+
     def visualise(self):
 
+        debug("visualise")
         # we may want to try again if the data hasn't been fetched yet
         if self.waiting:
             debug("Still waiting");
@@ -204,7 +279,11 @@ class CodexTypes(Frame):
             self.set_image("Thargoid", False)
             self.set_image("Biology", False)
             self.set_image("Guardian", False)
+            self.set_image("Human", False)
+            self.set_image("Ring", False)
             self.set_image("None", False)
+            self.set_image("Other", False)
+            self.set_image("Planets", False)
 
             if self.poidata:
                 self.grid()
@@ -214,12 +293,12 @@ class CodexTypes(Frame):
             else:
                 self.grid_remove()
 
+
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         debug("CodeTypes journal_entry")
 
         if entry.get("event") in ("FSDJump"):
             # To avoid having check data we will assume we have some by now
-
             self.visualise()
 
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
@@ -230,8 +309,82 @@ class CodexTypes(Frame):
         if entry.get("event") in ("Location", "StartUp"):
             debug("Looking for POI data in {}".format(system))
             poiTypes(system, self.getdata).start()
-            ## lets give it 1 seconds 
-            self.after(1000, self.visualise)
+            ## lets give it 5 seconds
+            self.after(5000, self.visualise)
+
+
+
+        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('$Fixed_Event_Life_Ring;','$Fixed_Event_Life_Cloud;'):
+            found=False
+            if not self.waiting:
+                signals = self.poidata
+                for i, v in enumerate(signals):
+                    if signals[i].get("english_name") =='Life Cloud' and  entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
+                        found=True
+                    if signals[i].get("english_name") == 'Life Ring' and  entry.get("SignalName") == '$Fixed_Event_Life_Ring;':
+                        found=True
+                if not found:
+                    if  entry.get("SignalName") == '$Fixed_Event_Life_Ring;':
+                        cloudtype='Life Ring'
+                    else:
+                        cloudtype = 'Life Cloud'
+                    self.poidata.append({ "hud_category": 'Cloud', "english_name": cloudtype})
+                    debug(poidata)
+                    self.visualise()
+
+        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
+            found=False
+            if not self.waiting:
+                signals = self.poidata
+                for i, v in enumerate(signals):
+                    if signals[i].get("english_name") =='Guardian Beacon':
+                        found=True
+                if not found:
+                    self.poidata.append({ "hud_category": 'Guardian', "english_name": 'Guardian Beacon'})
+                    self.visualise()
+
+        if entry.get("event") == "Scan" and entry.get("ScanType") == "Detailed":
+            body=entry.get("BodyName").replace(system,'')
+            english_name=CodexTypes.body_types.get(entry.get("PlanetClass"))
+            if entry.get("PlanetClass") in CodexTypes.body_types.keys():
+                debug("PlanetClass".format(entry.get("PlanetClass")))
+                self.merge_poi("Planets",english_name,body)
+            debug("Volcanism {} landable {}".format(entry.get("Volcanism"),entry.get("Landable")))
+            if entry.get("Volcanism") != "" and entry.get("Landable"):
+                debug("oh come on!")
+                self.merge_poi("Geology", entry.get("Volcanism"), body)
+            if entry.get('TerraformState') == 'Terraformable':
+                self.merge_poi("Planets", "Terraformable", body)
+            self.visualise()
+
+        if entry.get("event") == "SAASignalsFound":
+            # if we arent waiting for new data
+            bodyName = entry.get("BodyName")
+            bodyVal = bodyName.replace(system, '')
+
+            debug("SAASignalsFound")
+
+            if not self.waiting:
+                signals = entry.get("Signals")
+                for i, v in enumerate(signals):
+                    found=False
+                    type=signals[i].get("Type")
+                    english_name=type.replace("$SAA_SignalType_","").replace("ical;","y").replace(";",'')
+                    if " Ring" in bodyName:
+                        cat="Ring"
+                    if "$SAA_SignalType_" in type:
+                        cat=english_name
+                    for x,r in enumerate(self.poidata):
+                        if r.get("hud_category") == cat and r.get("english_name") == english_name:
+                            found=True
+                            if not bodyVal in r.get("body"):
+                                self.poidata[x]["body"]="{},{}".format(self.poidata[x]["body"],bodyVal)
+                    if not found:
+                        self.set_image(cat, True)
+                        self.poidata.append({'body': bodyVal, 'hud_category': cat, 'english_name': english_name})
+                        self.visualise()
+                    debug(self.poidata)
+                    debug("cat {} name  {} body {}".format(cat,english_name,bodyVal))
 
     @classmethod
     def plugin_start(cls, plugin_dir):
@@ -337,14 +490,103 @@ class gSubmitCodex(threading.Thread):
             error(r.json())
 
 
+class guardianSites(Emitter):
+
+    #this is no longer used but might come back
+    gstypes = {
+        "ancient_tiny_001": 2,
+        "ancient_tiny_002": 3,
+        "ancient_tiny_003": 4,
+        "ancient_small_001": 5,
+        "ancient_small_002": 6,
+        "ancient_small_003": 7,
+        "ancient_small_005": 8,
+        "ancient_medium_001": 9,
+        "ancient_medium_002": 10,
+        "ancient_medium_003": 11
+    }
+
+    def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
+
+        Emitter.__init__(self, cmdr, is_beta, system, x, y, z, entry, entry.get("BodyName"), entry.get("Latitude"),
+                         entry.get("Longitude"), client)
+
+        example = {"timestamp": "2019-10-10T10:23:32Z",
+                   "event": "ApproachSettlement",
+                   "Name": "$Ancient_Tiny_003:#index=1;", "Name_Localised": "Guardian Structure",
+                   "SystemAddress": 5079737705833,
+                   "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
+                   "Latitude": 52.681084, "Longitude": 115.240822}
+
+        example = {
+            "timestamp": "2019-10-10T10:21:36Z",
+            "event": "ApproachSettlement",
+            "Name": "$Ancient:#index=2;", "Name_Localised": "Ancient Ruins (2)",
+            "SystemAddress": 5079737705833,
+            "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
+            "Latitude": -10.090128, "Longitude": 114.505409}
+
+        if ":" in entry.get("Name"):
+            prefix, suffix = entry.get("Name").split(':')
+            self.index = self.get_index(entry.get("Name"))
+
+            self.modelreport = None
+
+            if prefix:
+                prefix = prefix.lower()[1:]
+                debug("prefix {}".format(prefix))
+                if prefix in guardianSites.gstypes:
+                    # This is a guardian structure
+                    #self.gstype = guardianSites.gstypes.get(prefix)
+                    self.gstype = prefix
+                    debug("gstype {} {}".format(prefix,self.gstype))
+                    self.modelreport = 'gsreports'
+                if prefix == 'ancient':
+                    # this is s guardian ruin
+                    #self.gstype = 1
+                    self.gstype = 'Unknown'
+                    self.modelreport = 'grreports'
+
+
+
+    def run(self):
+        if self.modelreport and self.system:
+            payload = self.setPayload()
+            payload["userType"] = 'pc'
+            payload["reportType"] = 'new'
+            payload["reportStatus"] = 'pending'
+            payload["type"]=self.gstype
+            payload["systemAddress"] = self.entry.get("SystemAddress")
+            payload["bodyName"] = self.body
+            payload["latitude"] = self.lat
+            payload["longitude"] = self.lon
+            payload["reportComment"]=json.dumps(self.entry,indent=4)
+            payload["frontierID"] = self.index
+
+            url = self.getUrl()
+            debug(payload)
+
+            debug(url)
+            self.send(payload, url)
+
+    def get_index(self, value):
+        a = []
+        a = value.split('#')
+        if len(a) == 2:
+            dummy, c = value.split('#')
+            dummy, index_id = c.split("=")
+            index_id = index_id[:-1]
+            return index_id
+
+
 class codexEmitter(Emitter):
     types = {}
     reporttypes = {}
     excludecodices = {}
 
-    def split_region(self,region):
+    def split_region(self, region):
         if region:
-            return region.replace("$Codex_RegionName_","").replace(';','')
+            return region.replace("$Codex_RegionName_", "").replace(';', '')
         else:
             return None
 
@@ -361,20 +603,20 @@ class codexEmitter(Emitter):
         payload["reportStatus"] = "pending"
         payload["isBeta"] = self.is_beta
         payload["clientVersion"] = self.client
-        payload["regionID"]=self.split_region(self.entry.get("Region"))
+        payload["regionID"] = self.split_region(self.entry.get("Region"))
 
         return payload
 
     def split_nearest_destination(self, nearest_destination):
 
-        #abort if no index
+        # abort if no index
         if not "index" in nearest_destination:
             return None, None
 
-        ndarray=[]
-        signal_type=None
+        ndarray = []
+        signal_type = None
 
-        ndarray=nearest_destination.split('#')
+        ndarray = nearest_destination.split('#')
         if len(ndarray) == 2:
             dummy, c = nearest_destination.split('#')
             dummy, index_id = c.split("=")
@@ -498,67 +740,92 @@ class codexEmitter(Emitter):
             self.send(payload, url)
 
 
+def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
+    debug("detected test request")
+    # testentry = {
+    #     "timestamp": "2019-09-12T09:01:35Z", "event": "CodexEntry", "EntryID": 2100101,
+    #     "Name": "$Codex_Ent_Thargoid_Barnacle_01_Name;", "Name_Localised": "Common Thargoid Barnacle",
+    #     "SubCategory": "$Codex_SubCategory_Organic_Structures;",
+    #     "SubCategory_Localised": "Organic structures", "Category": "$Codex_Category_Biology;",
+    #     "Category_Localised": "Biological and Geological", "Region": "$Codex_RegionName_18;",
+    #     "Region_Localised": "Inner Orion Spur", "System": "Merope", "SystemAddress": 224644818084,
+    #     "NearestDestination": "$SAA_Unknown_Signal:#type=$SAA_SignalType_Thargoid;:#index=1;",
+    #     "NearestDestination_Localised": "Surface signal: Thargoid (1)"
+    # }
+    # submit("Factabulous Altimus", False, 'Merope', -78.59375, -149.625, -340.53125, testentry,
+    #        'Merope 2 a', 2.656142, 143.024597, client)
+    # testentry = {
+    #     "timestamp": "2019-09-12T14:46:03Z", "event": "CodexEntry", "EntryID": 2205002,
+    #     "Name": "$Codex_Ent_S_Seed_SdTp05_Bl_Name;", "Name_Localised": "Caeruleum Chalice Pod",
+    #     "SubCategory": "$Codex_SubCategory_Organic_Structures;", "SubCategory_Localised": "Organic structures",
+    #     "Category": "$Codex_Category_Biology;", "Category_Localised": "Biological and Geological",
+    #     "Region": "$Codex_RegionName_23;", "Region_Localised": "Acheron", "System": "Pyra Dryoae ET-O d7-7",
+    #     "SystemAddress": 252639699395, "IsNewEntry": True
+    # }
+    # submit(cmdr, False, "Pyra Dryoae ET-O d7-7", 7825.40625, -101.96875, 62316.9375, testentry,
+    #        None, None, None, client)
+    #
+    # testentry = {
+    #     "Name_Localised": "Purpureum Metallic Crystals",
+    #     "SystemAddress": 355710669314,
+    #     "Region_Localised": "Inner Orion Spur",
+    #     "Name": "$Codex_Ent_L_Cry_MetCry_Pur_Name;",
+    #     "EntryID": 2100802,
+    #     "System": "Plaa Eurk MU-A c1",
+    #     "SubCategory_Localised": "Organic structures",
+    #     "Category_Localised": "Biological and Geological",
+    #     "Region": "$Codex_RegionName_18;",
+    #     "timestamp": "2019-09-12T15:28:19Z",
+    #     "event": "CodexEntry",
+    #     "Category": "$Codex_Category_Biology;",
+    #     "SubCategory": "$Codex_SubCategory_Organic_Structures;"
+    # }
+    # submit("The_Martus", False, "Plaa Eurk MU-A c1", -1807.4375, 174.84375, -1058.5, testentry,
+    #        None, None, None, client)
+    #
+    # testentry = {
+    #     "Name_Localised": "Test Data",
+    #     "SystemAddress": 355710669314,
+    #     "Region_Localised": "Andromeda Wormhole",
+    #     "Name": "$tet_test_test;",
+    #     "EntryID": 9999999999,
+    #     "System": "Raxxla",
+    #     "SubCategory_Localised": "Imaginary structures",
+    #     "Category_Localised": "Insanity",
+    #     "Region": "$Codex_RegionName_00;",
+    #     "timestamp": "2019-09-12T15:28:19Z",
+    #     "event": "CodexEntry",
+    #     "Category": "$Codex_Category_Insanity;",
+    #     "SubCategory": "$Codex_SubCategory_Imaginary_Structures;"
+    # }
+    # submit("Test Date", False, "Raxxla", -1807.4375, 174.84375, -1058.5, testentry,
+    #        None, None, None, client)
+
+    testentry = {
+        "timestamp": "2019-10-10T10:21:36Z",
+        "event": "ApproachSettlement",
+        "Name": "$Ancient:#index=2;", "Name_Localised": "Ancient Ruins (2)",
+        "SystemAddress": 5079737705833,
+        "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
+        "Latitude": -10.090128, "Longitude": 114.505409}
+    submit("LCU No Fool Like One", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
+           "Synuefe LY-I b42-2 C 2", -10.090128, 114.505409, client)
+
+    testentry = {"timestamp": "2019-10-10T10:23:32Z",
+                   "event": "ApproachSettlement",
+                   "Name": "$Ancient_Tiny_003:#index=1;", "Name_Localised": "Guardian Structure",
+                   "SystemAddress": 5079737705833,
+                   "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
+                   "Latitude": 52.681084, "Longitude": 115.240822}
+    submit("LCU No Fool Like One", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
+           "Synuefe LY-I b42-2 C 2", 52.681084, 115.240822, client)
+
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     if entry["event"] == "CodexEntry":
         codexEmitter(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
 
+    if entry["event"] == "ApproachSettlement":
+        guardianSites(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
+
     if entry.get("event") == "SendText" and entry.get("Message") == "codextest":
-        debug("detected test request")
-        testentry = {
-            "timestamp": "2019-09-12T09:01:35Z", "event": "CodexEntry", "EntryID": 2100101,
-            "Name": "$Codex_Ent_Thargoid_Barnacle_01_Name;", "Name_Localised": "Common Thargoid Barnacle",
-            "SubCategory": "$Codex_SubCategory_Organic_Structures;",
-            "SubCategory_Localised": "Organic structures", "Category": "$Codex_Category_Biology;",
-            "Category_Localised": "Biological and Geological", "Region": "$Codex_RegionName_18;",
-            "Region_Localised": "Inner Orion Spur", "System": "Merope", "SystemAddress": 224644818084,
-            "NearestDestination": "$SAA_Unknown_Signal:#type=$SAA_SignalType_Thargoid;:#index=1;",
-            "NearestDestination_Localised": "Surface signal: Thargoid (1)"
-        }
-        submit("Factabulous Altimus", False, 'Merope', -78.59375, -149.625, -340.53125, testentry,
-               'Merope 2 a', 2.656142, 143.024597, client)
-        testentry = {
-            "timestamp": "2019-09-12T14:46:03Z", "event": "CodexEntry", "EntryID": 2205002,
-             "Name": "$Codex_Ent_S_Seed_SdTp05_Bl_Name;", "Name_Localised": "Caeruleum Chalice Pod",
-             "SubCategory": "$Codex_SubCategory_Organic_Structures;", "SubCategory_Localised": "Organic structures",
-             "Category": "$Codex_Category_Biology;", "Category_Localised": "Biological and Geological",
-             "Region": "$Codex_RegionName_23;", "Region_Localised": "Acheron", "System": "Pyra Dryoae ET-O d7-7",
-             "SystemAddress": 252639699395, "IsNewEntry": True
-        }
-        submit(cmdr, False, "Pyra Dryoae ET-O d7-7", 7825.40625 , -101.96875 , 62316.9375, testentry,
-               None, None, None, client)
-
-        testentry = {
-            "Name_Localised": "Purpureum Metallic Crystals",
-            "SystemAddress": 355710669314,
-            "Region_Localised": "Inner Orion Spur",
-            "Name": "$Codex_Ent_L_Cry_MetCry_Pur_Name;",
-            "EntryID": 2100802,
-            "System": "Plaa Eurk MU-A c1",
-            "SubCategory_Localised": "Organic structures",
-            "Category_Localised": "Biological and Geological",
-            "Region": "$Codex_RegionName_18;",
-            "timestamp": "2019-09-12T15:28:19Z",
-            "event": "CodexEntry",
-            "Category": "$Codex_Category_Biology;",
-            "SubCategory": "$Codex_SubCategory_Organic_Structures;"
-        }
-        submit("The_Martus", False, "Plaa Eurk MU-A c1",  -1807.4375 , 174.84375 , -1058.5, testentry,
-               None, None, None, client)
-
-        testentry = {
-            "Name_Localised": "Test Data",
-            "SystemAddress": 355710669314,
-            "Region_Localised": "Andromeda Wormhole",
-            "Name": "$tet_test_test;",
-                "EntryID": 9999999999,
-            "System": "Raxxla",
-            "SubCategory_Localised": "Imaginary structures",
-            "Category_Localised": "Insanity",
-            "Region": "$Codex_RegionName_00;",
-            "timestamp": "2019-09-12T15:28:19Z",
-            "event": "CodexEntry",
-            "Category": "$Codex_Category_Insanity;",
-            "SubCategory": "$Codex_SubCategory_Imaginary_Structures;"
-        }
-        submit("Test Date", False, "Raxxla", -1807.4375, 174.84375, -1058.5, testentry,
-               None, None, None, client)
+        test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)

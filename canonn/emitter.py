@@ -19,7 +19,10 @@ class postJson(threading.Thread):
         if not r.status_code == requests.codes.ok:
             error(json.dumps(self.payload))
             error(r.status_code)
-            error(r.json())
+            try:
+                error(r.json())
+            except:
+                error(r.text)
         else:
             debug("emitter.post success")
             debug(json.dumps(r.json(),indent=4))

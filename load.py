@@ -1,29 +1,26 @@
-from config import config
-import myNotebook as nb
-from urllib import quote_plus
-import requests
+import Tkinter as tk
 import json
-
-from canonn import journaldata
-from canonn import factionkill
-from canonn import nhss
-from canonn import codex
-from canonn import hdreport
-from canonn import news
-from canonn import release
-from canonn import legacy
+import myNotebook as nb
+import requests
+import sys
+import ttk
 from canonn import clientreport
+from canonn import codex
+from canonn import factionkill
 from canonn import fssreports
+from canonn import hdreport
+from canonn import journaldata
+from canonn import materialReport
+from canonn import news
+from canonn import nhss
 from canonn import patrol
-from canonn.systems import Systems
+from canonn import release
 from canonn.debug import Debug
 from canonn.debug import debug
+from canonn.systems import Systems
 from canonn.whitelist import whiteList
-from canonn import materialReport
-
-import ttk
-import Tkinter as tk
-import sys
+from config import config
+from urllib import quote_plus
 
 this = sys.modules[__name__]
 
@@ -40,7 +37,7 @@ myPlugin = "EDMC-Canonn"
 this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
-this.version = "3.0.2"
+this.version = "3.4.0"
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
 
@@ -113,6 +110,8 @@ def plugin_app(parent):
     this.release = release.Release(table, this.version, 1)
     this.codexcontrol = codex.CodexTypes(table, 2)
     this.patrol = patrol.CanonnPatrol(table, 3)
+    this.hyperdiction = hdreport.hyperdictionDetector.setup(table,4)
+
     whitelist = whiteList(parent)
     whitelist.fetchData()
 
@@ -189,13 +188,6 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
                           x, y, z, body, lat,
                           lon, client)
     codex.saaScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-
-    # legacy logging to google sheets
-    legacy.statistics(cmdr, is_beta, system, station, entry, state)
-    legacy.CodexEntry(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
-    legacy.AXZone(cmdr, is_beta, system, x, y, z, station, entry, state)
-    legacy.faction_kill(cmdr, is_beta, system, station, entry, state)
-    legacy.NHSS.submit(cmdr, is_beta, system, x, y, z, station, entry, client)
 
 
 def dashboard_entry(cmdr, is_beta, entry):
