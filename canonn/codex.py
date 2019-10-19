@@ -6,13 +6,14 @@ import os
 import requests
 import sys
 import threading
+import urllib2
 from Tkinter import Frame
 from config import config
 from debug import Debug
 from debug import debug, error
 from emitter import Emitter
 from urllib import quote_plus
-import urllib2
+
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
@@ -130,25 +131,26 @@ class CodexTypes(Frame):
         self.grid_remove()
 
     def getdata(self, system):
-        self.waiting=True
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(quote_plus(system.encode('utf8')))
+        self.waiting = True
+        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
+            quote_plus(system.encode('utf8')))
         debug(url)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
             self.poidata = r.json()
 
-        bodytypes={'Metal-rich body': [],'Earth-like world': [],'Water world': [],'Ammonia world': []}
+        bodytypes = {'Metal-rich body': [], 'Earth-like world': [], 'Water world': [], 'Ammonia world': []}
 
-        tform=[]
+        tform = []
 
-        usystem=urllib2.unquote(system)
+        usystem = urllib2.unquote(system)
 
-        edsm="https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
+        edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
         debug(edsm)
         r = requests.get(edsm)
         if r.status_code == requests.codes.ok:
-            debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-            bodies=r.json().get("bodies")
+
+            bodies = r.json().get("bodies")
             if bodies:
                 for b in bodies:
                     debug(b.get("subType"))
@@ -157,24 +159,17 @@ class CodexTypes(Frame):
                         debug(" NAME {}".format(b.get("name")))
                         debug(usystem)
                         debug(b.get("name").replace(usystem, ''))
-                        bodytypes[b.get("subType")].append(b.get("name").replace(usystem,''))
+                        bodytypes[b.get("subType")].append(b.get("name").replace(usystem, ''))
 
                     if b.get('terraformingState') == 'Candidate for terraforming':
-                        tform.append(b.get("name").replace(usystem,''))
+                        self.merge_poi("Planets", "Terraformable", b.get("name").replace(usystem, ''))
 
-            if len(bodytypes.get('Ammonia world')) > 0:
-                self.poidata.append({ "hud_category": "Planets", "english_name": "Ammonia World", "body": ",".join(bodytypes.get('Ammonia world'))})
-            if len(bodytypes.get('Earth-like world')) > 0:
-                self.poidata.append({ "hud_category": "Planets", "english_name": "Earthlike World", "body": ",".join(bodytypes.get('Earth-like world'))})
-            if len(bodytypes.get('Metal-rich body')) > 0:
-                self.poidata.append({ "hud_category": "Planets", "english_name": "Metal-Rich Body", "body": ",".join(bodytypes.get('Metal-rich body'))})
-            if len(bodytypes.get('Water world')) > 0:
-                self.poidata.append({ "hud_category": "Planets", "english_name": "Water World", "body": ",".join(bodytypes.get('Water world'))})
-            if len(tform) > 0:
-                self.poidata.append({"hud_category": "Planets", "english_name": "Terraformable", "body": ",".join(tform)})
+                    if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism':
+                        self.merge_poi("Geology", b.get('volcanismType'), b.get("name").replace(usystem, ''))
 
-        debug(bodytypes)
-        debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+                    if b.get('subType') in CodexTypes.body_types.keys():
+                        self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')),
+                                       b.get("name").replace(usystem, ''))
 
         self.waiting = False
 
@@ -252,15 +247,15 @@ class CodexTypes(Frame):
         else:
             self.labels[name].grid_remove()
 
-    def merge_poi(self,hud_category,english_name,body):
+    def merge_poi(self, hud_category, english_name, body):
         debug("Merge POI")
-        found=False
+        found = False
         signals = self.poidata
         for i, v in enumerate(signals):
             if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
                 if not body in signals[i].get("body").split(','):
-                    self.poidata[i]["body"]="{},{}".format(signals[i].get("body"),body)
-                found=True
+                    self.poidata[i]["body"] = "{},{}".format(signals[i].get("body"), body)
+                found = True
         if not found:
             self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
 
@@ -293,7 +288,6 @@ class CodexTypes(Frame):
             else:
                 self.grid_remove()
 
-
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         debug("CodeTypes journal_entry")
 
@@ -312,44 +306,45 @@ class CodexTypes(Frame):
             ## lets give it 5 seconds
             self.after(5000, self.visualise)
 
-
-
-        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('$Fixed_Event_Life_Ring;','$Fixed_Event_Life_Cloud;'):
-            found=False
+        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
+                '$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
+            found = False
             if not self.waiting:
                 signals = self.poidata
                 for i, v in enumerate(signals):
-                    if signals[i].get("english_name") =='Life Cloud' and  entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
-                        found=True
-                    if signals[i].get("english_name") == 'Life Ring' and  entry.get("SignalName") == '$Fixed_Event_Life_Ring;':
-                        found=True
+                    if signals[i].get("english_name") == 'Life Cloud' and entry.get(
+                            "SignalName") == '$Fixed_Event_Life_Cloud;':
+                        found = True
+                    if signals[i].get("english_name") == 'Life Ring' and entry.get(
+                            "SignalName") == '$Fixed_Event_Life_Ring;':
+                        found = True
                 if not found:
-                    if  entry.get("SignalName") == '$Fixed_Event_Life_Ring;':
-                        cloudtype='Life Ring'
+                    if entry.get("SignalName") == '$Fixed_Event_Life_Ring;':
+                        cloudtype = 'Life Ring'
                     else:
                         cloudtype = 'Life Cloud'
-                    self.poidata.append({ "hud_category": 'Cloud', "english_name": cloudtype})
+                    self.poidata.append({"hud_category": 'Cloud', "english_name": cloudtype})
                     debug(poidata)
                     self.visualise()
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
-            found=False
+            found = False
             if not self.waiting:
                 signals = self.poidata
                 for i, v in enumerate(signals):
-                    if signals[i].get("english_name") =='Guardian Beacon':
-                        found=True
+                    if signals[i].get("english_name") == 'Guardian Beacon':
+                        found = True
                 if not found:
-                    self.poidata.append({ "hud_category": 'Guardian', "english_name": 'Guardian Beacon'})
+                    self.poidata.append({"hud_category": 'Guardian', "english_name": 'Guardian Beacon'})
                     self.visualise()
 
         if entry.get("event") == "Scan" and entry.get("ScanType") == "Detailed":
-            body=entry.get("BodyName").replace(system,'')
-            english_name=CodexTypes.body_types.get(entry.get("PlanetClass"))
+            body = entry.get("BodyName").replace(system, '')
+            english_name = CodexTypes.body_types.get(entry.get("PlanetClass"))
             if entry.get("PlanetClass") in CodexTypes.body_types.keys():
                 debug("PlanetClass".format(entry.get("PlanetClass")))
-                self.merge_poi("Planets",english_name,body)
-            debug("Volcanism {} landable {}".format(entry.get("Volcanism"),entry.get("Landable")))
+                self.merge_poi("Planets", english_name, body)
+            debug("Volcanism {} landable {}".format(entry.get("Volcanism"), entry.get("Landable")))
             if entry.get("Volcanism") != "" and entry.get("Landable"):
                 debug("oh come on!")
                 self.merge_poi("Geology", entry.get("Volcanism"), body)
@@ -367,24 +362,24 @@ class CodexTypes(Frame):
             if not self.waiting:
                 signals = entry.get("Signals")
                 for i, v in enumerate(signals):
-                    found=False
-                    type=signals[i].get("Type")
-                    english_name=type.replace("$SAA_SignalType_","").replace("ical;","y").replace(";",'')
+                    found = False
+                    type = signals[i].get("Type")
+                    english_name = type.replace("$SAA_SignalType_", "").replace("ical;", "y").replace(";", '')
                     if " Ring" in bodyName:
-                        cat="Ring"
+                        cat = "Ring"
                     if "$SAA_SignalType_" in type:
-                        cat=english_name
-                    for x,r in enumerate(self.poidata):
+                        cat = english_name
+                    for x, r in enumerate(self.poidata):
                         if r.get("hud_category") == cat and r.get("english_name") == english_name:
-                            found=True
+                            found = True
                             if not bodyVal in r.get("body"):
-                                self.poidata[x]["body"]="{},{}".format(self.poidata[x]["body"],bodyVal)
+                                self.poidata[x]["body"] = "{},{}".format(self.poidata[x]["body"], bodyVal)
                     if not found:
                         self.set_image(cat, True)
                         self.poidata.append({'body': bodyVal, 'hud_category': cat, 'english_name': english_name})
                         self.visualise()
                     debug(self.poidata)
-                    debug("cat {} name  {} body {}".format(cat,english_name,bodyVal))
+                    debug("cat {} name  {} body {}".format(cat, english_name, bodyVal))
 
     @classmethod
     def plugin_start(cls, plugin_dir):
@@ -491,8 +486,7 @@ class gSubmitCodex(threading.Thread):
 
 
 class guardianSites(Emitter):
-
-    #this is no longer used but might come back
+    # this is no longer used but might come back
     gstypes = {
         "ancient_tiny_001": 2,
         "ancient_tiny_002": 3,
@@ -537,17 +531,15 @@ class guardianSites(Emitter):
                 debug("prefix {}".format(prefix))
                 if prefix in guardianSites.gstypes:
                     # This is a guardian structure
-                    #self.gstype = guardianSites.gstypes.get(prefix)
+                    # self.gstype = guardianSites.gstypes.get(prefix)
                     self.gstype = prefix
-                    debug("gstype {} {}".format(prefix,self.gstype))
+                    debug("gstype {} {}".format(prefix, self.gstype))
                     self.modelreport = 'gsreports'
                 if prefix == 'ancient':
                     # this is s guardian ruin
-                    #self.gstype = 1
+                    # self.gstype = 1
                     self.gstype = 'Unknown'
                     self.modelreport = 'grreports'
-
-
 
     def run(self):
         if self.modelreport and self.system:
@@ -555,12 +547,12 @@ class guardianSites(Emitter):
             payload["userType"] = 'pc'
             payload["reportType"] = 'new'
             payload["reportStatus"] = 'pending'
-            payload["type"]=self.gstype
+            payload["type"] = self.gstype
             payload["systemAddress"] = self.entry.get("SystemAddress")
             payload["bodyName"] = self.body
             payload["latitude"] = self.lat
             payload["longitude"] = self.lon
-            payload["reportComment"]=json.dumps(self.entry,indent=4)
+            payload["reportComment"] = json.dumps(self.entry, indent=4)
             payload["frontierID"] = self.index
 
             url = self.getUrl()
@@ -812,13 +804,14 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
            "Synuefe LY-I b42-2 C 2", -10.090128, 114.505409, client)
 
     testentry = {"timestamp": "2019-10-10T10:23:32Z",
-                   "event": "ApproachSettlement",
-                   "Name": "$Ancient_Tiny_003:#index=1;", "Name_Localised": "Guardian Structure",
-                   "SystemAddress": 5079737705833,
-                   "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
-                   "Latitude": 52.681084, "Longitude": 115.240822}
+                 "event": "ApproachSettlement",
+                 "Name": "$Ancient_Tiny_003:#index=1;", "Name_Localised": "Guardian Structure",
+                 "SystemAddress": 5079737705833,
+                 "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
+                 "Latitude": 52.681084, "Longitude": 115.240822}
     submit("LCU No Fool Like One", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
            "Synuefe LY-I b42-2 C 2", 52.681084, 115.240822, client)
+
 
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     if entry["event"] == "CodexEntry":
