@@ -72,7 +72,8 @@ class CodexTypes(Frame):
         "Human": "Human Sites",
         "Ring": "Planetary Ring Resources",
         "Other": "Other Sites",
-        "Planets": "Valuable Planets"
+        "Planets": "Valuable Planets",
+        "Tourist": "Tourist Informatiom"
     }
 
     body_types = {
@@ -123,6 +124,7 @@ class CodexTypes(Frame):
         self.addimage("None", 8)
         self.addimage("Other", 9)
         self.addimage("Planets", 10)
+        self.addimage("Tourist", 11)
 
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.grid(row=gridrow, column=0)
@@ -154,7 +156,7 @@ class CodexTypes(Frame):
 
             bodies = r.json().get("bodies")
             if bodies:
-                CodexTypes.bodycount=len(bodies)
+                CodexTypes.bodycount = len(bodies)
                 debug("bodycount: {}".format(CodexTypes.bodycount))
                 for b in bodies:
                     debug(b.get("subType"))
@@ -175,8 +177,14 @@ class CodexTypes(Frame):
                     if b.get('subType') in CodexTypes.body_types.keys():
                         self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')),
                                        b.get("name").replace(usystem, ''))
+                    debug("Orbit {} {}".format(b.get('orbitalPeriod'),b.get("name")))
+                    if b.get('orbitalPeriod'):
+                        if float(b.get('orbitalPeriod')) <= 0.042:
+                            self.merge_poi("Tourist", 'Fast Orbital Period', b.get("name").replace(usystem, ''))
+
+
         else:
-            CodexTypes.bodycount=0
+            CodexTypes.bodycount = 0
             debug("bodycount: {}".format(CodexTypes.bodycount))
 
         self.waiting = False
@@ -267,13 +275,12 @@ class CodexTypes(Frame):
         if not found:
             self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
 
-    def remove_poi(self,hud_category,english_name):
+    def remove_poi(self, hud_category, english_name):
         signals = self.poidata
         for i, v in enumerate(signals):
             if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
                 del self.poidata[i]
                 self.visualise()
-
 
     def visualise(self):
 
@@ -295,6 +302,7 @@ class CodexTypes(Frame):
             self.set_image("None", False)
             self.set_image("Other", False)
             self.set_image("Planets", False)
+            self.set_image("Tourist", False)
 
             if self.poidata:
                 self.grid()
@@ -323,10 +331,10 @@ class CodexTypes(Frame):
             self.after(5000, self.visualise)
 
         if entry.get("event") in ("FSSDiscoveryScan"):
-            CodexTypes.fsscount=entry.get("BodyCount")
-            debug("body reconciliation: {} {}".format(CodexTypes.bodycount,CodexTypes.fsscount))
+            CodexTypes.fsscount = entry.get("BodyCount")
+            debug("body reconciliation: {} {}".format(CodexTypes.bodycount, CodexTypes.fsscount))
             if CodexTypes.fsscount > CodexTypes.bodycount:
-                self.merge_poi("Planets", "Unexplored Bodies","")
+                self.merge_poi("Planets", "Unexplored Bodies", "")
                 self.visualise()
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
@@ -362,7 +370,7 @@ class CodexTypes(Frame):
                     self.visualise()
 
         if entry.get("event") == "Scan" and entry.get("ScanType") == "Detailed":
-            self.remove_poi("Planets","Unexplored Bodies")
+            self.remove_poi("Planets", "Unexplored Bodies")
             body = entry.get("BodyName").replace(system, '')
             english_name = CodexTypes.body_types.get(entry.get("PlanetClass"))
             if entry.get("PlanetClass") in CodexTypes.body_types.keys():
@@ -374,6 +382,11 @@ class CodexTypes(Frame):
                 self.merge_poi("Geology", entry.get("Volcanism"), body)
             if entry.get('TerraformState') == 'Terraformable':
                 self.merge_poi("Planets", "Terraformable", body)
+
+            if entry.get('OrbitalPeriod'):
+                if float(entry.get('OrbitalPeriod')) < 3600:
+                    self.merge_poi("Tourist", "Fast Orbit", body)
+
             self.visualise()
 
         if entry.get("event") == "SAASignalsFound":
