@@ -177,7 +177,7 @@ class CodexTypes(Frame):
 
                     # fast orbits
                     if b.get('orbitalPeriod'):
-                        if float(b.get('orbitalPeriod')) <= 0.042:
+                        if abs(float(b.get('orbitalPeriod'))) <= 0.042:
                             self.merge_poi("Tourist", 'Fast Orbital Period', body_code)
 
                     # Ringed ELW etc
@@ -209,7 +209,7 @@ class CodexTypes(Frame):
                         self.merge_poi("Tourist", 'Tiny Radius Landable', body_code)
 
                     #    Fast and non-locked rotation
-                    if float(b.get('rotationalPeriod')) < 1 / 24 and not b.get("rotationalPeriodTidallyLocked"):
+                    if abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get("rotationalPeriodTidallyLocked"):
                         self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
                     #    High eccentricity
                     #    Wide rings
@@ -430,7 +430,7 @@ class CodexTypes(Frame):
                 self.merge_poi("Planets", "Terraformable", body)
 
             if entry.get('OrbitalPeriod'):
-                if float(entry.get('OrbitalPeriod')) < 3600:
+                if abs(float(entry.get('OrbitalPeriod'))) < 3600:
                     self.merge_poi("Tourist", "Fast Orbit", body)
 
             if entry.get('subType') in ('Earthlike body', 'Water world', 'Ammonia world'):
@@ -461,7 +461,7 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
             #    Fast and non-locked rotation < 1 hour
-            if entry.get('RotationPeriod') < 3600 and not entry.get("TidalLock"):
+            if abs(entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
                 self.merge_poi("Tourist", 'Fast unlocked rotation', body)
 
             #    High eccentricity
