@@ -188,15 +188,15 @@ class CodexTypes(Frame):
 
                     #  Landable with surface pressure
                     if b.get('type') == 'Planet' and b.get('surfacePressure') and b.get('isLandable'):
-                        self.merge_poi("Tourist",'Landable with atmosphere', body_code)
+                        self.merge_poi("Tourist", 'Landable with atmosphere', body_code)
 
                     #    Landable high-g (>3g)
                     if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
-                        self.merge_poi("Tourist",'High Gravity', body_code)
+                        self.merge_poi("Tourist", 'High Gravity', body_code)
 
                     #    Landable large (>18000km radius)
                     if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
-                        self.merge_poi("Tourist",'Large Radius Landable', body_code)
+                        self.merge_poi("Tourist", 'Large Radius Landable', body_code)
 
                     #    Orbiting close to parent body
                     #   Shepherd moons (orbiting closer than a ring)
@@ -205,10 +205,12 @@ class CodexTypes(Frame):
                     #    Moons of moons
 
                     #    Tiny objects (<300km radius)
-                    if b.get('type') == 'Planet' and b.get('radius') < 300  and b.get('isLandable'):
-                        self.merge_poi("Tourist",'Tiny Radius Landable', body_code)
+                    if b.get('type') == 'Planet' and b.get('radius') < 300 and b.get('isLandable'):
+                        self.merge_poi("Tourist", 'Tiny Radius Landable', body_code)
 
                     #    Fast and non-locked rotation
+                    if float(b.get('rotationalPeriod')) < 1 / 24 and not b.get("rotationalPeriodTidallyLocked"):
+                        self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
                     #    High eccentricity
                     #    Wide rings
                     #    Good jumponium availability (5/6 materials on a single body)
@@ -406,13 +408,12 @@ class CodexTypes(Frame):
         if entry.get("event") == "FSSSignalDiscovered":
             if "NumberStation" in entry.get("SignalName"):
                 self.merge_poi("Human", "Unregistered Comms Beacon", body)
-            if "Mega"  in entry.get("SignalName"):
+            if "Mega" in entry.get("SignalName"):
                 self.merge_poi("Human", "Megaship", body)
-            if "ListeningPost"  in entry.get("SignalName"):
+            if "ListeningPost" in entry.get("SignalName"):
                 self.merge_poi("Human", "Listening Post", body)
-            if "CAPSHIP"  in entry.get("SignalName"):
+            if "CAPSHIP" in entry.get("SignalName"):
                 self.merge_poi("Human", "Capital Ship", body)
-
 
         if entry.get("event") == "Scan" and entry.get("ScanType") == "Detailed":
             self.remove_poi("Planets", "Unexplored Bodies")
@@ -446,7 +447,7 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'High Gravity', body)
 
             #    Landable large (>18000km radius)
-            if entry.get('PlanetClass') and entry.get('radius') > 18000 and entry.get('Landable'):
+            if entry.get('PlanetClass') and entry.get('radius') > 18000000 and entry.get('Landable'):
                 self.merge_poi("Tourist", 'Large Radius Landable', body_code)
 
             #    Orbiting close to parent body
@@ -456,10 +457,13 @@ class CodexTypes(Frame):
             #    Moons of moons
 
             #    Tiny objects (<300km radius)
-            if entry.get('radius') < 300:
+            if entry.get('radius') < 300000:
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
-            #    Fast and non-locked rotation
+            #    Fast and non-locked rotation < 1 hour
+            if entry.get('RotationPeriod') < 3600 and not entry.get("TidalLock"):
+                self.merge_poi("Tourist", 'Fast unlocked rotation', body)
+
             #    High eccentricity
             #    Wide rings
             #    Good jumponium availability (5/6 materials on a single body)
