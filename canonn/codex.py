@@ -447,7 +447,7 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'High Gravity', body)
 
             #    Landable large (>18000km radius)
-            if entry.get('PlanetClass') and entry.get('radius') > 18000000 and entry.get('Landable'):
+            if entry.get('PlanetClass') and entry.get('Radius') > 18000000 and entry.get('Landable'):
                 self.merge_poi("Tourist", 'Large Radius Landable', body_code)
 
             #    Orbiting close to parent body
@@ -457,7 +457,7 @@ class CodexTypes(Frame):
             #    Moons of moons
 
             #    Tiny objects (<300km radius)
-            if entry.get('radius') < 300000:
+            if entry.get('Radius') < 300000:
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
             #    Fast and non-locked rotation < 1 hour
