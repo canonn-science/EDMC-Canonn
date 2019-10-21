@@ -13,6 +13,7 @@ from debug import Debug
 from debug import debug, error
 from emitter import Emitter
 from urllib import quote_plus
+from math import sqrt,pow
 
 
 class poiTypes(threading.Thread):
@@ -198,7 +199,14 @@ class CodexTypes(Frame):
                     if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
                         self.merge_poi("Tourist", 'Large Radius Landable', body_code)
 
-                    #    Orbiting close to parent body
+                    # orbiting close to the star we need the solar radius for this...
+                    #if b.get('type') == 'Planet' and self.surface_distance(d.get("distanceToArrival"),)
+
+                    #    Orbiting close to parent body less than 5ls
+                    if b.get('type') == 'Planet' and self.semi_minor_axis('semiMajorAxis', b.get("semiMajorAxis"),
+                                                                          b.get("orbitalEccentricity")) < 2:
+                        self.merge_poi("Tourist", 'Close Orbit', body_code)
+
                     #   Shepherd moons (orbiting closer than a ring)
                     #    Close binary pairs
                     #   Colliding binary pairs
@@ -318,6 +326,44 @@ class CodexTypes(Frame):
                 del self.poidata[i]
                 self.visualise()
 
+    def light_seconds(self, tag, value):
+        if tag in ("distanceToArrival", "DistanceFromArrivalLS"):
+            return value
+
+        # Things measured in meters
+        if tag in ("Radius", "SemiMajorAxis"):
+            # from journal metres
+            return value * 299792000
+
+        # Things measure in kilometres
+        if tag == "radius":
+            # from journal metres
+            return value * 1000 * 299792000
+
+        # Things measure in astronomical units
+        if tag == "semiMajorAxis":
+            return value * 499.005
+
+        # Things measured in solar radii
+        if tag == "solarRadius":
+            return value * 2.32061
+
+    def semi_minor_axis(self, tag, major, eccentricity):
+        # b2 = a2(1 - e2 )
+        debug("semi_monor_axist {} {} {}".format(tag, major, eccentricity))
+
+        a = float(self.light_seconds(tag, major))
+        e = float(eccentricity or 0)
+        minor = sqrt(pow(a, 2) * (1 - pow(e, 2)))
+
+        debug("closest approach {}".format(minor))
+        debug("furthest approach {}".format(a))
+
+        return minor
+
+    def surface_distance(self, d, r1, r2):
+        return d - r1, r2;
+
     def visualise(self):
 
         debug("visualise")
@@ -415,6 +461,9 @@ class CodexTypes(Frame):
             if "CAPSHIP" in entry.get("SignalName"):
                 self.merge_poi("Human", "Capital Ship", body)
 
+        if entry.get("event") == "FSSAllBodiesFound":
+            self.remove_poi("Planets", "Unexplored Bodies")
+
         if entry.get("event") == "Scan" and entry.get("ScanType") == "Detailed":
             self.remove_poi("Planets", "Unexplored Bodies")
             body = entry.get("BodyName").replace(system, '')
@@ -451,6 +500,9 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'Large Radius Landable', body_code)
 
             #    Orbiting close to parent body
+            if entry.get('PlanetClass') and self.semi_minor_axis('SemiMajorAxis', entry.get("SemiMajorAxis"),
+                                                                 entry.get("Eccentricity")) < 2:
+                self.merge_poi("Tourist", 'Close Orbit', body)
             #   Shepherd moons (orbiting closer than a ring)
             #    Close binary pairs
             #   Colliding binary pairs
