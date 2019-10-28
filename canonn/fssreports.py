@@ -3,6 +3,7 @@ import requests
 import sys
 import json
 from emitter import Emitter
+import emitter
 from urllib import quote_plus
 import urllib
 from debug import Debug
@@ -106,11 +107,27 @@ class fssEmitter(Emitter):
 
         self.getExcluded()
 
+        # don't bother sending USS
+        if self.entry["event"] == "FSSSignalDiscovered" and not "$USS" in self.entry.get("SignalName"):
+            emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postFSSSignal",
+                        {
+                            "signalname": self.entry.get("SignalName"),
+                            "signalNameLocalised": self.entry.get("SignalName_Localised"),
+                            "cmdr": self.cmdr,
+                            "system": self.system,
+                            "x": self.x,
+                            "y": self.y,
+                            "z": self.z,
+                            "raw_json": self.entry,
+                        })
+
         # is this a code entry and do we want to record it?
         # We dont want o record any that don't begin with $ and and with ;
-        if self.entry["event"] == "FSSSignalDiscovered" and not fssEmitter.excludefss.get(
-                self.entry.get("SignalName")) and not self.entry.get("SignalName") == "$USS;" and not self.entry.get(
-                "IsStation") and '$' in self.entry.get("SignalName"):
+        if self.entry["event"] == "FSSSignalDiscovered" and \
+                not fssEmitter.excludefss.get(self.entry.get("SignalName")) and \
+                not "$USS" in self.entry.get("SignalName") and \
+                not self.entry.get(      "IsStation") and \
+                '$' in self.entry.get("SignalName"):
 
             url = self.getUrl()
 

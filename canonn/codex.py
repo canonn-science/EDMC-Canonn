@@ -88,6 +88,10 @@ class CodexTypes(Frame):
 
     bodycount = 0
 
+    parentRadius = 0
+
+    close_orbit=0.1
+
     def __init__(self, parent, gridrow):
         "Initialise the ``Patrol``."
         Frame.__init__(
@@ -95,6 +99,7 @@ class CodexTypes(Frame):
             parent
         )
 
+        self.parent=parent
         self.waiting = True
 
         self.hidecodexbtn = tk.IntVar(value=config.getint("Canonn:HideCodex"))
@@ -159,6 +164,10 @@ class CodexTypes(Frame):
             if bodies:
                 CodexTypes.bodycount = len(bodies)
                 debug("bodycount: {}".format(CodexTypes.bodycount))
+
+
+                CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies[0].get("solarRadius"))
+
                 for b in bodies:
                     debug(b.get("subType"))
                     body_code = b.get("name").replace(usystem, '')
@@ -200,12 +209,14 @@ class CodexTypes(Frame):
                         self.merge_poi("Tourist", 'Large Radius Landable', body_code)
 
                     # orbiting close to the star we need the solar radius for this...
-                    #if b.get('type') == 'Planet' and self.surface_distance(d.get("distanceToArrival"),)
+                    if b.get('type') == 'Planet' and self.surface_distance(b.get("distanceToArrival"),CodexTypes.parentRadius,self.light_seconds('radius',b.get("radius"))) < 10:
+                        self.merge_poi("Tourist", 'Surface Close to parent star', body_code)
 
                     #    Orbiting close to parent body less than 5ls
-                    if b.get('type') == 'Planet' and self.semi_minor_axis('semiMajorAxis', b.get("semiMajorAxis"),
-                                                                          b.get("orbitalEccentricity")) < 2:
+                    if b.get('type') == 'Planet' and self.aphelion('semiMajorAxis', b.get("semiMajorAxis"),
+                                                                          b.get("orbitalEccentricity")) < CodexTypes.close_orbit:
                         self.merge_poi("Tourist", 'Close Orbit', body_code)
+
 
                     #   Shepherd moons (orbiting closer than a ring)
                     #    Close binary pairs
@@ -219,13 +230,14 @@ class CodexTypes(Frame):
                     #    Fast and non-locked rotation
                     if abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get("rotationalPeriodTidallyLocked"):
                         self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
+
                     #    High eccentricity
+                    if float(b.get("orbitalEccentricity") or 0) > 0.6:
+                        self.merge_poi("Tourist", 'Highly Eccentric Orbit', body)
                     #    Wide rings
                     #    Good jumponium availability (5/6 materials on a single body)
                     #    Full jumponium availability within a single system
                     #    Full jumponium availability on a single body
-
-
 
         else:
             CodexTypes.bodycount = 0
@@ -278,6 +290,7 @@ class CodexTypes(Frame):
 
     def leave(self, event):
         # self.tooltip.grid_remove()
+
         self.tooltiplist.grid_remove()
 
     def addimage(self, name, col):
@@ -349,17 +362,30 @@ class CodexTypes(Frame):
             return value * 2.32061
 
     def semi_minor_axis(self, tag, major, eccentricity):
-        # b2 = a2(1 - e2 )
-        debug("semi_monor_axist {} {} {}".format(tag, major, eccentricity))
-
         a = float(self.light_seconds(tag, major))
         e = float(eccentricity or 0)
         minor = sqrt(pow(a, 2) * (1 - pow(e, 2)))
 
-        debug("closest approach {}".format(minor))
-        debug("furthest approach {}".format(a))
 
         return minor
+
+    # The focus is the closest point of the orbit
+    # return value is in light seconds
+    def perihelion(self, tag, major, eccentricity):
+        a = float(self.light_seconds(tag, major))
+        e = float(eccentricity or 0)
+        focus = a * (1-e)
+        debug("focus  {}ls".format(a))
+
+        return focus
+
+    def aphelion(self, tag, major, eccentricity):
+        a = float(self.light_seconds(tag, major))
+        e = float(eccentricity or 0)
+        focus = a * (1+e)
+        debug("focus  {}ls".format(a))
+
+        return focus
 
     def surface_distance(self, d, r1, r2):
         return d - r1, r2;
@@ -500,8 +526,8 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'Large Radius Landable', body_code)
 
             #    Orbiting close to parent body
-            if entry.get('PlanetClass') and self.semi_minor_axis('SemiMajorAxis', entry.get("SemiMajorAxis"),
-                                                                 entry.get("Eccentricity")) < 2:
+            if entry.get('PlanetClass') and self.aphelion('SemiMajorAxis', entry.get("SemiMajorAxis"),
+                                                                 entry.get("Eccentricity")) < CodexTypes.close_orbit:
                 self.merge_poi("Tourist", 'Close Orbit', body)
             #   Shepherd moons (orbiting closer than a ring)
             #    Close binary pairs
@@ -509,7 +535,7 @@ class CodexTypes(Frame):
             #    Moons of moons
 
             #    Tiny objects (<300km radius)
-            if entry.get('Radius') < 300000:
+            if entry.get('Radius') < 300000 and entry.get('Landable'):
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
             #    Fast and non-locked rotation < 1 hour
@@ -517,12 +543,18 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'Fast unlocked rotation', body)
 
             #    High eccentricity
+            if float(entry.get("Eccentricity") or 0) > 0.6:
+                self.merge_poi("Tourist", 'Highly Eccentric Orbit', body)
             #    Wide rings
             #    Good jumponium availability (5/6 materials on a single body)
             #    Full jumponium availability within a single system
             #    Full jumponium availability on a single body
 
             self.visualise()
+
+
+        if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
+            CodexTypes.parentRadius=self.light_seconds("Radius",entry.get("Radius"))
 
         if entry.get("event") == "SAASignalsFound":
             # if we arent waiting for new data
