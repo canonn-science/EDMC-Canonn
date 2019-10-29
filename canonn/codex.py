@@ -92,6 +92,8 @@ class CodexTypes(Frame):
 
     close_orbit=0.1
 
+    waiting = True
+
     def __init__(self, parent, gridrow):
         "Initialise the ``Patrol``."
         Frame.__init__(
@@ -100,7 +102,7 @@ class CodexTypes(Frame):
         )
 
         self.parent=parent
-        self.waiting = True
+
 
         self.hidecodexbtn = tk.IntVar(value=config.getint("Canonn:HideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
@@ -141,7 +143,7 @@ class CodexTypes(Frame):
         self.grid_remove()
 
     def getdata(self, system):
-        self.waiting = True
+        CodexTypes.waiting = True
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
             quote_plus(system.encode('utf8')))
         debug(url)
@@ -165,8 +167,8 @@ class CodexTypes(Frame):
                 CodexTypes.bodycount = len(bodies)
                 debug("bodycount: {}".format(CodexTypes.bodycount))
 
-
-                CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies[0].get("solarRadius"))
+                if bodies[0].get("solarRadius"):
+                    CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies[0].get("solarRadius"))
 
                 for b in bodies:
                     debug(b.get("subType"))
@@ -243,7 +245,7 @@ class CodexTypes(Frame):
             CodexTypes.bodycount = 0
             debug("bodycount: {}".format(CodexTypes.bodycount))
 
-        self.waiting = False
+        CodexTypes.waiting = False
 
     def enter(self, event):
 
@@ -340,6 +342,7 @@ class CodexTypes(Frame):
                 self.visualise()
 
     def light_seconds(self, tag, value):
+        debug("light seconds {} {}".format(tag,value))
         if tag in ("distanceToArrival", "DistanceFromArrivalLS"):
             return value
 
@@ -394,7 +397,7 @@ class CodexTypes(Frame):
 
         debug("visualise")
         # we may want to try again if the data hasn't been fetched yet
-        if self.waiting:
+        if CodexTypes.waiting:
             debug("Still waiting");
             self.after(1000, self.visualise)
         else:
@@ -448,7 +451,7 @@ class CodexTypes(Frame):
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
                 '$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
             found = False
-            if not self.waiting:
+            if not CodexTypes.waiting:
                 signals = self.poidata
                 for i, v in enumerate(signals):
                     if signals[i].get("english_name") == 'Life Cloud' and entry.get(
@@ -468,7 +471,7 @@ class CodexTypes(Frame):
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             found = False
-            if not self.waiting:
+            if not CodexTypes.waiting:
                 signals = self.poidata
                 for i, v in enumerate(signals):
                     if signals[i].get("english_name") == 'Guardian Beacon':
@@ -563,7 +566,7 @@ class CodexTypes(Frame):
 
             debug("SAASignalsFound")
 
-            if not self.waiting:
+            if not CodexTypes.waiting:
                 signals = entry.get("Signals")
                 for i, v in enumerate(signals):
                     found = False
