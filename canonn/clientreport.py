@@ -51,3 +51,6 @@ class clientReport(Emitter):
 def submit(cmdr, is_beta, client, entry):
     if entry.get("event") in ("Location", "StartUp"):
         clientReport(cmdr, is_beta, client).start()
+
+    if entry.get("event") in ("Fileheader"):
+        emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postGameVersion",event)
