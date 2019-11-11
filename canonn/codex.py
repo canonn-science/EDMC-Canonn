@@ -94,7 +94,7 @@ class CodexTypes(Frame):
     parentRadius = 0
     minPressure = 80
 
-    close_orbit = 0.1
+    close_orbit = 0.05
     eccentricity = 0.9
 
     waiting = True
@@ -107,7 +107,7 @@ class CodexTypes(Frame):
         )
 
         self.parent = parent
-        self.bind('<<POIData>>', self.visualise)
+        self.bind('<<POIData>>', self.evisualise)
         self.hidecodexbtn = tk.IntVar(value=config.getint("Canonn:HideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
 
@@ -145,6 +145,11 @@ class CodexTypes(Frame):
         # self.tooltip.grid_remove()
         self.tooltiplist.grid_remove()
         self.grid_remove()
+
+
+    # wrapper for visualise
+    def evisualise(self,event):
+        self.visualise()
 
     def getdata(self, system):
         debug("Getting POI data in thread")
@@ -205,6 +210,13 @@ class CodexTypes(Frame):
                                 self.merge_poi("Tourist",
                                                'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))),
                                                body_code)
+                            if b.get("Parents")[0].get("Planet"):
+                                self.merge_poi("Tourist",
+                                               '{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))),
+                                               body_code)
+                        if b.get('subType') in ('Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                            self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
+                                           body_code)
 
                         #  Landable with surface pressure
                         if b.get('type') == 'Planet' and surface_pressure("surfacePressure",b.get('surfacePressure')) > CodexTypes.minPressure and b.get('isLandable'):
@@ -260,6 +272,7 @@ class CodexTypes(Frame):
             debug("Error fetching data")
 
         CodexTypes.waiting = False
+        debug("event_generate")
         self.event_generate('<<POIData>>', when='tail')
         debug("Finished getting POI data in thread")
 
@@ -356,7 +369,7 @@ class CodexTypes(Frame):
         for i, v in enumerate(signals):
             if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
                 del self.poidata[i]
-                self.visualise()
+
 
     def light_seconds(self, tag, value):
         debug("light seconds {} {}".format(tag, value))
@@ -450,6 +463,9 @@ class CodexTypes(Frame):
             debug("Looking for POI data in {}".format(system))
             poiTypes(system, self.getdata).start()
 
+        if entry.get("event") in ("Location", "StartUp","FSDJump"):
+            if entry.get("SystemAllegiance") in ("Thargoid","Guardian"):
+                self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(entry.get("SystemAllegiance")), "")
 
         if entry.get("event") in ("FSSDiscoveryScan"):
             CodexTypes.fsscount = entry.get("BodyCount")
@@ -500,10 +516,17 @@ class CodexTypes(Frame):
                 if abs(float(entry.get('OrbitalPeriod'))) < 3600:
                     self.merge_poi("Tourist", "Fast Orbit", body)
 
-            if entry.get('subType') in ('Earthlike body', 'Water world', 'Ammonia world'):
+            if entry.get('PlanetClass') in ('Earthlike body', 'Water world', 'Ammonia world'):
                 if entry.get("Rings"):
-                    self.merge_poi("Tourist", 'Ringed {}'.format(CodexTypes.body_types.get(entry.get('subType'))),
+                    self.merge_poi("Tourist", 'Ringed {}'.format(CodexTypes.body_types.get(entry.get('PlanetClass'))),
                                    body_code)
+                if entry.get("Parents")[0].get("Planet"):
+                    self.merge_poi("Tourist", '{} Moon'.format(CodexTypes.body_types.get(entry.get('PlanetClass'))),
+                                   body_code)
+
+            if entry.get('PlanetClass') in ('Earthlike body') and entry.get('TidalLock'):
+                self.merge_poi("Tourist",'Tidal Locked Earthlike Word',
+                               body_code)
 
             #  Landable with surface pressure
             if entry.get('PlanetClass') and surface_pressure("SurfacePressure",entry.get('SurfacePressure')) > CodexTypes.minPressure and entry.get('Landable'):
