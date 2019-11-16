@@ -148,4 +148,5 @@ class fssEmitter(Emitter):
 
 
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
-    fssEmitter(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
+    if entry.get("event") == "FSSSignalDiscovered":
+        fssEmitter(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
