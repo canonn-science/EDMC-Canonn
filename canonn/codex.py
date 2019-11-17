@@ -592,7 +592,7 @@ class CodexTypes(Frame):
                 if not found:
                     self.set_image(cat, True)
                     self.poidata.append({'body': bodyVal, 'hud_category': cat, 'english_name': english_name})
-                    self.visualise()
+
                 debug(self.poidata)
                 debug("cat {} name  {} body {}".format(cat, english_name, bodyVal))
 
