@@ -108,7 +108,7 @@ def submit(cmdr, is_beta, system, station, entry, client, body, lat, lon):
 
 
     if CanonnJournal.exclusions:
-        included_event = not CanonnJournal.exclusions.get(self.entry.get("event"))
+        included_event = not CanonnJournal.exclusions.get(entry.get("event"))
 
     if not CanonnJournal.exclusions:
         debug("getting journal includes")
