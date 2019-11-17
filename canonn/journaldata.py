@@ -105,4 +105,13 @@ class CanonnJournal(Emitter):
 
 
 def submit(cmdr, is_beta, system, station, entry, client, body, lat, lon):
-    CanonnJournal(cmdr, is_beta, system, station, entry, client, body, lat, lon).start()
+
+
+    if CanonnJournal.exclusions:
+        included_event = not CanonnJournal.exclusions.get(entry.get("event"))
+
+    if not CanonnJournal.exclusions:
+        debug("getting journal includes")
+        CanonnJournal(cmdr, is_beta, system, station, entry, client, body, lat, lon).start()
+    elif included_event:
+        CanonnJournal(cmdr, is_beta, system, station, entry, client, body, lat, lon).start()

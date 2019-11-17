@@ -318,10 +318,12 @@ class CanonnPatrol(Frame):
 
         if self.visible():
 
+            debug("Patrol update: Visible")
             capi_update = self.patrol_list and self.system and self.capi_update
             journal_update = self.patrol_list and self.system
 
             if journal_update or capi_update:
+                debug("journal_update or capi_update")
                 self.sort_patrol()
                 p = Systems.edsmGetSystem(self.system)
                 self.nearest = self.getNearest(p)
@@ -338,7 +340,7 @@ class CanonnPatrol(Frame):
                 self.prev.grid()
                 self.next.grid()
                 self.capi_update = False
-
+                debug("finished refresh")
             else:
                 if self.system:
                     self.hyperlink['text'] = "Fetching patrols..."
@@ -866,11 +868,15 @@ class CanonnPatrol(Frame):
 
 
 def copyclip(value):
+    debug("copyclip")
     window = tk.Tk()
     window.withdraw()
     window.clipboard_clear()  # clear clipboard contents
     window.clipboard_append(value)
+    debug("copyclip_append")
+    window.update()
     window.destroy()
+    debug("copyclip done")
 
 
 def getDistance(p, g):

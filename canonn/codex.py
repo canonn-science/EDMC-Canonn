@@ -6,13 +6,18 @@ import os
 import requests
 import sys
 import threading
+import urllib2
 from Tkinter import Frame
 from config import config
 from debug import Debug
 from debug import debug, error
 from emitter import Emitter
+from math import sqrt, pow
 from urllib import quote_plus
-import urllib2
+
+def surface_pressure(tag,value):
+    if tag == "surfacePressure":
+        return value * 100000
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
@@ -71,7 +76,8 @@ class CodexTypes(Frame):
         "Human": "Human Sites",
         "Ring": "Planetary Ring Resources",
         "Other": "Other Sites",
-        "Planets": "Valuable Planets"
+        "Planets": "Valuable Planets",
+        "Tourist": "Tourist Informatiom"
     }
 
     body_types = {
@@ -83,6 +89,16 @@ class CodexTypes(Frame):
         'Ammonia world': 'Ammonia World'
     }
 
+    bodycount = 0
+
+    parentRadius = 0
+    minPressure = 80
+
+    close_orbit = 0.05
+    eccentricity = 0.9
+
+    waiting = True
+
     def __init__(self, parent, gridrow):
         "Initialise the ``Patrol``."
         Frame.__init__(
@@ -90,8 +106,8 @@ class CodexTypes(Frame):
             parent
         )
 
-        self.waiting = True
-
+        self.parent = parent
+        self.bind('<<POIData>>', self.evisualise)
         self.hidecodexbtn = tk.IntVar(value=config.getint("Canonn:HideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
 
@@ -120,6 +136,7 @@ class CodexTypes(Frame):
         self.addimage("None", 8)
         self.addimage("Other", 9)
         self.addimage("Planets", 10)
+        self.addimage("Tourist", 11)
 
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.grid(row=gridrow, column=0)
@@ -129,54 +146,135 @@ class CodexTypes(Frame):
         self.tooltiplist.grid_remove()
         self.grid_remove()
 
+
+    # wrapper for visualise
+    def evisualise(self,event):
+        self.visualise()
+
     def getdata(self, system):
-        self.waiting=True
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(quote_plus(system.encode('utf8')))
-        debug(url)
-        r = requests.get(url)
-        if r.status_code == requests.codes.ok:
-            self.poidata = r.json()
+        debug("Getting POI data in thread")
+        CodexTypes.waiting = True
 
-        bodytypes={'Metal-rich body': [],'Earth-like world': [],'Water world': [],'Ammonia world': []}
+        try:
+            self.poidata = []
+            url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
+                quote_plus(system.encode('utf8')))
+            debug(url)
+            r = requests.get(url)
+            if r.status_code == requests.codes.ok:
+                poidata = r.json()
 
-        tform=[]
+            for r in poidata:
+                self.merge_poi(r.get("hud_category"), r.get("english_name"), r.get("body"))
 
-        usystem=urllib2.unquote(system)
+            usystem = urllib2.unquote(system)
 
-        edsm="https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
-        debug(edsm)
-        r = requests.get(edsm)
-        if r.status_code == requests.codes.ok:
-            debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-            bodies=r.json().get("bodies")
-            if bodies:
-                for b in bodies:
-                    debug(b.get("subType"))
+            edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
+            debug(edsm)
+            r = requests.get(edsm)
+            if r.status_code == requests.codes.ok:
 
-                    if b.get("subType") in bodytypes.keys():
-                        debug(" NAME {}".format(b.get("name")))
-                        debug(usystem)
-                        debug(b.get("name").replace(usystem, ''))
-                        bodytypes[b.get("subType")].append(b.get("name").replace(usystem,''))
+                bodies = r.json().get("bodies")
+                if bodies:
+                    CodexTypes.bodycount = len(bodies)
+                    debug("bodycount: {}".format(CodexTypes.bodycount))
 
-                    if b.get('terraformingState') == 'Candidate for terraforming':
-                        tform.append(b.get("name").replace(usystem,''))
+                    if bodies[0].get("solarRadius"):
+                        CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies[0].get("solarRadius"))
 
-            if len(bodytypes.get('Ammonia world')) > 0:
-                self.poidata.append({ "hud_category": "Planets", "english_name": "Ammonia World", "body": ",".join(bodytypes.get('Ammonia world'))})
-            if len(bodytypes.get('Earth-like world')) > 0:
-                self.poidata.append({ "hud_category": "Planets", "english_name": "Earthlike World", "body": ",".join(bodytypes.get('Earth-like world'))})
-            if len(bodytypes.get('Metal-rich body')) > 0:
-                self.poidata.append({ "hud_category": "Planets", "english_name": "Metal-Rich Body", "body": ",".join(bodytypes.get('Metal-rich body'))})
-            if len(bodytypes.get('Water world')) > 0:
-                self.poidata.append({ "hud_category": "Planets", "english_name": "Water World", "body": ",".join(bodytypes.get('Water world'))})
-            if len(tform) > 0:
-                self.poidata.append({"hud_category": "Planets", "english_name": "Terraformable", "body": ",".join(tform)})
+                    for b in bodies:
+                        debug(b.get("subType"))
+                        body_code = b.get("name").replace(usystem, '')
+                        body_name = b.get("name")
 
-        debug(bodytypes)
-        debug("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+                        # Terraforming
+                        if b.get('terraformingState') == 'Candidate for terraforming':
+                            self.merge_poi("Planets", "Terraformable", body_code)
 
-        self.waiting = False
+                        # Landable Volcanism
+                        if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism':
+                            self.merge_poi("Geology", b.get('volcanismType'), body_code)
+
+                        # water ammonia etc
+                        if b.get('subType') in CodexTypes.body_types.keys():
+                            self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')), body_code)
+
+                        # fast orbits
+                        if b.get('orbitalPeriod'):
+                            if abs(float(b.get('orbitalPeriod'))) <= 0.042:
+                                self.merge_poi("Tourist", 'Fast Orbital Period', body_code)
+
+                        # Ringed ELW etc
+                        if b.get('subType') in ('Earth-like world', 'Water world', 'Ammonia world'):
+                            if b.get("Rings"):
+                                self.merge_poi("Tourist",
+                                               'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))),
+                                               body_code)
+                            if b.get("Parents")[0].get("Planet"):
+                                self.merge_poi("Tourist",
+                                               '{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))),
+                                               body_code)
+                        if b.get('subType') in ('Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                            self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
+                                           body_code)
+
+                        #  Landable with surface pressure
+                        if b.get('type') == 'Planet' and surface_pressure("surfacePressure",b.get('surfacePressure')) > CodexTypes.minPressure and b.get('isLandable'):
+                            self.merge_poi("Tourist", 'Landable with atmosphere', body_code)
+
+                        #    Landable high-g (>3g)
+                        if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
+                            self.merge_poi("Tourist", 'High Gravity', body_code)
+
+                        #    Landable large (>18000km radius)
+                        if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
+                            self.merge_poi("Tourist", 'Large Radius Landable', body_code)
+
+                        # orbiting close to the star we need the solar radius for this...
+                        if b.get('type') == 'Planet' and self.surface_distance(b.get("distanceToArrival"),
+                                                                               CodexTypes.parentRadius,
+                                                                               self.light_seconds('radius', b.get(
+                                                                                   "radius"))) < 10:
+                            self.merge_poi("Tourist", 'Surface Close to parent star', body_code)
+
+                        #    Orbiting close to parent body less than 5ls
+                        if b.get('type') == 'Planet' and self.aphelion('semiMajorAxis', b.get("semiMajorAxis"),
+                                                                       b.get(
+                                                                           "orbitalEccentricity")) < CodexTypes.close_orbit:
+                            self.merge_poi("Tourist", 'Close Orbit', body_code)
+
+                        #   Shepherd moons (orbiting closer than a ring)
+                        #    Close binary pairs
+                        #   Colliding binary pairs
+                        #    Moons of moons
+
+                        #    Tiny objects (<300km radius)
+                        if b.get('type') == 'Planet' and b.get('radius') < 300 and b.get('isLandable'):
+                            self.merge_poi("Tourist", 'Tiny Radius Landable', body_code)
+
+                        #    Fast and non-locked rotation
+                        if abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get(
+                                "rotationalPeriodTidallyLocked"):
+                            self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
+
+                        #    High eccentricity
+                        if float(b.get("orbitalEccentricity") or 0) > CodexTypes.eccentricity:
+                            self.merge_poi("Tourist", 'Highly Eccentric Orbit', body)
+                        #    Wide rings
+                        #    Good jumponium availability (5/6 materials on a single body)
+                        #    Full jumponium availability within a single system
+                        #    Full jumponium availability on a single body
+
+            else:
+                CodexTypes.bodycount = 0
+                debug("bodycount: {}".format(CodexTypes.bodycount))
+        except:
+            debug("Error fetching data")
+
+        CodexTypes.waiting = False
+        debug("event_generate")
+        self.event_generate('<<POIData>>', when='tail')
+        debug("Finished getting POI data in thread")
 
     def enter(self, event):
 
@@ -223,6 +321,7 @@ class CodexTypes(Frame):
 
     def leave(self, event):
         # self.tooltip.grid_remove()
+
         self.tooltiplist.grid_remove()
 
     def addimage(self, name, col):
@@ -252,25 +351,83 @@ class CodexTypes(Frame):
         else:
             self.labels[name].grid_remove()
 
-    def merge_poi(self,hud_category,english_name,body):
+    def merge_poi(self, hud_category, english_name, body):
         debug("Merge POI")
-        found=False
+        found = False
         signals = self.poidata
         for i, v in enumerate(signals):
             if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
                 if not body in signals[i].get("body").split(','):
-                    self.poidata[i]["body"]="{},{}".format(signals[i].get("body"),body)
-                found=True
+                    self.poidata[i]["body"] = "{},{}".format(signals[i].get("body"), body)
+                found = True
         if not found:
             self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
+
+    def remove_poi(self, hud_category, english_name):
+        debug("Remove POI")
+        signals = self.poidata
+        for i, v in enumerate(signals):
+            if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
+                del self.poidata[i]
+
+
+    def light_seconds(self, tag, value):
+        debug("light seconds {} {}".format(tag, value))
+        if tag in ("distanceToArrival", "DistanceFromArrivalLS"):
+            return value
+
+        # Things measured in meters
+        if tag in ("Radius", "SemiMajorAxis"):
+            # from journal metres
+            return value * 299792000
+
+        # Things measure in kilometres
+        if tag == "radius":
+            # from journal metres
+            return value * 1000 * 299792000
+
+        # Things measure in astronomical units
+        if tag == "semiMajorAxis":
+            return value * 499.005
+
+        # Things measured in solar radii
+        if tag == "solarRadius":
+            return value * 2.32061
+
+    def semi_minor_axis(self, tag, major, eccentricity):
+        a = float(self.light_seconds(tag, major))
+        e = float(eccentricity or 0)
+        minor = sqrt(pow(a, 2) * (1 - pow(e, 2)))
+
+        return minor
+
+    # The focus is the closest point of the orbit
+    # return value is in light seconds
+    def perihelion(self, tag, major, eccentricity):
+        a = float(self.light_seconds(tag, major))
+        e = float(eccentricity or 0)
+        focus = a * (1 - e)
+        debug("focus  {}ls".format(a))
+
+        return focus
+
+    def aphelion(self, tag, major, eccentricity):
+        a = float(self.light_seconds(tag, major))
+        e = float(eccentricity or 0)
+        focus = a * (1 + e)
+        debug("focus  {}ls".format(a))
+
+        return focus
+
+    def surface_distance(self, d, r1, r2):
+        return d - r1, r2;
 
     def visualise(self):
 
         debug("visualise")
         # we may want to try again if the data hasn't been fetched yet
-        if self.waiting:
+        if CodexTypes.waiting:
             debug("Still waiting");
-            self.after(1000, self.visualise)
         else:
 
             self.set_image("Geology", False)
@@ -284,6 +441,7 @@ class CodexTypes(Frame):
             self.set_image("None", False)
             self.set_image("Other", False)
             self.set_image("Planets", False)
+            self.set_image("Tourist", False)
 
             if self.poidata:
                 self.grid()
@@ -293,13 +451,8 @@ class CodexTypes(Frame):
             else:
                 self.grid_remove()
 
-
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         debug("CodeTypes journal_entry")
-
-        if entry.get("event") in ("FSDJump"):
-            # To avoid having check data we will assume we have some by now
-            self.visualise()
 
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             # go fetch some data.It will 
@@ -309,53 +462,111 @@ class CodexTypes(Frame):
         if entry.get("event") in ("Location", "StartUp"):
             debug("Looking for POI data in {}".format(system))
             poiTypes(system, self.getdata).start()
-            ## lets give it 5 seconds
-            self.after(5000, self.visualise)
+
+        if entry.get("event") in ("Location", "StartUp","FSDJump"):
+            if entry.get("SystemAllegiance") in ("Thargoid","Guardian"):
+                self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(entry.get("SystemAllegiance")), "")
+
+        if entry.get("event") in ("FSSDiscoveryScan"):
+            CodexTypes.fsscount = entry.get("BodyCount")
+            debug("body reconciliation: {} {}".format(CodexTypes.bodycount, CodexTypes.fsscount))
+            if CodexTypes.fsscount > CodexTypes.bodycount:
+                self.merge_poi("Planets", "Unexplored Bodies", "")
 
 
+        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
+                '$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
+            if entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
+                self.merge_poi("Cloud", "Life Cloud", "")
+            else:
+                self.merge_poi("Cloud", "Life Ring", "")
 
-        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('$Fixed_Event_Life_Ring;','$Fixed_Event_Life_Cloud;'):
-            found=False
-            if not self.waiting:
-                signals = self.poidata
-                for i, v in enumerate(signals):
-                    if signals[i].get("english_name") =='Life Cloud' and  entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
-                        found=True
-                    if signals[i].get("english_name") == 'Life Ring' and  entry.get("SignalName") == '$Fixed_Event_Life_Ring;':
-                        found=True
-                if not found:
-                    if  entry.get("SignalName") == '$Fixed_Event_Life_Ring;':
-                        cloudtype='Life Ring'
-                    else:
-                        cloudtype = 'Life Cloud'
-                    self.poidata.append({ "hud_category": 'Cloud', "english_name": cloudtype})
-                    debug(poidata)
-                    self.visualise()
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
-            found=False
-            if not self.waiting:
-                signals = self.poidata
-                for i, v in enumerate(signals):
-                    if signals[i].get("english_name") =='Guardian Beacon':
-                        found=True
-                if not found:
-                    self.poidata.append({ "hud_category": 'Guardian', "english_name": 'Guardian Beacon'})
-                    self.visualise()
+            self.merge_poi("Guardian", "Guardian Beacon", "")
+
+
+        if entry.get("event") == "FSSSignalDiscovered":
+            if "NumberStation" in entry.get("SignalName"):
+                self.merge_poi("Human", "Unregistered Comms Beacon", body)
+            if "Mega" in entry.get("SignalName"):
+                self.merge_poi("Human", "Megaship", body)
+            if "ListeningPost" in entry.get("SignalName"):
+                self.merge_poi("Human", "Listening Post", body)
+            if "CAPSHIP" in entry.get("SignalName"):
+                self.merge_poi("Human", "Capital Ship", body)
+
+        if entry.get("event") == "FSSAllBodiesFound":
+            self.remove_poi("Planets", "Unexplored Bodies")
 
         if entry.get("event") == "Scan" and entry.get("ScanType") == "Detailed":
-            body=entry.get("BodyName").replace(system,'')
-            english_name=CodexTypes.body_types.get(entry.get("PlanetClass"))
+            self.remove_poi("Planets", "Unexplored Bodies")
+            body = entry.get("BodyName").replace(system, '')
+            english_name = CodexTypes.body_types.get(entry.get("PlanetClass"))
             if entry.get("PlanetClass") in CodexTypes.body_types.keys():
                 debug("PlanetClass".format(entry.get("PlanetClass")))
-                self.merge_poi("Planets",english_name,body)
-            debug("Volcanism {} landable {}".format(entry.get("Volcanism"),entry.get("Landable")))
+                self.merge_poi("Planets", english_name, body)
+            debug("Volcanism {} landable {}".format(entry.get("Volcanism"), entry.get("Landable")))
             if entry.get("Volcanism") != "" and entry.get("Landable"):
-                debug("oh come on!")
                 self.merge_poi("Geology", entry.get("Volcanism"), body)
             if entry.get('TerraformState') == 'Terraformable':
                 self.merge_poi("Planets", "Terraformable", body)
-            self.visualise()
+
+            if entry.get('OrbitalPeriod'):
+                if abs(float(entry.get('OrbitalPeriod'))) < 3600:
+                    self.merge_poi("Tourist", "Fast Orbit", body)
+
+            if entry.get('PlanetClass') in ('Earthlike body', 'Water world', 'Ammonia world'):
+                if entry.get("Rings"):
+                    self.merge_poi("Tourist", 'Ringed {}'.format(CodexTypes.body_types.get(entry.get('PlanetClass'))),
+                                   body_code)
+                if entry.get("Parents")[0].get("Planet"):
+                    self.merge_poi("Tourist", '{} Moon'.format(CodexTypes.body_types.get(entry.get('PlanetClass'))),
+                                   body_code)
+
+            if entry.get('PlanetClass') in ('Earthlike body') and entry.get('TidalLock'):
+                self.merge_poi("Tourist",'Tidal Locked Earthlike Word',
+                               body_code)
+
+            #  Landable with surface pressure
+            if entry.get('PlanetClass') and surface_pressure("SurfacePressure",entry.get('SurfacePressure')) > CodexTypes.minPressure and entry.get('Landable'):
+                self.merge_poi("Tourist", 'Landable with atmosphere', body)
+
+            #    Landable high-g (>3g) looks like the journal is tenths of G therefor 3.257900 = 0.33G
+            if entry.get('PlanetClass') and entry.get('SurfaceGravity') > 30 and entry.get('Landable'):
+                self.merge_poi("Tourist", 'High Gravity', body)
+
+            #    Landable large (>18000km radius)
+            if entry.get('PlanetClass') and entry.get('Radius') > 18000000 and entry.get('Landable'):
+                self.merge_poi("Tourist", 'Large Radius Landable', body_code)
+
+            #    Orbiting close to parent body
+            if entry.get('PlanetClass') and self.aphelion('SemiMajorAxis', entry.get("SemiMajorAxis"),
+                                                          entry.get("Eccentricity")) < CodexTypes.close_orbit:
+                self.merge_poi("Tourist", 'Close Orbit', body)
+            #   Shepherd moons (orbiting closer than a ring)
+            #    Close binary pairs
+            #   Colliding binary pairs
+            #    Moons of moons
+
+            #    Tiny objects (<300km radius)
+            if entry.get('Radius') < 300000 and entry.get('Landable'):
+                self.merge_poi("Tourist", 'Tiny Radius Landable', body)
+
+            #    Fast and non-locked rotation < 1 hour
+            if abs(entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
+                self.merge_poi("Tourist", 'Fast unlocked rotation', body)
+
+            #    High eccentricity
+            if float(entry.get("Eccentricity") or 0) > CodexTypes.eccentricity:
+                self.merge_poi("Tourist", 'Highly Eccentric Orbit', body)
+            #    Wide rings
+            #    Good jumponium availability (5/6 materials on a single body)
+            #    Full jumponium availability within a single system
+            #    Full jumponium availability on a single body
+
+        if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
+            CodexTypes.parentRadius = self.light_seconds("Radius", entry.get("Radius"))
 
         if entry.get("event") == "SAASignalsFound":
             # if we arent waiting for new data
@@ -364,27 +575,30 @@ class CodexTypes(Frame):
 
             debug("SAASignalsFound")
 
-            if not self.waiting:
-                signals = entry.get("Signals")
-                for i, v in enumerate(signals):
-                    found=False
-                    type=signals[i].get("Type")
-                    english_name=type.replace("$SAA_SignalType_","").replace("ical;","y").replace(";",'')
-                    if " Ring" in bodyName:
-                        cat="Ring"
-                    if "$SAA_SignalType_" in type:
-                        cat=english_name
-                    for x,r in enumerate(self.poidata):
-                        if r.get("hud_category") == cat and r.get("english_name") == english_name:
-                            found=True
-                            if not bodyVal in r.get("body"):
-                                self.poidata[x]["body"]="{},{}".format(self.poidata[x]["body"],bodyVal)
-                    if not found:
-                        self.set_image(cat, True)
-                        self.poidata.append({'body': bodyVal, 'hud_category': cat, 'english_name': english_name})
-                        self.visualise()
-                    debug(self.poidata)
-                    debug("cat {} name  {} body {}".format(cat,english_name,bodyVal))
+            signals = entry.get("Signals")
+            for i, v in enumerate(signals):
+                found = False
+                type = signals[i].get("Type")
+                english_name = type.replace("$SAA_SignalType_", "").replace("ical;", "y").replace(";", '')
+                if " Ring" in bodyName:
+                    cat = "Ring"
+                if "$SAA_SignalType_" in type:
+                    cat = english_name
+                for x, r in enumerate(self.poidata):
+                    if r.get("hud_category") == cat and r.get("english_name") == english_name:
+                        found = True
+                        if not bodyVal in r.get("body"):
+                            self.poidata[x]["body"] = "{},{}".format(self.poidata[x]["body"], bodyVal)
+                if not found:
+                    self.set_image(cat, True)
+                    self.poidata.append({'body': bodyVal, 'hud_category': cat, 'english_name': english_name})
+
+                debug(self.poidata)
+                debug("cat {} name  {} body {}".format(cat, english_name, bodyVal))
+
+        # we can do this on every event can't we
+        self.visualise()
+        debug(json.dumps(self.poidata))
 
     @classmethod
     def plugin_start(cls, plugin_dir):
@@ -491,8 +705,7 @@ class gSubmitCodex(threading.Thread):
 
 
 class guardianSites(Emitter):
-
-    #this is no longer used but might come back
+    # this is no longer used but might come back
     gstypes = {
         "ancient_tiny_001": 2,
         "ancient_tiny_002": 3,
@@ -537,17 +750,15 @@ class guardianSites(Emitter):
                 debug("prefix {}".format(prefix))
                 if prefix in guardianSites.gstypes:
                     # This is a guardian structure
-                    #self.gstype = guardianSites.gstypes.get(prefix)
+                    # self.gstype = guardianSites.gstypes.get(prefix)
                     self.gstype = prefix
-                    debug("gstype {} {}".format(prefix,self.gstype))
+                    debug("gstype {} {}".format(prefix, self.gstype))
                     self.modelreport = 'gsreports'
                 if prefix == 'ancient':
                     # this is s guardian ruin
-                    #self.gstype = 1
+                    # self.gstype = 1
                     self.gstype = 'Unknown'
                     self.modelreport = 'grreports'
-
-
 
     def run(self):
         if self.modelreport and self.system:
@@ -555,12 +766,12 @@ class guardianSites(Emitter):
             payload["userType"] = 'pc'
             payload["reportType"] = 'new'
             payload["reportStatus"] = 'pending'
-            payload["type"]=self.gstype
+            payload["type"] = self.gstype
             payload["systemAddress"] = self.entry.get("SystemAddress")
             payload["bodyName"] = self.body
             payload["latitude"] = self.lat
             payload["longitude"] = self.lon
-            payload["reportComment"]=json.dumps(self.entry,indent=4)
+            payload["reportComment"] = json.dumps(self.entry, indent=4)
             payload["frontierID"] = self.index
 
             url = self.getUrl()
@@ -812,13 +1023,14 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
            "Synuefe LY-I b42-2 C 2", -10.090128, 114.505409, client)
 
     testentry = {"timestamp": "2019-10-10T10:23:32Z",
-                   "event": "ApproachSettlement",
-                   "Name": "$Ancient_Tiny_003:#index=1;", "Name_Localised": "Guardian Structure",
-                   "SystemAddress": 5079737705833,
-                   "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
-                   "Latitude": 52.681084, "Longitude": 115.240822}
+                 "event": "ApproachSettlement",
+                 "Name": "$Ancient_Tiny_003:#index=1;", "Name_Localised": "Guardian Structure",
+                 "SystemAddress": 5079737705833,
+                 "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
+                 "Latitude": 52.681084, "Longitude": 115.240822}
     submit("LCU No Fool Like One", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
            "Synuefe LY-I b42-2 C 2", 52.681084, 115.240822, client)
+
 
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     if entry["event"] == "CodexEntry":
