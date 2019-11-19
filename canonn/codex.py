@@ -192,7 +192,7 @@ class CodexTypes(Frame):
                             self.merge_poi("Planets", "Terraformable", body_code)
 
                         # Landable Volcanism
-                        if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism':
+                        if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get('isLandable'):
                             self.merge_poi("Geology", b.get('volcanismType'), body_code)
 
                         # water ammonia etc
@@ -282,10 +282,16 @@ class CodexTypes(Frame):
         # clear it if it exists
         for col in self.tooltipcol1:
             col["text"] = ""
-            col.grid_remove()
+            try:
+                col.grid_remove()
+            except:
+                error("Col1 grid_remove error")
         for col in self.tooltipcol2:
             col["text"] = ""
-            col.grid_remove()
+            try:
+                col.grid_remove()
+            except:
+                error("Col2 grid_remove error")
 
         poicount = 0
 
@@ -346,7 +352,7 @@ class CodexTypes(Frame):
 
         self.labels[name]["image"] = self.images.get(setting)
 
-        if enabled:
+        if enabled and self.labels.get(name):
             self.labels[name].grid()
         else:
             self.labels[name].grid_remove()
