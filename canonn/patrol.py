@@ -655,12 +655,13 @@ class CanonnPatrol(Frame):
 
         nopatrols = self.canonn == 1 and self.faction == 1 and self.hideships == 1
 
-        if nopatrols:
+        if nopatrols and self.isvisible:
             self.grid_remove()
             self.isvisible = False
             return False
         else:
             self.grid()
+
             self.isvisible = True
             return True
 

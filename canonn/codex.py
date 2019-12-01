@@ -350,6 +350,7 @@ class CodexTypes(Frame):
         else:
             setting = grey
 
+        debug("Setting image to {}".format(setting))
         self.labels[name]["image"] = self.images.get(setting)
 
         if enabled and self.labels.get(name):
@@ -525,14 +526,14 @@ class CodexTypes(Frame):
             if entry.get('PlanetClass') in ('Earthlike body', 'Water world', 'Ammonia world'):
                 if entry.get("Rings"):
                     self.merge_poi("Tourist", 'Ringed {}'.format(CodexTypes.body_types.get(entry.get('PlanetClass'))),
-                                   body_code)
+                                   body)
                 if entry.get("Parents")[0].get("Planet"):
                     self.merge_poi("Tourist", '{} Moon'.format(CodexTypes.body_types.get(entry.get('PlanetClass'))),
-                                   body_code)
+                                   body)
 
             if entry.get('PlanetClass') in ('Earthlike body') and entry.get('TidalLock'):
                 self.merge_poi("Tourist",'Tidal Locked Earthlike Word',
-                               body_code)
+                               body)
 
             #  Landable with surface pressure
             if entry.get('PlanetClass') and surface_pressure("SurfacePressure",entry.get('SurfacePressure')) > CodexTypes.minPressure and entry.get('Landable'):
@@ -544,7 +545,7 @@ class CodexTypes(Frame):
 
             #    Landable large (>18000km radius)
             if entry.get('PlanetClass') and entry.get('Radius') > 18000000 and entry.get('Landable'):
-                self.merge_poi("Tourist", 'Large Radius Landable', body_code)
+                self.merge_poi("Tourist", 'Large Radius Landable', body)
 
             #    Orbiting close to parent body
             if entry.get('PlanetClass') and self.aphelion('SemiMajorAxis', entry.get("SemiMajorAxis"),
