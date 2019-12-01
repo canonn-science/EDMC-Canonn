@@ -530,8 +530,8 @@ class CodexTypes(Frame):
                 if entry.get("Parents")[0].get("Planet"):
                     self.merge_poi("Tourist", '{} Moon'.format(CodexTypes.body_types.get(entry.get('PlanetClass'))),
                                    body)
-
-            if entry.get('PlanetClass') in ('Earthlike body') and entry.get('TidalLock'):
+            
+            if entry.get('PlanetClass') and entry.get('PlanetClass') in ('Earthlike body') and entry.get('TidalLock'):
                 self.merge_poi("Tourist",'Tidal Locked Earthlike Word',
                                body)
 
@@ -561,7 +561,7 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
             #    Fast and non-locked rotation < 1 hour
-            if abs(entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
+            if entry.get('RotationPeriod') and abs(entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
                 self.merge_poi("Tourist", 'Fast unlocked rotation', body)
 
             #    High eccentricity
