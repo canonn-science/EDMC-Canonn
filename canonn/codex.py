@@ -206,11 +206,11 @@ class CodexTypes(Frame):
 
                         # Ringed ELW etc
                         if b.get('subType') in ('Earth-like world', 'Water world', 'Ammonia world'):
-                            if b.get("Rings"):
+                            if b.get("rings"):
                                 self.merge_poi("Tourist",
                                                'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))),
                                                body_code)
-                            if b.get("Parents")[0].get("Planet"):
+                            if b.get("parents")[0].get("Planet"):
                                 self.merge_poi("Tourist",
                                                '{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))),
                                                body_code)
@@ -506,7 +506,7 @@ class CodexTypes(Frame):
         if entry.get("event") == "FSSAllBodiesFound":
             self.remove_poi("Planets", "Unexplored Bodies")
 
-        if entry.get("event") == "Scan" and entry.get("ScanType") == "Detailed":
+        if entry.get("event") == "Scan" and entry.get("ScanType") in("Detailed","AutoScan"):
             self.remove_poi("Planets", "Unexplored Bodies")
             body = entry.get("BodyName").replace(system, '')
             english_name = CodexTypes.body_types.get(entry.get("PlanetClass"))
