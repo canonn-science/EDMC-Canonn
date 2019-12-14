@@ -29,13 +29,13 @@ class poiTypes(threading.Thread):
         debug("running poitypes")
         self.callback(self.system)
 
-    def recycle(self):
-        print "Recycling Labels"
-
-        for label in self.lt:
-            label.grid_remove()
-        for label in self.lp:
-            label.grid_remove()
+    # def recycle(self):
+    #     print "Recycling Labels"
+    #
+    #     for label in self.lt:
+    #         label.grid_remove()
+    #     for label in self.lp:
+    #         label.grid_remove()
 
             # Frame.destroy(self)
 
@@ -253,7 +253,7 @@ class CodexTypes(Frame):
                             self.merge_poi("Tourist", 'Tiny Radius Landable', body_code)
 
                         #    Fast and non-locked rotation
-                        if abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get(
+                        if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get(
                                 "rotationalPeriodTidallyLocked"):
                             self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
 
@@ -341,6 +341,7 @@ class CodexTypes(Frame):
         self.labels[name].bind("<Enter>", self.enter)
         self.labels[name].bind("<Leave>", self.leave)
         self.labels[name].bind("<ButtonPress>", self.enter)
+        self.labels[name]["image"] = self.images[name]
 
     def set_image(self, name, enabled):
         grey = "{}_grey".format(name)
@@ -349,9 +350,6 @@ class CodexTypes(Frame):
             setting = name
         else:
             setting = grey
-
-        debug("Setting image to {}".format(setting))
-        self.labels[name]["image"] = self.images.get(setting)
 
         if enabled and self.labels.get(name):
             self.labels[name].grid()
@@ -530,7 +528,7 @@ class CodexTypes(Frame):
                 if entry.get("Parents")[0].get("Planet"):
                     self.merge_poi("Tourist", '{} Moon'.format(CodexTypes.body_types.get(entry.get('PlanetClass'))),
                                    body)
-            
+
             if entry.get('PlanetClass') and entry.get('PlanetClass') in ('Earthlike body') and entry.get('TidalLock'):
                 self.merge_poi("Tourist",'Tidal Locked Earthlike Word',
                                body)
@@ -561,7 +559,7 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
             #    Fast and non-locked rotation < 1 hour
-            if entry.get('RotationPeriod') and abs(entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
+            if entry.get('PlanetClass') and entry.get('RotationPeriod') and abs(entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
                 self.merge_poi("Tourist", 'Fast unlocked rotation', body)
 
             #    High eccentricity
