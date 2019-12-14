@@ -29,13 +29,13 @@ class poiTypes(threading.Thread):
         debug("running poitypes")
         self.callback(self.system)
 
-    def recycle(self):
-        print "Recycling Labels"
-
-        for label in self.lt:
-            label.grid_remove()
-        for label in self.lp:
-            label.grid_remove()
+    # def recycle(self):
+    #     print "Recycling Labels"
+    #
+    #     for label in self.lt:
+    #         label.grid_remove()
+    #     for label in self.lp:
+    #         label.grid_remove()
 
             # Frame.destroy(self)
 
@@ -192,7 +192,7 @@ class CodexTypes(Frame):
                             self.merge_poi("Planets", "Terraformable", body_code)
 
                         # Landable Volcanism
-                        if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism':
+                        if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get('isLandable'):
                             self.merge_poi("Geology", b.get('volcanismType'), body_code)
 
                         # water ammonia etc
@@ -206,11 +206,11 @@ class CodexTypes(Frame):
 
                         # Ringed ELW etc
                         if b.get('subType') in ('Earth-like world', 'Water world', 'Ammonia world'):
-                            if b.get("Rings"):
+                            if b.get("rings"):
                                 self.merge_poi("Tourist",
                                                'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))),
                                                body_code)
-                            if b.get("Parents")[0].get("Planet"):
+                            if b.get("parents")[0].get("Planet"):
                                 self.merge_poi("Tourist",
                                                '{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))),
                                                body_code)
@@ -253,7 +253,7 @@ class CodexTypes(Frame):
                             self.merge_poi("Tourist", 'Tiny Radius Landable', body_code)
 
                         #    Fast and non-locked rotation
-                        if abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get(
+                        if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get(
                                 "rotationalPeriodTidallyLocked"):
                             self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
 
@@ -282,10 +282,16 @@ class CodexTypes(Frame):
         # clear it if it exists
         for col in self.tooltipcol1:
             col["text"] = ""
-            col.grid_remove()
+            try:
+                col.grid_remove()
+            except:
+                error("Col1 grid_remove error")
         for col in self.tooltipcol2:
             col["text"] = ""
-            col.grid_remove()
+            try:
+                col.grid_remove()
+            except:
+                error("Col2 grid_remove error")
 
         poicount = 0
 
@@ -335,6 +341,7 @@ class CodexTypes(Frame):
         self.labels[name].bind("<Enter>", self.enter)
         self.labels[name].bind("<Leave>", self.leave)
         self.labels[name].bind("<ButtonPress>", self.enter)
+        self.labels[name]["image"] = self.images[name]
 
     def set_image(self, name, enabled):
         grey = "{}_grey".format(name)
@@ -344,9 +351,7 @@ class CodexTypes(Frame):
         else:
             setting = grey
 
-        self.labels[name]["image"] = self.images.get(setting)
-
-        if enabled:
+        if enabled and self.labels.get(name):
             self.labels[name].grid()
         else:
             self.labels[name].grid_remove()
@@ -499,7 +504,7 @@ class CodexTypes(Frame):
         if entry.get("event") == "FSSAllBodiesFound":
             self.remove_poi("Planets", "Unexplored Bodies")
 
-        if entry.get("event") == "Scan" and entry.get("ScanType") == "Detailed":
+        if entry.get("event") == "Scan" and entry.get("ScanType") in("Detailed","AutoScan"):
             self.remove_poi("Planets", "Unexplored Bodies")
             body = entry.get("BodyName").replace(system, '')
             english_name = CodexTypes.body_types.get(entry.get("PlanetClass"))
@@ -519,14 +524,14 @@ class CodexTypes(Frame):
             if entry.get('PlanetClass') in ('Earthlike body', 'Water world', 'Ammonia world'):
                 if entry.get("Rings"):
                     self.merge_poi("Tourist", 'Ringed {}'.format(CodexTypes.body_types.get(entry.get('PlanetClass'))),
-                                   body_code)
+                                   body)
                 if entry.get("Parents")[0].get("Planet"):
                     self.merge_poi("Tourist", '{} Moon'.format(CodexTypes.body_types.get(entry.get('PlanetClass'))),
-                                   body_code)
+                                   body)
 
-            if entry.get('PlanetClass') in ('Earthlike body') and entry.get('TidalLock'):
+            if entry.get('PlanetClass') and entry.get('PlanetClass') in ('Earthlike body') and entry.get('TidalLock'):
                 self.merge_poi("Tourist",'Tidal Locked Earthlike Word',
-                               body_code)
+                               body)
 
             #  Landable with surface pressure
             if entry.get('PlanetClass') and surface_pressure("SurfacePressure",entry.get('SurfacePressure')) > CodexTypes.minPressure and entry.get('Landable'):
@@ -538,7 +543,7 @@ class CodexTypes(Frame):
 
             #    Landable large (>18000km radius)
             if entry.get('PlanetClass') and entry.get('Radius') > 18000000 and entry.get('Landable'):
-                self.merge_poi("Tourist", 'Large Radius Landable', body_code)
+                self.merge_poi("Tourist", 'Large Radius Landable', body)
 
             #    Orbiting close to parent body
             if entry.get('PlanetClass') and self.aphelion('SemiMajorAxis', entry.get("SemiMajorAxis"),
@@ -554,7 +559,7 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
             #    Fast and non-locked rotation < 1 hour
-            if abs(entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
+            if entry.get('PlanetClass') and entry.get('RotationPeriod') and abs(entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
                 self.merge_poi("Tourist", 'Fast unlocked rotation', body)
 
             #    High eccentricity
