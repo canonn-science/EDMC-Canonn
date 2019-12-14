@@ -1,13 +1,12 @@
-import emitter
 import json
 import requests
 import sys
 import threading
-from debug import Debug
-from debug import debug, error
-from emitter import Emitter
-from release import Release
-from urllib import quote_plus
+from canonn.debug import Debug
+from canonn.debug import debug, error
+from canonn.emitter import Emitter
+from canonn.release import Release
+from urllib.parse import quote_plus
 
 
 class clientReport(Emitter):

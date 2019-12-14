@@ -2,8 +2,8 @@ import threading
 import requests
 import sys
 import json
-from debug import Debug
-from debug import debug,error
+from canonn.debug import Debug
+from canonn.debug import debug,error
 
 class postJson(threading.Thread):
     def __init__(self, url,payload):

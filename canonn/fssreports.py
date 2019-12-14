@@ -2,13 +2,13 @@ import threading
 import requests
 import sys
 import json
-from emitter import Emitter
-import emitter
-from urllib import quote_plus
-import urllib
-from debug import Debug
-from debug import debug, error
-from systems import Systems
+from canonn.emitter import Emitter
+import canonn.emitter
+from urllib.parse import quote_plus
+from urllib.parse import urlencode
+from canonn.debug import Debug
+from canonn.debug import debug, error
+from canonn.systems import Systems
 import random
 import time
 
@@ -76,7 +76,7 @@ class fssEmitter(Emitter):
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/submitAXCZ"
         debug("gSubmitAXCZ {}".format(p.get("systemName")))
 
-        getstr = "{}?{}".format(url, urllib.urlencode(p))
+        getstr = "{}?{}".format(url, urlencode(p))
 
         debug("gsubmit {}".format(getstr))
         r = requests.get(getstr)

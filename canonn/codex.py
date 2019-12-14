@@ -1,19 +1,20 @@
-import Tkinter as tk
-import emitter
+import tkinter as tk
+import canonn.emitter
 import json
 import myNotebook as nb
 import os
 import requests
 import sys
 import threading
-import urllib2
-from Tkinter import Frame
+
+from tkinter import Frame
 from config import config
-from debug import Debug
-from debug import debug, error
-from emitter import Emitter
+from canonn.debug import Debug
+from canonn.debug import debug, error
+from canonn.emitter import Emitter
 from math import sqrt, pow
-from urllib import quote_plus
+from urllib.parse import quote_plus
+from urllib.parse import unquote
 
 def surface_pressure(tag,value):
     if tag == "surfacePressure":
@@ -167,7 +168,7 @@ class CodexTypes(Frame):
             for r in poidata:
                 self.merge_poi(r.get("hud_category"), r.get("english_name"), r.get("body"))
 
-            usystem = urllib2.unquote(system)
+            usystem = unquote(system)
 
             edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
             debug(edsm)

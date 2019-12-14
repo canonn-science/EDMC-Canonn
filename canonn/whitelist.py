@@ -1,13 +1,13 @@
-from urllib import quote_plus
-from debug import Debug
-from debug import debug,error
+from urllib.parse import quote_plus
+from canonn.debug import Debug
+from canonn.debug import debug,error
 import threading
 import requests
 import sys
 import json
-from Tkinter import Frame
-import Tkinter as tk
-from urllib import quote_plus
+from tkinter import Frame
+import tkinter as tk
+from urllib.parse import quote_plus
 
 
 class whiteListGetter(threading.Thread):

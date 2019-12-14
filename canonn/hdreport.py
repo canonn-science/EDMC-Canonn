@@ -1,5 +1,5 @@
-import Tkinter as tk
-import emitter
+import tkinter as tk
+import canonn.emitter
 import glob
 import json
 import os
@@ -7,14 +7,14 @@ import requests
 import sys
 import threading
 import time
-from Tkinter import Button
-from Tkinter import Frame
+from tkinter import Button
+from tkinter import Frame
 from config import config
-from debug import Debug
-from debug import debug, error
-from emitter import Emitter
-from systems import Systems
-from urllib import quote_plus
+from canonn.debug import Debug
+from canonn.debug import debug, error
+from canonn.emitter import Emitter
+from canonn.systems import Systems
+from urllib.parse import quote_plus
 import plug
 import math
 

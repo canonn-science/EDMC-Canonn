@@ -1,5 +1,5 @@
-import Tkinter as tk
-from Tkinter import Frame
+import tkinter as tk
+from tkinter import Frame
 import myNotebook as nb
 from config import config
 import datetime 

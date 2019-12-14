@@ -2,8 +2,8 @@
 Module to provide the news.
 """
 
-import Tkinter as tk
-from Tkinter import Frame
+import tkinter as tk
+from tkinter import Frame
 import uuid
 from ttkHyperlinkLabel import HyperlinkLabel
 import requests
@@ -12,13 +12,13 @@ import re
 import myNotebook as nb
 from config import config
 import zipfile
-import StringIO
+from io import StringIO
 import os
 import shutil
 import threading
-from  player import Player
-from debug import Debug
-from debug import debug,error
+from canonn.player import Player
+from canonn.debug import Debug
+from canonn.debug import debug,error
 import plug
 
 RELEASE_CYCLE=60 * 1000 * 60 # 1 Hour

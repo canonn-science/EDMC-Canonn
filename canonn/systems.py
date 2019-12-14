@@ -1,8 +1,8 @@
-from urllib import quote_plus
+from urllib.parse import quote_plus
 import requests
 import json
-from debug import Debug
-from debug import debug,error
+from canonn.debug import Debug
+from canonn.debug import debug,error
 
 class Systems():
 
@@ -66,7 +66,7 @@ class Systems():
 
     @classmethod
     def storeSystem(cls,system,pos):
-        if cls.systemCache.has_key(system):
+        if system in cls.systemCache:
             debug("system {} already in cache".format(system))
         else: 
             cls.systemCache[system]=pos
@@ -74,7 +74,7 @@ class Systems():
     @classmethod
     def edsmGetSystem(cls,system):
         
-        if cls.systemCache.has_key(system):
+        if system in cls.systemCache:
             #debug(cls.systemCache[system])
             return cls.systemCache[system]
             

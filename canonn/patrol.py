@@ -2,8 +2,8 @@
 Patrols
 """
 
-import Tkinter as tk
-from Tkinter import Frame
+import tkinter as tk
+from tkinter import Frame
 import uuid
 from ttkHyperlinkLabel import HyperlinkLabel
 import requests
@@ -12,16 +12,16 @@ import re
 import myNotebook as nb
 from config import config
 import threading
-from systems import Systems
+from canonn.systems import Systems
 import math
-from debug import Debug
-from debug import debug, error
+from canonn.debug import Debug
+from canonn.debug import debug, error
 import csv
 import os
 from contextlib import closing
-from urllib import quote_plus
+from urllib.parse import quote_plus
 from datetime import datetime
-from release import Release
+from canonn.release import Release
 from l10n import Locale
 
 CYCLE = 60 * 1000 * 60  # 60 minutes

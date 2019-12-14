@@ -1,9 +1,9 @@
-import Tkinter as tk
+import tkinter as tk
 import json
 import myNotebook as nb
 import requests
 import sys
-import ttk
+
 from canonn import clientreport
 from canonn import codex
 from canonn import factionkill
@@ -20,7 +20,7 @@ from canonn.debug import debug
 from canonn.systems import Systems
 from canonn.whitelist import whiteList
 from config import config
-from urllib import quote_plus
+from urllib.parse import quote_plus
 
 this = sys.modules[__name__]
 
@@ -37,7 +37,7 @@ myPlugin = "EDMC-Canonn"
 this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
-this.version = "3.4.2"
+this.version = "5.0.0"
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
 
@@ -70,7 +70,7 @@ def prefs_changed(cmdr, is_beta):
     Debug.prefs_changed()
 
 
-def plugin_start(plugin_dir):
+def plugin_start3(plugin_dir):
     """
     Load Template plugin into EDMC
     """
