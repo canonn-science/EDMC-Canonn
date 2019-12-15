@@ -15,6 +15,7 @@ from tkinter import Frame
 from urllib.parse import quote_plus
 from urllib.parse import unquote
 
+nvl = lambda a,b: a or b
 
 def surface_pressure(tag, value):
     if tag == "surfacePressure":
@@ -476,8 +477,10 @@ class CodexTypes(Frame):
 
         if entry.get("event") in ("FSSDiscoveryScan"):
             CodexTypes.fsscount = entry.get("BodyCount")
+            if not CodexTypes.fsscount:
+                CodexTypes.fsscount = 0
             debug("body reconciliation: {} {}".format(CodexTypes.bodycount, CodexTypes.fsscount))
-            if CodexTypes.fsscount > CodexTypes.bodycount:
+            if nvl(CodexTypes.fsscount,0) > nvl(CodexTypes.bodycount,0):
                 self.merge_poi("Planets", "Unexplored Bodies", "")
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
@@ -536,12 +539,13 @@ class CodexTypes(Frame):
                                body)
 
             #  Landable with surface pressure
-            if entry.get('PlanetClass') and surface_pressure("SurfacePressure", entry.get(
+            if entry.get('PlanetClass') and entry.get(
+                    'SurfacePressure') and surface_pressure("SurfacePressure", entry.get(
                     'SurfacePressure')) > CodexTypes.minPressure and entry.get('Landable'):
                 self.merge_poi("Tourist", 'Landable with atmosphere', body)
 
             #    Landable high-g (>3g) looks like the journal is tenths of G therefor 3.257900 = 0.33G
-            if entry.get('PlanetClass') and entry.get('SurfaceGravity') > 30 and entry.get('Landable'):
+            if entry.get('PlanetClass') and entry.get('SurfaceGravity') and entry.get('SurfaceGravity') > 30 and entry.get('Landable'):
                 self.merge_poi("Tourist", 'High Gravity', body)
 
             #    Landable large (>18000km radius)
