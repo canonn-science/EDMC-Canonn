@@ -493,7 +493,7 @@ class CodexTypes(Frame):
         if entry.get("event") == "FSSSignalDiscovered":
             if "NumberStation" in entry.get("SignalName"):
                 self.merge_poi("Human", "Unregistered Comms Beacon", body)
-            if "Mega" in entry.get("SignalName"):
+            if "Megaship" in entry.get("SignalName"):
                 self.merge_poi("Human", "Megaship", body)
             if "ListeningPost" in entry.get("SignalName"):
                 self.merge_poi("Human", "Listening Post", body)
