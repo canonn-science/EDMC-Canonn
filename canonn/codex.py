@@ -1,4 +1,3 @@
-import tkinter as tk
 import canonn.emitter
 import json
 import myNotebook as nb
@@ -6,19 +5,21 @@ import os
 import requests
 import sys
 import threading
-
-from tkinter import Frame
-from config import config
+import tkinter as tk
 from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.emitter import Emitter
+from config import config
 from math import sqrt, pow
+from tkinter import Frame
 from urllib.parse import quote_plus
 from urllib.parse import unquote
 
-def surface_pressure(tag,value):
+
+def surface_pressure(tag, value):
     if tag == "surfacePressure":
         return value * 100000
+
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
@@ -38,7 +39,7 @@ class poiTypes(threading.Thread):
     #     for label in self.lp:
     #         label.grid_remove()
 
-            # Frame.destroy(self)
+    # Frame.destroy(self)
 
 
 class saaScan():
@@ -49,20 +50,20 @@ class saaScan():
     @classmethod
     def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if entry.get("event") == "SAASignalsFound":
-            emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postSAA",
-                         {
-                             "cmdr": cmdr,
-                             "beta": is_beta,
-                             "system": system,
-                             "x": x,
-                             "y": y,
-                             "z": z,
-                             "entry": entry,
-                             "body": body,
-                             "lat": lat,
-                             "lon": lon,
-                             "client": client
-                         })
+            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postSAA",
+                                {
+                                    "cmdr": cmdr,
+                                    "beta": is_beta,
+                                    "system": system,
+                                    "x": x,
+                                    "y": y,
+                                    "z": z,
+                                    "entry": entry,
+                                    "body": body,
+                                    "lat": lat,
+                                    "lon": lon,
+                                    "client": client
+                                })
 
 
 class CodexTypes(Frame):
@@ -147,9 +148,8 @@ class CodexTypes(Frame):
         self.tooltiplist.grid_remove()
         self.grid_remove()
 
-
     # wrapper for visualise
-    def evisualise(self,event):
+    def evisualise(self, event):
         self.visualise()
 
     def getdata(self, system):
@@ -193,7 +193,8 @@ class CodexTypes(Frame):
                             self.merge_poi("Planets", "Terraformable", body_code)
 
                         # Landable Volcanism
-                        if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get('isLandable'):
+                        if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get(
+                                'isLandable'):
                             self.merge_poi("Geology", b.get('volcanismType'), body_code)
 
                         # water ammonia etc
@@ -220,7 +221,8 @@ class CodexTypes(Frame):
                                            body_code)
 
                         #  Landable with surface pressure
-                        if b.get('type') == 'Planet' and surface_pressure("surfacePressure",b.get('surfacePressure')) > CodexTypes.minPressure and b.get('isLandable'):
+                        if b.get('type') == 'Planet' and surface_pressure("surfacePressure", b.get(
+                                'surfacePressure')) > CodexTypes.minPressure and b.get('isLandable'):
                             self.merge_poi("Tourist", 'Landable with atmosphere', body_code)
 
                         #    Landable high-g (>3g)
@@ -376,7 +378,6 @@ class CodexTypes(Frame):
             if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
                 del self.poidata[i]
 
-
     def light_seconds(self, tag, value):
         debug("light seconds {} {}".format(tag, value))
         if tag in ("distanceToArrival", "DistanceFromArrivalLS"):
@@ -469,8 +470,8 @@ class CodexTypes(Frame):
             debug("Looking for POI data in {}".format(system))
             poiTypes(system, self.getdata).start()
 
-        if entry.get("event") in ("Location", "StartUp","FSDJump"):
-            if entry.get("SystemAllegiance") in ("Thargoid","Guardian"):
+        if entry.get("event") in ("Location", "StartUp", "FSDJump"):
+            if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
                 self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(entry.get("SystemAllegiance")), "")
 
         if entry.get("event") in ("FSSDiscoveryScan"):
@@ -479,7 +480,6 @@ class CodexTypes(Frame):
             if CodexTypes.fsscount > CodexTypes.bodycount:
                 self.merge_poi("Planets", "Unexplored Bodies", "")
 
-
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
                 '$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
             if entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
@@ -487,10 +487,8 @@ class CodexTypes(Frame):
             else:
                 self.merge_poi("Cloud", "Life Ring", "")
 
-
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             self.merge_poi("Guardian", "Guardian Beacon", "")
-
 
         if entry.get("event") == "FSSSignalDiscovered":
             if "NumberStation" in entry.get("SignalName"):
@@ -505,7 +503,7 @@ class CodexTypes(Frame):
         if entry.get("event") == "FSSAllBodiesFound":
             self.remove_poi("Planets", "Unexplored Bodies")
 
-        if entry.get("event") == "Scan" and entry.get("ScanType") in("Detailed","AutoScan"):
+        if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
             self.remove_poi("Planets", "Unexplored Bodies")
             body = entry.get("BodyName").replace(system, '')
             english_name = CodexTypes.body_types.get(entry.get("PlanetClass"))
@@ -531,11 +529,12 @@ class CodexTypes(Frame):
                                    body)
 
             if entry.get('PlanetClass') and entry.get('PlanetClass') in ('Earthlike body') and entry.get('TidalLock'):
-                self.merge_poi("Tourist",'Tidal Locked Earthlike Word',
+                self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
                                body)
 
             #  Landable with surface pressure
-            if entry.get('PlanetClass') and surface_pressure("SurfacePressure",entry.get('SurfacePressure')) > CodexTypes.minPressure and entry.get('Landable'):
+            if entry.get('PlanetClass') and surface_pressure("SurfacePressure", entry.get(
+                    'SurfacePressure')) > CodexTypes.minPressure and entry.get('Landable'):
                 self.merge_poi("Tourist", 'Landable with atmosphere', body)
 
             #    Landable high-g (>3g) looks like the journal is tenths of G therefor 3.257900 = 0.33G
@@ -560,7 +559,8 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
             #    Fast and non-locked rotation < 1 hour
-            if entry.get('PlanetClass') and entry.get('RotationPeriod') and abs(entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
+            if entry.get('PlanetClass') and entry.get('RotationPeriod') and abs(
+                    entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
                 self.merge_poi("Tourist", 'Fast unlocked rotation', body)
 
             #    High eccentricity
@@ -922,20 +922,20 @@ class codexEmitter(Emitter):
             self.getReportTypes(self.entry.get("EntryID"))
             url = self.getUrl()
 
-            emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postCodex",
-                         {
-                             "cmdr": self.cmdr,
-                             "beta": self.is_beta,
-                             "system": self.system,
-                             "x": self.x,
-                             "y": self.y,
-                             "z": self.z,
-                             "entry": self.entry,
-                             "body": self.body,
-                             "lat": self.lat,
-                             "lon": self.lon,
-                             "client": self.client}
-                         )
+            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postCodex",
+                                {
+                                    "cmdr": self.cmdr,
+                                    "beta": self.is_beta,
+                                    "system": self.system,
+                                    "x": self.x,
+                                    "y": self.y,
+                                    "z": self.z,
+                                    "entry": self.entry,
+                                    "body": self.body,
+                                    "lat": self.lat,
+                                    "lon": self.lon,
+                                    "client": self.client}
+                                )
 
             jid = self.entry.get("EntryID")
             reportType = codexEmitter.reporttypes.get(str(jid))

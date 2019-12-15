@@ -23,6 +23,7 @@ from urllib.parse import quote_plus
 from datetime import datetime
 from canonn.release import Release
 from l10n import Locale
+import codecs
 
 CYCLE = 60 * 1000 * 60  # 60 minutes
 DEFAULT_URL = ""
@@ -413,7 +414,7 @@ class CanonnPatrol(Frame):
         SystemsOvireden = []
         url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqwb4MYDrfSuBzRRGpA3R1u0kzKzSPuPBudVukWm4_Ti9G9KPaW2hWdwxwOJ2vHybywVOb-O2-tTBH/pub?gid=0&single=true&output=tsv"  # Set your BGS override link(tsv)
         with closing(requests.get(url, stream=True)) as r:
-            reader = csv.reader(r.iter_lines(), delimiter='\t')
+            reader = csv.reader(r.content.decode('utf-8').splitlines(), delimiter='\t')
             next(reader)
             for row in reader:
 
@@ -513,7 +514,7 @@ class CanonnPatrol(Frame):
         canonnpatrol = []
 
         with closing(requests.get(url, stream=True)) as r:
-            reader = csv.reader(r.iter_lines(), delimiter='\t')
+            reader = csv.reader(r.content.decode('utf-8').splitlines(), delimiter='\t')
             next(reader)
             for row in reader:
 
@@ -541,7 +542,7 @@ class CanonnPatrol(Frame):
         canonnpatrol = []
         url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsi1Vbfx4Sk2msNYiqo0PVnW3VHSrvvtIRkjT-JvH_oG9fP67TARWX2jIjehFHKLwh4VXdSh0atk3J/pub?gid=0&single=true&output=tsv"
         with closing(requests.get(url, stream=True)) as r:
-            reader = csv.reader(r.iter_lines(), delimiter='\t')
+            reader = csv.reader(r.content.decode('utf-8').splitlines(), delimiter='\t')
             next(reader)
             for row in reader:
 

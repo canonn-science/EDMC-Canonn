@@ -7,7 +7,7 @@ from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from canonn.release import Release
 from urllib.parse import quote_plus
-
+import canonn.emitter
 
 class clientReport(Emitter):
     done = False
@@ -38,7 +38,7 @@ class clientReport(Emitter):
             url = self.getUrl()
             self.send(payload, url)
             debug("Google Client Report")
-            emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/submitCient",
+            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/submitCient",
                          {
                              "cmdr": payload.get("cmdrName"),
                              "beta": payload.get("isBeta"),
@@ -52,4 +52,4 @@ def submit(cmdr, is_beta, client, entry):
         clientReport(cmdr, is_beta, client).start()
 
     if entry.get("event") in ("Fileheader"):
-        emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postGameVersion",event)
+        canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postGameVersion",event)

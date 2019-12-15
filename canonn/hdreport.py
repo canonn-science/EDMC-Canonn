@@ -1,22 +1,22 @@
-import tkinter as tk
 import canonn.emitter
 import glob
 import json
+import math
 import os
+import plug
 import requests
 import sys
 import threading
 import time
-from tkinter import Button
-from tkinter import Frame
-from config import config
+import tkinter as tk
 from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from canonn.systems import Systems
+from config import config
+from tkinter import Button
+from tkinter import Frame
 from urllib.parse import quote_plus
-import plug
-import math
 
 '''
 
@@ -196,10 +196,10 @@ class HDInspector(Frame):
         for filename in glob.glob(os.path.join(config.default_journal_dir, 'journal*.log')):
             self.scan_file(filename)
 
-class hyperdictionDetector():
 
-    state=0
-    target_system=""
+class hyperdictionDetector():
+    state = 0
+    target_system = ""
 
     @classmethod
     def hide(cls):
@@ -208,48 +208,48 @@ class hyperdictionDetector():
     @classmethod
     def show(cls):
         cls.frame.grid()
-        cls.frame.after(120000,cls.hide)
+        cls.frame.after(120000, cls.hide)
 
     @classmethod
-    def setup(cls,parent,gridrow):
-        cls.frame=tk.Frame(parent)
+    def setup(cls, parent, gridrow):
+        cls.frame = tk.Frame(parent)
         cls.frame.grid(row=gridrow)
         cls.container = tk.Frame(cls.frame)
         cls.container.columnconfigure(1, weight=1)
         cls.container.grid(row=1)
-        cls.banner=tk.Label(cls.container,text="HYPERDICTION",fg="red")
+        cls.banner = tk.Label(cls.container, text="HYPERDICTION", fg="red")
         cls.banner.grid(row=0, column=0, columnspan=1, sticky="NSEW")
         cls.banner.config(font=("Arial Black", 22))
-        cls.instructions=tk.Label(cls.container,text="Please exit to main menu for confirmation",fg="red")
+        cls.instructions = tk.Label(cls.container, text="Please exit to main menu for confirmation", fg="red")
         cls.instructions.grid(row=1, column=0, columnspan=1, sticky="NSEW")
         cls.instructions.config(font=("Arial Black", 8))
         cls.hide()
         return cls.frame
 
     @classmethod
-    def startJump(cls,target_system):
+    def startJump(cls, target_system):
         debug("startJump setting state 1 {}".format(target_system))
         cls.hide()
         cls.state = 1
-        cls.target_system=target_system
+        cls.target_system = target_system
 
     @classmethod
-    def FSDJump(cls,system):
+    def FSDJump(cls, system):
         if cls.state == 1 and not system == cls.target_system:
-            debug("FSDJump setting state 2 {} {}".format(system,cls.target_system))
-            cls.state =2;
+            debug("FSDJump setting state 2 {} {}".format(system, cls.target_system))
+            cls.state = 2;
         else:
-            debug("FSDJUMP resetting state back {} {}".format(system,cls.target_system))
+            debug("FSDJUMP resetting state back {} {}".format(system, cls.target_system))
             cls.state = 0
 
     @classmethod
-    def Music(cls,system,cmdr,timestamp):
+    def Music(cls, system, cmdr, timestamp):
         if cls.state == 2:
             debug("Hyperdiction Detected")
             cls.show()
             x, y, z = Systems.edsmGetSystem(system)
-            emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHDDetected",
-                         {"cmdr": cmdr, "system": system, "timestamp": timestamp, "x": x, "y": y, "z": z })
+            canonn.emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHDDetected",
+                                {"cmdr": cmdr, "system": system, "timestamp": timestamp, "x": x, "y": y, "z": z})
             plug.show_error("Hyperdiction: Exit to main menu")
         else:
             debug("FSDJUMP resetting state back")
@@ -262,7 +262,7 @@ class hyperdictionDetector():
         state = 0
 
     @classmethod
-    def submit(cls,cmdr, is_beta, system, station, entry, client):
+    def submit(cls, cmdr, is_beta, system, station, entry, client):
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             cls.startJump(entry.get("StarSystem"))
 
@@ -270,46 +270,49 @@ class hyperdictionDetector():
             cls.FSDJump(entry.get("StarSystem"))
 
         if entry.get("event") == "Music" and entry.get("MusicTrack") in ("Unknown_Encounter"):
-            cls.Music(system,cmdr,entry.get("timestamp"))
+            cls.Music(system, cmdr, entry.get("timestamp"))
 
         if entry.get("event") == "SupercruiseExit":
             cls.SupercruiseExit()
 
-def post_traffic(system,entry):
+
+def post_traffic(system, entry):
     debug("posting traffic {} ".format(system))
     try:
-        emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postTraffic",
-                 {"system": system, "timestamp": entry.get("timestamp")})
+        canonn.emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postTraffic",
+                            {"system": system, "timestamp": entry.get("timestamp")})
     except:
         plug.show_error("Failed to post traffic")
         debug("Failed to post traffic for {}".format(system))
 
 
-def get_distance(a,b):
+def get_distance(a, b):
     x, y, z = Systems.edsmGetSystem(a)
     a, b, c = Systems.edsmGetSystem(b)
-    return math.sqrt(math.pow(x-a,2)+math.pow(y-b,2)+math.pow(z-c,2))
+    return math.sqrt(math.pow(x - a, 2) + math.pow(y - b, 2) + math.pow(z - c, 2))
 
-def post_distance(system,centre,entry):
-    d = int(get_distance(system,centre)/10)*10
+
+def post_distance(system, centre, entry):
+    d = int(get_distance(system, centre) / 10) * 10
     debug("distance {}".format(d))
     if d <= 250:
-        tag="{} ({})".format(centre,int(d))
-        post_traffic(tag,entry)
+        tag = "{} ({})".format(centre, int(d))
+        post_traffic(tag, entry)
 
 
 def submit(cmdr, is_beta, system, station, entry, client):
-
     hyperdictionDetector.submit(cmdr, is_beta, system, station, entry, client)
 
-    hdsystems = ("Electra","Asterope","Delphi","Merope", "Celaeno", "Maia", "HR 1185","HIP 23759","Witch Head Sector DL-Y d17","Pleiades Sector HR-W d1-79","Pleione","Witch Head Sector GW-W c1-4")
+    hdsystems = (
+    "Electra", "Asterope", "Delphi", "Merope", "Celaeno", "Maia", "HR 1185", "HIP 23759", "Witch Head Sector DL-Y d17",
+    "Pleiades Sector HR-W d1-79", "Pleione", "Witch Head Sector GW-W c1-4")
 
     if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
-        #post traffic from reference systems
+        # post traffic from reference systems
         if system in hdsystems:
-            post_traffic(system,entry)
+            post_traffic(system, entry)
 
-        post_distance(system,'Merope',entry)
+        post_distance(system, 'Merope', entry)
         post_distance(system, 'Witch Head Sector IR-W c1-9', entry)
 
     if entry["event"] == "Statistics" and entry.get("TG_ENCOUNTERS"):
@@ -318,17 +321,17 @@ def submit(cmdr, is_beta, system, station, entry, client):
 
             lastsystem = entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM")
             gametime = entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_TIMESTAMP")
-            year,remainder=gametime.split("-",1)
-            tgtime="{}-{}".format(str(int(year)-1286),remainder)
+            year, remainder = gametime.split("-", 1)
+            tgtime = "{}-{}".format(str(int(year) - 1286), remainder)
 
             if lastsystem == "Pleiades Sector IR-W d1-55":
-                lastsystem="Delphi"
+                lastsystem = "Delphi"
 
             debug({"cmdr": cmdr, "system": lastsystem, "timestamp": tgtime})
             x, y, z = Systems.edsmGetSystem(lastsystem)
             # we are going to submit the hyperdiction here.
-            emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHD",
-                         {"cmdr": cmdr, "system": lastsystem, "timestamp": tgtime, "x": x, "y": y, "z": z })
+            canonn.emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHD",
+                                {"cmdr": cmdr, "system": lastsystem, "timestamp": tgtime, "x": x, "y": y, "z": z})
 
             if lastsystem:
                 if HDReport.hdsystems.get(lastsystem) == lastsystem:
