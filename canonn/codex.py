@@ -499,6 +499,9 @@ class CodexTypes(Frame):
                 self.merge_poi("Human", "Listening Post", body)
             if "CAPSHIP" in entry.get("SignalName"):
                 self.merge_poi("Human", "Capital Ship", body)
+            if "Generation Ship" in entry.get("SignalName"):
+                self.merge_poi("Human", entry.get("SignalName"), body)
+
 
         if entry.get("event") == "FSSAllBodiesFound":
             self.remove_poi("Planets", "Unexplored Bodies")
