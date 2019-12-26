@@ -248,7 +248,7 @@ class Release(Frame):
         except:
             error("Download failed: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")
-            
+
             return False
 
         # If we got this far then we have a new plugin so any failures and we will need to delete it
