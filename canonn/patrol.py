@@ -249,6 +249,7 @@ class CanonnPatrol(Frame):
         self.patrol_count = 0
         self.patrol_pos = 0
         self.minutes = 0
+        self.isvisible = True
         self.visible()
         self.cmdr = ""
         self.nearest = {}
