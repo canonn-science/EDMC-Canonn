@@ -20,6 +20,8 @@ nvl = lambda a,b: a or b
 def surface_pressure(tag, value):
     if tag == "surfacePressure":
         return value * 100000
+    else:
+        return value
 
 
 class poiTypes(threading.Thread):
@@ -539,9 +541,9 @@ class CodexTypes(Frame):
                                body)
 
             #  Landable with surface pressure
-            if entry.get('PlanetClass') and entry.get(
+            if entry.get('PlanetClass') and entry.get('Landable') and entry.get(
                     'SurfacePressure') and surface_pressure("SurfacePressure", entry.get(
-                    'SurfacePressure')) > CodexTypes.minPressure and entry.get('Landable'):
+                    'SurfacePressure')) > CodexTypes.minPressure:
                 self.merge_poi("Tourist", 'Landable with atmosphere', body)
 
             #    Landable high-g (>3g) looks like the journal is tenths of G therefor 3.257900 = 0.33G
@@ -562,7 +564,7 @@ class CodexTypes(Frame):
             #    Moons of moons
 
             #    Tiny objects (<300km radius)
-            if entry.get('Radius') < 300000 and entry.get('Landable'):
+            if entry.get('Landable') and entry.get('Radius') and entry.get('Radius') < 300000 :
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
             #    Fast and non-locked rotation < 1 hour
