@@ -148,6 +148,8 @@ class CodexTypes(Frame):
         self.container.grid(row=0, column=0, sticky="W")
         self.poidata = []
         # self.tooltip.grid_remove()
+        self.tooltiplist.grid()
+        self.grid()
         self.tooltiplist.grid_remove()
         self.grid_remove()
 
@@ -289,12 +291,14 @@ class CodexTypes(Frame):
         for col in self.tooltipcol1:
             col["text"] = ""
             try:
+                col.grid()
                 col.grid_remove()
             except:
                 error("Col1 grid_remove error")
         for col in self.tooltipcol2:
             col["text"] = ""
             try:
+                col.grid()
                 col.grid_remove()
             except:
                 error("Col2 grid_remove error")
@@ -334,6 +338,7 @@ class CodexTypes(Frame):
     def leave(self, event):
         # self.tooltip.grid_remove()
 
+        self.tooltiplist.grid()
         self.tooltiplist.grid_remove()
 
     def addimage(self, name, col):
@@ -360,6 +365,8 @@ class CodexTypes(Frame):
         if enabled and self.labels.get(name):
             self.labels[name].grid()
         else:
+            # ensure it is enabled before disabling
+            self.labels[name].grid()
             self.labels[name].grid_remove()
 
     def merge_poi(self, hud_category, english_name, body):
@@ -455,10 +462,12 @@ class CodexTypes(Frame):
 
             if self.poidata:
                 self.grid()
+                self.visible()
                 for r in self.poidata:
                     debug(r)
                     self.set_image(r.get("hud_category"), True)
             else:
+                self.grid()
                 self.grid_remove()
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
@@ -467,6 +476,7 @@ class CodexTypes(Frame):
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             # go fetch some data.It will 
             poiTypes(entry.get("StarSystem"), self.getdata).start()
+            self.grid()
             self.grid_remove()
 
         if entry.get("event") in ("Location", "StartUp"):
@@ -642,13 +652,15 @@ class CodexTypes(Frame):
         self.hidecodex = self.hidecodexbtn.get()
 
         # dont check the retval
-        # self.visible()
+
+        self.visualise()
 
     def visible(self):
 
         noicons = (self.hidecodex == 1)
 
         if noicons:
+            self.grid()
             self.grid_remove()
             self.isvisible = False
             return False
