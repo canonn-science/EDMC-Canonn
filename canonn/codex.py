@@ -638,7 +638,7 @@ class CodexTypes(Frame):
         self.hidecodex = self.hidecodexbtn.get()
 
         # dont check the retval
-        self.visible()
+        self.visualise()
 
     def visible(self):
 
