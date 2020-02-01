@@ -354,6 +354,7 @@ class CodexTypes(Frame):
         if enabled and self.labels.get(name):
             self.labels[name].grid()
         else:
+            self.labels[name].grid()
             self.labels[name].grid_remove()
 
     def merge_poi(self, hud_category, english_name, body):
@@ -450,6 +451,7 @@ class CodexTypes(Frame):
 
             if self.poidata:
                 self.grid()
+                self.visible()
                 for r in self.poidata:
                     debug(r)
                     self.set_image(r.get("hud_category"), True)
@@ -632,13 +634,14 @@ class CodexTypes(Frame):
         self.hidecodex = self.hidecodexbtn.get()
 
         # dont check the retval
-        # self.visible()
+        self.visible()
 
     def visible(self):
 
         noicons = (self.hidecodex == 1)
 
         if noicons:
+            self.grid()
             self.grid_remove()
             self.isvisible = False
             return False
