@@ -143,7 +143,9 @@ class CodexTypes(Frame):
         self.container.grid(row=0, column=0, sticky="W")
         self.poidata = []
         # self.tooltip.grid_remove()
+        self.tooltiplist.grid()
         self.tooltiplist.grid_remove()
+        self.grid()
         self.grid_remove()
 
 
@@ -283,12 +285,14 @@ class CodexTypes(Frame):
         for col in self.tooltipcol1:
             col["text"] = ""
             try:
+                col.grid()
                 col.grid_remove()
             except:
                 error("Col1 grid_remove error")
         for col in self.tooltipcol2:
             col["text"] = ""
             try:
+                col.grid()
                 col.grid_remove()
             except:
                 error("Col2 grid_remove error")
