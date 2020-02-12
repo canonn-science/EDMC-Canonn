@@ -15,7 +15,8 @@ from tkinter import Frame
 from urllib.parse import quote_plus
 from urllib.parse import unquote
 
-nvl = lambda a,b: a or b
+nvl = lambda a, b: a or b
+
 
 def surface_pressure(tag, value):
     if tag == "surfacePressure":
@@ -161,123 +162,122 @@ class CodexTypes(Frame):
         debug("Getting POI data in thread")
         CodexTypes.waiting = True
 
-        try:
-            self.poidata = []
-            url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
-                quote_plus(system.encode('utf8')))
-            debug(url)
-            r = requests.get(url)
-            if r.status_code == requests.codes.ok:
-                poidata = r.json()
+        self.poidata = []
+        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
+            quote_plus(system.encode('utf8')))
+        debug(url)
+        r = requests.get(url)
+        if r.status_code == requests.codes.ok:
+            poidata = r.json()
 
-            for r in poidata:
-                self.merge_poi(r.get("hud_category"), r.get("english_name"), r.get("body"))
+        for r in poidata:
+            self.merge_poi(r.get("hud_category"), r.get("english_name"), r.get("body"))
 
-            usystem = unquote(system)
+        usystem = unquote(system)
 
-            edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
-            debug(edsm)
-            r = requests.get(edsm)
-            if r.status_code == requests.codes.ok:
+        edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
+        debug(edsm)
+        r = requests.get(edsm)
+        if r.status_code == requests.codes.ok:
 
-                bodies = r.json().get("bodies")
-                if bodies:
-                    CodexTypes.bodycount = len(bodies)
-                    debug("bodycount: {}".format(CodexTypes.bodycount))
-
-                    if bodies[0].get("solarRadius"):
-                        CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies[0].get("solarRadius"))
-
-                    for b in bodies:
-                        debug(b.get("subType"))
-                        body_code = b.get("name").replace(usystem, '')
-                        body_name = b.get("name")
-
-                        # Terraforming
-                        if b.get('terraformingState') == 'Candidate for terraforming':
-                            self.merge_poi("Planets", "Terraformable", body_code)
-
-                        # Landable Volcanism
-                        if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get(
-                                'isLandable'):
-                            self.merge_poi("Geology", b.get('volcanismType'), body_code)
-
-                        # water ammonia etc
-                        if b.get('subType') in CodexTypes.body_types.keys():
-                            self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')), body_code)
-
-                        # fast orbits
-                        if b.get('orbitalPeriod'):
-                            if abs(float(b.get('orbitalPeriod'))) <= 0.042:
-                                self.merge_poi("Tourist", 'Fast Orbital Period', body_code)
-
-                        # Ringed ELW etc
-                        if b.get('subType') in ('Earth-like world', 'Water world', 'Ammonia world'):
-                            if b.get("rings"):
-                                self.merge_poi("Tourist",
-                                               'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))),
-                                               body_code)
-                            if b.get("parents")[0].get("Planet"):
-                                self.merge_poi("Tourist",
-                                               '{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))),
-                                               body_code)
-                        if b.get('subType') in ('Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
-                            self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
-                                           body_code)
-
-                        #  Landable with surface pressure
-                        if b.get('type') == 'Planet' and surface_pressure("surfacePressure", b.get(
-                                'surfacePressure')) > CodexTypes.minPressure and b.get('isLandable'):
-                            self.merge_poi("Tourist", 'Landable with atmosphere', body_code)
-
-                        #    Landable high-g (>3g)
-                        if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
-                            self.merge_poi("Tourist", 'High Gravity', body_code)
-
-                        #    Landable large (>18000km radius)
-                        if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
-                            self.merge_poi("Tourist", 'Large Radius Landable', body_code)
-
-                        # orbiting close to the star we need the solar radius for this...
-                        if b.get('type') == 'Planet' and self.surface_distance(b.get("distanceToArrival"),
-                                                                               CodexTypes.parentRadius,
-                                                                               self.light_seconds('radius', b.get(
-                                                                                   "radius"))) < 10:
-                            self.merge_poi("Tourist", 'Surface Close to parent star', body_code)
-
-                        #    Orbiting close to parent body less than 5ls
-                        if b.get('type') == 'Planet' and self.aphelion('semiMajorAxis', b.get("semiMajorAxis"),
-                                                                       b.get(
-                                                                           "orbitalEccentricity")) < CodexTypes.close_orbit:
-                            self.merge_poi("Tourist", 'Close Orbit', body_code)
-
-                        #   Shepherd moons (orbiting closer than a ring)
-                        #    Close binary pairs
-                        #   Colliding binary pairs
-                        #    Moons of moons
-
-                        #    Tiny objects (<300km radius)
-                        if b.get('type') == 'Planet' and b.get('radius') < 300 and b.get('isLandable'):
-                            self.merge_poi("Tourist", 'Tiny Radius Landable', body_code)
-
-                        #    Fast and non-locked rotation
-                        if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get(
-                                "rotationalPeriodTidallyLocked"):
-                            self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
-
-                        #    High eccentricity
-                        if float(b.get("orbitalEccentricity") or 0) > CodexTypes.eccentricity:
-                            self.merge_poi("Tourist", 'Highly Eccentric Orbit', body)
-                        #    Wide rings
-                        #    Good jumponium availability (5/6 materials on a single body)
-                        #    Full jumponium availability within a single system
-                        #    Full jumponium availability on a single body
-
-            else:
-                CodexTypes.bodycount = 0
+            bodies = r.json().get("bodies")
+            if bodies:
+                CodexTypes.bodycount = len(bodies)
                 debug("bodycount: {}".format(CodexTypes.bodycount))
-        except:
-            debug("Error fetching data")
+
+                if bodies[0].get("solarRadius"):
+                    CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies[0].get("solarRadius"))
+
+                for b in bodies:
+                    debug(b.get("subType"))
+                    body_code = b.get("name").replace(usystem, '')
+                    body_name = b.get("name")
+
+                    # Terraforming
+                    if b.get('terraformingState') == 'Candidate for terraforming':
+                        self.merge_poi("Planets", "Terraformable", body_code)
+
+                    # Landable Volcanism
+                    if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get(
+                            'isLandable'):
+                        self.merge_poi("Geology", b.get('volcanismType'), body_code)
+
+                    # water ammonia etc
+                    if b.get('subType') in CodexTypes.body_types.keys():
+                        self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')), body_code)
+
+                    # fast orbits
+                    if b.get('orbitalPeriod'):
+                        if abs(float(b.get('orbitalPeriod'))) <= 0.042:
+                            self.merge_poi("Tourist", 'Fast Orbital Period', body_code)
+
+                    # Ringed ELW etc
+                    if b.get('subType') in ('Earth-like world', 'Water world', 'Ammonia world'):
+                        if b.get("rings"):
+                            self.merge_poi("Tourist",
+                                           'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))),
+                                           body_code)
+                        if b.get("parents")[0].get("Planet"):
+                            self.merge_poi("Tourist",
+                                           '{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))),
+                                           body_code)
+                    if b.get('subType') in ('Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                        self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
+                                       body_code)
+
+                    #  Landable with surface pressure
+                    if b.get('type') == 'Planet' and \
+                            b.get('surfacePressure') and \
+                            surface_pressure("surfacePressure", b.get(
+                                'surfacePressure')) > CodexTypes.minPressure and b.get('isLandable'):
+                        self.merge_poi("Tourist", 'Landable with atmosphere', body_code)
+
+                    #    Landable high-g (>3g)
+                    if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
+                        self.merge_poi("Tourist", 'High Gravity', body_code)
+
+                    #    Landable large (>18000km radius)
+                    if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
+                        self.merge_poi("Tourist", 'Large Radius Landable', body_code)
+
+                    # orbiting close to the star we need the solar radius for this...
+                    # if b.get('type') == 'Planet' and self.surface_distance(b.get("distanceToArrival"),
+                    #                                                        CodexTypes.parentRadius,
+                    #                                                        self.light_seconds('radius', b.get(
+                    #                                                            "radius"))) < 10:
+                    #     self.merge_poi("Tourist", 'Surface Close to parent star', body_code)
+
+                    #    Orbiting close to parent body less than 5ls
+                    if b.get('type') == 'Planet' and self.aphelion('semiMajorAxis', b.get("semiMajorAxis"),
+                                                                   b.get(
+                                                                       "orbitalEccentricity")) < CodexTypes.close_orbit:
+                        self.merge_poi("Tourist", 'Close Orbit', body_code)
+
+                    #   Shepherd moons (orbiting closer than a ring)
+                    #    Close binary pairs
+                    #   Colliding binary pairs
+                    #    Moons of moons
+
+                    #    Tiny objects (<300km radius)
+                    if b.get('type') == 'Planet' and b.get('radius') < 300 and b.get('isLandable'):
+                        self.merge_poi("Tourist", 'Tiny Radius Landable', body_code)
+
+                    #    Fast and non-locked rotation
+                    if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get(
+                            "rotationalPeriodTidallyLocked"):
+                        self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
+
+                    #    High eccentricity
+                    if float(b.get("orbitalEccentricity") or 0) > CodexTypes.eccentricity:
+                        self.merge_poi("Tourist", 'Highly Eccentric Orbit', body)
+                    #    Wide rings
+                    #    Good jumponium availability (5/6 materials on a single body)
+                    #    Full jumponium availability within a single system
+                    #    Full jumponium availability on a single body
+
+        else:
+            CodexTypes.bodycount = 0
+            debug("bodycount: {}".format(CodexTypes.bodycount))
 
         CodexTypes.waiting = False
         debug("event_generate")
@@ -437,7 +437,7 @@ class CodexTypes(Frame):
         return focus
 
     def surface_distance(self, d, r1, r2):
-        return d - r1, r2;
+        return d - (r1 + r2);
 
     def visualise(self):
 
@@ -492,7 +492,7 @@ class CodexTypes(Frame):
             if not CodexTypes.fsscount:
                 CodexTypes.fsscount = 0
             debug("body reconciliation: {} {}".format(CodexTypes.bodycount, CodexTypes.fsscount))
-            if nvl(CodexTypes.fsscount,0) > nvl(CodexTypes.bodycount,0):
+            if nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0):
                 self.merge_poi("Planets", "Unexplored Bodies", "")
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
@@ -516,7 +516,6 @@ class CodexTypes(Frame):
                 self.merge_poi("Human", "Capital Ship", body)
             if "Generation Ship" in entry.get("SignalName"):
                 self.merge_poi("Human", entry.get("SignalName"), body)
-
 
         if entry.get("event") == "FSSAllBodiesFound":
             self.remove_poi("Planets", "Unexplored Bodies")
@@ -553,11 +552,12 @@ class CodexTypes(Frame):
             #  Landable with surface pressure
             if entry.get('PlanetClass') and entry.get('Landable') and entry.get(
                     'SurfacePressure') and surface_pressure("SurfacePressure", entry.get(
-                    'SurfacePressure')) > CodexTypes.minPressure:
+                'SurfacePressure')) > CodexTypes.minPressure:
                 self.merge_poi("Tourist", 'Landable with atmosphere', body)
 
             #    Landable high-g (>3g) looks like the journal is tenths of G therefor 3.257900 = 0.33G
-            if entry.get('PlanetClass') and entry.get('SurfaceGravity') and entry.get('SurfaceGravity') > 30 and entry.get('Landable'):
+            if entry.get('PlanetClass') and entry.get('SurfaceGravity') and entry.get(
+                    'SurfaceGravity') > 30 and entry.get('Landable'):
                 self.merge_poi("Tourist", 'High Gravity', body)
 
             #    Landable large (>18000km radius)
@@ -574,7 +574,7 @@ class CodexTypes(Frame):
             #    Moons of moons
 
             #    Tiny objects (<300km radius)
-            if entry.get('Landable') and entry.get('Radius') and entry.get('Radius') < 300000 :
+            if entry.get('Landable') and entry.get('Radius') and entry.get('Radius') < 300000:
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
             #    Fast and non-locked rotation < 1 hour
