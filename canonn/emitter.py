@@ -18,11 +18,13 @@ class postJson(threading.Thread):
         headers={"content-type": "application/json"})
         if not r.status_code == requests.codes.ok:
             error(json.dumps(self.payload))
+            headers = r.headers
+            contentType = str(headers['content-type'])
+            if 'json' in contentType:
+                error(json.dumps(r.content))
+            else:
+                error(r.content)
             error(r.status_code)
-            try:
-                error(r.json())
-            except:
-                error(r.text)
         else:
             debug("emitter.post success")
             debug(json.dumps(r.json(),indent=4))
@@ -118,7 +120,16 @@ class Emitter(threading.Thread):
         if not r.status_code == requests.codes.ok:
             error("{}/{}".format(url,self.modelreport))
             error(r.status_code)
-            error(r.json())
+            headers = r.headers
+            contentType = str(headers['content-type'])
+            error(contentType)
+            if 'json' in contentType:
+                error(json.dumps(r.content))
+            else:
+                if "Offline for Maintenance" in str(r.content):
+                    error("Canonn API Offline")
+                else:
+                    error(r.content)
             error(json.dumps(payload))
         else:
             debug("{}?id={}".format(fullurl,r.json().get("id")))
