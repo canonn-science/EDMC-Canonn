@@ -1,3 +1,8 @@
+try:
+    from urllib.parse import quote_plus
+except:
+    from urllib import quote_plus
+
 import threading
 import requests
 import sys
@@ -6,7 +11,7 @@ from canonn.emitter import Emitter
 from canonn.debug import Debug
 from canonn.debug import debug,error
 from canonn.systems import Systems
-from urllib.parse import quote_plus
+
 
 class gSubmitNHSS(threading.Thread):
     def __init__(self,cmdr,system,x,y,z,threat_level):

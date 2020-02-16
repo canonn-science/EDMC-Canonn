@@ -1,9 +1,15 @@
 """
 Patrols
 """
+try:
+    import tkinter as tk
+    from tkinter import Frame
+    from urllib.parse import quote_plus
+except:
+    import Tkinter as tk
+    from Tkinter import Frame
+    from urllib import quote_plus
 
-import tkinter as tk
-from tkinter import Frame
 import uuid
 from ttkHyperlinkLabel import HyperlinkLabel
 import requests
@@ -19,7 +25,7 @@ from canonn.debug import debug, error
 import csv
 import os
 from contextlib import closing
-from urllib.parse import quote_plus
+
 from datetime import datetime
 from canonn.release import Release
 from l10n import Locale

@@ -1,7 +1,18 @@
 """
-Module to provide the news.
+Module for managing releases
 """
 
+try:
+    import tkinter as tk    
+    from tkinter import Frame
+    from io import BytesIO
+    from io import StringIO
+except:
+    import Tkinter as tk    
+    from Tkinter import Frame
+    import StringIO
+    import StringIO as BytesIO
+    
 import json
 import myNotebook as nb
 import os
@@ -10,16 +21,15 @@ import re
 import requests
 import shutil
 import threading
-import tkinter as tk
+
 import uuid
 import zipfile
 from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.player import Player
 from config import config
-from io import BytesIO
-from io import StringIO
-from tkinter import Frame
+
+
 from ttkHyperlinkLabel import HyperlinkLabel
 
 RELEASE_CYCLE = 60 * 1000 * 60  # 1 Hour

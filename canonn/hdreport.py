@@ -1,3 +1,14 @@
+try:
+    import tkinter as tk
+    from tkinter import Button
+    from tkinter import Frame
+    from urllib.parse import quote_plus
+except:
+    import Tkinter as tk
+    from Tkinter import Button
+    from Tkinter import Frame
+    from urllib import quote_plus
+    
 import canonn.emitter
 import glob
 import json
@@ -8,15 +19,13 @@ import requests
 import sys
 import threading
 import time
-import tkinter as tk
+
 from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from canonn.systems import Systems
 from config import config
-from tkinter import Button
-from tkinter import Frame
-from urllib.parse import quote_plus
+
 
 '''
 

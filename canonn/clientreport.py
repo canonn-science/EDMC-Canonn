@@ -1,3 +1,9 @@
+#assume python 3 before trying python 2.7
+try:
+    from urllib.parse import quote_plus
+except:
+    from urllib import quote_plus
+
 import json
 import requests
 import sys
@@ -6,7 +12,7 @@ from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from canonn.release import Release
-from urllib.parse import quote_plus
+
 import canonn.emitter
 
 class clientReport(Emitter):

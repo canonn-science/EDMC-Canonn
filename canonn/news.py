@@ -1,9 +1,14 @@
 """
 Module to provide the news.
 """
+try:
+    import tkinter as tk
+    from tkinter import Frame
+except:
+    import Tkinter as tk
+    from Tkinter import Frame
 
-import tkinter as tk
-from tkinter import Frame
+
 import uuid
 from ttkHyperlinkLabel import HyperlinkLabel
 import requests

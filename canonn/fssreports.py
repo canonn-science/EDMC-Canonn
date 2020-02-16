@@ -1,11 +1,18 @@
+try:
+    from urllib.parse import quote_plus
+    from urllib.parse import urlencode
+except:
+    from urllib import quote_plus
+    from urllib import urlencode
+
+
+
 import threading
 import requests
 import sys
 import json
 from canonn.emitter import Emitter
 import canonn.emitter
-from urllib.parse import quote_plus
-from urllib.parse import urlencode
 from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.systems import Systems

@@ -1,4 +1,9 @@
-import tkinter as tk
+#assume python3 and try python 2.7 if it fails
+try:
+    import tkinter as tk
+except:
+    import Tkinter as tk
+
 import json
 import myNotebook as nb
 import requests
@@ -20,7 +25,7 @@ from canonn.debug import debug
 from canonn.systems import Systems
 from canonn.whitelist import whiteList
 from config import config
-from urllib.parse import quote_plus
+
 
 this = sys.modules[__name__]
 
@@ -83,6 +88,19 @@ def plugin_start3(plugin_dir):
 
     return 'Canonn'
 
+
+def plugin_start(plugin_dir):
+    """
+    Load Template plugin into EDMC
+    """
+
+    # print this.patrol
+    release.Release.plugin_start(plugin_dir)
+    Debug.setClient(this.client_version)
+    patrol.CanonnPatrol.plugin_start(plugin_dir)
+    codex.CodexTypes.plugin_start(plugin_dir)
+
+    return 'Canonn'
 
 def plugin_stop():
     """

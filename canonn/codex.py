@@ -1,3 +1,15 @@
+# Try python3 before 2.7
+try:
+    import tkinter as tk
+    from tkinter import Frame
+    from urllib.parse import quote_plus
+    from urllib.parse import unquote
+except:
+    import Tkinter as tk
+    from Tkinter import Frame
+    from urllib import quote_plus
+    from urllib import unquote
+
 import canonn.emitter
 import json
 import myNotebook as nb
@@ -5,15 +17,14 @@ import os
 import requests
 import sys
 import threading
-import tkinter as tk
+
 from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from config import config
 from math import sqrt, pow
-from tkinter import Frame
-from urllib.parse import quote_plus
-from urllib.parse import unquote
+
+
 
 nvl = lambda a, b: a or b
 

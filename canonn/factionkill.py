@@ -1,6 +1,11 @@
+try:
+    from urllib.parse import quote_plus
+except:
+    from urllib import quote_plus
+
 import threading
 import requests
-from urllib.parse import quote_plus
+
 import sys
 import json
 from canonn.emitter import Emitter
