@@ -251,10 +251,14 @@ class Release(Frame):
 
         try:
             debug("Downloading new version")
-            download = requests.get("https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name),
-                                    stream=True)
-            z = zipfile.ZipFile(BytesIO(download.content))
-            z.extractall(os.path.dirname(Release.plugin_dir))
+            download = requests.get("https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name),stream=True)
+
+            try:
+                z = zipfile.ZipFile(BytesIO(download.content))
+                z.extractall(os.path.dirname(Release.plugin_dir))
+            except:
+                z = zipfile.ZipFile(StringIO.StringIO(download.content))
+                z.extractall(os.path.dirname(Release.plugin_dir))
         except:
             error("Download failed: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")

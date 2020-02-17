@@ -1,4 +1,4 @@
-#assume python3 and try python 2.7 if it fails
+# assume python3 and try python 2.7 if it fails
 try:
     import tkinter as tk
 except:
@@ -26,7 +26,6 @@ from canonn.systems import Systems
 from canonn.whitelist import whiteList
 from config import config
 
-
 this = sys.modules[__name__]
 
 this.nearloc = {
@@ -42,7 +41,7 @@ myPlugin = "EDMC-Canonn"
 this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
-this.version = "5.0.0"
+this.version = "0.0.1"
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
 
@@ -102,6 +101,7 @@ def plugin_start(plugin_dir):
 
     return 'Canonn'
 
+
 def plugin_stop():
     """
     EDMC is closing
@@ -128,7 +128,7 @@ def plugin_app(parent):
     this.release = release.Release(table, this.version, 1)
     this.codexcontrol = codex.CodexTypes(table, 2)
     this.patrol = patrol.CanonnPatrol(table, 3)
-    this.hyperdiction = hdreport.hyperdictionDetector.setup(table,4)
+    this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 4)
 
     whitelist = whiteList(parent)
     whitelist.fetchData()
