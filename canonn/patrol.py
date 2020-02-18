@@ -10,26 +10,25 @@ except:
     from Tkinter import Frame
     from urllib import quote_plus
 
-import uuid
-from ttkHyperlinkLabel import HyperlinkLabel
-import requests
+import codecs
+import csv
 import json
-import re
-import myNotebook as nb
-from config import config
-import threading
-from canonn.systems import Systems
 import math
+import myNotebook as nb
+import os
+import re
+import requests
+import threading
+import uuid
 from canonn.debug import Debug
 from canonn.debug import debug, error
-import csv
-import os
-from contextlib import closing
-
-from datetime import datetime
 from canonn.release import Release
+from canonn.systems import Systems
+from config import config
+from contextlib import closing
+from datetime import datetime
 from l10n import Locale
-import codecs
+from ttkHyperlinkLabel import HyperlinkLabel
 
 CYCLE = 60 * 1000 * 60  # 60 minutes
 DEFAULT_URL = ""
@@ -133,11 +132,13 @@ class UpdateThread(threading.Thread):
 def decode_unicode_references(data):
     return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
 
-def get(list,index):
+
+def get(list, index):
     try:
         return list[index]
     except:
         return None
+
 
 class PatrolLink(HyperlinkLabel):
 
@@ -200,7 +201,7 @@ class CanonnPatrol(Frame):
             parent
         )
         self.ships = []
-
+        self.bind('<<PatrolDone>>', self.update_ui)
         self.IMG_PREV = tk.PhotoImage(file=u'{}\\icons\\left_arrow.gif'.format(CanonnPatrol.plugin_dir))
         self.IMG_NEXT = tk.PhotoImage(file=u'{}\\icons\\right_arrow.gif'.format(CanonnPatrol.plugin_dir))
 
@@ -270,8 +271,8 @@ class CanonnPatrol(Frame):
         self.started = False
 
         # wait 10 seconds before updatinb the ui
-        debug('self.after(1000, self.update_ui)')
-        self.after(1000, self.update_ui)
+        self.patrol_update()
+        # self.after(1000, self.update_ui)
 
     @classmethod
     def plugin_start(cls, plugin_dir):
@@ -316,10 +317,10 @@ class CanonnPatrol(Frame):
             if self.copypatrol == 1:
                 copyclip(self.nearest.get("system"))
 
-    def update_ui(self):
+    def update_ui(self, event):
         # rerun every 5 seconds
         debug('in update_ui self.after(5000, self.update_ui)')
-        self.after(5000, self.update_ui)
+        # self.after(5000, self.update_ui)
         self.update()
 
     def update(self):
@@ -490,8 +491,7 @@ class CanonnPatrol(Frame):
         else:
             return url
 
-
-    def getJsonPatrol(self,url):
+    def getJsonPatrol(self, url):
         canonnpatrol = []
 
         with closing(requests.get(url)) as r:
@@ -500,8 +500,8 @@ class CanonnPatrol(Frame):
 
                 type = row.get("type")
                 system = row.get("system")
-                x=  row.get("x")
-                y=  row.get("y")
+                x = row.get("x")
+                y = row.get("y")
                 z = row.get("z")
                 instructions = row.get("instructions")
                 url = row.get("url")
@@ -513,11 +513,11 @@ class CanonnPatrol(Frame):
                     except:
                         error("patrol {},{},{},{},{},{},{},{}".format(type, system, x, y, z, instructions, url, event))
                 else:
-                    error("Patrol contains blank lines")
+                    error("Patrol {} contains blank lines".format(type))
 
         return canonnpatrol
 
-    def getTsvPatrol(self,url):
+    def getTsvPatrol(self, url):
         canonnpatrol = []
 
         with closing(requests.get(url, stream=True)) as r:
@@ -525,15 +525,14 @@ class CanonnPatrol(Frame):
             next(reader)
             for row in reader:
 
-
-                type=get(row,0)
-                system=get(row,1)
-                x=get(row,2)
-                y=get(row,3)
-                z=get(row,4)
-                instructions=get(row,5)
-                url=get(row,6)
-                event=get(row,7)
+                type = get(row, 0)
+                system = get(row, 1)
+                x = get(row, 2)
+                y = get(row, 3)
+                z = get(row, 4)
+                instructions = get(row, 5)
+                url = get(row, 6)
+                event = get(row, 7)
                 if system != '':
                     try:
                         canonnpatrol.append(
@@ -553,19 +552,18 @@ class CanonnPatrol(Frame):
             next(reader)
             for row in reader:
 
-                id,	enabled, description, type, link = row
+                id, enabled, description, type, link = row
                 if enabled == 'Y':
                     if type == 'json':
                         debug("{} Patrol enabled".format(description))
                         canonnpatrol = canonnpatrol + self.getJsonPatrol(link)
-                    elif  type == 'tsv':
+                    elif type == 'tsv':
                         debug("{} Patrol enabled".format(description))
                         canonnpatrol = canonnpatrol + self.getTsvPatrol(link)
                     else:
                         debug("no patrol {}".format(row))
                 else:
                     debug("{} Patrol disabled".format(description))
-
 
         return canonnpatrol
 
@@ -593,42 +591,42 @@ class CanonnPatrol(Frame):
         else:
             self.load_excluded()
 
-        # no point if we have no idea where we are
-        if self.system:
-            patrol_list = []
-            if self.faction != 1:
-                debug("Getting Faction Data")
-                BGSO, BGSOSys = self.getBGSOveride()  # first variable- for patrol_list, second-for ignore existant systems
-                patrol_list.extend(BGSO)
+        patrol_list = []
+        if self.faction != 1:
+            debug("Getting Faction Data")
+            BGSO, BGSOSys = self.getBGSOveride()  # first variable- for patrol_list, second-for ignore existant systems
+            patrol_list.extend(BGSO)
 
-                patrol_list.extend(self.getFactionData("Canonn", BGSOSys))
-                patrol_list.extend(self.getFactionData("Canonn Deep Space Research", BGSOSys))
-                try:
-                    patrol_list.remove(None)
-                except:
-                    debug("Nothing to delete")
+            patrol_list.extend(self.getFactionData("Canonn", BGSOSys))
+            patrol_list.extend(self.getFactionData("Canonn Deep Space Research", BGSOSys))
+            try:
+                patrol_list.remove(None)
+            except:
+                debug("Nothing to delete")
 
-            if self.ships and self.hideships != 1:
-                patrol_list.extend(self.ships)
+        if self.ships and self.hideships != 1:
+            patrol_list.extend(self.ships)
 
-            if self.canonn != 1:
-                self.canonnpatrol = self.getCanonnPatrol()
-                patrol_list.extend(self.canonnpatrol)
+        if self.canonn != 1:
+            self.canonnpatrol = self.getCanonnPatrol()
+            patrol_list.extend(self.canonnpatrol)
 
-            # add exclusions from configuration
-            for num, val in enumerate(patrol_list):
-                system = val.get("system")
-                type = val.get("type")
+        # add exclusions from configuration
+        for num, val in enumerate(patrol_list):
+            system = val.get("system")
+            type = val.get("type")
 
-                if self.excluded.get(type):
-                    if self.excluded.get(type).get(system):
-                        patrol_list[num]["excluded"] = self.excluded.get(type).get(system)
+            if self.excluded.get(type):
+                if self.excluded.get(type).get(system):
+                    patrol_list[num]["excluded"] = self.excluded.get(type).get(system)
 
-            # we will sort the patrol list
-            self.patrol_list = patrol_list
-            self.sort_patrol()
+        # we will sort the patrol list
+        self.patrol_list = patrol_list
+        self.sort_patrol()
 
-            debug("download done")
+        debug("download done")
+        # poke an evennt safely
+        self.event_generate('<<PatrolDone>>', when='tail')
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         """Called to get a tk Frame for the settings dialog."""
@@ -708,7 +706,6 @@ class CanonnPatrol(Frame):
             # we should fire off an extra download
             UpdateThread(self).start()
 
-
         debug("canonn: {}, faction: {} hideships {}".format(self.canonn, self.faction, self.hideships))
 
     def trigger(self, system, entry):
@@ -718,8 +715,8 @@ class CanonnPatrol(Frame):
         debug("event {}".format(event))
         for key in event.keys():
             if event.get(key):
-                debug("event key {} value {}".format(key,event.get(key)))
-                
+                debug("event key {} value {}".format(key, event.get(key)))
+
                 if not str(entry.get(key)).upper() == str(event.get(key)).upper():
                     return False
 
@@ -738,11 +735,6 @@ class CanonnPatrol(Frame):
         self.x = x
         self.y = y
         self.z = z
-
-        if system and not self.started:
-            debug("Patrol download cycle commencing")
-            self.started = True
-            self.patrol_update()
 
         if cmdr:
             self.cmdr = cmdr
@@ -871,10 +863,6 @@ class CanonnPatrol(Frame):
             self.ships.append(newPatrol("SHIPS", system, ship_pos, ship_info, None))
 
         self.capi_update = True
-        if self.system and not self.started:
-            debug("Patrol download cycle commencing")
-            self.started = True
-            self.patrol_update()
 
 
 def copyclip(value):

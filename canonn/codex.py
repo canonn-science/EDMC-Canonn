@@ -24,8 +24,6 @@ from canonn.emitter import Emitter
 from config import config
 from math import sqrt, pow
 
-
-
 nvl = lambda a, b: a or b
 
 
