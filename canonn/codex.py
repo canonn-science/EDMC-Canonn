@@ -493,7 +493,12 @@ class CodexTypes(Frame):
         if entry.get("event") in ("Location", "StartUp"):
             debug("Looking for POI data in {}".format(system))
             poiTypes(system, self.getdata).start()
+
             self.allowed = True
+            # we can't wait for another event so give it 5 seconds
+            # then ten seconds later for good measure
+            self.after(5000, self.visualise)
+            self.after(10000, self.visualise)
 
         if entry.get("event") in ("Location", "StartUp", "FSDJump"):
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
