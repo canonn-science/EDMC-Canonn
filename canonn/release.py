@@ -116,10 +116,13 @@ class Release(Frame):
         self.news_pos = 0
         self.minutes = 0
         self.latest = {}
-        self.update()
+
         # self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
+        self.bind('<<ReleaseUpdate>>', self.release_update)
 
         debug(config.get('Canonn:RemoveBackup'))
+
+        self.update(None)
 
         if self.rmbackup.get() == 1 and config.get('Canonn:RemoveBackup') != "None":
             delete_dir = config.get('Canonn:RemoveBackup')
@@ -133,9 +136,11 @@ class Release(Frame):
             ## lets not keep trying
             config.set('Canonn:RemoveBackup', "None")
 
-    def update(self):
+    def update(self,event):
         self.release_thread()
-        self.after(1000, self.release_update)
+        # check again in an hour
+        debug("checking for the next release in one hour")
+        self.after(RELEASE_CYCLE, self.update)
 
     def version2number(self, version):
         major, minor, patch = version.split('.')
@@ -158,8 +163,9 @@ class Release(Frame):
         else:
             self.latest = latest
             debug("latest release downloaded")
+            self.event_generate('<<ReleaseUpdate>>', when='tail')
 
-    def release_update(self):
+    def release_update(self,event):
 
         # if we have just installed a new version we can end the cycle
         if not self.installed:
@@ -167,8 +173,6 @@ class Release(Frame):
             if self.latest:
                 debug("Latest is not null")
 
-                # checjed again in an hour
-                self.after(RELEASE_CYCLE, self.update)
 
                 # self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
 
@@ -203,7 +207,7 @@ class Release(Frame):
                     self.grid()
             else:
                 debug("Latest is null")
-                self.after(1000, self.release_update)
+
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
