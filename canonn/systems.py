@@ -84,6 +84,10 @@ class Systems():
     @classmethod
     def edsmGetSystem(cls, system):
 
+        if not system:
+            error("system is null")
+            return
+
         if not system in cls.systemCache and not cls.scanned:
             journalGetSystem()
             cls.scanned=True

@@ -271,8 +271,11 @@ class CanonnPatrol(Frame):
         self.started = False
 
         # wait 10 seconds before updatinb the ui
-        self.patrol_update()
-        # self.after(1000, self.update_ui)
+
+        self.bind('<<PatrolDisplay>>',self.update_desc)
+
+    def update_desc(self,event):
+        self.hyperlink['text']="Fetching {}".format(self.patrol_name)
 
     @classmethod
     def plugin_start(cls, plugin_dir):
@@ -319,7 +322,7 @@ class CanonnPatrol(Frame):
 
     def update_ui(self, event):
         # rerun every 5 seconds
-        debug('in update_ui self.after(5000, self.update_ui)')
+        debug('in update_ui')
         # self.after(5000, self.update_ui)
         self.update()
 
@@ -553,25 +556,39 @@ class CanonnPatrol(Frame):
             for row in reader:
 
                 id, enabled, description, type, link = row
+                self.patrol_name = description
+
                 if enabled == 'Y':
                     if type == 'json':
                         debug("{} Patrol enabled".format(description))
+                        self.event_generate('<<PatrolDisplay>>', when='tail')
                         canonnpatrol = canonnpatrol + self.getJsonPatrol(link)
+
                     elif type == 'tsv':
                         debug("{} Patrol enabled".format(description))
+                        self.event_generate('<<PatrolDisplay>>', when='tail')
                         canonnpatrol = canonnpatrol + self.getTsvPatrol(link)
+
                     else:
                         debug("no patrol {}".format(row))
                 else:
                     debug("{} Patrol disabled".format(description))
 
+
+        debug("Finished loading Canonn Patrols")
         return canonnpatrol
 
     def keyval(self, k):
-        x, y, z = Systems.edsmGetSystem(self.system)
-        return getDistance((x, y, z), k.get("coords"))
+        # code smell!
+        # getting a blank or null system so we will push it to the end
+        try:
+            x, y, z = Systems.edsmGetSystem(self.system)
+            return getDistance((x, y, z), k.get("coords"))
+        except:
+            return 999999
 
     def sort_patrol(self):
+
         patrol_list = sorted(self.patrol_list, key=self.keyval)
 
         for num, val in enumerate(patrol_list):
@@ -579,8 +596,8 @@ class CanonnPatrol(Frame):
             type = val.get("type")
 
             patrol_list[num]["index"] = num
-
         self.patrol_list = patrol_list
+
 
     def download(self):
         debug("Download Patrol Data")
@@ -594,6 +611,8 @@ class CanonnPatrol(Frame):
         patrol_list = []
         if self.faction != 1:
             debug("Getting Faction Data")
+            self.patrol_name="Cannon Factions"
+            self.event_generate('<<PatrolDisplay>>', when='tail')
             BGSO, BGSOSys = self.getBGSOveride()  # first variable- for patrol_list, second-for ignore existant systems
             patrol_list.extend(BGSO)
 
@@ -605,6 +624,8 @@ class CanonnPatrol(Frame):
                 debug("Nothing to delete")
 
         if self.ships and self.hideships != 1:
+            self.patrol_name = "Your Ships"
+            self.event_generate('<<PatrolDisplay>>', when='tail')
             patrol_list.extend(self.ships)
 
         if self.canonn != 1:
@@ -612,6 +633,7 @@ class CanonnPatrol(Frame):
             patrol_list.extend(self.canonnpatrol)
 
         # add exclusions from configuration
+        debug("adding exclusions")
         for num, val in enumerate(patrol_list):
             system = val.get("system")
             type = val.get("type")
@@ -739,6 +761,9 @@ class CanonnPatrol(Frame):
         if cmdr:
             self.cmdr = cmdr
 
+        if entry.get("event") in ("Location","StartUp") and not self.patrol_list:
+            self.patrol_update()
+
         if self.system != system and entry.get("event") in ("Location", "FSDJump", "StartUp"):
             debug("Refresshing Patrol ({})".format(entry.get("event")))
             self.system = system
@@ -863,6 +888,8 @@ class CanonnPatrol(Frame):
             self.ships.append(newPatrol("SHIPS", system, ship_pos, ship_info, None))
 
         self.capi_update = True
+        if not self.patrol_list:
+            self.patrol_update()
 
 
 def copyclip(value):
