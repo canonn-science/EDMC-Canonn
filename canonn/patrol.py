@@ -271,12 +271,12 @@ class CanonnPatrol(Frame):
         self.started = False
 
         # wait 10 seconds before updatinb the ui
-
+        self.patrol_update()
         self.bind('<<PatrolDisplay>>',self.update_desc)
 
     def update_desc(self,event):
         self.hyperlink['text']="Fetching {}".format(self.patrol_name)
-
+        self.hyperlink['url']=None
     @classmethod
     def plugin_start(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
@@ -549,14 +549,15 @@ class CanonnPatrol(Frame):
 
     def getCanonnPatrol(self):
         canonnpatrol = []
+        c=0
         url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsi1Vbfx4Sk2msNYiqo0PVnW3VHSrvvtIRkjT-JvH_oG9fP67TARWX2jIjehFHKLwh4VXdSh0atk3J/pub?gid=0&single=true&output=tsv"
         with closing(requests.get(url, stream=True)) as r:
             reader = csv.reader(r.content.decode('utf-8').splitlines(), delimiter='\t')
             next(reader)
             for row in reader:
-
+                c=c+1
                 id, enabled, description, type, link = row
-                self.patrol_name = description
+                self.patrol_name = "{} ({})".format(description,c)
 
                 if enabled == 'Y':
                     if type == 'json':
@@ -762,7 +763,7 @@ class CanonnPatrol(Frame):
             self.cmdr = cmdr
 
         if entry.get("event") in ("Location","StartUp") and not self.patrol_list:
-            self.patrol_update()
+            self.update()
 
         if self.system != system and entry.get("event") in ("Location", "FSDJump", "StartUp"):
             debug("Refresshing Patrol ({})".format(entry.get("event")))
@@ -888,8 +889,7 @@ class CanonnPatrol(Frame):
             self.ships.append(newPatrol("SHIPS", system, ship_pos, ship_info, None))
 
         self.capi_update = True
-        if not self.patrol_list:
-            self.patrol_update()
+        self.update()
 
 
 def copyclip(value):
