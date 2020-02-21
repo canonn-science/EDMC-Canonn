@@ -365,6 +365,9 @@ class CodexTypes(Frame):
         self.labels[name]["image"] = self.images[name]
 
     def set_image(self, name, enabled):
+        if name == None:
+            return
+
         grey = "{}_grey".format(name)
 
         if enabled:
