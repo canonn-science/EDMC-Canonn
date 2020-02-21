@@ -76,9 +76,7 @@ class Systems():
 
     @classmethod
     def storeSystem(cls, system, pos):
-        if system in cls.systemCache:
-            debug("system {} already in cache".format(system))
-        else:
+        if not system in cls.systemCache:
             cls.systemCache[system] = pos
 
     @classmethod
@@ -92,9 +90,9 @@ class Systems():
             journalGetSystem()
             cls.scanned=True
 
-        debug("getting system: {} from cache".format(system))
+
         if system in cls.systemCache:
-            debug(cls.systemCache[system])
+
             return cls.systemCache[system]
 
         else:
