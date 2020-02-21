@@ -140,6 +140,11 @@ class CodexTypes(Frame):
         self.tooltipcol1 = []
         self.tooltipcol2 = []
 
+        self.imagetypes = ("Geology", "Cloud", "Anomaly", "Thargoid",
+                           "Biology", "Guardian", "Human", "Ring",
+                           "None", "Other", "Planets", "Tourist"
+                           )
+
         self.addimage("Geology", 0)
         self.addimage("Cloud", 1)
         self.addimage("Anomaly", 2)
@@ -366,7 +371,11 @@ class CodexTypes(Frame):
 
     def set_image(self, name, enabled):
         if name == None:
+            error("set_image: name is None")
             return
+        if name not in self.imagetypes:
+            error("set_image: name {} is not allowed")
+
 
         grey = "{}_grey".format(name)
 
