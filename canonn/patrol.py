@@ -562,12 +562,14 @@ class CanonnPatrol(Frame):
                 if enabled == 'Y':
                     if type == 'json':
                         debug("{} Patrol enabled".format(description))
-                        self.event_generate('<<PatrolDisplay>>', when='tail')
+                        if not self.started:
+                            self.event_generate('<<PatrolDisplay>>', when='tail')
                         canonnpatrol = canonnpatrol + self.getJsonPatrol(link)
 
                     elif type == 'tsv':
                         debug("{} Patrol enabled".format(description))
-                        self.event_generate('<<PatrolDisplay>>', when='tail')
+                        if not self.started:
+                            self.event_generate('<<PatrolDisplay>>', when='tail')
                         canonnpatrol = canonnpatrol + self.getTsvPatrol(link)
 
                     else:
@@ -582,10 +584,10 @@ class CanonnPatrol(Frame):
     def keyval(self, k):
         # code smell!
         # getting a blank or null system so we will push it to the end
-        try:
+        if self.system:
             x, y, z = Systems.edsmGetSystem(self.system)
             return getDistance((x, y, z), k.get("coords"))
-        except:
+        else:
             return 999999
 
     def sort_patrol(self):
@@ -613,7 +615,9 @@ class CanonnPatrol(Frame):
         if self.faction != 1:
             debug("Getting Faction Data")
             self.patrol_name="Cannon Factions"
-            self.event_generate('<<PatrolDisplay>>', when='tail')
+            if not self.started:
+                self.event_generate('<<PatrolDisplay>>', when='tail')
+
             BGSO, BGSOSys = self.getBGSOveride()  # first variable- for patrol_list, second-for ignore existant systems
             patrol_list.extend(BGSO)
 
@@ -626,7 +630,9 @@ class CanonnPatrol(Frame):
 
         if self.ships and self.hideships != 1:
             self.patrol_name = "Your Ships"
-            self.event_generate('<<PatrolDisplay>>', when='tail')
+            if not self.started:
+                self.event_generate('<<PatrolDisplay>>', when='tail')
+
             patrol_list.extend(self.ships)
 
         if self.canonn != 1:
@@ -648,6 +654,7 @@ class CanonnPatrol(Frame):
         self.sort_patrol()
 
         debug("download done")
+        self.started=True
         # poke an evennt safely
         self.event_generate('<<PatrolDone>>', when='tail')
 
