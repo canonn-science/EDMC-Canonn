@@ -245,7 +245,7 @@ class CodexTypes(Frame):
                             b.get('surfacePressure') and \
                             surface_pressure("surfacePressure", b.get(
                                 'surfacePressure')) > CodexTypes.minPressure and b.get('isLandable'):
-                        self.merge_poi("Tourist", 'Landable with atmosphere', body_code)
+                        self.merge_poi("Tourist", 'Landable with pressure', body_code)
 
                     #    Landable high-g (>3g)
                     if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
@@ -588,7 +588,7 @@ class CodexTypes(Frame):
             if entry.get('PlanetClass') and entry.get('Landable') and entry.get(
                     'SurfacePressure') and surface_pressure("SurfacePressure", entry.get(
                 'SurfacePressure')) > CodexTypes.minPressure:
-                self.merge_poi("Tourist", 'Landable with atmosphere', body)
+                self.merge_poi("Tourist", 'Landable with pressure', body)
 
             #    Landable high-g (>3g) looks like the journal is tenths of G therefor 3.257900 = 0.33G
             if entry.get('PlanetClass') and entry.get('SurfaceGravity') and entry.get(
