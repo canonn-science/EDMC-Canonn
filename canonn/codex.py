@@ -1098,7 +1098,7 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
 
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     if entry["event"] == "CodexEntry":
-        codexEmitter(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
+        codexEmitter(cmdr, is_beta, entry.get("System"), x, y, z, entry, body, lat, lon, client).start()
 
     if entry["event"] == "ApproachSettlement":
         guardianSites(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
