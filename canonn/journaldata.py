@@ -3,9 +3,9 @@ import requests
 import sys
 import json
 import time
-from emitter import Emitter
-from debug import Debug
-from debug import debug, error
+from canonn.emitter import Emitter
+from canonn.debug import Debug
+from canonn.debug import debug, error
 
 '''
 Added the above events to: https://api.canonn.tech:2053/excludeevents

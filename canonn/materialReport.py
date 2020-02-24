@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
+try:
+    from urllib.parse import quote_plus
+except:
+    from urllib import quote_plus
+
 import threading
 import requests
-from urllib import quote_plus
+
 import sys
 import json
-from emitter import Emitter
-from debug import Debug
-from debug import debug,error
+from canonn.emitter import Emitter
+from canonn.debug import Debug
+from canonn.debug import debug,error
 
 
               

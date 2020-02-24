@@ -1,9 +1,14 @@
 """
 Module to provide the news.
 """
+try:
+    import tkinter as tk
+    from tkinter import Frame
+except:
+    import Tkinter as tk
+    from Tkinter import Frame
 
-import Tkinter as tk
-from Tkinter import Frame
+
 import uuid
 from ttkHyperlinkLabel import HyperlinkLabel
 import requests
@@ -12,8 +17,8 @@ import re
 import myNotebook as nb
 from config import config
 import threading
-from debug import Debug
-from debug import debug,error
+from canonn.debug import Debug
+from canonn.debug import debug,error
 
 
 REFRESH_CYCLES = 60 ## how many cycles before we refresh
