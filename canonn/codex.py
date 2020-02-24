@@ -501,6 +501,7 @@ class CodexTypes(Frame):
             self.grid()
             self.grid_remove()
             self.allowed = False
+            self.visualise()
 
         if entry.get("event") in ("Location", "StartUp"):
             debug("Looking for POI data in {}".format(system))
@@ -516,6 +517,7 @@ class CodexTypes(Frame):
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
                 self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(entry.get("SystemAllegiance")), "")
             self.allowed = True
+            self.visualise()
 
         if entry.get("event") in ("FSSDiscoveryScan"):
             CodexTypes.fsscount = entry.get("BodyCount")
@@ -525,6 +527,7 @@ class CodexTypes(Frame):
             if nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0):
                 self.merge_poi("Planets", "Unexplored Bodies", "")
             self.allowed = True
+            self.visualise()
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
                 '$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
@@ -533,10 +536,12 @@ class CodexTypes(Frame):
             else:
                 self.merge_poi("Cloud", "Life Ring", "")
             self.allowed = True
+            self.visualise()
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             self.merge_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
+            self.visualise()
 
         if entry.get("event") == "FSSSignalDiscovered":
             if "NumberStation" in entry.get("SignalName"):
@@ -550,10 +555,12 @@ class CodexTypes(Frame):
             if "Generation Ship" in entry.get("SignalName"):
                 self.merge_poi("Human", entry.get("SignalName"), body)
             self.allowed = True
+            self.visualise()
 
         if entry.get("event") == "FSSAllBodiesFound":
             self.remove_poi("Planets", "Unexplored Bodies")
             self.allowed = True
+            self.visualise()
 
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
             self.remove_poi("Planets", "Unexplored Bodies")
@@ -625,6 +632,7 @@ class CodexTypes(Frame):
             #    Full jumponium availability within a single system
             #    Full jumponium availability on a single body
             self.allowed = True
+            self.visualise()
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
             CodexTypes.parentRadius = self.light_seconds("Radius", entry.get("Radius"))
@@ -657,10 +665,9 @@ class CodexTypes(Frame):
 
                 debug(self.poidata)
                 debug("cat {} name  {} body {}".format(cat, english_name, bodyVal))
+            self.visualise()
             self.allowed = True
-        # we can do this on every event can't we
-        self.visualise()
-        debug(json.dumps(self.poidata))
+
 
     @classmethod
     def plugin_start(cls, plugin_dir):
