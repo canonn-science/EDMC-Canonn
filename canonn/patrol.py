@@ -270,7 +270,6 @@ class CanonnPatrol(Frame):
 
         self.started = False
 
-        # wait 10 seconds before updatinb the ui
         self.patrol_update()
         self.bind('<<PatrolDisplay>>',self.update_desc)
 
@@ -287,8 +286,9 @@ class CanonnPatrol(Frame):
 
     def patrol_update(self):
         UpdateThread(self).start()
-        debug('self.after(CYCLE, self.patrol_update)')
-        self.after(CYCLE, self.patrol_update)
+        #removing the timer to see if it makes things more stable
+        #debug('self.after(CYCLE, self.patrol_update)')
+        #self.after(CYCLE, self.patrol_update)
 
     def patrol_next(self, event):
         """
@@ -778,13 +778,6 @@ class CanonnPatrol(Frame):
             self.update()
             if self.nearest and self.copypatrol == 1:
                 copyclip(self.nearest.get("system"))
-
-        if body:
-            self.update()
-        # else:
-        # error("nope {}".format(entry.get("event")))
-        # error(system)
-        # error(self.system)
 
         # If we have visted a system and then jump out then lets clicknext
         if system and self.nearest:

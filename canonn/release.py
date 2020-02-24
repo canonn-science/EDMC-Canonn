@@ -139,8 +139,8 @@ class Release(Frame):
     def update(self,event):
         self.release_thread()
         # check again in an hour
-        debug("checking for the next release in one hour")
-        self.after(RELEASE_CYCLE, self.update)
+        #debug("checking for the next release in one hour")
+        #self.after(RELEASE_CYCLE, self.update)
 
     def version2number(self, version):
         major, minor, patch = version.split('.')
