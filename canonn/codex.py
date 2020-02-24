@@ -195,6 +195,7 @@ class CodexTypes(Frame):
         r = requests.get(edsm)
         if r.status_code == requests.codes.ok:
 
+
             bodies = r.json().get("bodies")
             if bodies:
                 CodexTypes.bodycount = len(bodies)
@@ -387,7 +388,6 @@ class CodexTypes(Frame):
         if enabled and self.labels.get(name):
             self.labels[name].grid()
         else:
-            # ensure it is enabled before disabling
             self.labels[name].grid()
             self.labels[name].grid_remove()
 
@@ -562,6 +562,7 @@ class CodexTypes(Frame):
             self.allowed = True
             self.visualise()
 
+
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
             self.remove_poi("Planets", "Unexplored Bodies")
             body = entry.get("BodyName").replace(system, '')
@@ -620,6 +621,7 @@ class CodexTypes(Frame):
                 self.merge_poi("Tourist", 'Tiny Radius Landable', body)
 
             #    Fast and non-locked rotation < 1 hour
+
             if entry.get('PlanetClass') and entry.get('RotationPeriod') and abs(
                     entry.get('RotationPeriod')) < 3600 and not entry.get("TidalLock"):
                 self.merge_poi("Tourist", 'Fast unlocked rotation', body)
@@ -696,7 +698,6 @@ class CodexTypes(Frame):
         self.hidecodex = self.hidecodexbtn.get()
 
         # dont check the retval
-
         self.visualise()
 
     def visible(self):

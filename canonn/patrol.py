@@ -257,6 +257,7 @@ class CanonnPatrol(Frame):
         self.patrol_count = 0
         self.patrol_pos = 0
         self.minutes = 0
+
         self.isvisible = False
         self.visible()
         self.cmdr = ""
