@@ -107,6 +107,7 @@ class CanonnNews(Frame):
         self.visible()
         #self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
         self.after(250, self.news_update)
+        self.bind('<<NewsData>>', self.eupdate)
         
     def news_update(self):
     
@@ -126,6 +127,9 @@ class CanonnNews(Frame):
         #refesh every 60 seconds
         self.after(NEWS_CYCLE, self.news_update)
 
+    def eupdate(self,event):
+        self.update()
+
     def update(self):
         if self.visible():
             if self.news_data:
@@ -133,9 +137,7 @@ class CanonnNews(Frame):
                     self.hyperlink['url'] = news['link']
                     self.hyperlink['text'] = decode_unicode_references(news['title']['rendered'])
             else:
-                #keep trying until we have some data
-                #elf.hyperlink['text'] = "Fetching News..."
-                self.after(1000, self.update)
+                debug("News download not complete")
 
     def click_news(self,event):
         if self.news_count == self.news_pos:           
@@ -155,6 +157,7 @@ class CanonnNews(Frame):
             self.news_count=len(self.news_data)-1
             self.news_pos=0
             self.minutes=REFRESH_CYCLES
+            self.event_generate('<<NewsData>>', when='tail')
 
     def plugin_prefs(self, parent, cmdr, is_beta,gridrow):
         "Called to get a tk Frame for the settings dialog."
