@@ -210,12 +210,15 @@ class CanonnPatrol(Frame):
         self.canonnbtn = tk.IntVar(value=config.getint("HideCanonn"))
         self.factionbtn = tk.IntVar(value=config.getint("HideFaction"))
         self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
+        self.edsmbtn = tk.IntVar(value=config.getint("HideEDSM"))
         self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
+
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
         self.hideships = self.hideshipsbtn.get()
         self.copypatrol = self.copypatrolbtn.get()
+        self.edsm = self.edsmbtn.get()
 
         self.columnconfigure(1, weight=1)
         self.columnconfigure(4, weight=4)
@@ -272,11 +275,12 @@ class CanonnPatrol(Frame):
         self.started = False
 
         self.patrol_update()
-        self.bind('<<PatrolDisplay>>',self.update_desc)
+        self.bind('<<PatrolDisplay>>', self.update_desc)
 
-    def update_desc(self,event):
-        self.hyperlink['text']="Fetching {}".format(self.patrol_name)
-        self.hyperlink['url']=None
+    def update_desc(self, event):
+        self.hyperlink['text'] = "Fetching {}".format(self.patrol_name)
+        self.hyperlink['url'] = None
+
     @classmethod
     def plugin_start(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
@@ -287,9 +291,9 @@ class CanonnPatrol(Frame):
 
     def patrol_update(self):
         UpdateThread(self).start()
-        #removing the timer to see if it makes things more stable
-        #debug('self.after(CYCLE, self.patrol_update)')
-        #self.after(CYCLE, self.patrol_update)
+        # removing the timer to see if it makes things more stable
+        # debug('self.after(CYCLE, self.patrol_update)')
+        # self.after(CYCLE, self.patrol_update)
 
     def patrol_next(self, event):
         """
@@ -550,15 +554,15 @@ class CanonnPatrol(Frame):
 
     def getCanonnPatrol(self):
         canonnpatrol = []
-        c=0
+        c = 0
         url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsi1Vbfx4Sk2msNYiqo0PVnW3VHSrvvtIRkjT-JvH_oG9fP67TARWX2jIjehFHKLwh4VXdSh0atk3J/pub?gid=0&single=true&output=tsv"
         with closing(requests.get(url, stream=True)) as r:
             reader = csv.reader(r.content.decode('utf-8').splitlines(), delimiter='\t')
             next(reader)
             for row in reader:
-                c=c+1
+                c = c + 1
                 id, enabled, description, type, link = row
-                self.patrol_name = "{} ({})".format(description,c)
+                self.patrol_name = "{} ({})".format(description, c)
 
                 if enabled == 'Y':
                     if type == 'json':
@@ -577,7 +581,6 @@ class CanonnPatrol(Frame):
                         debug("no patrol {}".format(row))
                 else:
                     debug("{} Patrol disabled".format(description))
-
 
         debug("Finished loading Canonn Patrols")
         return canonnpatrol
@@ -602,7 +605,6 @@ class CanonnPatrol(Frame):
             patrol_list[num]["index"] = num
         self.patrol_list = patrol_list
 
-
     def download(self):
         debug("Download Patrol Data")
 
@@ -615,7 +617,7 @@ class CanonnPatrol(Frame):
         patrol_list = []
         if self.faction != 1:
             debug("Getting Faction Data")
-            self.patrol_name="Cannon Factions"
+            self.patrol_name = "Cannon Factions"
             if not self.started:
                 self.event_generate('<<PatrolDisplay>>', when='tail')
 
@@ -640,6 +642,9 @@ class CanonnPatrol(Frame):
             self.canonnpatrol = self.getCanonnPatrol()
             patrol_list.extend(self.canonnpatrol)
 
+        if self.edsm != 1:
+            patrol_list.extend(self.getEDSMPatrol())
+
         # add exclusions from configuration
         debug("adding exclusions")
         for num, val in enumerate(patrol_list):
@@ -655,9 +660,70 @@ class CanonnPatrol(Frame):
         self.sort_patrol()
 
         debug("download done")
-        self.started=True
+        self.started = True
         # poke an evennt safely
         self.event_generate('<<PatrolDone>>', when='tail')
+
+    def getEDSMPatrol(self):
+        url = "https://www.edsm.net/en/galactic-mapping/json"
+
+        types = {
+            'minorPOI': 'Minor Point of Interest',
+            'planetaryNebula': 'Planetary Nebula',
+            'nebula': 'Nebula',
+            'blackHole': 'Black Hole',
+            'historicalLocation': 'Historical Location',
+            'stellarRemnant': 'Stellar Remnant',
+            'planetFeatures': 'Planet Features',
+            'regional': 'Regional',
+            'pulsar': 'Pulsar',
+            'starCluster': 'Star Cluster',
+            'jumponiumRichSystem': 'Jumponium Rich System',
+            'surfacePOI': 'Surface Point of Interest',
+            'deepSpaceOutpost': 'Deep Space Outpost',
+            'mysteryPOI': 'Mystery Point of Interest',
+            'organicPOI': 'Organic Point of Interest',
+            'restrictedSectors': 'Restricted Sector',
+            'geyserPOI': 'Geyser Point of Interest',
+            'region': 'Region',
+            'travelRoute': 'Travel Route',
+            'historicalRoute': 'Historical Route',
+            'minorRoute': 'Minor Route',
+            'neutronRoute': 'Neutron Route'
+        }
+
+        validtypes = ['minorPOI', 'planetaryNebula', 'nebula', 'blackHole', 'historicalLocation', 'stellarRemnant',
+                      'planetFeatures', 'regional', 'pulsar', 'starCluster', 'jumponiumRichSystem', 'surfacePOI',
+                      'deepSpaceOutpost', 'mysteryPOI', 'organicPOI', 'restrictedSectors', 'geyserPOI']
+
+        r = requests.get(url)
+        r.encoding = 'utf-8'
+        debug(r.encoding)
+        entries = r.json()
+        categories = {}
+
+        edsm_patrol=[]
+
+        self.patrol_name = "Galactic Mapping"
+
+        for entry in entries:
+
+            if entry.get("type") in validtypes and "Archived: " not in entry.get("name"):
+
+                edsm_patrol.append(
+                    newPatrol("Galactic Mapping",
+                            entry.get("galMapSearch"), (
+                                float(entry.get("coordinates")[0]),
+                                float(entry.get("coordinates")[1]),
+                                float(entry.get("coordinates")[2])
+                            ),
+                              "Galactic Mapping Project: {} : {}".format(types.get(entry.get("type")),entry.get("name").encode('utf-8')),
+                              entry.get("galMapUrl"),
+                              None)
+                )
+
+        self.event_generate('<<PatrolDone>>', when='tail')
+        return edsm_patrol
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         """Called to get a tk Frame for the settings dialog."""
@@ -665,11 +731,13 @@ class CanonnPatrol(Frame):
         self.canonnbtn = tk.IntVar(value=config.getint("HideCanonn"))
         self.factionbtn = tk.IntVar(value=config.getint("HideFaction"))
         self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
+        self.edsmbtn = tk.IntVar(value=config.getint("HideEDSM"))
         self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
         self.hideships = self.hideshipsbtn.get()
+        self.edsm = self.edsmbtn.get()
         self.copypatrol = self.copypatrolbtn.get()
 
         frame = nb.Frame(parent)
@@ -681,16 +749,17 @@ class CanonnPatrol(Frame):
         nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.factionbtn).grid(row=1, column=2,
                                                                                                  sticky="NW")
         nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideshipsbtn).grid(row=1, column=3, sticky="NW")
+        nb.Checkbutton(frame, text="Hide Galactic Mapping POIS", variable=self.edsmbtn).grid(row=2, column=0, sticky="NW")
         nb.Checkbutton(frame, text="Automatically copy the patrol to the clipboard", variable=self.copypatrolbtn).grid(
-            row=2, column=0, sticky="NW", )
+            row=3, column=0, sticky="NW", )
 
-        debug("canonn: {}, faction: {} hideships {}".format(self.canonn, self.faction, self.hideships))
+        debug("canonn: {}, faction: {} hideships {}, EDSM {}".format(self.canonn, self.faction, self.hideships, self.edsm))
 
         return frame
 
     def visible(self):
 
-        nopatrols = self.canonn == 1 and self.faction == 1 and self.hideships == 1
+        nopatrols = self.canonn == 1 and self.faction == 1 and self.hideships == 1 and self.edsm == 1
 
         if nopatrols:
             self.grid()
@@ -726,18 +795,20 @@ class CanonnPatrol(Frame):
         config.set('HideCanonn', self.canonnbtn.get())
         config.set('HideFaction', self.factionbtn.get())
         config.set('HideShips', self.hideshipsbtn.get())
+        config.set('HideEDSM', self.edsmbtn.get())
         config.set('CopyPatrol', self.copypatrolbtn.get())
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
         self.hideships = self.hideshipsbtn.get()
+        self.edsm = self.edsmbtn.get()
         self.copypatrol = self.copypatrolbtn.get()
 
         if self.visible():
             # we should fire off an extra download
             UpdateThread(self).start()
 
-        debug("canonn: {}, faction: {} hideships {}".format(self.canonn, self.faction, self.hideships))
+        debug("canonn: {}, faction: {} hideships {} hideEDSM {}".format(self.canonn, self.faction, self.hideships, self.edsm))
 
     def trigger(self, system, entry):
         # exit if the events dont match
@@ -770,7 +841,7 @@ class CanonnPatrol(Frame):
         if cmdr:
             self.cmdr = cmdr
 
-        if entry.get("event") in ("Location","StartUp") and not self.patrol_list:
+        if entry.get("event") in ("Location", "StartUp") and not self.patrol_list:
             self.update()
 
         if self.system != system and entry.get("event") in ("Location", "FSDJump", "StartUp"):
