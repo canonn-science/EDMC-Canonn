@@ -302,7 +302,7 @@ class CodexTypes(Frame):
 
         CodexTypes.waiting = False
         debug("event_generate")
-        self.event_generate('<<POIData>>', when='tail')
+        self.event_generate('<<POIData>>', when='head')
         debug("Finished getting POI data in thread")
 
     def enter(self, event):
@@ -501,6 +501,7 @@ class CodexTypes(Frame):
             self.journal_entry_wrap(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
 
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
+        debug("Codex {}".format(entry.get("event")))
 
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             # go fetch some data.It will 
@@ -566,6 +567,7 @@ class CodexTypes(Frame):
 
         if entry.get("event") == "FSSAllBodiesFound":
             self.remove_poi("Planets", "Unexplored Bodies")
+            CodexTypes.bodycount = CodexTypes.fsscount
             self.allowed = True
             self.visualise()
 
