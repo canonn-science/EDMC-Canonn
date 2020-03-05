@@ -171,6 +171,9 @@ class CodexTypes(Frame):
 
     # wrapper for visualise
     def evisualise(self, event):
+        debug("evisualise")
+        self.poidata = []
+        debug("self.poidata = []")
 
         for r in self.temp_poidata:
             self.merge_poi(r.get("hud_category"), r.get("english_name"), r.get("body"))
@@ -280,8 +283,7 @@ class CodexTypes(Frame):
         debug("Getting POI data in thread")
         CodexTypes.waiting = True
         debug("CodexTypes.waiting = True")
-        self.poidata = []
-        debug("self.poidata = []")
+
 
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
             quote_plus(system.encode('utf8')))
