@@ -72,7 +72,8 @@ class NewsLink(HyperlinkLabel):
         if not self.resized:
             self.resized=True
             self.configure(wraplength=event.width)    
-            self.after(500,self.__reset)
+            #self.after(500,self.__reset)
+            self.event_generate('<Configure>', when='tail')
 
 class CanonnNews(Frame):
 
@@ -172,6 +173,7 @@ class CanonnNews(Frame):
 
     def visible(self):
         if self.hidden.get() == 1:
+            self.grid()
             self.grid_remove()
             self.isvisible=False
             return False
