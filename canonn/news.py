@@ -70,10 +70,11 @@ class NewsLink(HyperlinkLabel):
         "Handle resizing."
 
         if not self.resized:
+            debug("News widget resize")
             self.resized=True
             self.configure(wraplength=event.width)    
-            #self.after(500,self.__reset)
-            self.event_generate('<Configure>', when='tail')
+            self.after(500,self.__reset)
+
 
 class CanonnNews(Frame):
 
