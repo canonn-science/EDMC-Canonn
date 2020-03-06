@@ -152,11 +152,11 @@ class PatrolLink(HyperlinkLabel):
             # wraplength=50,  # updated in __configure_event below
             anchor=tk.NW
         )
-        # self.bind('<Configure>', self.__configure_event)
+        #self.bind('<Configure>', self.__configure_event)
 
     def __configure_event(self, event):
         """Handle resizing."""
-
+        debug("Patrol: Link widget resize")
         self.configure(wraplength=event.width)
 
 
@@ -182,6 +182,7 @@ class InfoLink(HyperlinkLabel):
         """Handle resizing."""
 
         if not self.resized:
+            debug("Patrol: Info widget resize")
             self.resized = True
             self.configure(wraplength=event.width)
             self.after(500, self.__reset)
