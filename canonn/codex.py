@@ -147,7 +147,8 @@ class CodexTypes():
                            "Biology", "Guardian", "Human", "Ring",
                            "None", "Other", "Planets", "Tourist"
                            )
-
+        self.temp_poidata=None
+        self.temp_edsmdata = None
         self.addimage("Geology", 0)
         self.addimage("Cloud", 1)
         self.addimage("Anomaly", 2)
