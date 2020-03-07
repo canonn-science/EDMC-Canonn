@@ -36,6 +36,7 @@ def surface_pressure(tag, value):
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
+        debug("initialise POITYpes Thread")
         threading.Thread.__init__(self)
         self.system = system
         self.callback = callback
@@ -43,6 +44,7 @@ class poiTypes(threading.Thread):
     def run(self):
         debug("running poitypes")
         self.callback(self.system)
+        debug("poitypes Callback Complete")
 
     # def recycle(self):
     #     print "Recycling Labels"
@@ -79,7 +81,7 @@ class saaScan():
                                 })
 
 
-class CodexTypes(Frame):
+class CodexTypes():
     tooltips = {
         "Geology": "Geology: Vents and fumeroles",
         "Cloud": "Lagrange Clouds",
@@ -116,24 +118,25 @@ class CodexTypes(Frame):
 
     def __init__(self, parent, gridrow):
         "Initialise the ``Patrol``."
-        Frame.__init__(
-            self,
-            parent
-        )
+        # Frame.__init__(
+        #    self,
+        #   parent
+        # )
 
+        self.frame = Frame(parent)
         self.parent = parent
-        self.bind('<<POIData>>', self.evisualise)
+        self.frame.bind('<<POIData>>', self.evisualise)
         self.hidecodexbtn = tk.IntVar(value=config.getint("Canonn:HideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
 
-        self.container = Frame(self)
+        self.container = Frame(self.frame)
         self.container.columnconfigure(1, weight=1)
         # self.tooltip=Frame(self)
         # self.tooltip.columnconfigure(1, weight=1)
         # self.tooltip.grid(row = 1, column = 0,sticky="NSEW")
 
         # self.tooltiplist=tk.Frame(self.tooltip)
-        self.tooltiplist = tk.Frame(self)
+        self.tooltiplist = tk.Frame(self.frame)
 
         self.images = {}
         self.labels = {}
@@ -159,21 +162,25 @@ class CodexTypes(Frame):
         self.addimage("Tourist", 11)
 
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
-        self.grid(row=gridrow, column=0)
+        self.frame.grid(row=gridrow, column=0)
         self.container.grid(row=0, column=0, sticky="W")
         self.poidata = []
         # self.tooltip.grid_remove()
         self.tooltiplist.grid()
-        self.grid()
+        self.frame.grid()
         self.tooltiplist.grid_remove()
-        self.grid_remove()
+        self.frame.grid_remove()
         self.allowed = False
 
-    # wrapper for visualise
+    # wrap visualise so we can call from time
+    def tvisualise(self):
+        self.evisualise(None)
+
     def evisualise(self, event):
         debug("evisualise")
         self.poidata = []
         debug("self.poidata = []")
+        usystem = unquote(self.system)
 
         for r in self.temp_poidata:
             self.merge_poi(r.get("hud_category"), r.get("english_name"), r.get("body"))
@@ -188,7 +195,7 @@ class CodexTypes(Frame):
 
             for b in bodies:
                 debug(b.get("subType"))
-                body_code = b.get("name").replace(usystem, '')
+                body_code = b.get("name").replace(self.system, '')
                 body_name = b.get("name")
 
                 # Terraforming
@@ -202,6 +209,7 @@ class CodexTypes(Frame):
 
                 # water ammonia etc
                 if b.get('subType') in CodexTypes.body_types.keys():
+                    debug(b.get('subType'))
                     self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')), body_code)
 
                 # fast orbits
@@ -284,25 +292,26 @@ class CodexTypes(Frame):
         CodexTypes.waiting = True
         debug("CodexTypes.waiting = True")
 
-
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
             quote_plus(system.encode('utf8')))
         debug(url)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
+            debug("got POI Data")
             self.temp_poidata = r.json()
 
-        usystem = unquote(system)
+
 
         edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
         debug(edsm)
         r = requests.get(edsm)
         if r.status_code == requests.codes.ok:
+            debug("got EDSM Data")
             self.temp_edsmdata = r
 
         CodexTypes.waiting = False
         debug("event_generate")
-        self.event_generate('<<POIData>>', when='head')
+        self.frame.event_generate('<<POIData>>', when='head')
         debug("Finished getting POI data in thread")
 
     def enter(self, event):
@@ -467,12 +476,12 @@ class CodexTypes(Frame):
 
     def visualise(self):
 
-        debug("visualise")
+        debug("Codex visualise")
         # we may want to try again if the data hasn't been fetched yet
         if CodexTypes.waiting or not self.allowed:
-            debug("Still waiting");
+            debug("Still waiting")
         else:
-
+            debug("setting images")
             self.set_image("Geology", False)
             self.set_image("Cloud", False)
             self.set_image("Anomaly", False)
@@ -487,27 +496,29 @@ class CodexTypes(Frame):
             self.set_image("Tourist", False)
 
             if self.poidata:
-                self.grid()
+                debug("Codex Grid")
+                self.frame.grid()
                 self.visible()
                 for r in self.poidata:
                     debug(r)
                     self.set_image(r.get("hud_category"), True)
             else:
-                self.grid()
-                self.grid_remove()
+                self.frame.grid()
+                self.frame.grid_remove()
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if not self.hidecodex:
             self.journal_entry_wrap(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
 
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
+        self.system=system
         debug("Codex {}".format(entry.get("event")))
 
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             # go fetch some data.It will 
             poiTypes(entry.get("StarSystem"), self.getdata).start()
-            self.grid()
-            self.grid_remove()
+            self.frame.grid()
+            self.frame.grid_remove()
             self.allowed = False
             # self.visualise()
 
@@ -518,8 +529,8 @@ class CodexTypes(Frame):
             self.allowed = True
             # we can't wait for another event so give it 5 seconds
             # then ten seconds later for good measure
-            self.after(5000, self.visualise)
-            self.after(10000, self.visualise)
+            self.frame.after(5000, self.tvisualise)
+            self.frame.after(10000, self.tvisualise)
 
         if entry.get("event") in ("Location", "StartUp", "FSDJump"):
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
@@ -651,7 +662,7 @@ class CodexTypes(Frame):
         if entry.get("event") == "SAASignalsFound":
             # if we arent waiting for new data
             bodyName = entry.get("BodyName")
-            bodyVal = bodyName.replace(system, '')
+            bodyVal = bodyName.replace(self.system,'')
 
             debug("SAASignalsFound")
 
@@ -712,12 +723,12 @@ class CodexTypes(Frame):
         noicons = (self.hidecodex == 1)
 
         if noicons:
-            self.grid()
-            self.grid_remove()
+            self.frame.grid()
+            self.frame.grid_remove()
             self.isvisible = False
             return False
         else:
-            self.grid()
+            self.frame.grid()
             self.isvisible = True
             return True
 
