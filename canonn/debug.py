@@ -13,6 +13,9 @@ from config import config
 
 class Debug:
     debugvar = tk.IntVar(value=config.getint("CanonnDebug"))
+    debugswitch = debugvar.get()
+    print("EDMC-Canonn: Starting the debug sub-system")
+
     client = "Canonn"
 
     @classmethod
@@ -26,7 +29,7 @@ class Debug:
 
     @classmethod
     def debug(cls, value):
-        if cls.debugvar.get() == 1:
+        if cls.debugswitch == 1:
             cls.p(value)
 
     @classmethod
@@ -34,6 +37,7 @@ class Debug:
         "Called to get a tk Frame for the settings dialog."
 
         cls.debugvar = tk.IntVar(value=config.getint("CanonnDebug"))
+        cls.debugswitch = cls.debugvar.get()
         Debug.client = client
 
         frame = nb.Frame(parent)
@@ -48,6 +52,7 @@ class Debug:
     def prefs_changed(cls):
         "Called when the user clicks OK on the settings dialog."
         config.set('CanonnDebug', cls.debugvar.get())
+        cls.debugswitch = cls.debugvar.get()
 
 
 def debug(value):
