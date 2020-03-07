@@ -147,7 +147,7 @@ class CodexTypes():
                            "Biology", "Guardian", "Human", "Ring",
                            "None", "Other", "Planets", "Tourist"
                            )
-        self.temp_poidata=None
+        self.temp_poidata = None
         self.temp_edsmdata = None
         self.addimage("Geology", 0)
         self.addimage("Cloud", 1)
@@ -300,8 +300,6 @@ class CodexTypes():
         if r.status_code == requests.codes.ok:
             debug("got POI Data")
             self.temp_poidata = r.json()
-
-
 
         edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
         debug(edsm)
@@ -512,7 +510,7 @@ class CodexTypes():
             self.journal_entry_wrap(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
 
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
-        self.system=system
+        self.system = system
         debug("Codex {}".format(entry.get("event")))
 
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
@@ -663,7 +661,7 @@ class CodexTypes():
         if entry.get("event") == "SAASignalsFound":
             # if we arent waiting for new data
             bodyName = entry.get("BodyName")
-            bodyVal = bodyName.replace(self.system,'')
+            bodyVal = bodyName.replace(self.system, '')
 
             debug("SAASignalsFound")
 
