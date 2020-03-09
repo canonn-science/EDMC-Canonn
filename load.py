@@ -42,7 +42,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "5.1.1"
+this.version = "5.10.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
