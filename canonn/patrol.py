@@ -19,6 +19,7 @@ import os
 import re
 import requests
 import threading
+import time
 import uuid
 from canonn.debug import Debug
 from canonn.debug import debug, error
@@ -33,6 +34,8 @@ from ttkHyperlinkLabel import HyperlinkLabel
 CYCLE = 60 * 1000 * 60  # 60 minutes
 DEFAULT_URL = ""
 WRAP_LENGTH = 200
+
+THARGOIDSITES = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFRhsa3g0tpYFkqyBR2HrfUjXfjW6gSRnnDhFtVtPlWtpuNAHKujI5fH6Lnh3ctt0SAyNywnesv8H_/pub?gid=1675294629&single=true&output=tsv"
 
 ship_types = {
     'adder': 'Adder',
@@ -152,7 +155,7 @@ class PatrolLink(HyperlinkLabel):
             # wraplength=50,  # updated in __configure_event below
             anchor=tk.NW
         )
-        #self.bind('<Configure>', self.__configure_event)
+        # self.bind('<Configure>', self.__configure_event)
 
     def __configure_event(self, event):
         """Handle resizing."""
@@ -213,13 +216,14 @@ class CanonnPatrol(Frame):
         self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
         self.edsmbtn = tk.IntVar(value=config.getint("HideEDSM"))
         self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
-
+        self.thargoidbtn = tk.IntVar(value=config.getint("HideThargoids"))
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
         self.hideships = self.hideshipsbtn.get()
         self.copypatrol = self.copypatrolbtn.get()
         self.edsm = self.edsmbtn.get()
+        self.thargoids = self.thargoidbtn.get()
 
         self.columnconfigure(1, weight=1)
         self.columnconfigure(4, weight=4)
@@ -623,6 +627,7 @@ class CanonnPatrol(Frame):
                 self.event_generate('<<PatrolDisplay>>', when='tail')
 
             BGSO, BGSOSys = self.getBGSOveride()  # first variable- for patrol_list, second-for ignore existant systems
+
             patrol_list.extend(BGSO)
 
             patrol_list.extend(self.getFactionData("Canonn", BGSOSys))
@@ -631,6 +636,14 @@ class CanonnPatrol(Frame):
                 patrol_list.remove(None)
             except:
                 debug("Nothing to delete")
+
+        if self.thargoids != 1:
+            debug("Getting Thargoid Tour")
+            self.patrol_name = "Cannon Factions"
+            if not self.started:
+                self.event_generate('<<PatrolDisplay>>', when='tail')
+            patrol_list.extend(self.getTsvPatrol(THARGOIDSITES))
+
 
         if self.ships and self.hideships != 1:
             self.patrol_name = "Your Ships"
@@ -703,22 +716,22 @@ class CanonnPatrol(Frame):
         entries = r.json()
         categories = {}
 
-        edsm_patrol=[]
+        edsm_patrol = []
 
         self.patrol_name = "Galactic Mapping"
 
         for entry in entries:
 
             if entry.get("type") in validtypes and "Archived: " not in entry.get("name"):
-
                 edsm_patrol.append(
                     newPatrol("Galactic Mapping",
-                            entry.get("galMapSearch"), (
-                                float(entry.get("coordinates")[0]),
-                                float(entry.get("coordinates")[1]),
-                                float(entry.get("coordinates")[2])
-                            ),
-                              "Galactic Mapping Project: {} : {}".format(types.get(entry.get("type")),entry.get("name").encode('utf-8')),
+                              entry.get("galMapSearch"), (
+                                  float(entry.get("coordinates")[0]),
+                                  float(entry.get("coordinates")[1]),
+                                  float(entry.get("coordinates")[2])
+                              ),
+                              "Galactic Mapping Project: {} : {}".format(types.get(entry.get("type")),
+                                                                         entry.get("name").encode('utf-8')),
                               entry.get("galMapUrl"),
                               None)
                 )
@@ -733,6 +746,7 @@ class CanonnPatrol(Frame):
         self.factionbtn = tk.IntVar(value=config.getint("HideFaction"))
         self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
         self.edsmbtn = tk.IntVar(value=config.getint("HideEDSM"))
+        self.thargoidbtn = tk.IntVar(value=config.getint("HideThargoids"))
         self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
 
         self.canonn = self.canonnbtn.get()
@@ -740,6 +754,7 @@ class CanonnPatrol(Frame):
         self.hideships = self.hideshipsbtn.get()
         self.edsm = self.edsmbtn.get()
         self.copypatrol = self.copypatrolbtn.get()
+        self.thargoids = self.thargoidbtn.get()
 
         frame = nb.Frame(parent)
         frame.columnconfigure(1, weight=1)
@@ -750,17 +765,21 @@ class CanonnPatrol(Frame):
         nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.factionbtn).grid(row=1, column=2,
                                                                                                  sticky="NW")
         nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideshipsbtn).grid(row=1, column=3, sticky="NW")
-        nb.Checkbutton(frame, text="Hide Galactic Mapping POIS", variable=self.edsmbtn).grid(row=2, column=0, sticky="NW")
+        nb.Checkbutton(frame, text="Hide Galactic Mapping POIS", variable=self.edsmbtn).grid(row=2, column=0,
+                                                                                             sticky="NW")
+        nb.Checkbutton(frame, text="Hide Thargoid Sites", variable=self.thargoidbtn).grid(row=2, column=1,
+                                                                                          sticky="NW")
         nb.Checkbutton(frame, text="Automatically copy the patrol to the clipboard", variable=self.copypatrolbtn).grid(
             row=3, column=0, sticky="NW", )
 
-        debug("canonn: {}, faction: {} hideships {}, EDSM {}".format(self.canonn, self.faction, self.hideships, self.edsm))
+        debug("canonn: {}, faction: {} hideships {}, EDSM {}".format(self.canonn, self.faction, self.hideships,
+                                                                     self.edsm))
 
         return frame
 
     def visible(self):
 
-        nopatrols = self.canonn == 1 and self.faction == 1 and self.hideships == 1 and self.edsm == 1
+        nopatrols = self.canonn == 1 and self.faction == 1 and self.hideships == 1 and self.edsm == 1 and self.thargoids == 1
 
         if nopatrols:
             self.grid()
@@ -797,6 +816,7 @@ class CanonnPatrol(Frame):
         config.set('HideFaction', self.factionbtn.get())
         config.set('HideShips', self.hideshipsbtn.get())
         config.set('HideEDSM', self.edsmbtn.get())
+        config.set('HideThargoids', self.thargoidbtn.get())
         config.set('CopyPatrol', self.copypatrolbtn.get())
 
         self.canonn = self.canonnbtn.get()
@@ -804,12 +824,14 @@ class CanonnPatrol(Frame):
         self.hideships = self.hideshipsbtn.get()
         self.edsm = self.edsmbtn.get()
         self.copypatrol = self.copypatrolbtn.get()
+        self.thargoids = self.thargoidbtn.get()
 
         if self.visible():
             # we should fire off an extra download
             UpdateThread(self).start()
 
-        debug("canonn: {}, faction: {} hideships {} hideEDSM {}".format(self.canonn, self.faction, self.hideships, self.edsm))
+        debug("canonn: {}, faction: {} hideships {} hideEDSM {}".format(self.canonn, self.faction, self.hideships,
+                                                                        self.edsm))
 
     def trigger(self, system, entry):
         # exit if the events dont match
