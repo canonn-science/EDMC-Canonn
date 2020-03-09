@@ -87,7 +87,7 @@ class Systems():
             return
 
         if not system in cls.systemCache and not cls.scanned:
-            journalGetSystem()
+            #journalGetSystem()
             cls.scanned=True
 
 
