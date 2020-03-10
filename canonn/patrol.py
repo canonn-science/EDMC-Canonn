@@ -149,7 +149,7 @@ class PatrolLink(HyperlinkLabel):
         HyperlinkLabel.__init__(
             self,
             parent,
-            text="Fetching Patrol...",
+            text="Waiting for location..",
             url=DEFAULT_URL,
             popup_copy=True,
             # wraplength=50,  # updated in __configure_event below
@@ -169,7 +169,7 @@ class InfoLink(HyperlinkLabel):
         HyperlinkLabel.__init__(
             self,
             parent,
-            text="Fetching Patrol...",
+            text="Waiting for location",
             url=DEFAULT_URL,
             popup_copy=True,
             wraplength=50,  # updated in __configure_event below
@@ -278,8 +278,9 @@ class CanonnPatrol(Frame):
         self.lon = ""
 
         self.started = False
+        self.downloaded = False
 
-        self.patrol_update()
+        #self.patrol_update()
         self.bind('<<PatrolDisplay>>', self.update_desc)
 
     def update_desc(self, event):
@@ -507,7 +508,15 @@ class CanonnPatrol(Frame):
     def getJsonPatrol(self, url):
         canonnpatrol = []
 
-        with closing(requests.get(url)) as r:
+        a, b, c = Systems.edsmGetSystem(self.system)
+        if '?' in url:
+            newurl="{}&x={}&y={}&z={}".format(url,a,b,c)
+        else:
+            newurl = "{}?x={}&y={}&z={}".format(url, a, b, c)
+
+        debug("getting patrol {}".format(newurl))
+
+        with closing(requests.get(newurl)) as r:
             reader = r.json()
             for row in reader:
 
@@ -560,6 +569,7 @@ class CanonnPatrol(Frame):
     def getCanonnPatrol(self):
         canonnpatrol = []
         c = 0
+
         url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQsi1Vbfx4Sk2msNYiqo0PVnW3VHSrvvtIRkjT-JvH_oG9fP67TARWX2jIjehFHKLwh4VXdSh0atk3J/pub?gid=0&single=true&output=tsv"
         with closing(requests.get(url, stream=True)) as r:
             reader = csv.reader(r.content.decode('utf-8').splitlines(), delimiter='\t')
@@ -612,6 +622,8 @@ class CanonnPatrol(Frame):
 
     def download(self):
         debug("Download Patrol Data")
+
+        debug("Patrol Download for system {}".format(self.system))
 
         # if patrol list is populated then was can save
         if self.patrol_list:
@@ -861,6 +873,10 @@ class CanonnPatrol(Frame):
         self.y = y
         self.z = z
 
+        if not self.downloaded:
+            self.downloaded=True;
+            self.patrol_update()
+
         if cmdr:
             self.cmdr = cmdr
 
@@ -984,6 +1000,9 @@ class CanonnPatrol(Frame):
             self.ships.append(newPatrol("SHIPS", system, ship_pos, ship_info, None))
 
         self.capi_update = True
+        if not self.downloaded:
+            self.downloaded=True;
+            self.patrol_update()
         self.update()
 
 
