@@ -873,14 +873,15 @@ class CanonnPatrol(Frame):
         self.y = y
         self.z = z
 
-        if not self.downloaded:
-            self.downloaded=True;
-            self.patrol_update()
+
 
         if cmdr:
             self.cmdr = cmdr
 
         if entry.get("event") in ("Location", "StartUp") and not self.patrol_list:
+            if not self.downloaded:
+                self.downloaded = True;
+                self.patrol_update()
             self.update()
 
         if self.system != system and entry.get("event") in ("Location", "FSDJump", "StartUp"):
