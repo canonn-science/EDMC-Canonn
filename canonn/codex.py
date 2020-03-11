@@ -1136,3 +1136,20 @@ def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
 
     if entry.get("event") == "SendText" and entry.get("Message") == "codextest":
         test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
+        
+    if entry.get("StationName") and entry.get("StationName") == "The Gnosis":
+        debug("Hey it's The Gnosis!")
+        canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postGnosis",
+                                {
+                                    "cmdr": cmdr,
+                                    "beta": is_beta,
+                                    "system": system,
+                                    "x": x,
+                                    "y": y,
+                                    "z": z,
+                                    "entry": entry,
+                                    "body": body,
+                                    "lat": lat,
+                                    "lon": lon,
+                                    "client": client}
+                                )
