@@ -520,25 +520,35 @@ class CanonnPatrol(Frame):
         debug("getting patrol {}".format(newurl))
 
         with closing(requests.get(newurl)) as r:
-            reader = r.json()
-            for row in reader:
-
-                type = row.get("type")
-                system = row.get("system")
-                x = row.get("x")
-                y = row.get("y")
-                z = row.get("z")
-                instructions = row.get("instructions")
-                url = row.get("url")
-                event = row.get("event")
-                if system != '':
-                    try:
-                        canonnpatrol.append(
-                            newPatrol(type, system, (float(x), float(y), float(z)), instructions, url, event))
-                    except:
-                        error("patrol {},{},{},{},{},{},{},{}".format(type, system, x, y, z, instructions, url, event))
+            if not r.status_code == requests.codes.ok:
+                error(json.dumps(self.payload))
+                headers = r.headers
+                contentType = str(headers['content-type'])
+                if 'json' in contentType:
+                    error(json.dumps(r.content))
                 else:
-                    error("Patrol {} contains blank lines".format(type))
+                    error(r.content)
+                error(r.status_code)
+            else:
+                reader = r.json()
+                for row in reader:
+
+                    type = row.get("type")
+                    system = row.get("system")
+                    x = row.get("x")
+                    y = row.get("y")
+                    z = row.get("z")
+                    instructions = row.get("instructions")
+                    url = row.get("url")
+                    event = row.get("event")
+                    if system != '':
+                        try:
+                            canonnpatrol.append(
+                                newPatrol(type, system, (float(x), float(y), float(z)), instructions, url, event))
+                        except:
+                            error("patrol {},{},{},{},{},{},{},{}".format(type, system, x, y, z, instructions, url, event))
+                    else:
+                        error("Patrol {} contains blank lines".format(type))
 
         return canonnpatrol
 
