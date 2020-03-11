@@ -624,81 +624,83 @@ class CanonnPatrol(Frame):
         self.patrol_list = patrol_list
 
     def download(self):
-        debug("Download Patrol Data")
 
-        debug("Patrol Download for system {}".format(self.system))
+        if self.system:
+            debug("Download Patrol Data")
 
-        # if patrol list is populated then was can save
-        if self.patrol_list:
-            self.save_excluded()
-        else:
-            self.load_excluded()
+            debug("Patrol Download for system {}".format(self.system))
 
-        patrol_list = []
-        if self.faction != 1:
-            debug("Getting Faction Data")
-            self.patrol_name = "Cannon Factions"
-            if not self.started:
-                self.event_generate('<<PatrolDisplay>>', when='tail')
+            # if patrol list is populated then was can save
+            if self.patrol_list:
+                self.save_excluded()
+            else:
+                self.load_excluded()
 
-            BGSO, BGSOSys = self.getBGSOveride()  # first variable- for patrol_list, second-for ignore existant systems
+            patrol_list = []
+            if self.faction != 1:
+                debug("Getting Faction Data")
+                self.patrol_name = "Cannon Factions"
+                if not self.started:
+                    self.event_generate('<<PatrolDisplay>>', when='tail')
 
-            patrol_list.extend(BGSO)
+                BGSO, BGSOSys = self.getBGSOveride()  # first variable- for patrol_list, second-for ignore existant systems
 
-            patrol_list.extend(self.getFactionData("Canonn", BGSOSys))
-            patrol_list.extend(self.getFactionData("Canonn Deep Space Research", BGSOSys))
-            try:
-                patrol_list.remove(None)
-            except:
-                debug("Nothing to delete")
+                patrol_list.extend(BGSO)
 
-        if self.thargoids != 1:
-            debug("Getting Thargoid Tour")
-            self.patrol_name = "Thargoid Tour"
-            if not self.started:
-                self.event_generate('<<PatrolDisplay>>', when='tail')
-            patrol_list.extend(self.getTsvPatrol(THARGOIDSITES))
-            
-        if self.guardians != 1:
-            debug("Getting Guardian Tour")
-            self.patrol_name = "Guardian Tour"
-            if not self.started:
-                self.event_generate('<<PatrolDisplay>>', when='tail')
-            patrol_list.extend(self.getJsonPatrol(GUARDIANSITES))            
+                patrol_list.extend(self.getFactionData("Canonn", BGSOSys))
+                patrol_list.extend(self.getFactionData("Canonn Deep Space Research", BGSOSys))
+                try:
+                    patrol_list.remove(None)
+                except:
+                    debug("Nothing to delete")
+
+            if self.thargoids != 1:
+                debug("Getting Thargoid Tour")
+                self.patrol_name = "Thargoid Tour"
+                if not self.started:
+                    self.event_generate('<<PatrolDisplay>>', when='tail')
+                patrol_list.extend(self.getTsvPatrol(THARGOIDSITES))
+
+            if self.guardians != 1:
+                debug("Getting Guardian Tour")
+                self.patrol_name = "Guardian Tour"
+                if not self.started:
+                    self.event_generate('<<PatrolDisplay>>', when='tail')
+                patrol_list.extend(self.getJsonPatrol(GUARDIANSITES))
 
 
-        if self.ships and self.hideships != 1:
-            self.patrol_name = "Your Ships"
-            if not self.started:
-                self.event_generate('<<PatrolDisplay>>', when='tail')
+            if self.ships and self.hideships != 1:
+                self.patrol_name = "Your Ships"
+                if not self.started:
+                    self.event_generate('<<PatrolDisplay>>', when='tail')
 
-            patrol_list.extend(self.ships)
+                patrol_list.extend(self.ships)
 
-        if self.canonn != 1:
-            self.canonnpatrol = self.getCanonnPatrol()
-            patrol_list.extend(self.canonnpatrol)
+            if self.canonn != 1:
+                self.canonnpatrol = self.getCanonnPatrol()
+                patrol_list.extend(self.canonnpatrol)
 
-        if self.edsm != 1:
-            patrol_list.extend(self.getEDSMPatrol())
+            if self.edsm != 1:
+                patrol_list.extend(self.getEDSMPatrol())
 
-        # add exclusions from configuration
-        debug("adding exclusions")
-        for num, val in enumerate(patrol_list):
-            system = val.get("system")
-            type = val.get("type")
+            # add exclusions from configuration
+            debug("adding exclusions")
+            for num, val in enumerate(patrol_list):
+                system = val.get("system")
+                type = val.get("type")
 
-            if self.excluded.get(type):
-                if self.excluded.get(type).get(system):
-                    patrol_list[num]["excluded"] = self.excluded.get(type).get(system)
+                if self.excluded.get(type):
+                    if self.excluded.get(type).get(system):
+                        patrol_list[num]["excluded"] = self.excluded.get(type).get(system)
 
-        # we will sort the patrol list
-        self.patrol_list = patrol_list
-        self.sort_patrol()
+            # we will sort the patrol list
+            self.patrol_list = patrol_list
+            self.sort_patrol()
 
-        debug("download done")
-        self.started = True
-        # poke an evennt safely
-        self.event_generate('<<PatrolDone>>', when='tail')
+            debug("download done")
+            self.started = True
+            # poke an evennt safely
+            self.event_generate('<<PatrolDone>>', when='tail')
 
     def getEDSMPatrol(self):
         url = "https://www.edsm.net/en/galactic-mapping/json"
