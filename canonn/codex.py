@@ -23,6 +23,7 @@ from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from config import config
 from math import sqrt, pow
+import webbrowser
 
 nvl = lambda a, b: a or b
 
@@ -370,6 +371,11 @@ class CodexTypes():
         self.tooltiplist.grid()
         self.tooltiplist.grid_remove()
 
+    def click_icon(self,name):
+        debug("clicked on icon {} ".format(name))
+        webbrowser.open("https://tools.canonn.tech/Signals?system={}".format(quote_plus(self.system)))
+
+
     def addimage(self, name, col):
 
         grey = "{}_grey".format(name)
@@ -380,7 +386,7 @@ class CodexTypes():
 
         self.labels[name].bind("<Enter>", self.enter)
         self.labels[name].bind("<Leave>", self.leave)
-        self.labels[name].bind("<ButtonPress>", self.enter)
+        self.labels[name].bind("<ButtonPress>", lambda event, x=name : self.click_icon(x))
         self.labels[name]["image"] = self.images[name]
 
     def set_image(self, name, enabled):
