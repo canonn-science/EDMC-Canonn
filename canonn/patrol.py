@@ -27,7 +27,7 @@ from canonn.release import Release
 from canonn.systems import Systems
 from config import config
 from contextlib import closing
-from datetime import datetime
+
 from l10n import Locale
 from ttkHyperlinkLabel import HyperlinkLabel
 import datetime
@@ -402,8 +402,8 @@ class CanonnPatrol(Frame):
             states = ""
 
         # 2019-03-24T11:14:38.000Z
-        d1 = datetime.strptime(bgs.get("updated_at"), '%Y-%m-%dT%H:%M:%S.%fZ')
-        d2 = datetime.now()
+        d1 = datetime.datetime.strptime(bgs.get("updated_at"), '%Y-%m-%dT%H:%M:%S.%fZ')
+        d2 = datetime.datetime.now()
 
         last_updated = (d2 - d1).days
         if last_updated == 0:
