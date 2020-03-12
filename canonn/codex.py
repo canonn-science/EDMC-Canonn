@@ -277,7 +277,7 @@ class CodexTypes():
 
                 #    High eccentricity
                 if float(b.get("orbitalEccentricity") or 0) > CodexTypes.eccentricity:
-                    self.merge_poi("Tourist", 'Highly Eccentric Orbit', body)
+                    self.merge_poi("Tourist", 'Highly Eccentric Orbit', body_code)
                 #    Wide rings
                 #    Good jumponium availability (5/6 materials on a single body)
                 #    Full jumponium availability within a single system
