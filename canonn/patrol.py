@@ -912,7 +912,7 @@ class CanonnPatrol(Frame):
             self.update()
 
         if self.system != system and entry.get("event") in ("Location", "FSDJump", "StartUp"):
-            debug("Refresshing Patrol ({})".format(entry.get("event")))
+            debug("Refreshing Patrol ({})".format(entry.get("event")))
             self.system = system
             self.update()
             if self.nearest and self.copypatrol == 1:
