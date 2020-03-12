@@ -283,7 +283,7 @@ class CanonnPatrol(Frame):
         self.started = False
         self.downloaded = False
 
-        #self.patrol_update()
+        # self.patrol_update()
         self.bind('<<PatrolDisplay>>', self.update_desc)
 
     def update_desc(self, event):
@@ -513,7 +513,7 @@ class CanonnPatrol(Frame):
 
         a, b, c = Systems.edsmGetSystem(self.system)
         if '?' in url:
-            newurl="{}&x={}&y={}&z={}".format(url,a,b,c)
+            newurl = "{}&x={}&y={}&z={}".format(url, a, b, c)
         else:
             newurl = "{}?x={}&y={}&z={}".format(url, a, b, c)
 
@@ -546,7 +546,8 @@ class CanonnPatrol(Frame):
                             canonnpatrol.append(
                                 newPatrol(type, system, (float(x), float(y), float(z)), instructions, url, event))
                         except:
-                            error("patrol {},{},{},{},{},{},{},{}".format(type, system, x, y, z, instructions, url, event))
+                            error("patrol {},{},{},{},{},{},{},{}".format(type, system, x, y, z, instructions, url,
+                                                                          event))
                     else:
                         error("Patrol {} contains blank lines".format(type))
 
@@ -678,7 +679,6 @@ class CanonnPatrol(Frame):
                     self.event_generate('<<PatrolDisplay>>', when='tail')
                 patrol_list.extend(self.getJsonPatrol(GUARDIANSITES))
 
-
             if self.ships and self.hideships != 1:
                 self.patrol_name = "Your Ships"
                 if not self.started:
@@ -806,7 +806,7 @@ class CanonnPatrol(Frame):
         nb.Checkbutton(frame, text="Hide Thargoid Sites", variable=self.thargoidbtn).grid(row=2, column=1,
                                                                                           sticky="NW")
         nb.Checkbutton(frame, text="Hide Guardian Sites", variable=self.guardianbtn).grid(row=2, column=2,
-                                                                                          sticky="NW")                                                                                          
+                                                                                          sticky="NW")
         nb.Checkbutton(frame, text="Automatically copy the patrol to the clipboard", variable=self.copypatrolbtn).grid(
             row=3, column=0, sticky="NW", )
 
@@ -864,7 +864,7 @@ class CanonnPatrol(Frame):
         self.edsm = self.edsmbtn.get()
         self.copypatrol = self.copypatrolbtn.get()
         self.thargoids = self.thargoidbtn.get()
-        self.gaurdians = self.guardianbtn.get()        
+        self.gaurdians = self.guardianbtn.get()
 
         if self.visible():
             # we should fire off an extra download
@@ -901,12 +901,11 @@ class CanonnPatrol(Frame):
         self.y = y
         self.z = z
 
-
-
         if cmdr:
             self.cmdr = cmdr
 
         if entry.get("event") in ("Location", "StartUp") and not self.patrol_list:
+            self.system = system
             if not self.downloaded:
                 self.downloaded = True;
                 self.patrol_update()
@@ -1030,7 +1029,7 @@ class CanonnPatrol(Frame):
 
         self.capi_update = True
         if not self.downloaded:
-            self.downloaded=True;
+            self.downloaded = True;
             self.patrol_update()
         self.update()
 
