@@ -833,12 +833,12 @@ class guardianSites(Emitter):
             "SystemAddress": 5079737705833,
             "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
             "Latitude": -10.090128, "Longitude": 114.505409}
+            
+        self.modelreport = None
 
         if ":" in entry.get("Name"):
             prefix, suffix = entry.get("Name").split(':')
             self.index = self.get_index(entry.get("Name"))
-
-            self.modelreport = None
 
             if prefix:
                 prefix = prefix.lower()[1:]
@@ -856,7 +856,7 @@ class guardianSites(Emitter):
                     self.modelreport = 'grreports'
 
     def run(self):
-        if self.modelreport and self.system:
+        if self.modelreport and self.modelreport in ('grreports','gsreports') and self.system:
             payload = self.setPayload()
             payload["userType"] = 'pc'
             payload["reportType"] = 'new'
@@ -874,6 +874,8 @@ class guardianSites(Emitter):
 
             debug(url)
             self.send(payload, url)
+        else:
+            debug("not a Guardian Settlement")
 
     def get_index(self, value):
         a = []
