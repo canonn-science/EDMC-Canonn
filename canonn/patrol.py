@@ -563,7 +563,7 @@ class CanonnPatrol(Frame):
 
         with closing(requests.get(newurl)) as r:
             if not r.status_code == requests.codes.ok:
-                error(json.dumps(self.payload))
+                error(json.dumps(newurl))
                 headers = r.headers
                 contentType = str(headers['content-type'])
                 if 'json' in contentType:
