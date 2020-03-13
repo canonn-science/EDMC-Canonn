@@ -184,8 +184,9 @@ class CodexTypes():
         debug("self.poidata = []")
         usystem = unquote(self.system)
 
-        for r in self.temp_poidata:
-            self.merge_poi(r.get("hud_category"), r.get("english_name"), r.get("body"))
+        if self.temp_poidata:
+            for r in self.temp_poidata:
+                self.merge_poi(r.get("hud_category"), r.get("english_name"), r.get("body"))
 
         bodies = self.temp_edsmdata.json().get("bodies")
         if bodies:
