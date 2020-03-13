@@ -27,9 +27,10 @@ from canonn.release import Release
 from canonn.systems import Systems
 from config import config
 from contextlib import closing
-from datetime import datetime
+
 from l10n import Locale
 from ttkHyperlinkLabel import HyperlinkLabel
+import datetime
 
 CYCLE = 60 * 1000 * 60  # 60 minutes
 DEFAULT_URL = ""
@@ -401,8 +402,8 @@ class CanonnPatrol(Frame):
             states = ""
 
         # 2019-03-24T11:14:38.000Z
-        d1 = datetime.strptime(bgs.get("updated_at"), '%Y-%m-%dT%H:%M:%S.%fZ')
-        d2 = datetime.now()
+        d1 = datetime.datetime.strptime(bgs.get("updated_at"), '%Y-%m-%dT%H:%M:%S.%fZ')
+        d2 = datetime.datetime.now()
 
         last_updated = (d2 - d1).days
         if last_updated == 0:
@@ -433,6 +434,47 @@ class CanonnPatrol(Frame):
 
         debug("{}: {}".format(bgs.get("system_name"), retval))
         return retval
+
+
+
+    def getGnosis(self):
+
+        def find_closest_thursday():
+            date = datetime.datetime.today()
+            date = date.replace(hour=0, minute=0, second=0, microsecond=0)
+            THURSDAY = 4
+            year, week, day = date.isocalendar()
+            delta = datetime.timedelta(days=THURSDAY - day)
+            return date + delta + datetime.timedelta(hours=8)
+
+        patrol=[]
+        url = "https://www.edsm.net/en/tools/canonn/gnosis"
+        r = requests.get(url)
+
+        if not r.status_code == requests.codes.ok:
+            error(json.dumps(self.payload))
+            headers = r.headers
+            contentType = str(headers['content-type'])
+            if 'json' in contentType:
+                error(json.dumps(r.content))
+            else:
+                error(r.content)
+            error(r.status_code)
+        else:
+            j=r.json()
+
+            update_time=datetime.datetime.strptime(j.get("station").get("updateTime").get("information"), '%Y-%m-%d %H:%M:%S')
+            target_time=find_closest_thursday()
+
+            if update_time > target_time:
+                instructions="Come and visit The Gnosis, your lab is waiting for you. Distance to arrival {}ls".format(str(round(float(j.get("station").get("distanceToArrival")),2)))
+            else:
+                instructions = "The last known position of The Gnosis. Last updated {}".format(update_time)
+            x,y,z = Systems.edsmGetSystem(j.get("name"))
+
+            patrol.append(newPatrol("GNOSIS", j.get("name"), (float(x), float(y), float(z)), instructions, None, None))
+        return patrol
+
 
     def getBGSOveride(self):
         BGSOveride = []
@@ -664,6 +706,12 @@ class CanonnPatrol(Frame):
                     patrol_list.remove(None)
                 except:
                     debug("Nothing to delete")
+
+            debug("Getting Gnosis")
+            self.patrol_name = "The Gnosis"
+            if not self.started:
+                self.event_generate('<<PatrolDisplay>>', when='tail')
+            patrol_list.extend(self.getGnosis())
 
             if self.thargoids != 1:
                 debug("Getting Thargoid Tour")
