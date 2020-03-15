@@ -37,15 +37,15 @@ def surface_pressure(tag, value):
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
-        debug("initialise POITYpes Thread")
+        #debug("initialise POITYpes Thread")
         threading.Thread.__init__(self)
         self.system = system
         self.callback = callback
 
     def run(self):
-        debug("running poitypes")
+        #debug("running poitypes")
         self.callback(self.system)
-        debug("poitypes Callback Complete")
+        #debug("poitypes Callback Complete")
 
     # def recycle(self):
     #     print "Recycling Labels"
@@ -292,29 +292,29 @@ class CodexTypes():
         self.visualise()
 
     def getdata(self, system):
-        debug("Getting POI data in thread")
+        #debug("Getting POI data in thread")
         CodexTypes.waiting = True
-        debug("CodexTypes.waiting = True")
+        #debug("CodexTypes.waiting = True")
 
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
             quote_plus(system.encode('utf8')))
-        debug(url)
+        #debug(url)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
-            debug("got POI Data")
+            #debug("got POI Data")
             self.temp_poidata = r.json()
 
         edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
-        debug(edsm)
+        #debug(edsm)
         r = requests.get(edsm)
         if r.status_code == requests.codes.ok:
-            debug("got EDSM Data")
+            #debug("got EDSM Data")
             self.temp_edsmdata = r
 
         CodexTypes.waiting = False
-        debug("event_generate")
+        #debug("event_generate")
         self.frame.event_generate('<<POIData>>', when='head')
-        debug("Finished getting POI data in thread")
+        #debug("Finished getting POI data in thread")
 
     def enter(self, event):
 
