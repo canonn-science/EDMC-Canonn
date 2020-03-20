@@ -1,11 +1,12 @@
-import threading
+import json
+import os
 import requests
 import sys
-import json
+import threading
 import time
-from canonn.emitter import Emitter
 from canonn.debug import Debug
 from canonn.debug import debug, error
+from canonn.emitter import Emitter
 
 '''
 Added the above events to: https://api.canonn.tech:2053/excludeevents
@@ -60,22 +61,24 @@ class CanonnJournal(Emitter):
             payload["Longitude"] = self.lon
         return payload
 
+    @classmethod
+    def get_excludes(cls):
+        # hard coded may as well get the exclude from live
+        url = "https://api.canonn.tech"
+        tempexcludes = {}
+        r = requests.get("{}/excludeevents?_limit=1000".format(url))
+
+        if r.status_code == requests.codes.ok:
+            # populate a local variable so other threads dont see incomplete results
+            for exc in r.json():
+                tempexcludes[exc["eventName"]] = True
+            CanonnJournal.exclusions = tempexcludes
+            debug("Jouurnal excludes got")
+        else:
+            error("{}/excludeevents".format(url))
+
     def run(self):
         url = self.getUrl()
-        # Plan to migrate this over to use eventAltName in the future, no ETA yet pending CAPIv2 changes
-        if not CanonnJournal.exclusions:
-            debug("getting journal excludes")
-            tempexcludes = {}
-            r = requests.get("{}/excludeevents?_limit=1000".format(url))
-
-            if r.status_code == requests.codes.ok:
-                # populate a local variable so other threads dont see incomplete results
-                for exc in r.json():
-                    tempexcludes[exc["eventName"]] = True
-                CanonnJournal.exclusions = tempexcludes
-                debug("Jouurnal excludes got")
-            else:
-                error("{}/excludeevents".format(url))
 
         payload = {}
         payload["systemName"] = self.system
@@ -104,9 +107,32 @@ class CanonnJournal(Emitter):
 '''
 
 
+class Exclude(threading.Thread):
+    def __init__(self, callback):
+        # debug("initialise POITYpes Thread")
+        threading.Thread.__init__(self)
+        self.callback = callback
+
+    def run(self):
+        debug("getting excludes from strapi")
+        self.callback()
+        # debug("poitypes Callback Complete")
+
+
+def plugin_start(plugin_dir):
+    # CanonnJournal.exclusions=
+    tempexcludes = {}
+    json.loads(open(os.path.join(plugin_dir, 'data/excludeevents.json')).read())
+    for exc in json.loads(open(os.path.join(plugin_dir, 'data/excludeevents.json')).read()):
+        tempexcludes[exc["eventName"]] = True
+
+    CanonnJournal.exclusions = tempexcludes
+
+    debug("Journal excludes got now firing off thread to update them")
+    Exclude(CanonnJournal.get_excludes).start()
+
+
 def submit(cmdr, is_beta, system, station, entry, client, body, lat, lon):
-
-
     if CanonnJournal.exclusions:
         included_event = not CanonnJournal.exclusions.get(entry.get("event"))
 

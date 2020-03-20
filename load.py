@@ -80,14 +80,7 @@ def plugin_start3(plugin_dir):
     """
     Load Template plugin into EDMC
     """
-
-    # print this.patrol
-    release.Release.plugin_start(plugin_dir)
-    Debug.setClient(this.client_version)
-    patrol.CanonnPatrol.plugin_start(plugin_dir)
-    codex.CodexTypes.plugin_start(plugin_dir)
-
-    return 'Canonn'
+    return plugin_start(plugin_dir)
 
 
 def plugin_start(plugin_dir):
@@ -100,6 +93,7 @@ def plugin_start(plugin_dir):
     Debug.setClient(this.client_version)
     patrol.CanonnPatrol.plugin_start(plugin_dir)
     codex.CodexTypes.plugin_start(plugin_dir)
+    journaldata.plugin_start(plugin_dir)
 
     return 'Canonn'
 
