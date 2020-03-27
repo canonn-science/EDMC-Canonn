@@ -260,9 +260,29 @@ class CodexTypes():
                     r1 = float(ring.get("outerRadius")) # km
                     #convert au to km
                     r2 = float(body.get("semiMajorAxis"))*149597870.691
+                    r3 = float(body.get("radius"))
                     # and the orbit of the body is close to the outer radius
-                    if r2 - r1 < 1700:
+                    debug("Shep {} {} {}".format(r1,r2,r3))
+                    if (r2 -r3) - r1 < 1700:
                         self.merge_poi("Tourist", 'Shepherd Moon', body_code)
+            #gah i need to refector this to avoid duplication
+            if parent.get("Star") and bodies.get(parent.get("Star")).get("rings"):
+                debug("Parent has rings")
+                # If the parent body has a ring
+                for ring in bodies.get(parent.get("Star")).get("rings"):
+                    r1 = float(ring.get("outerRadius")) # km
+                    #convert au to km
+                    r2 = float(body.get("semiMajorAxis"))*149597870.691
+                    r3 = float(body.get("radius"))
+                    # and the orbit of the body is close to the outer radius
+                    debug("Shep {} {} {}".format(r1,r2,r3))
+                    if (r2 -r3) - r1 < 1700:
+                        self.merge_poi("Tourist", 'Shepherd Planet', body_code)
+
+    def trojan(self,bodies):
+        #https://forums.frontier.co.uk/threads/hunt-for-trojans.369380/page-7
+        #do nothing until you work out how to do it
+        return False
 
 
     def evisualise(self, event):
@@ -313,6 +333,8 @@ class CodexTypes():
                 for k in bodies.keys():
                     if bodies.get(k).get("name") == self.system and bodies.get(k).get("solarRadius"):
                         CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies.get(k).get("solarRadius"))
+
+                self.trojan(bodies)
 
                 for k in bodies.keys():
                     b = bodies.get(k)
