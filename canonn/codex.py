@@ -249,6 +249,22 @@ class CodexTypes():
     def tvisualise(self):
         self.evisualise(None)
 
+    def sheperd_moon(self,body,bodies):
+        body_code = body.get("name").replace(self.system, '')
+        if body.get("parents"):
+            parent = body.get("parents")[0]
+            if parent.get("Planet") and bodies.get(parent.get("Planet")).get("rings"):
+                debug("Parent has rings")
+                # If the parent body has a ring
+                for ring in bodies.get(parent.get("Planet")).get("rings"):
+                    r1 = float(ring.get("outerRadius")) # km
+                    #convert au to km
+                    r2 = float(body.get("semiMajorAxis"))*149597870.691
+                    # and the orbit of the body is close to the outer radius
+                    if r2 - r1 < 1700:
+                        self.merge_poi("Tourist", 'Shepherd Moon', body_code)
+
+
     def evisualise(self, event):
         debug("evisualise")
         self.poidata = []
@@ -272,10 +288,6 @@ class CodexTypes():
                 if not "Belt Cluster" in b.get("name"):
                     debug("addimg body: {}".format(b.get("name")))
                     self.bodies[b.get("bodyId")] = b
-
-        #debug("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-        #debug(json.dumps(self.bodies, indent=4))
-        #debug("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
         if len(self.bodies) > 0:
             debug("We have bodies")
@@ -307,6 +319,8 @@ class CodexTypes():
                     # debug(json.dumps(b,indent=4))
                     body_code = b.get("name").replace(self.system, '')
                     body_name = b.get("name")
+
+                    self.sheperd_moon(b,bodies)
 
                     # Terraforming
                     if b.get('terraformingState') == 'Candidate for terraforming':
