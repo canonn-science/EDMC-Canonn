@@ -262,9 +262,10 @@ class CodexTypes():
                     r2 = float(body.get("semiMajorAxis"))*149597870.691
                     r3 = float(body.get("radius"))
                     # and the orbit of the body is close to the outer radius
-                    debug("Shep {} {} {}".format(r1,r2,r3))
+
                     if (r2 -r3) - r1 < 1700:
                         self.merge_poi("Tourist", 'Shepherd Moon', body_code)
+                        debug("Shepherd Moon {} {} {}".format(r1, r2, r3))
             #gah i need to refector this to avoid duplication
             if parent.get("Star") and bodies.get(parent.get("Star")).get("rings"):
                 debug("Parent has rings")
@@ -278,6 +279,8 @@ class CodexTypes():
                     debug("Shep {} {} {}".format(r1,r2,r3))
                     if (r2 -r3) - r1 < 1700:
                         self.merge_poi("Tourist", 'Shepherd Planet', body_code)
+                        debug("Shepherd Planet {} {} {}".format(r1, r2, r3))
+                        debug((r2-r1)-r3)
 
     def trojan(self,bodies):
         #https://forums.frontier.co.uk/threads/hunt-for-trojans.369380/page-7
