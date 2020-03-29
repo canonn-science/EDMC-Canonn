@@ -29,7 +29,7 @@ nvl = lambda a, b: a or b
 
 # This function will return a body in edsm format
 def journal2edsm(j):
-    #debug(json.dumps(j, indent=4))
+    # debug(json.dumps(j, indent=4))
 
     def convertAtmosphere(a):
         r = {}
@@ -68,10 +68,10 @@ def journal2edsm(j):
             e["atmosphereType"] = j.get("Atmosphere")
         else:
             e["atmosphereType"] = "No atmosphere"
-        if j.get("TerrformingState") == "":
-            e["terraformingState"] = False
-        else:
+        if j.get("TerraformState") == "Terraformable":
             e["terraformingState"] = True
+        else:
+            e["terraformingState"] = False
         if j.get("Volcanism") == "":
             e["volcanismType"] = "No volcanism"
         else:
@@ -240,16 +240,16 @@ class CodexTypes():
         self.frame.grid_remove()
         self.allowed = False
         self.bodies = None
-        self.progress=tk.Label(self.container,text="?")
-        self.progress.grid(row=0,column=0)
+        self.progress = tk.Label(self.container, text="?")
+        self.progress.grid(row=0, column=0)
         self.progress.grid_remove()
-        #self.progress.grid_remove()
+        # self.progress.grid_remove()
 
     # wrap visualise so we can call from time
     def tvisualise(self):
         self.evisualise(None)
 
-    def sheperd_moon(self,body,bodies):
+    def sheperd_moon(self, body, bodies):
         body_code = body.get("name").replace(self.system, '')
         if body.get("parents"):
             parent = body.get("parents")[0]
@@ -257,36 +257,62 @@ class CodexTypes():
                 debug("Parent has rings")
                 # If the parent body has a ring
                 for ring in bodies.get(parent.get("Planet")).get("rings"):
-                    r1 = float(ring.get("outerRadius")) # km
-                    #convert au to km
-                    r2 = float(body.get("semiMajorAxis"))*149597870.691
+                    r1 = float(ring.get("outerRadius"))  # km
+                    # convert au to km
+                    r2 = float(body.get("semiMajorAxis")) * 149597870.691
                     r3 = float(body.get("radius"))
                     # and the orbit of the body is close to the outer radius
 
-                    if (r2 -r3) - r1 < 1700:
+                    if (r2 - r3) - r1 < 1700:
                         self.merge_poi("Tourist", 'Shepherd Moon', body_code)
                         debug("Shepherd Moon {} {} {}".format(r1, r2, r3))
-            #gah i need to refector this to avoid duplication
+            # gah i need to refector this to avoid duplication
             if parent.get("Star") and bodies.get(parent.get("Star")).get("rings"):
                 debug("Parent has rings")
                 # If the parent body has a ring
                 for ring in bodies.get(parent.get("Star")).get("rings"):
-                    r1 = float(ring.get("outerRadius")) # km
-                    #convert au to km
-                    r2 = float(body.get("semiMajorAxis"))*149597870.691
+                    r1 = float(ring.get("outerRadius"))  # km
+                    # convert au to km
+                    r2 = float(body.get("semiMajorAxis")) * 149597870.691
                     r3 = float(body.get("radius"))
                     # and the orbit of the body is close to the outer radius
-                    debug("Shep {} {} {}".format(r1,r2,r3))
-                    if (r2 -r3) - r1 < 1700:
+                    debug("Shep {} {} {}".format(r1, r2, r3))
+                    if (r2 - r3) - r1 < 1700:
                         self.merge_poi("Tourist", 'Shepherd Planet', body_code)
                         debug("Shepherd Planet {} {} {}".format(r1, r2, r3))
-                        debug((r2-r1)-r3)
+                        debug((r2 - r1) - r3)
 
-    def trojan(self,bodies):
-        #https://forums.frontier.co.uk/threads/hunt-for-trojans.369380/page-7
-        #do nothing until you work out how to do it
-        return False
+    def trojan(self, candidate, bodies):
+        # https://forums.frontier.co.uk/threads/hunt-for-trojans.369380/page-7
+        # do nothing until you work out how to do it
+        def get_parent(body):
+            parents = body.get("parents")
+            if parents:
+                pd = parents[0]
+                pl = pd.items()
+                p = pl[0][1]
+                return p
 
+        if candidate.get("argOfPeriapsis"):
+            body_code = candidate.get("name").replace(self.system, '')
+            for body in bodies.values():
+                # set up some booleans
+                if body.get("argOfPeriapsis") and candidate.get("argOfPeriapsis"):
+                    not_self = (body.get("bodyId") != candidate.get("bodyId"))
+                    sibling = (get_parent(body) == get_parent(candidate))
+                    axis_match = (body.get("semiMajorAxis") == candidate.get("semiMajorAxis"))
+                    eccentricity_match = (body.get("orbitalEccentricity") == candidate.get("orbitalEccentricity"))
+                    inclination_match = (body.get("orbitalInclination") == candidate.get("orbitalInclination"))
+                    period_match = (body.get("orbitalPeriod") == candidate.get("orbitalPeriod"))
+                    non_binary = (
+                                180 != abs(float(body.get("argOfPeriapsis")) - float(candidate.get("argOfPeriapsis"))))
+                    attribute_match = (axis_match and eccentricity_match and inclination_match and period_match)
+
+                    if not_self and sibling and attribute_match and non_binary:
+                        self.merge_poi("Tourist", "Trojan {}".format(candidate.get("type")), body_code)
+        else:
+            debug("Arg of periapsis is None {} {} {}".format(candidate.get("name"), candidate.get("type"),
+                                                             candidate.get("bodyId")))
 
     def evisualise(self, event):
         debug("evisualise")
@@ -322,13 +348,13 @@ class CodexTypes():
                     CodexTypes.fsscount = 0
                 debug("body reconciliation: {} {}".format(CodexTypes.fsscount, nvl(CodexTypes.bodycount, 0)))
                 if nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0):
-                    #self.merge_poi("Planets", "Unexplored Bodies", "")
+                    # self.merge_poi("Planets", "Unexplored Bodies", "")
                     if CodexTypes.fsscount > 0:
                         self.progress.grid()
-                        #self.progress["text"]="{}%".format(round((float(CodexTypes.bodycount)/float(CodexTypes.fsscount))*100,1))
-                        self.progress["text"] = "{}/{}".format(CodexTypes.bodycount,CodexTypes.fsscount)
+                        # self.progress["text"]="{}%".format(round((float(CodexTypes.bodycount)/float(CodexTypes.fsscount))*100,1))
+                        self.progress["text"] = "{}/{}".format(CodexTypes.bodycount, CodexTypes.fsscount)
                 else:
-                    #self.remove_poi("Planets", "Unexplored Bodies")
+                    # self.remove_poi("Planets", "Unexplored Bodies")
                     self.progress.grid_remove()
 
                 debug("bodycount: {}".format(CodexTypes.bodycount))
@@ -337,15 +363,14 @@ class CodexTypes():
                     if bodies.get(k).get("name") == self.system and bodies.get(k).get("solarRadius"):
                         CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies.get(k).get("solarRadius"))
 
-                self.trojan(bodies)
-
                 for k in bodies.keys():
                     b = bodies.get(k)
                     # debug(json.dumps(b,indent=4))
                     body_code = b.get("name").replace(self.system, '')
                     body_name = b.get("name")
 
-                    self.sheperd_moon(b,bodies)
+                    self.sheperd_moon(b, bodies)
+                    self.trojan(b, bodies)
 
                     # Terraforming
                     if b.get('terraformingState') == 'Candidate for terraforming':
@@ -528,7 +553,7 @@ class CodexTypes():
         self.images[name] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
         self.images[grey] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
         self.labels[name] = tk.Label(self.container, image=self.images.get(grey), text=name)
-        self.labels[name].grid(row=0, column=col+1)
+        self.labels[name].grid(row=0, column=col + 1)
 
         self.labels[name].bind("<Enter>", self.enter)
         self.labels[name].bind("<Leave>", self.leave)
@@ -627,7 +652,7 @@ class CodexTypes():
 
     def visualise(self):
 
-        unscanned=nvl(CodexTypes.fsscount,0) > nvl(CodexTypes.bodycount,0)
+        unscanned = nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0)
 
         debug("Codex visualise")
         # we may want to try again if the data hasn't been fetched yet
