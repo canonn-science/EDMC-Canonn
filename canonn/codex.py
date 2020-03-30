@@ -259,13 +259,13 @@ class CodexTypes():
                 for ring in bodies.get(parent.get("Planet")).get("rings"):
                     r1 = float(ring.get("outerRadius"))  # km
                     # convert au to km
-                    r2 = float(body.get("semiMajorAxis")) * 149597870.691
+                    r2 = float(body.get("semiMajorAxis")) * 149597870691
                     r3 = float(body.get("radius"))
                     # and the orbit of the body is close to the outer radius
 
-                    if (r2 - r3) - r1 < 1700:
+                    if r2 - r3 < r1 + 1700:
                         self.merge_poi("Tourist", 'Shepherd Moon', body_code)
-                        debug("Shepherd Moon {} {} {}".format(r1, r2, r3))
+                        debug("Shepherd Moon {} {} {} {} {}".format(r1, r2, r3,body.get("axialTilt"),bodies.get(parent.get("Planet")).get("axialTilt")))
             # gah i need to refector this to avoid duplication
             if parent.get("Star") and bodies.get(parent.get("Star")).get("rings"):
                 debug("Parent has rings")
@@ -273,11 +273,11 @@ class CodexTypes():
                 for ring in bodies.get(parent.get("Star")).get("rings"):
                     r1 = float(ring.get("outerRadius"))  # km
                     # convert au to km
-                    r2 = float(body.get("semiMajorAxis")) * 149597870.691
+                    r2 = float(body.get("semiMajorAxis")) * 149597870691
                     r3 = float(body.get("radius"))
                     # and the orbit of the body is close to the outer radius
                     debug("Shep {} {} {}".format(r1, r2, r3))
-                    if (r2 - r3) - r1 < 1700:
+                    if r2 - r3 < r1 + 1700:
                         self.merge_poi("Tourist", 'Shepherd Planet', body_code)
                         debug("Shepherd Planet {} {} {}".format(r1, r2, r3))
                         debug((r2 - r1) - r3)
@@ -308,8 +308,16 @@ class CodexTypes():
                                 180 != abs(float(body.get("argOfPeriapsis")) - float(candidate.get("argOfPeriapsis"))))
                     attribute_match = (axis_match and eccentricity_match and inclination_match and period_match)
 
+                    if candidate.get("rings"):
+                        ringo="Ringed "
+                    else:
+                        ringo=""
+
                     if not_self and sibling and attribute_match and non_binary:
-                        self.merge_poi("Tourist", "Trojan {}".format(candidate.get("type")), body_code)
+                        if candidate.get('subType') in CodexTypes.body_types.keys():
+                            self.merge_poi("Tourist", "{}Trojan {}".format(ringo,CodexTypes.body_types.get(candidate.get('subType'))), body_code)
+                        else:
+                            self.merge_poi("Tourist", "{}Trojan {}".format(ringo,candidate.get("type")), body_code)
         else:
             debug("Arg of periapsis is None {} {} {}".format(candidate.get("name"), candidate.get("type"),
                                                              candidate.get("bodyId")))
