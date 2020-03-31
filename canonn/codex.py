@@ -94,9 +94,9 @@ def journal2edsm(j):
             e["rings"].append(
                 {"name": ring.get("Name"),
                  "type": ring.get("RingClass"),
-                 "mass": float(j.get("MassMT")),
-                 "innerRadius": float(j.get("innerRadius"))/1000,
-                 "outerRadius": float(j.get("outerRadius"))/1000
+                 "mass": float(ring.get("MassMT")),
+                 "innerRadius": float(ring.get("innerRadius"))/1000,
+                 "outerRadius": float(ring.get("outerRadius"))/1000
                  }
             )
     if j.get("SemiMajorAxis"):
