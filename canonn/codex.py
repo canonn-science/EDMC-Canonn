@@ -88,8 +88,20 @@ def journal2edsm(j):
     e["orbitalEccentricity"] = j.get("Eccentricity")
     e["rotationalPeriodTidallyLocked"] = (j.get("TidalLock") or False)
     e["name"] = j.get("BodyName")
+    if j.get("Rings"):
+        e["rings"]=[]
+        for ring in j.get("Rings"):
+            e["rings"].append(
+                {"name": ring.get("Name"),
+                 "type": ring.get("RingClass"),
+                 "mass": float(j.get("MassMT")),
+                 "innerRadius": float(j.get("innerRadius"))/1000,
+                 "outerRadius": float(j.get("outerRadius"))/1000
+                 }
+            )
     if j.get("SemiMajorAxis"):
         e["semiMajorAxis"] = j.get("SemiMajorAxis") / 149597870700
+    debug(json.dumps(e,indent=4))
     return e
 
 
@@ -253,7 +265,7 @@ class CodexTypes():
         body_code = body.get("name").replace(self.system, '')
         if body.get("parents"):
             parent = body.get("parents")[0]
-            if parent.get("Planet") and bodies.get(parent.get("Planet")).get("rings"):
+            if parent.get("Planet") and bodies.get(parent.get("Planet")) and bodies.get(parent.get("Planet")).get("rings"):
                 debug("Parent has rings")
                 # If the parent body has a ring
                 for ring in bodies.get(parent.get("Planet")).get("rings"):
@@ -267,7 +279,7 @@ class CodexTypes():
                         self.merge_poi("Tourist", 'Shepherd Moon', body_code)
                         debug("Shepherd Moon {} {} {} {} {}".format(r1, r2, r3,body.get("axialTilt"),bodies.get(parent.get("Planet")).get("axialTilt")))
             # gah i need to refector this to avoid duplication
-            if parent.get("Star") and bodies.get(parent.get("Star")).get("rings"):
+            if parent.get("Star") and bodies.get(parent.get("Star")) and bodies.get(parent.get("Star")).get("rings"):
                 debug("Parent has rings")
                 # If the parent body has a ring
                 for ring in bodies.get(parent.get("Star")).get("rings"):
