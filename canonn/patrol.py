@@ -487,7 +487,7 @@ class CanonnPatrol(Frame):
 
                 system, x, y, z, TINF, TFAC, Description = row
                 instructions = Description.format(TFAC, TINF)
-                SystemsOvireden = []
+                #SystemsOvireden = []
 
                 if system != '':
                     try:
@@ -499,7 +499,7 @@ class CanonnPatrol(Frame):
                             "patrol {},{},{},{},{},{},{},{}".format("BGSO", system, x, y, z, instructions, None, None))
                 else:
                     error("Patrol contains blank lines")
-                debug(BGSOveride)
+                #debug(BGSOveride)
         return BGSOveride, SystemsOvireden
 
     def getBGSPatrol(self, bgs, BGSOSys):
@@ -659,7 +659,7 @@ class CanonnPatrol(Frame):
     def keyval(self, k):
         # code smell!
         # getting a blank or null system so we will push it to the end
-        if self.system:
+        if self.system and k:
             x, y, z = Systems.edsmGetSystem(self.system)
             return getDistance((x, y, z), k.get("coords"))
         else:
@@ -670,10 +670,11 @@ class CanonnPatrol(Frame):
         patrol_list = sorted(self.patrol_list, key=self.keyval)
 
         for num, val in enumerate(patrol_list):
-            system = val.get("system")
-            type = val.get("type")
+            if val:
+                system = val.get("system")
+                type = val.get("type")
 
-            patrol_list[num]["index"] = num
+                patrol_list[num]["index"] = num
         self.patrol_list = patrol_list
 
     def download(self):
@@ -698,10 +699,14 @@ class CanonnPatrol(Frame):
 
                 BGSO, BGSOSys = self.getBGSOveride()  # first variable- for patrol_list, second-for ignore existant systems
 
-                patrol_list.extend(BGSO)
+                if BGSO:
+                    patrol_list.extend(BGSO)
 
-                patrol_list.extend(self.getFactionData("Canonn", BGSOSys))
-                patrol_list.extend(self.getFactionData("Canonn Deep Space Research", BGSOSys))
+                p = self.getFactionData("Canonn", BGSOSys)
+                if p:
+                    patrol_list.extend(p)
+                p = self.getFactionData("Canonn Deep Space Research", BGSOSys)
+                patrol_list.extend(p)
                 try:
                     patrol_list.remove(None)
                 except:
@@ -744,12 +749,14 @@ class CanonnPatrol(Frame):
             # add exclusions from configuration
             debug("adding exclusions")
             for num, val in enumerate(patrol_list):
-                system = val.get("system")
-                type = val.get("type")
+                if val:
 
-                if self.excluded.get(type):
-                    if self.excluded.get(type).get(system):
-                        patrol_list[num]["excluded"] = self.excluded.get(type).get(system)
+                    system = val.get("system")
+                    type = val.get("type")
+
+                    if self.excluded.get(type):
+                        if self.excluded.get(type).get(system):
+                            patrol_list[num]["excluded"] = self.excluded.get(type).get(system)
 
             # we will sort the patrol list
             self.patrol_list = patrol_list
@@ -882,17 +889,18 @@ class CanonnPatrol(Frame):
         nearest = ""
         for num, patrol in enumerate(self.patrol_list):
             # add the index to the patrol so we can navigate
-            self.patrol_list[num]["index"] = int(num)
+            if patrol:
+                self.patrol_list[num]["index"] = int(num)
 
-            if not patrol.get("excluded"):
-                if nearest != "":
+                if not patrol.get("excluded"):
+                    if nearest != "":
 
-                    if getDistance(location, patrol.get("coords")) < getDistance(location, nearest.get("coords")):
+                        if getDistance(location, patrol.get("coords")) < getDistance(location, nearest.get("coords")):
+                            nearest = patrol
+
+                    else:
+
                         nearest = patrol
-
-                else:
-
-                    nearest = patrol
 
         return nearest
 
