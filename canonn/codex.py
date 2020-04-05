@@ -293,7 +293,7 @@ class CodexTypes():
                     r3 = float(body.get("radius")) * 1000
                     # and the orbit of the body is close to the outer radius
 
-                    if r2 - r3 < r1 + 15000000 and density > 0.06:
+                    if r2 - r3 < r1 + 15000000:
                         self.merge_poi("Tourist", 'Shepherd Moon', body_code)
                         debug("Shepherd Moon {} {} {} {} {}".format(r1, r2, r3, body.get("axialTilt"),
                                                                     bodies.get(parent.get("Planet")).get("axialTilt")))
@@ -310,7 +310,7 @@ class CodexTypes():
                     r3 = float(body.get("radius")) * 1000
                     # and the orbit of the body is close to the outer radius
                     debug("Shep {} {} {}".format(r1, r2, r3))
-                    if r2 - r3 < r1 + 15000000 and density > 0.06:
+                    if r2 - r3 < r1 + 15000000:
                         self.merge_poi("Tourist", 'Shepherd Planet', body_code)
                         debug("Shepherd Planet {} {} {}".format(r1, r2, r3))
                         debug((r2 - r1) - r3)
