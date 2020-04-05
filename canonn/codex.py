@@ -70,9 +70,9 @@ def journal2edsm(j):
         else:
             e["atmosphereType"] = "No atmosphere"
         if j.get("TerraformState") == "Terraformable":
-            e["terraformingState"] = True
+            e["terraformingState"] = 'Candidate for terraforming'
         else:
-            e["terraformingState"] = False
+            e["terraformingState"] = 'Not terraformable'
         if j.get("Volcanism") == "":
             e["volcanismType"] = "No volcanism"
         else:
