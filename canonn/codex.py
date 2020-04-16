@@ -356,6 +356,18 @@ class CodexTypes():
             debug("Arg of periapsis is None {} {} {}".format(candidate.get("name"), candidate.get("type"),
                                                              candidate.get("bodyId")))
 
+    def ringed_star(self, candidate):
+        hasRings=False
+        body_code = candidate.get("name").replace(self.system, '')
+
+        if candidate.get("rings") and candidate.get('type') == 'Star':
+            for ring in candidate.get("rings"):
+                if "Ring" in ring.get("name"):
+                    hasRings=True
+
+        if hasRings:
+            self.merge_poi("Tourist","Ringed Star",body_code)
+
     def evisualise(self, event):
         debug("evisualise")
         self.poidata = []
@@ -413,10 +425,14 @@ class CodexTypes():
 
                     self.sheperd_moon(b, bodies)
                     self.trojan(b, bodies)
+                    self.ringed_star(b)
 
                     # Terraforming
                     if b.get('terraformingState') == 'Candidate for terraforming':
-                        self.merge_poi("Planets", "Terraformable", body_code)
+                        if b.get('isLandable'):
+                            self.merge_poi("Planets", "Landable Terraformable", body_code)
+                        else:
+                            self.merge_poi("Planets", "Terraformable", body_code)
 
                     # Landable Volcanism
                     if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get(
