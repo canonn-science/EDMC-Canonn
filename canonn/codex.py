@@ -28,6 +28,14 @@ from math import sqrt, pow
 nvl = lambda a, b: a or b
 
 
+def get_parent(body):
+    parents = body.get("parents")
+    if parents:
+        pd = parents[0]
+        pl = pd.items()
+        p = pl[0][1]
+        return p
+
 # This function will return a body in edsm format
 def journal2edsm(j):
     # debug(json.dumps(j, indent=4))
@@ -314,17 +322,17 @@ class CodexTypes():
                         self.merge_poi("Tourist", 'Shepherd Planet', body_code)
                         debug("Shepherd Planet {} {} {}".format(r1, r2, r3))
                         debug((r2 - r1) - r3)
+    def ringed_siblings(self, candidate, bodies,body_code):
+        #need to modify this to look at barycentres too
+        parent=bodies.get(get_parent(candidate))
+
+        if parent and parent.get("rings") and candidate.get("rings"):
+            if candidate.get("type") == "Planet" and parent.get("type") == "Planet":
+                self.merge_poi("Tourist","Ringed Family", body_code)
+
 
     def trojan(self, candidate, bodies):
         # https://forums.frontier.co.uk/threads/hunt-for-trojans.369380/page-7
-        # do nothing until you work out how to do it
-        def get_parent(body):
-            parents = body.get("parents")
-            if parents:
-                pd = parents[0]
-                pl = pd.items()
-                p = pl[0][1]
-                return p
 
         if candidate.get("argOfPeriapsis"):
             body_code = candidate.get("name").replace(self.system, '')
@@ -426,6 +434,7 @@ class CodexTypes():
                     self.sheperd_moon(b, bodies)
                     self.trojan(b, bodies)
                     self.ringed_star(b)
+                    self.ringed_siblings(b,bodies,body_code)
 
                     # Terraforming
                     if b.get('terraformingState') == 'Candidate for terraforming':
