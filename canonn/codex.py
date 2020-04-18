@@ -36,6 +36,24 @@ def get_parent(body):
         p = pl[0][1]
         return p
 
+def get_area(inner,outer):
+    a1=math.pi*pow(inner,2)
+    a2=math.pi*pow(outer,2)
+    return a2-a1
+
+
+def get_density(mass,inner,outer):
+    a=get_area(inner,outer)
+    #print("{} {} {}".format(mass,inner,outer))
+    #add a tiny number to force non zero
+    if a > 0:
+        density=mass/a
+        #print(density)
+    else:
+        density = 0
+    return density
+
+
 # This function will return a body in edsm format
 def journal2edsm(j):
     # debug(json.dumps(j, indent=4))
@@ -375,6 +393,19 @@ class CodexTypes():
 
         if hasRings:
             self.merge_poi("Tourist","Ringed Star",body_code)
+
+    def rings(self,candidate,body_code):
+        if candidate.get("rings"):
+            for ring in candidate.get("rings"):
+                area=get_area(ring.get("innerRadius"),ring.get("outerRadius"))
+
+                if "Ring" in ring.get("name").replace(self.system,''):
+                    if area > 7.604221648984754e+17 + (2*3.91663339734517e+19):
+                        self.merge_poi("Tourist", "Large Area Rings", body_code)
+                    elif ring.get("outerRadius") > (99395267.84341194 + (2* 520150745.3976549)):
+                        self.merge_poi("Tourist", "Large Radius Rings", body_code)
+                    elif ring.get("innerRadius") > (45935299.69736346 - (2* 190463268.57872835)):
+                        self.merge_poi("Tourist", "Small Radius Rings", body_code)
 
     def evisualise(self, event):
         debug("evisualise")
