@@ -36,22 +36,81 @@ def get_parent(body):
         p = pl[0][1]
         return p
 
-def get_area(inner,outer):
-    a1=math.pi*pow(inner,2)
-    a2=math.pi*pow(outer,2)
-    return a2-a1
+
+def get_null(body):
+    parents = body.get("parents")
+    if parents:
+        p1 = parents[0]
+        id = p1.get("Null")
+        if not p1 == None:
+            return p1
+    return None
 
 
-def get_density(mass,inner,outer):
-    a=get_area(inner,outer)
-    #print("{} {} {}".format(mass,inner,outer))
-    #add a tiny number to force non zero
+def isBinary(body):
+    parents = body.get("parents")
+    # find out if we are a binary
+    if parents and parents[0].get("Null"):
+        return True
+
+    return False
+
+
+def get_sibling(body, bodies):
+    p1 = get_null(body)
+    for candidate in bodies.values():
+        p2 = get_null(candidate)
+        if not p2 == None and p2 == p1 and body.get("bodyId") != candidate.get("bodyId"):
+            return candidate
+    return None
+
+
+def get_area(inner, outer):
+    a1 = math.pi * pow(inner, 2)
+    a2 = math.pi * pow(outer, 2)
+    return a2 - a1
+
+
+def hasRings(body):
+    if body.get("rings") or body.get("belts"):
+        rings = body.get("rings")
+        if body.get("belts") and not rings:
+            rings = body.get("belts")
+
+        for ring in rings:
+            if 'Belt' not in ring.get("name"):
+                return True
+    return False
+
+
+def get_density(mass, inner, outer):
+    a = get_area(inner, outer)
+    # print("{} {} {}".format(mass,inner,outer))
+    # add a tiny number to force non zero
     if a > 0:
-        density=mass/a
-        #print(density)
+        density = mass / a
+        # print(density)
     else:
         density = 0
     return density
+
+
+def get_outer_radius(body):
+    if body.get("rings") or body.get("belts"):
+        rings = body.get("rings")
+        if body.get("belts") and not rings:
+            rings = body.get("belts")
+    outer = None
+    for ring in rings:
+        if not outer or 'Belt' not in ring.get("name"):
+            if not outer:
+                outer = ring.get("outerRadius")
+            if ring.get("outerRadius") > outer:
+                outer = ring.get("outerRadius")
+    # convert to light seconds from km
+    result = outer / 299792.458
+    debug("Ring radius {}km = {}ls".format(outer, result))
+    return result
 
 
 # This function will return a body in edsm format
@@ -151,16 +210,6 @@ class poiTypes(threading.Thread):
         self.callback(self.system)
         # debug("poitypes Callback Complete")
 
-    # def recycle(self):
-    #     print "Recycling Labels"
-    #
-    #     for label in self.lt:
-    #         label.grid_remove()
-    #     for label in self.lp:
-    #         label.grid_remove()
-
-    # Frame.destroy(self)
-
 
 class saaScan():
 
@@ -216,7 +265,7 @@ class CodexTypes():
     parentRadius = 0
     minPressure = 80
 
-    close_orbit = 0.04
+    close_orbit = 0.02
     eccentricity = 0.9
 
     waiting = True
@@ -294,11 +343,11 @@ class CodexTypes():
             a1 = math.pi * pow(inner, 2)
             a2 = math.pi * pow(outer, 2)
             a = a2 - a1
-            print("{} {} {}".format(mass, inner, outer))
+            debug("{} {} {}".format(mass, inner, outer))
             # add a tiny number to force non zero
             if a > 0:
                 density = mass / a
-                print(density)
+                debug(density)
             else:
                 density = 0
             return density
@@ -323,7 +372,8 @@ class CodexTypes():
                         if r2 - r3 < r1 + 15000000:
                             self.merge_poi("Tourist", 'Shepherd Moon', body_code)
                             debug("Shepherd Moon {} {} {} {} {}".format(r1, r2, r3, body.get("axialTilt"),
-                                                                        bodies.get(parent.get("Planet")).get("axialTilt")))
+                                                                        bodies.get(parent.get("Planet")).get(
+                                                                            "axialTilt")))
             # gah i need to refector this to avoid duplication
             if parent.get("Star") and bodies.get(parent.get("Star")) and bodies.get(parent.get("Star")).get("rings"):
                 debug("Parent has rings")
@@ -343,17 +393,53 @@ class CodexTypes():
                             debug("Shepherd Planet {} {} {}".format(r1, r2, r3))
                             debug((r2 - r1) - r3)
 
-    def ringed_siblings(self, candidate, bodies,body_code):
-        #need to modify this to look at barycentres too
-        parent=bodies.get(get_parent(candidate))
+    def close_bodies(self, candidate, bodies, body_code):
+        if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
+            distance = None
+            if isBinary(candidate) and candidate.get("semiMajorAxis") is not None:
+                body = get_sibling(candidate, bodies)
+                if body and body.get("semiMajorAxis") is not None:
+                    distance = (candidate.get("semiMajorAxis") + body.get("semiMajorAxis")) * 499.005
+            if not isBinary(candidate):
+                # body=get_parent(candidate)
+                distance = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
+                                         candidate.get("orbitalEccentricity"))
+
+            if distance is not None and distance < CodexTypes.close_orbit:
+                self.merge_poi("Tourist", 'Close Orbit', body_code)
+
+    def close_rings(self, candidate, bodies, body_code):
+
+        # need to modify this to look at barycentres too
+        binary = False
+        parent = bodies.get(get_parent(candidate))
+        sibling = get_sibling(candidate, bodies)
+        if sibling:
+            binary = True
+            parent = sibling
 
         if parent and parent.get("rings") and candidate.get("rings"):
-            if candidate.get("type") == "Planet" and parent.get("type") == "Planet":
-                if candidate.get("semiMajorAxis") and candidate.get("eccentricity"):
-                    apehelion = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"), candidate.get("eccentricity"))
-                    if apehelion < 10:
-                        self.merge_poi("Tourist","Ringed Family", body_code)
+            debug("Ring ring {} {}".format(candidate.get("semiMajorAxis"), candidate.get("orbitalEccentricity")))
+            if candidate.get("semiMajorAxis"):
+                debug("Calculating ring distance")
+                apehelion = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
+                                          candidate.get("orbitalEccentricity") or 0)
+                ring_span = get_outer_radius(candidate) + get_outer_radius(parent)
+                debug("Ring Span: {}".format(ring_span))
+                if binary:
+                    distance = ((candidate.get("semiMajorAxis") + parent.get("semiMajorAxis")) * 499.005) - ring_span
+                else:
+                    distance = apehelion - ring_span
 
+                if distance < 2 and binary:
+                    parent_code = parent.get("name").replace(self.system, '')
+                    self.merge_poi("Tourist", "Close Ring Proximity", body_code)
+                    self.merge_poi("Tourist", "Close Ring Proximity", parent_code)
+
+                if distance < 2 and not binary:
+                    parent_code = parent.get("name").replace(self.system, '')
+                    self.merge_poi("Tourist", "Close Ring Proximity", body_code)
+                    self.merge_poi("Tourist", "Close Ring Proximity", parent_code)
 
     def trojan(self, candidate, bodies):
         # https://forums.frontier.co.uk/threads/hunt-for-trojans.369380/page-7
@@ -389,37 +475,37 @@ class CodexTypes():
                                                              candidate.get("bodyId")))
 
     def ringed_star(self, candidate):
-        hasRings=False
+        hasRings = False
         body_code = candidate.get("name").replace(self.system, '')
 
         if candidate.get("rings") and candidate.get('type') == 'Star':
             for ring in candidate.get("rings"):
                 if "Ring" in ring.get("name"):
-                    hasRings=True
+                    hasRings = True
 
         if hasRings:
-            self.merge_poi("Tourist","Ringed Star",body_code)
+            self.merge_poi("Tourist", "Ringed Star", body_code)
 
-    def rings(self,candidate,body_code):
+    def rings(self, candidate, body_code):
         if candidate.get("rings"):
             for ring in candidate.get("rings"):
-                area=get_area(ring.get("innerRadius"),ring.get("outerRadius"))
-                density=get_density(ring.get("mass"), ring.get("innerRadius"),ring.get("outerRadius"))
+                area = get_area(ring.get("innerRadius"), ring.get("outerRadius"))
+                density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
 
-                if "Ring" in ring.get("name").replace(self.system,''):
-                    if area > 7.604221648984754e+17 + (2*2.91663339734517e+19):
+                if "Ring" in ring.get("name").replace(self.system, ''):
+                    if area > 7.604221648984754e+17 + (2 * 2.91663339734517e+19):
                         self.merge_poi("Tourist", "High Area Rings", body_code)
-                    elif ring.get("outerRadius") > (99395267.84341194 + (2* 520150745.3976549)):
+                    elif ring.get("outerRadius") > (99395267.84341194 + (2 * 520150745.3976549)):
                         self.merge_poi("Tourist", "Large Radius Rings", body_code)
-                    elif ring.get("innerRadius") < (45935299.69736346 - (2* 190463268.57872835)):
+                    elif ring.get("innerRadius") < (45935299.69736346 - (2 * 190463268.57872835)):
                         self.merge_poi("Tourist", "Small Radius Rings", body_code)
-                    elif area <7.604221648984754e+17 - (2*2.91663339734517e+19):
+                    elif area < 7.604221648984754e+17 - (2 * 2.91663339734517e+19):
                         self.merge_poi("Tourist", "Low Area Rings", body_code)
-                    elif density < 4.917372037815108 - (2*297.7768008954368):
+                    elif density < 4.917372037815108 - (2 * 297.7768008954368):
                         self.merge_poi("Tourist", "Low Density Rings", body_code)
-                    elif density < 4.917372037815108 - (2*297.7768008954368):
+                    elif density < 4.917372037815108 - (2 * 297.7768008954368):
                         self.merge_poi("Tourist", "Low Density Rings", body_code)
-                    elif density > 4.917372037815108 + (2*297.7768008954368):
+                    elif density > 4.917372037815108 + (2 * 297.7768008954368):
                         self.merge_poi("Tourist", "High Density Rings", body_code)
 
     def evisualise(self, event):
@@ -480,15 +566,22 @@ class CodexTypes():
                     self.sheperd_moon(b, bodies)
                     self.trojan(b, bodies)
                     self.ringed_star(b)
-                    self.ringed_siblings(b,bodies,body_code)
-                    self.rings(b,body_code)
+                    self.close_rings(b, bodies, body_code)
+                    self.close_bodies(b, bodies, body_code)
+                    self.rings(b, body_code)
 
                     # Terraforming
                     if b.get('terraformingState') == 'Candidate for terraforming':
                         if b.get('isLandable'):
-                            self.merge_poi("Planets", "Landable Terraformable", body_code)
+                            if not b.get("rings"):
+                                self.merge_poi("Planets", "Landable Terraformable", body_code)
+                            else:
+                                self.merge_poi("Planets", "Landable Ringed Terraformable", body_code)
                         else:
                             self.merge_poi("Planets", "Terraformable", body_code)
+                    else:
+                        if b.get("rings") and b.get('isLandable'):
+                            self.merge_poi("Tourist", "Landable Ringed Body", body_code)
 
                     # Landable Volcanism
                     if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get(
@@ -519,13 +612,6 @@ class CodexTypes():
                         self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
                                        body_code)
 
-                    #  Landable with surface pressure
-                    if b.get('type') == 'Planet' and \
-                            b.get('surfacePressure') and \
-                            surface_pressure("surfacePressure", b.get(
-                                'surfacePressure')) > CodexTypes.minPressure and b.get('isLandable'):
-                        self.merge_poi("Tourist", 'Landable with pressure', body_code)
-
                     #    Landable high-g (>3g)
                     if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
                         self.merge_poi("Tourist", 'High Gravity', body_code)
@@ -534,22 +620,6 @@ class CodexTypes():
                     if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
                         self.merge_poi("Tourist", 'Large Radius Landable', body_code)
 
-                    # orbiting close to the star we need the solar radius for this...
-                    # if b.get('type') == 'Planet' and self.surface_distance(b.get("distanceToArrival"),
-                    #                                                        CodexTypes.parentRadius,
-                    #                                                        self.light_seconds('radius', b.get(
-                    #                                                            "radius"))) < 10:
-                    #     self.merge_poi("Tourist", 'Surface Close to parent star', body_code)
-
-                    #    Orbiting close to parent body less than 5ls
-                    if b.get('type') == 'Planet' and self.aphelion('semiMajorAxis', b.get("semiMajorAxis"),
-                                                                   b.get(
-                                                                       "orbitalEccentricity")) < CodexTypes.close_orbit:
-                        self.merge_poi("Tourist", 'Close Orbit', body_code)
-
-                    #   Shepherd moons (orbiting closer than a ring)
-                    #    Close binary pairs
-                    #   Colliding binary pairs
                     #    Moons of moons
 
                     #    Tiny objects (<300km radius)
@@ -564,7 +634,7 @@ class CodexTypes():
                     #    High eccentricity
                     if float(b.get("orbitalEccentricity") or 0) > CodexTypes.eccentricity:
                         self.merge_poi("Tourist", 'Highly Eccentric Orbit', body_code)
-                    #    Wide rings
+
                     #    Good jumponium availability (5/6 materials on a single body)
                     #    Full jumponium availability within a single system
                     #    Full jumponium availability on a single body
@@ -757,7 +827,7 @@ class CodexTypes():
         a = float(self.light_seconds(tag, major))
         e = float(eccentricity or 0)
         focus = a * (1 + e)
-        debug("focus  {}ls".format(a))
+        debug("Apehelion  {}ls".format(a))
 
         return focus
 
@@ -852,12 +922,12 @@ class CodexTypes():
             else:
                 self.merge_poi("Cloud", "Life Ring", "")
             self.allowed = True
-            self.visualise()
+            self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             self.merge_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
-            self.visualise()
+            self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
             if "NumberStation" in entry.get("SignalName"):
@@ -871,7 +941,7 @@ class CodexTypes():
             if "Generation Ship" in entry.get("SignalName"):
                 self.merge_poi("Human", entry.get("SignalName"), body)
             self.allowed = True
-            self.visualise()
+            self.evisualise(None)
 
         if entry.get("event") == "FSSAllBodiesFound":
             # self.remove_poi("Planets", "Unexplored Bodies")
