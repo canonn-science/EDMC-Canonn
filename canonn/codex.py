@@ -47,6 +47,22 @@ def get_null(body):
     return None
 
 
+def moon_moon_moon(body):
+    # we are going to count parents that are planets
+    # ignore barycenters
+    moons = 0
+    if body.get("parents") and body.get("type") == 'Planet':
+        for parent in body.get("parents"):
+            if parent.get("Planet"):
+                moons += 1
+            if parent.get("Star"):
+                break
+        if moons >= 3:
+            return True
+
+    return False
+
+
 def isBinary(body):
     parents = body.get("parents")
     # find out if we are a binary
@@ -569,6 +585,8 @@ class CodexTypes():
                     self.close_rings(b, bodies, body_code)
                     self.close_bodies(b, bodies, body_code)
                     self.rings(b, body_code)
+                    if moon_moon_moon(b):
+                        self.merge_poi("Planets", "Moon Moon Moon", body_code)
 
                     # Terraforming
                     if b.get('terraformingState') == 'Candidate for terraforming':
