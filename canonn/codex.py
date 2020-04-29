@@ -586,7 +586,7 @@ class CodexTypes():
                     self.close_bodies(b, bodies, body_code)
                     self.rings(b, body_code)
                     if moon_moon_moon(b):
-                        self.merge_poi("Planets", "Moon Moon Moon", body_code)
+                        self.merge_poi("Tourist", "Moon Moon Moon", body_code)
 
                     # Terraforming
                     if b.get('terraformingState') == 'Candidate for terraforming':
