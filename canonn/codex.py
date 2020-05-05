@@ -450,7 +450,10 @@ class CodexTypes():
 
                 if distance is not None and distance < comparitor:
                     debug("{} distance: {} comparitor {}".format(body_code, distance, comparitor))
-                    self.merge_poi("Tourist", 'Close Orbit', body_code)
+                    if candidate.get("isLandable"):
+                        self.merge_poi("Tourist", 'Close Orbit Landable', body_code)
+                    else:
+                        self.merge_poi("Tourist", 'Close Orbit', body_code)
 
     def close_rings(self, candidate, bodies, body_code):
 
