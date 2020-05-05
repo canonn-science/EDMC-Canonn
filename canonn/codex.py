@@ -409,12 +409,11 @@ class CodexTypes():
                             debug("Shepherd Planet {} {} {}".format(r1, r2, r3))
                             debug((r2 - r1) - r3)
 
-    def radius_ly(self,body):
-        debug(body)
+    def radius_ly(self, body):
         if body.get("type") == 'Star' and body.get("solarRadius"):
-            return self.light_seconds('solarRadius',body.get("solarRadius"))
+            return self.light_seconds('solarRadius', body.get("solarRadius"))
         if body.get("type") == 'Planet' and body.get("radius"):
-            return self.light_seconds('radius',body.get("radius"))
+            return self.light_seconds('radius', body.get("radius"))
         return None
 
     def close_bodies(self, candidate, bodies, body_code):
@@ -423,31 +422,35 @@ class CodexTypes():
 
             if isBinary(candidate) and candidate.get("semiMajorAxis") is not None:
                 body = get_sibling(candidate, bodies)
+                debug("binary")
+
                 if body and body.get("semiMajorAxis") is not None:
                     # light seconds
 
                     d1 = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
-                                  candidate.get("orbitalEccentricity"))
+                                       candidate.get("orbitalEccentricity"))
                     d2 = self.aphelion("semiMajorAxis", body.get("semiMajorAxis"),
                                        body.get("orbitalEccentricity"))
-                    #distance = (candidate.get("semiMajorAxis") + body.get("semiMajorAxis")) * 499.005
+                    # distance = (candidate.get("semiMajorAxis") + body.get("semiMajorAxis")) * 499.005
                     distance = d1 + d2
 
             if not isBinary(candidate):
+                debug("non-binary")
+
                 body = bodies.get(get_parent(candidate))
                 distance = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
                                          candidate.get("orbitalEccentricity"))
 
+            if candidate and body:
+                r1 = self.radius_ly(body)
+                r2 = self.radius_ly(candidate)
+                # to account for things like stars and gas giants
+                if distance is not None and r1 is not None and r2 is not None:
+                    comparitor = 2 * (r1 + r2)
 
-            r1 = self.radius_ly(body)
-            r2 = self.radius_ly(candidate)
-            # to account for things like stars and gas giants
-            if distance is not None and r1 is not None and r2 is not None:
-                comparitor = 2 * (r1 + r2)
-
-            if distance is not None and distance < comparitor:
-                debug("{} distance: {} comparitor {}".format(body_code,distance,comparitor))
-                self.merge_poi("Tourist", 'Close Orbit', body_code)
+                if distance is not None and distance < comparitor:
+                    debug("{} distance: {} comparitor {}".format(body_code, distance, comparitor))
+                    self.merge_poi("Tourist", 'Close Orbit', body_code)
 
     def close_rings(self, candidate, bodies, body_code):
 
