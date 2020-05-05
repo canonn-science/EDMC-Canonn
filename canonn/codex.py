@@ -409,19 +409,44 @@ class CodexTypes():
                             debug("Shepherd Planet {} {} {}".format(r1, r2, r3))
                             debug((r2 - r1) - r3)
 
+    def radius_ly(self,body):
+        debug(body)
+        if body.get("type") == 'Star' and body.get("solarRadius"):
+            return self.light_seconds('solarRadius',body.get("solarRadius"))
+        if body.get("type") == 'Planet' and body.get("radius"):
+            return self.light_seconds('radius',body.get("radius"))
+        return None
+
     def close_bodies(self, candidate, bodies, body_code):
         if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
             distance = None
+
             if isBinary(candidate) and candidate.get("semiMajorAxis") is not None:
                 body = get_sibling(candidate, bodies)
                 if body and body.get("semiMajorAxis") is not None:
-                    distance = (candidate.get("semiMajorAxis") + body.get("semiMajorAxis")) * 499.005
+                    # light seconds
+
+                    d1 = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
+                                  candidate.get("orbitalEccentricity"))
+                    d2 = self.aphelion("semiMajorAxis", body.get("semiMajorAxis"),
+                                       body.get("orbitalEccentricity"))
+                    #distance = (candidate.get("semiMajorAxis") + body.get("semiMajorAxis")) * 499.005
+                    distance = d1 + d2
+
             if not isBinary(candidate):
-                # body=get_parent(candidate)
+                body = bodies.get(get_parent(candidate))
                 distance = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
                                          candidate.get("orbitalEccentricity"))
 
-            if distance is not None and distance < CodexTypes.close_orbit:
+
+            r1 = self.radius_ly(body)
+            r2 = self.radius_ly(candidate)
+            # to account for things like stars and gas giants
+            if distance is not None and r1 is not None and r2 is not None:
+                comparitor = 2 * (r1 + r2)
+
+            if distance is not None and distance < comparitor:
+                debug("{} distance: {} comparitor {}".format(body_code,distance,comparitor))
                 self.merge_poi("Tourist", 'Close Orbit', body_code)
 
     def close_rings(self, candidate, bodies, body_code):
@@ -570,8 +595,12 @@ class CodexTypes():
                 debug("bodycount: {}".format(CodexTypes.bodycount))
 
                 for k in bodies.keys():
-                    if bodies.get(k).get("name") == self.system and bodies.get(k).get("solarRadius"):
+                    if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
                         CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies.get(k).get("solarRadius"))
+
+                    # lets normalise radius between planets and stars
+                    if bodies.get(k).get("solarRadius") is not None:
+                        bodies[k]["radius"] = bodies.get(k).get("solarRadius")
 
                 for k in bodies.keys():
                     b = bodies.get(k)
@@ -814,7 +843,7 @@ class CodexTypes():
         # Things measure in kilometres
         if tag == "radius":
             # from journal metres
-            return value * 1000 * 299792000
+            return value / 299792
 
         # Things measure in astronomical units
         if tag == "semiMajorAxis":
