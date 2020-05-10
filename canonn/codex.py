@@ -154,8 +154,7 @@ def journal2edsm(j):
         e["spectralClass"] = "{}{}".format(j.get("StarType"), j.get("Subclass"))
         e["absoluteMagnitude"] = j.get("AbsoluteMagnitude")
         e["solarMasses"] = j.get("StellarMass")
-        # why are we using this constant?
-        e["solarRadius"] = 181122998.959 / j.get("Radius")
+        e["solarRadius"] = j.get("Radius") / 695500000
         e["luminosity"] = j.get("Luminosity")
         e["age"] = j.get("Age_MY")
     else:
@@ -556,146 +555,150 @@ class CodexTypes():
                         self.merge_poi("Tourist", "High Density Rings", body_code)
 
     def evisualise(self, event):
-        debug("evisualise")
-        self.poidata = []
-        debug("self.poidata = []")
-        usystem = unquote(self.system)
+        try:
+            debug("evisualise")
+            self.poidata = []
+            debug("self.poidata = []")
+            usystem = unquote(self.system)
 
-        if self.temp_poidata:
-            for r in self.temp_poidata:
-                self.merge_poi(r.get("hud_category"), r.get("english_name"), r.get("body"))
+            if self.temp_poidata:
+                for r in self.temp_poidata:
+                    self.merge_poi(r.get("hud_category"), r.get("english_name"), r.get("body"))
 
-        # if self.temp_edsmdata:
-        if not self.bodies:
-            self.bodies = {}
-        # restructure the EDSM data
-        if self.temp_edsmdata:
-            edsm_bodies = self.temp_edsmdata.json().get("bodies")
-        else:
-            edsm_bodies = {}
-        if edsm_bodies:
-            for b in edsm_bodies:
-                if not "Belt Cluster" in b.get("name"):
-                    debug("addimg body: {}".format(b.get("name")))
-                    self.bodies[b.get("bodyId")] = b
+            # if self.temp_edsmdata:
+            if not self.bodies:
+                self.bodies = {}
+            # restructure the EDSM data
+            if self.temp_edsmdata:
+                edsm_bodies = self.temp_edsmdata.json().get("bodies")
+            else:
+                edsm_bodies = {}
+            if edsm_bodies:
+                for b in edsm_bodies:
+                    if not "Belt Cluster" in b.get("name"):
+                        debug("addimg body: {}".format(b.get("name")))
+                        self.bodies[b.get("bodyId")] = b
 
-        if len(self.bodies) > 0:
-            debug("We have bodies")
-            # bodies = self.temp_edsmdata.json().get("bodies")
-            bodies = self.bodies
-            if bodies:
-                CodexTypes.bodycount = len(bodies)
-                if not CodexTypes.fsscount:
-                    CodexTypes.fsscount = 0
-                debug("body reconciliation: {} {}".format(CodexTypes.fsscount, nvl(CodexTypes.bodycount, 0)))
-                if nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0):
-                    # self.merge_poi("Planets", "Unexplored Bodies", "")
-                    if CodexTypes.fsscount > 0:
-                        self.progress.grid()
-                        # self.progress["text"]="{}%".format(round((float(CodexTypes.bodycount)/float(CodexTypes.fsscount))*100,1))
-                        self.progress["text"] = "{}/{}".format(CodexTypes.bodycount, CodexTypes.fsscount)
-                else:
-                    # self.remove_poi("Planets", "Unexplored Bodies")
-                    self.progress.grid_remove()
-
-                debug("bodycount: {}".format(CodexTypes.bodycount))
-
-                for k in bodies.keys():
-                    if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
-                        CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies.get(k).get("solarRadius"))
-
-                    # lets normalise radius between planets and stars
-                    if bodies.get(k).get("solarRadius") is not None:
-                        bodies[k]["radius"] = bodies.get(k).get("solarRadius")
-
-                for k in bodies.keys():
-                    b = bodies.get(k)
-                    # debug(json.dumps(b,indent=4))
-                    body_code = b.get("name").replace(self.system, '')
-                    body_name = b.get("name")
-
-                    self.sheperd_moon(b, bodies)
-                    self.trojan(b, bodies)
-                    self.ringed_star(b)
-                    self.close_rings(b, bodies, body_code)
-                    self.close_bodies(b, bodies, body_code)
-                    self.rings(b, body_code)
-                    if moon_moon_moon(b):
-                        self.merge_poi("Tourist", "Moon Moon Moon", body_code)
-
-                    # Terraforming
-                    if b.get('terraformingState') == 'Candidate for terraforming':
-                        if b.get('isLandable'):
-                            if not b.get("rings"):
-                                self.merge_poi("Planets", "Landable Terraformable", body_code)
-                            else:
-                                self.merge_poi("Planets", "Landable Ringed Terraformable", body_code)
-                        else:
-                            self.merge_poi("Planets", "Terraformable", body_code)
+            if len(self.bodies) > 0:
+                debug("We have bodies")
+                # bodies = self.temp_edsmdata.json().get("bodies")
+                bodies = self.bodies
+                if bodies:
+                    CodexTypes.bodycount = len(bodies)
+                    if not CodexTypes.fsscount:
+                        CodexTypes.fsscount = 0
+                    debug("body reconciliation: {} {}".format(CodexTypes.fsscount, nvl(CodexTypes.bodycount, 0)))
+                    if nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0):
+                        # self.merge_poi("Planets", "Unexplored Bodies", "")
+                        if CodexTypes.fsscount > 0:
+                            self.progress.grid()
+                            # self.progress["text"]="{}%".format(round((float(CodexTypes.bodycount)/float(CodexTypes.fsscount))*100,1))
+                            self.progress["text"] = "{}/{}".format(CodexTypes.bodycount, CodexTypes.fsscount)
                     else:
-                        if b.get("rings") and b.get('isLandable'):
-                            self.merge_poi("Tourist", "Landable Ringed Body", body_code)
+                        # self.remove_poi("Planets", "Unexplored Bodies")
+                        self.progress.grid_remove()
 
-                    # Landable Volcanism
-                    if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get(
-                            'isLandable'):
-                        self.merge_poi("Geology", b.get('volcanismType'), body_code)
+                    debug("bodycount: {}".format(CodexTypes.bodycount))
 
-                    # water ammonia etc
-                    if b.get('subType') in CodexTypes.body_types.keys():
-                        debug(b.get('subType'))
-                        self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')), body_code)
+                    for k in bodies.keys():
+                        if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
+                            CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies.get(k).get("solarRadius"))
 
-                    # fast orbits
-                    if b.get('orbitalPeriod'):
-                        if abs(float(b.get('orbitalPeriod'))) <= 0.042:
-                            self.merge_poi("Tourist", 'Fast Orbital Period', body_code)
+                        # lets normalise radius between planets and stars
+                        if bodies.get(k).get("solarRadius") is not None:
+                            bodies[k]["radius"] = bodies.get(k).get("solarRadius")
 
-                    # Ringed ELW etc
-                    if b.get('subType') in ('Earth-like world', 'Water world', 'Ammonia world'):
-                        if b.get("rings"):
-                            self.merge_poi("Tourist",
-                                           'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))),
+                    for k in bodies.keys():
+                        b = bodies.get(k)
+                        # debug(json.dumps(b,indent=4))
+                        body_code = b.get("name").replace(self.system, '')
+                        body_name = b.get("name")
+
+                        self.sheperd_moon(b, bodies)
+                        self.trojan(b, bodies)
+                        self.ringed_star(b)
+                        self.close_rings(b, bodies, body_code)
+                        self.close_bodies(b, bodies, body_code)
+                        self.rings(b, body_code)
+                        if moon_moon_moon(b):
+                            self.merge_poi("Tourist", "Moon Moon Moon", body_code)
+
+                        # Terraforming
+                        if b.get('terraformingState') == 'Candidate for terraforming':
+                            if b.get('isLandable'):
+                                if not b.get("rings"):
+                                    self.merge_poi("Planets", "Landable Terraformable", body_code)
+                                else:
+                                    self.merge_poi("Planets", "Landable Ringed Terraformable", body_code)
+                            else:
+                                self.merge_poi("Planets", "Terraformable", body_code)
+                        else:
+                            if b.get("rings") and b.get('isLandable'):
+                                self.merge_poi("Tourist", "Landable Ringed Body", body_code)
+
+                        # Landable Volcanism
+                        if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get(
+                                'isLandable'):
+                            self.merge_poi("Geology", b.get('volcanismType'), body_code)
+
+                        # water ammonia etc
+                        if b.get('subType') in CodexTypes.body_types.keys():
+                            debug(b.get('subType'))
+                            self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')), body_code)
+
+                        # fast orbits
+                        if b.get('orbitalPeriod'):
+                            if abs(float(b.get('orbitalPeriod'))) <= 0.042:
+                                self.merge_poi("Tourist", 'Fast Orbital Period', body_code)
+
+                        # Ringed ELW etc
+                        if b.get('subType') in ('Earth-like world', 'Water world', 'Ammonia world'):
+                            if b.get("rings"):
+                                self.merge_poi("Tourist",
+                                               'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))),
+                                               body_code)
+                            if b.get("parents")[0].get("Planet"):
+                                self.merge_poi("Tourist",
+                                               '{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))),
+                                               body_code)
+                        if b.get('subType') in ('Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                            self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
                                            body_code)
-                        if b.get("parents")[0].get("Planet"):
-                            self.merge_poi("Tourist",
-                                           '{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))),
-                                           body_code)
-                    if b.get('subType') in ('Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
-                        self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
-                                       body_code)
 
-                    #    Landable high-g (>3g)
-                    if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
-                        self.merge_poi("Tourist", 'High Gravity', body_code)
+                        #    Landable high-g (>3g)
+                        if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
+                            self.merge_poi("Tourist", 'High Gravity', body_code)
 
-                    #    Landable large (>18000km radius)
-                    if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
-                        self.merge_poi("Tourist", 'Large Radius Landable', body_code)
+                        #    Landable large (>18000km radius)
+                        if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
+                            self.merge_poi("Tourist", 'Large Radius Landable', body_code)
 
-                    #    Moons of moons
+                        #    Moons of moons
 
-                    #    Tiny objects (<300km radius)
-                    if b.get('type') == 'Planet' and b.get('radius') < 300 and b.get('isLandable'):
-                        self.merge_poi("Tourist", 'Tiny Radius Landable', body_code)
+                        #    Tiny objects (<300km radius)
+                        if b.get('type') == 'Planet' and b.get('radius') < 300 and b.get('isLandable'):
+                            self.merge_poi("Tourist", 'Tiny Radius Landable', body_code)
 
-                    #    Fast and non-locked rotation
-                    if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get(
-                            "rotationalPeriodTidallyLocked"):
-                        self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
+                        #    Fast and non-locked rotation
+                        if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get(
+                                "rotationalPeriodTidallyLocked"):
+                            self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
 
-                    #    High eccentricity
-                    if float(b.get("orbitalEccentricity") or 0) > CodexTypes.eccentricity:
-                        self.merge_poi("Tourist", 'Highly Eccentric Orbit', body_code)
+                        #    High eccentricity
+                        if float(b.get("orbitalEccentricity") or 0) > CodexTypes.eccentricity:
+                            self.merge_poi("Tourist", 'Highly Eccentric Orbit', body_code)
 
-                    #    Good jumponium availability (5/6 materials on a single body)
-                    #    Full jumponium availability within a single system
-                    #    Full jumponium availability on a single body
+                        #    Good jumponium availability (5/6 materials on a single body)
+                        #    Full jumponium availability within a single system
+                        #    Full jumponium availability on a single body
 
-        else:
-            CodexTypes.bodycount = 0
-            debug("bodycount: {}".format(CodexTypes.bodycount))
-
+            else:
+                CodexTypes.bodycount = 0
+                debug("bodycount: {}".format(CodexTypes.bodycount))
+        except:
+            if Debug.debugswitch == 1:
+                self.merge_poi("Other", 'Plugin Error', None)
+            raise
         self.visualise()
 
     def getdata(self, system):
