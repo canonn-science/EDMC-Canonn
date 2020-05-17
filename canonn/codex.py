@@ -1,4 +1,5 @@
 # Try python3 before 2.7
+# Try python3 before 2.7
 try:
     import tkinter as tk
     from tkinter import Frame
@@ -652,7 +653,7 @@ class CodexTypes():
                                 self.merge_poi("Tourist", 'Fast Orbital Period', body_code)
 
                         # Ringed ELW etc
-                        if b.get('subType') in ('Earth-like world', 'Water world', 'Ammonia world'):
+                        if b.get('subType') in ('Earthlike body','Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
                                 self.merge_poi("Tourist",
                                                'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))),
@@ -661,7 +662,7 @@ class CodexTypes():
                                 self.merge_poi("Tourist",
                                                '{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))),
                                                body_code)
-                        if b.get('subType') in ('Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                        if b.get('subType') in ('Earthlike body','Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
                             self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
                                            body_code)
 
@@ -698,6 +699,7 @@ class CodexTypes():
         except:
             if Debug.debugswitch == 1:
                 self.merge_poi("Other", 'Plugin Error', None)
+                self.visualise()
             raise
         self.visualise()
 
