@@ -213,6 +213,14 @@ def surface_pressure(tag, value):
     else:
         return value
 
+def get_synodic_period(b1,b2):
+    T1=b1.get("orbitalPeriod")
+    T2=b2.get("orbitalPeriod")
+    if (T1 == T2):
+        return 9999999999
+    Tsyn = 1/abs( (1/T1) - (1/T2) )
+    return Tsyn
+
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
@@ -415,6 +423,39 @@ class CodexTypes():
         if body.get("type") == 'Planet' and body.get("radius"):
             return self.light_seconds('radius', body.get("radius"))
         return None
+
+    def close_flypast(self, body, bodies, body_code):
+        for sibling in bodies.values():
+            p1 = body.get("parents")
+            p2 = sibling.get("parents")
+
+            valid_body = True
+            valid_body = (p2 and valid_body)
+            valid_body = (p1 and valid_body)
+            valid_body = (body.get("semiMajorAxis") is not None and valid_body)
+            valid_body = (sibling.get("semiMajorAxis") is not None and valid_body)
+            valid_body = (body.get("orbitalEccentricity") is not None and valid_body)
+            valid_body = (sibling.get("orbitalEccentricity") is not None and valid_body)
+            valid_body = (body.get("orbitalPeriod") is not None and valid_body)
+            valid_body = (sibling.get("orbitalPeriod") is not None and valid_body)
+            not_self = (body.get("bodyId") != sibling.get("bodyId"))
+            valid_body = (not_self and valid_body)
+
+            # if we share teh same parent and not the same body
+            if valid_body and str(p1[0]) == str(p2[0]):
+                a1 = self.aphelion("semiMajorAxis",body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
+                a2 = self.aphelion("semiMajorAxis",sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                r1 = sibling.get("radius") / 299792.5436
+                r2 = body.get("radius") / 299792.5436
+
+                distance = abs(a1 - a2)
+                # print("distance {}, radii = {}".format(distance,r1+r2))
+                period = get_synodic_period(body, sibling)
+                debug("flypast: {} distance = {} avgdiameter = {} synodic = {} ".format(body_code,distance,r1+r2,period))
+                # average diameter and 4 days synodic period
+                if distance < 2 * (r1 + r2) and period < 4:
+                    self.merge_poi("Tourist", 'Close Flypast', body_code)
+
 
     def close_bodies(self, candidate, bodies, body_code):
         if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
@@ -620,6 +661,7 @@ class CodexTypes():
                         self.ringed_star(b)
                         self.close_rings(b, bodies, body_code)
                         self.close_bodies(b, bodies, body_code)
+                        self.close_flypast(b, bodies, body_code)
                         self.rings(b, body_code)
                         if moon_moon_moon(b):
                             self.merge_poi("Tourist", "Moon Moon Moon", body_code)
