@@ -203,6 +203,8 @@ def journal2edsm(j):
             )
     if j.get("SemiMajorAxis"):
         e["semiMajorAxis"] = j.get("SemiMajorAxis") / 149597870700
+    if j.get("ReserveLevel"):
+        e["reserveLevel"]=j.get("ReserveLevel")
     debug(json.dumps(e, indent=4))
     return e
 
@@ -579,8 +581,10 @@ class CodexTypes():
         if candidate.get("rings"):
             for ring in candidate.get("rings"):
                 if ring.get("name")[-4:] == "Ring":
-                    self.merge_poi("Ring", "{} Rings".format(ring.get("type")), body_code)
-
+                    if candidate.get("reserveLevel") and candidate.get("reserveLevel") in ("Pristine","PristineResources"):
+                        self.merge_poi("Ring", "Pristine {} Rings".format(ring.get("type")), body_code)
+                    else:
+                        self.merge_poi("Ring", "{} Rings".format(ring.get("type")), body_code)
                 area = get_area(ring.get("innerRadius"), ring.get("outerRadius"))
                 density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
 
