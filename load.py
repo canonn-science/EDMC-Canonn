@@ -167,6 +167,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         Systems.storeSystem(system, entry.get("StarPos"))
         this.DistFromStarLS = None
 
+    if entry.get("event") == "CarrierJump":
+        system = entry.get("StarSystem")
+        Systems.storeSystem(system, entry.get("StarPos"))
+
     if ('Body' in entry):
         this.body_name = entry['Body']
 
