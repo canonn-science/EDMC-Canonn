@@ -195,7 +195,7 @@ def journal2edsm(j):
         for ring in j.get("Rings"):
             e["rings"].append(
                 {"name": ring.get("Name"),
-                 "type": ring.get("RingClass"),
+                 "type": ring.get("RingClass").replace("eRingClass_","").replace("MetalRich","Metal Rich"),
                  "mass": float(ring.get("MassMT")),
                  "innerRadius": float(ring.get("InnerRad")) / 1000,
                  "outerRadius": float(ring.get("OuterRad")) / 1000
@@ -578,6 +578,9 @@ class CodexTypes():
     def rings(self, candidate, body_code):
         if candidate.get("rings"):
             for ring in candidate.get("rings"):
+                if ring.get("name")[-4:] == "Ring":
+                    self.merge_poi("Ring", "{} Rings".format(ring.get("type")), body_code)
+
                 area = get_area(ring.get("innerRadius"), ring.get("outerRadius"))
                 density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
 
@@ -684,7 +687,7 @@ class CodexTypes():
                         # Landable Volcanism
                         if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get(
                                 'isLandable'):
-                            self.merge_poi("Geology", b.get('volcanismType'), body_code)
+                            self.merge_poi("Geology", b.get('volcanismType').replace(" volcanism",""), body_code)
 
                         # water ammonia etc
                         if b.get('subType') in CodexTypes.body_types.keys():
