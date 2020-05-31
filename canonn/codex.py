@@ -213,12 +213,13 @@ def surface_pressure(tag, value):
     else:
         return value
 
-def get_synodic_period(b1,b2):
-    T1=b1.get("orbitalPeriod")
-    T2=b2.get("orbitalPeriod")
+
+def get_synodic_period(b1, b2):
+    T1 = b1.get("orbitalPeriod")
+    T2 = b2.get("orbitalPeriod")
     if (T1 == T2):
         return 9999999999
-    Tsyn = 1/abs( (1/T1) - (1/T2) )
+    Tsyn = 1 / abs((1 / T1) - (1 / T2))
     return Tsyn
 
 
@@ -443,19 +444,19 @@ class CodexTypes():
 
             # if we share teh same parent and not the same body
             if valid_body and str(p1[0]) == str(p2[0]):
-                a1 = self.aphelion("semiMajorAxis",body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
-                a2 = self.aphelion("semiMajorAxis",sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                a1 = self.aphelion("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
+                a2 = self.aphelion("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
                 r1 = sibling.get("radius") / 299792.5436
                 r2 = body.get("radius") / 299792.5436
 
                 distance = abs(a1 - a2)
                 # print("distance {}, radii = {}".format(distance,r1+r2))
                 period = get_synodic_period(body, sibling)
-                debug("flypast: {} distance = {} avgdiameter = {} synodic = {} ".format(body_code,distance,r1+r2,period))
+                debug("flypast: {} distance = {} avgdiameter = {} synodic = {} ".format(body_code, distance, r1 + r2,
+                                                                                        period))
                 # average diameter and 4 days synodic period
                 if distance < 2 * (r1 + r2) and period < 4:
                     self.merge_poi("Tourist", 'Close Flypast', body_code)
-
 
     def close_bodies(self, candidate, bodies, body_code):
         if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
@@ -644,7 +645,8 @@ class CodexTypes():
 
                     for k in bodies.keys():
                         if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
-                            CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies.get(k).get("solarRadius"))
+                            CodexTypes.parentRadius = self.light_seconds("solarRadius",
+                                                                         bodies.get(k).get("solarRadius"))
 
                         # lets normalise radius between planets and stars
                         if bodies.get(k).get("solarRadius") is not None:
@@ -695,7 +697,7 @@ class CodexTypes():
                                 self.merge_poi("Tourist", 'Fast Orbital Period', body_code)
 
                         # Ringed ELW etc
-                        if b.get('subType') in ('Earthlike body','Earth-like world', 'Water world', 'Ammonia world'):
+                        if b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
                                 self.merge_poi("Tourist",
                                                'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))),
@@ -704,7 +706,8 @@ class CodexTypes():
                                 self.merge_poi("Tourist",
                                                '{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))),
                                                body_code)
-                        if b.get('subType') in ('Earthlike body','Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                        if b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get(
+                                'rotationalPeriodTidallyLocked'):
                             self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
                                            body_code)
 
@@ -988,8 +991,8 @@ class CodexTypes():
 
             # self.visualise()
 
-        if entry.get("event") in ("Location", "StartUp"):
-            debug("Looking for POI data in {}".format(system))
+        if entry.get("event") in ("Location", "StartUp", "CarrierJump"):
+            debug("{} Looking for POI data in {}".format(entry.get("event"),system))
             self.bodies = None
             poiTypes(system, self.getdata).start()
 
@@ -999,7 +1002,7 @@ class CodexTypes():
             self.frame.after(5000, self.tvisualise)
             self.frame.after(10000, self.tvisualise)
 
-        if entry.get("event") in ("Location", "StartUp", "FSDJump"):
+        if entry.get("event") in ("Location", "StartUp", "FSDJump", "CarrierJump"):
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
                 self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(entry.get("SystemAllegiance")), "")
             self.allowed = True
