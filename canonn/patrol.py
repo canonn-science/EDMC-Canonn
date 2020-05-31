@@ -702,11 +702,11 @@ class CanonnPatrol(Frame):
                 if BGSO:
                     patrol_list.extend(BGSO)
 
-                p = self.getFactionData("Canonn", BGSOSys)
-                if p:
-                    patrol_list.extend(p)
-                p = self.getFactionData("Canonn Deep Space Research", BGSOSys)
-                patrol_list.extend(p)
+                #p = self.getFactionData("Canonn", BGSOSys)
+                # if p:
+                #     patrol_list.extend(p)
+                # p = self.getFactionData("Canonn Deep Space Research", BGSOSys)
+                # patrol_list.extend(p)
                 try:
                     patrol_list.remove(None)
                 except:
