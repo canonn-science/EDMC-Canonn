@@ -620,13 +620,13 @@ class CodexTypes():
                 self.bodies = {}
             # restructure the EDSM data
             if self.temp_edsmdata:
-                edsm_bodies = self.temp_edsmdata.json().get("bodies")
+                edsm_bodies = self.temp_edsmdata.get("bodies")
             else:
                 edsm_bodies = {}
             if edsm_bodies:
                 for b in edsm_bodies:
                     if not "Belt Cluster" in b.get("name"):
-                        debug("addimg body: {}".format(b.get("name")))
+                        debug("addimg body: {}".format(b.get("name").encode('utf8')))
                         self.bodies[b.get("bodyId")] = b
 
             if len(self.bodies) > 0:
@@ -662,7 +662,7 @@ class CodexTypes():
                     for k in bodies.keys():
                         b = bodies.get(k)
                         # debug(json.dumps(b,indent=4))
-                        body_code = b.get("name").replace(self.system, '')
+                        body_code = b.get("name").replace(self.system, '').encode('utf-8')
                         body_name = b.get("name")
 
                         self.sheperd_moon(b, bodies)
@@ -764,6 +764,7 @@ class CodexTypes():
             quote_plus(system.encode('utf8')))
         # debug(url)
         r = requests.get(url)
+        r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
             # debug("got POI Data")
             self.temp_poidata = r.json()
@@ -771,9 +772,10 @@ class CodexTypes():
         edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(quote_plus(system.encode('utf8')))
         # debug(edsm)
         r = requests.get(edsm)
+        r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
             # debug("got EDSM Data")
-            self.temp_edsmdata = r
+            self.temp_edsmdata = r.json()
 
         CodexTypes.waiting = False
         # debug("event_generate")
