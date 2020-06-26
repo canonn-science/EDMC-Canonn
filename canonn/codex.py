@@ -308,6 +308,8 @@ class CodexTypes():
         self.frame = Frame(parent)
         self.parent = parent
         self.frame.bind('<<POIData>>', self.evisualise)
+        self.frame.grid(sticky="W")
+        self.frame.grid_remove()
         self.hidecodexbtn = tk.IntVar(value=config.getint("Canonn:HideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
 
@@ -689,7 +691,7 @@ class CodexTypes():
                                 self.merge_poi("Tourist", "Landable Ringed Body", body_code)
 
                         # Landable Volcanism
-                        if b.get('type') == 'Planet' and b.get('volcanismType') != 'No volcanism' and b.get(
+                        if b.get('type') == 'Planet' and b.get('volcanismType') and b.get('volcanismType') != 'No volcanism' and b.get(
                                 'isLandable'):
                             self.merge_poi("Geology", b.get('volcanismType').replace(" volcanism",""), body_code)
 

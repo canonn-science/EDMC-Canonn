@@ -25,6 +25,8 @@ from canonn.debug import debug
 from canonn.systems import Systems
 from canonn.whitelist import whiteList
 from config import config
+from ttkHyperlinkLabel import HyperlinkLabel
+import webbrowser
 
 this = sys.modules[__name__]
 
@@ -125,6 +127,7 @@ def plugin_app(parent):
     this.codexcontrol = codex.CodexTypes(table, 2)
     this.patrol = patrol.CanonnPatrol(table, 3)
     this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 4)
+    this.guestbook = guestBook.setup(table, 5)
 
     whitelist = whiteList(parent)
     whitelist.fetchData()
@@ -206,7 +209,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
                           x, y, z, body, lat,
                           lon, client)
     codex.saaScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-
+    guestBook.journal_entry(entry)
 
 def dashboard_entry(cmdr, is_beta, entry):
     this.landed = entry['Flags'] & 1 << 1 and True or False
@@ -235,3 +238,54 @@ def cmdr_data(data, is_beta):
     """
     # debug(json.dumps(data,indent=4))
     this.patrol.cmdr_data(data, is_beta)
+
+
+class guestBook():
+    state = 0
+    target_system = ""
+
+    @classmethod
+    def hide(cls):
+        cls.frame.grid_remove()
+
+    @classmethod
+    def show(cls):
+        cls.frame.grid()
+        #cls.frame.after(120000, cls.hide)
+
+    @classmethod
+    def visit_book(cls,event):
+        url = "https://forms.gle/Qp1JDiz7ocqwbZRH9"
+        webbrowser.open_new(url)
+        cls.hide()
+
+    @classmethod
+    def setup(cls, parent, gridrow):
+        cls.frame = tk.Frame(parent)
+        cls.frame.grid(row=gridrow,sticky="NSEW")
+        cls.container = tk.Frame(cls.frame)
+        cls.container.columnconfigure(1, weight=1)
+        cls.container.grid(row=0)
+        #cls.banner = HyperlinkLabel(cls.container, text="Guest Book")
+        #cls.banner["url"]="https://forms.gle/Qp1JDiz7ocqwbZRH9"
+        #cls.banner.grid(row=0, column=0, columnspan=1, sticky="NSEW")
+        #cls.banner.config(font=("Arial Black", 22))
+        cls.instructions = tk.Label(cls.container, text="click here to sign the gnosis guest book", fg="blue", underline=True)
+        cls.instructions.grid(row=1, column=0, columnspan=1, sticky="NSEW")
+        cls.instructions.config(font=("Arial Black", 8))
+        cls.instructions.bind("<Button-1>",cls.visit_book)
+        cls.visited=False
+
+        cls.hide()
+        #cls.show()
+        return cls.frame
+
+    @classmethod
+    def journal_entry(cls,entry):
+        if "The Gnosis" in str(entry) and not cls.visited :
+            cls.visited=True
+            cls.show()
+
+
+
+
