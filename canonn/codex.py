@@ -884,7 +884,7 @@ class CodexTypes():
         signals = self.poidata
         for i, v in enumerate(signals):
             if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
-                if not body in signals[i].get("body").split(','):
+                if not body in str(signals[i].get("body")).split(','):
                     self.poidata[i]["body"] = "{},{}".format(signals[i].get("body"), body)
                 found = True
         if not found:
