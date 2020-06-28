@@ -33,8 +33,8 @@ def get_parent(body):
     parents = body.get("parents")
     if parents:
         pd = parents[0]
-        pl = pd.items()
-        p = pl[0][1]
+        pl = list(pd.values())
+        p = pl[0]
         return p
 
 
