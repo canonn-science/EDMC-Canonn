@@ -38,6 +38,7 @@ WRAP_LENGTH = 200
 
 THARGOIDSITES = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFRhsa3g0tpYFkqyBR2HrfUjXfjW6gSRnnDhFtVtPlWtpuNAHKujI5fH6Lnh3ctt0SAyNywnesv8H_/pub?gid=1675294629&single=true&output=tsv"
 GUARDIANSITES = "https://us-central1-canonn-api-236217.cloudfunctions.net/guardian_tour"
+#FLEETCARRIERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSozf4Ii8TbuDCmk8Qk5ld1W0fUF_5EyHP-OvvnjRQmC9v8NF2_ZZLFy7XOe8pQWTXudaVgdAfxlCFo/pub?gid=470243264&single=true&output=tsv"
 
 ship_types = {
     'adder': 'Adder',
@@ -220,6 +221,7 @@ class CanonnPatrol(Frame):
         self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
         self.thargoidbtn = tk.IntVar(value=config.getint("HideThargoids"))
         self.guardianbtn = tk.IntVar(value=config.getint("HideGuardians"))
+        #self.fleetbtn = tk.IntVar(value=config.getint("HideFleet"))
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
@@ -228,6 +230,7 @@ class CanonnPatrol(Frame):
         self.edsm = self.edsmbtn.get()
         self.thargoids = self.thargoidbtn.get()
         self.guardians = self.guardianbtn.get()
+        #self.fleet = self.fleetbtn.get()
 
         self.columnconfigure(1, weight=1)
         self.columnconfigure(4, weight=4)
@@ -732,6 +735,14 @@ class CanonnPatrol(Frame):
                     self.event_generate('<<PatrolDisplay>>', when='tail')
                 patrol_list.extend(self.getJsonPatrol(GUARDIANSITES))
 
+            #if self.fleet != 1:
+            #    debug("Getting DSSA Locations")
+            #    self.patrol_name = "DSSA Locations"
+            #    if not self.started:
+            #        self.event_generate('<<PatrolDisplay>>', when='tail')
+                #patrol_list.extend(self.getPatrol(GUARDIANSITES))
+                #requires a new function
+
             if self.ships and self.hideships != 1:
                 self.patrol_name = "Your Ships"
                 if not self.started:
@@ -812,6 +823,8 @@ class CanonnPatrol(Frame):
         for entry in entries:
 
             if entry.get("type") in validtypes and "Archived: " not in entry.get("name"):
+                # cache these systems we may need them later
+                Systems.storeSystem(entry.get("galMapSearch"), entry.get("coordinates"))
                 edsm_patrol.append(
                     newPatrol("Galactic Mapping",
                               entry.get("galMapSearch"), (
@@ -838,6 +851,7 @@ class CanonnPatrol(Frame):
         self.thargoidbtn = tk.IntVar(value=config.getint("HideThargoids"))
         self.guardianbtn = tk.IntVar(value=config.getint("HideGuardians"))
         self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
+        #self.fleetbtn = tk.IntVar(value=config.getint("HideFleet"))
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
@@ -846,6 +860,7 @@ class CanonnPatrol(Frame):
         self.copypatrol = self.copypatrolbtn.get()
         self.thargoids = self.thargoidbtn.get()
         self.guardians = self.guardianbtn.get()
+        #self.fleet = self.fleetbtn.get()
 
         frame = nb.Frame(parent)
         frame.columnconfigure(1, weight=1)
@@ -862,6 +877,8 @@ class CanonnPatrol(Frame):
                                                                                           sticky="NW")
         nb.Checkbutton(frame, text="Hide Guardian Sites", variable=self.guardianbtn).grid(row=2, column=2,
                                                                                           sticky="NW")
+        #nb.Checkbutton(frame, text="Hide DSSA Fleet", variable=self.fleetbtn).grid(row=2, column=3,
+        #                                                                                  sticky="NW")
         nb.Checkbutton(frame, text="Automatically copy the patrol to the clipboard", variable=self.copypatrolbtn).grid(
             row=3, column=0, sticky="NW", )
 
@@ -872,6 +889,7 @@ class CanonnPatrol(Frame):
 
     def visible(self):
 
+        #nopatrols = self.canonn == 1 and self.faction == 1 and self.hideships == 1 and self.edsm == 1 and self.thargoids == 1 and self.guardians == 1 and self.fleet == 1
         nopatrols = self.canonn == 1 and self.faction == 1 and self.hideships == 1 and self.edsm == 1 and self.thargoids == 1 and self.guardians == 1
 
         if nopatrols:
@@ -912,6 +930,7 @@ class CanonnPatrol(Frame):
         config.set('HideEDSM', self.edsmbtn.get())
         config.set('HideThargoids', self.thargoidbtn.get())
         config.set('HideGuardians', self.guardianbtn.get())
+        #config.set('HideFleet', self.fleetbtn.get())
         config.set('CopyPatrol', self.copypatrolbtn.get())
 
         self.canonn = self.canonnbtn.get()
@@ -921,6 +940,8 @@ class CanonnPatrol(Frame):
         self.copypatrol = self.copypatrolbtn.get()
         self.thargoids = self.thargoidbtn.get()
         self.gaurdians = self.guardianbtn.get()
+        #self.fleet = self.fleetbtn.get()
+
 
         if self.visible():
             # we should fire off an extra download
