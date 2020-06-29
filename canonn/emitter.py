@@ -124,7 +124,7 @@ class Emitter(threading.Thread):
             contentType = str(headers['content-type'])
             error(contentType)
             if 'json' in contentType:
-                error(json.dumps(r.content))
+                error(json.dumps(r.json()))
             else:
                 if "Offline for Maintenance" in str(r.content):
                     error("Canonn API Offline")
