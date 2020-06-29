@@ -195,7 +195,7 @@ def journal2edsm(j):
         for ring in j.get("Rings"):
             e["rings"].append(
                 {"name": ring.get("Name"),
-                 "type": ring.get("RingClass").replace("eRingClass_","").replace("MetalRich","Metal Rich"),
+                 "type": ring.get("RingClass").replace("eRingClass_", "").replace("MetalRich", "Metal Rich"),
                  "mass": float(ring.get("MassMT")),
                  "innerRadius": float(ring.get("InnerRad")) / 1000,
                  "outerRadius": float(ring.get("OuterRad")) / 1000
@@ -204,7 +204,7 @@ def journal2edsm(j):
     if j.get("SemiMajorAxis"):
         e["semiMajorAxis"] = j.get("SemiMajorAxis") / 149597870700
     if j.get("ReserveLevel"):
-        e["reserveLevel"]=j.get("ReserveLevel")
+        e["reserveLevel"] = j.get("ReserveLevel")
     debug(json.dumps(e, indent=4))
     return e
 
@@ -583,7 +583,8 @@ class CodexTypes():
         if candidate.get("rings"):
             for ring in candidate.get("rings"):
                 if ring.get("name")[-4:] == "Ring":
-                    if candidate.get("reserveLevel") and candidate.get("reserveLevel") in ("Pristine","PristineResources"):
+                    if candidate.get("reserveLevel") and candidate.get("reserveLevel") in (
+                    "Pristine", "PristineResources"):
                         self.merge_poi("Ring", "Pristine {} Rings".format(ring.get("type")), body_code)
                     else:
                         self.merge_poi("Ring", "{} Rings".format(ring.get("type")), body_code)
@@ -628,7 +629,7 @@ class CodexTypes():
             if edsm_bodies:
                 for b in edsm_bodies:
                     if not "Belt Cluster" in b.get("name"):
-                        debug("addimg body: {}".format(b.get("name").encode('utf8')))
+                        debug("addimg body: {}".format(b.get("name")))
                         self.bodies[b.get("bodyId")] = b
 
             if len(self.bodies) > 0:
@@ -664,7 +665,7 @@ class CodexTypes():
                     for k in bodies.keys():
                         b = bodies.get(k)
                         # debug(json.dumps(b,indent=4))
-                        body_code = b.get("name").replace(self.system, '').encode('utf-8')
+                        body_code = b.get("name").replace(self.system, '')
                         body_name = b.get("name")
 
                         self.sheperd_moon(b, bodies)
@@ -691,9 +692,10 @@ class CodexTypes():
                                 self.merge_poi("Tourist", "Landable Ringed Body", body_code)
 
                         # Landable Volcanism
-                        if b.get('type') == 'Planet' and b.get('volcanismType') and b.get('volcanismType') != 'No volcanism' and b.get(
+                        if b.get('type') == 'Planet' and b.get('volcanismType') and b.get(
+                                'volcanismType') != 'No volcanism' and b.get(
                                 'isLandable'):
-                            self.merge_poi("Geology", b.get('volcanismType').replace(" volcanism",""), body_code)
+                            self.merge_poi("Geology", b.get('volcanismType').replace(" volcanism", ""), body_code)
 
                         # water ammonia etc
                         if b.get('subType') in CodexTypes.body_types.keys():
@@ -883,10 +885,14 @@ class CodexTypes():
         found = False
         signals = self.poidata
         for i, v in enumerate(signals):
+            # hud category andname match so we will see if teh body is in teh list
             if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
-                if not body in str(signals[i].get("body")).split(','):
-                    self.poidata[i]["body"] = "{},{}".format(signals[i].get("body"), body)
+                tmpb = signals[i].get("body")
+
+                if not body in tmpb.split():
+                    self.poidata[i]["body"] = ",".join([tmpb, body])
                 found = True
+
         if not found:
             self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
 
@@ -1003,7 +1009,7 @@ class CodexTypes():
             # self.visualise()
 
         if entry.get("event") in ("Location", "StartUp", "CarrierJump"):
-            debug("{} Looking for POI data in {}".format(entry.get("event"),system))
+            debug("{} Looking for POI data in {}".format(entry.get("event"), system))
             self.bodies = None
             poiTypes(system, self.getdata).start()
 
