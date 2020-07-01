@@ -12,6 +12,7 @@ except:
 
 import codecs
 import csv
+import datetime
 import json
 import math
 import myNotebook as nb
@@ -27,10 +28,8 @@ from canonn.release import Release
 from canonn.systems import Systems
 from config import config
 from contextlib import closing
-
 from l10n import Locale
 from ttkHyperlinkLabel import HyperlinkLabel
-import datetime
 
 CYCLE = 60 * 1000 * 60  # 60 minutes
 DEFAULT_URL = ""
@@ -38,7 +37,7 @@ WRAP_LENGTH = 200
 
 THARGOIDSITES = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFRhsa3g0tpYFkqyBR2HrfUjXfjW6gSRnnDhFtVtPlWtpuNAHKujI5fH6Lnh3ctt0SAyNywnesv8H_/pub?gid=1675294629&single=true&output=tsv"
 GUARDIANSITES = "https://us-central1-canonn-api-236217.cloudfunctions.net/guardian_tour"
-#FLEETCARRIERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSozf4Ii8TbuDCmk8Qk5ld1W0fUF_5EyHP-OvvnjRQmC9v8NF2_ZZLFy7XOe8pQWTXudaVgdAfxlCFo/pub?gid=470243264&single=true&output=tsv"
+# FLEETCARRIERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSozf4Ii8TbuDCmk8Qk5ld1W0fUF_5EyHP-OvvnjRQmC9v8NF2_ZZLFy7XOe8pQWTXudaVgdAfxlCFo/pub?gid=470243264&single=true&output=tsv"
 
 ship_types = {
     'adder': 'Adder',
@@ -209,28 +208,28 @@ class CanonnPatrol(Frame):
         )
         self.ships = []
         self.bind('<<PatrolDone>>', self.update_ui)
-        self.IMG_PREV = tk.PhotoImage(file = os.path.join(CanonnPatrol.plugin_dir,"icons","left_arrow.gif"))
-        self.IMG_NEXT = tk.PhotoImage(file = os.path.join(CanonnPatrol.plugin_dir,"icons","right_arrow.gif"))
+        self.IMG_PREV = tk.PhotoImage(file=os.path.join(CanonnPatrol.plugin_dir, "icons", "left_arrow.gif"))
+        self.IMG_NEXT = tk.PhotoImage(file=os.path.join(CanonnPatrol.plugin_dir, "icons", "right_arrow.gif"))
 
         self.patrol_config = os.path.join(Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
 
         self.canonnbtn = tk.IntVar(value=config.getint("HideCanonn"))
         self.factionbtn = tk.IntVar(value=config.getint("HideFaction"))
-        self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
+        # self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
         self.edsmbtn = tk.IntVar(value=config.getint("HideEDSM"))
         self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
         self.thargoidbtn = tk.IntVar(value=config.getint("HideThargoids"))
         self.guardianbtn = tk.IntVar(value=config.getint("HideGuardians"))
-        #self.fleetbtn = tk.IntVar(value=config.getint("HideFleet"))
+        # self.fleetbtn = tk.IntVar(value=config.getint("HideFleet"))
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
-        self.hideships = self.hideshipsbtn.get()
+        # self.hideships = self.hideshipsbtn.get()
         self.copypatrol = self.copypatrolbtn.get()
         self.edsm = self.edsmbtn.get()
         self.thargoids = self.thargoidbtn.get()
         self.guardians = self.guardianbtn.get()
-        #self.fleet = self.fleetbtn.get()
+        # self.fleet = self.fleetbtn.get()
 
         self.columnconfigure(1, weight=1)
         self.columnconfigure(4, weight=4)
@@ -438,8 +437,6 @@ class CanonnPatrol(Frame):
         debug("{}: {}".format(bgs.get("system_name"), retval))
         return retval
 
-
-
     def getGnosis(self):
 
         def find_closest_thursday():
@@ -450,7 +447,7 @@ class CanonnPatrol(Frame):
             delta = datetime.timedelta(days=THURSDAY - day)
             return date + delta + datetime.timedelta(hours=8)
 
-        patrol=[]
+        patrol = []
         url = "https://www.edsm.net/en/tools/canonn/gnosis"
         r = requests.get(url)
 
@@ -464,20 +461,21 @@ class CanonnPatrol(Frame):
                 error(r.content)
             error(r.status_code)
         else:
-            j=r.json()
+            j = r.json()
 
-            update_time=datetime.datetime.strptime(j.get("station").get("updateTime").get("information"), '%Y-%m-%d %H:%M:%S')
-            target_time=find_closest_thursday()
+            update_time = datetime.datetime.strptime(j.get("station").get("updateTime").get("information"),
+                                                     '%Y-%m-%d %H:%M:%S')
+            target_time = find_closest_thursday()
 
             if update_time > target_time:
-                instructions="Come and visit The Gnosis, your lab is waiting for you. Distance to arrival {}ls".format(str(round(float(j.get("station").get("distanceToArrival")),2)))
+                instructions = "Come and visit The Gnosis, your lab is waiting for you. Distance to arrival {}ls".format(
+                    str(round(float(j.get("station").get("distanceToArrival")), 2)))
             else:
                 instructions = "The last known position of The Gnosis. Last updated {}".format(update_time)
-            x,y,z = Systems.edsmGetSystem(j.get("name"))
+            x, y, z = Systems.edsmGetSystem(j.get("name"))
 
             patrol.append(newPatrol("GNOSIS", j.get("name"), (float(x), float(y), float(z)), instructions, None, None))
         return patrol
-
 
     def getBGSOveride(self):
         BGSOveride = []
@@ -490,7 +488,7 @@ class CanonnPatrol(Frame):
 
                 system, x, y, z, TINF, TFAC, Description = row
                 instructions = Description.format(TFAC, TINF)
-                #SystemsOvireden = []
+                # SystemsOvireden = []
 
                 if system != '':
                     try:
@@ -502,7 +500,7 @@ class CanonnPatrol(Frame):
                             "patrol {},{},{},{},{},{},{},{}".format("BGSO", system, x, y, z, instructions, None, None))
                 else:
                     error("Patrol contains blank lines")
-                #debug(BGSOveride)
+                # debug(BGSOveride)
         return BGSOveride, SystemsOvireden
 
     def getBGSPatrol(self, bgs, BGSOSys):
@@ -705,7 +703,7 @@ class CanonnPatrol(Frame):
                 if BGSO:
                     patrol_list.extend(BGSO)
 
-                #p = self.getFactionData("Canonn", BGSOSys)
+                # p = self.getFactionData("Canonn", BGSOSys)
                 # if p:
                 #     patrol_list.extend(p)
                 # p = self.getFactionData("Canonn Deep Space Research", BGSOSys)
@@ -735,20 +733,13 @@ class CanonnPatrol(Frame):
                     self.event_generate('<<PatrolDisplay>>', when='tail')
                 patrol_list.extend(self.getJsonPatrol(GUARDIANSITES))
 
-            #if self.fleet != 1:
+            # if self.fleet != 1:
             #    debug("Getting DSSA Locations")
             #    self.patrol_name = "DSSA Locations"
             #    if not self.started:
             #        self.event_generate('<<PatrolDisplay>>', when='tail')
-                #patrol_list.extend(self.getPatrol(GUARDIANSITES))
-                #requires a new function
-
-            if self.ships and self.hideships != 1:
-                self.patrol_name = "Your Ships"
-                if not self.started:
-                    self.event_generate('<<PatrolDisplay>>', when='tail')
-
-                patrol_list.extend(self.ships)
+            # patrol_list.extend(self.getPatrol(GUARDIANSITES))
+            # requires a new function
 
             if self.canonn != 1:
                 self.canonnpatrol = self.getCanonnPatrol()
@@ -846,21 +837,21 @@ class CanonnPatrol(Frame):
 
         self.canonnbtn = tk.IntVar(value=config.getint("HideCanonn"))
         self.factionbtn = tk.IntVar(value=config.getint("HideFaction"))
-        self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
+        # self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
         self.edsmbtn = tk.IntVar(value=config.getint("HideEDSM"))
         self.thargoidbtn = tk.IntVar(value=config.getint("HideThargoids"))
         self.guardianbtn = tk.IntVar(value=config.getint("HideGuardians"))
         self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
-        #self.fleetbtn = tk.IntVar(value=config.getint("HideFleet"))
+        # self.fleetbtn = tk.IntVar(value=config.getint("HideFleet"))
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
-        self.hideships = self.hideshipsbtn.get()
+        # self.hideships = self.hideshipsbtn.get()
         self.edsm = self.edsmbtn.get()
         self.copypatrol = self.copypatrolbtn.get()
         self.thargoids = self.thargoidbtn.get()
         self.guardians = self.guardianbtn.get()
-        #self.fleet = self.fleetbtn.get()
+        # self.fleet = self.fleetbtn.get()
 
         frame = nb.Frame(parent)
         frame.columnconfigure(1, weight=1)
@@ -870,27 +861,28 @@ class CanonnPatrol(Frame):
         nb.Checkbutton(frame, text="Hide Canonn Patrols", variable=self.canonnbtn).grid(row=1, column=0, sticky="NW")
         nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.factionbtn).grid(row=1, column=2,
                                                                                                  sticky="NW")
-        nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideshipsbtn).grid(row=1, column=3, sticky="NW")
+        # nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideshipsbtn).grid(row=1, column=3, sticky="NW")
         nb.Checkbutton(frame, text="Hide Galactic Mapping POIS", variable=self.edsmbtn).grid(row=2, column=0,
                                                                                              sticky="NW")
         nb.Checkbutton(frame, text="Hide Thargoid Sites", variable=self.thargoidbtn).grid(row=2, column=1,
                                                                                           sticky="NW")
         nb.Checkbutton(frame, text="Hide Guardian Sites", variable=self.guardianbtn).grid(row=2, column=2,
                                                                                           sticky="NW")
-        #nb.Checkbutton(frame, text="Hide DSSA Fleet", variable=self.fleetbtn).grid(row=2, column=3,
+        # nb.Checkbutton(frame, text="Hide DSSA Fleet", variable=self.fleetbtn).grid(row=2, column=3,
         #                                                                                  sticky="NW")
         nb.Checkbutton(frame, text="Automatically copy the patrol to the clipboard", variable=self.copypatrolbtn).grid(
             row=3, column=0, sticky="NW", )
 
-        debug("canonn: {}, faction: {} hideships {}, EDSM {}".format(self.canonn, self.faction, self.hideships,
-                                                                     self.edsm))
+        debug("canonn: {}, faction: {} , EDSM {}".format(self.canonn, self.faction, self.edsm))
 
         return frame
 
     def visible(self):
 
-        #nopatrols = self.canonn == 1 and self.faction == 1 and self.hideships == 1 and self.edsm == 1 and self.thargoids == 1 and self.guardians == 1 and self.fleet == 1
-        nopatrols = self.canonn == 1 and self.faction == 1 and self.hideships == 1 and self.edsm == 1 and self.thargoids == 1 and self.guardians == 1
+        # nopatrols = self.canonn == 1 and self.faction == 1 and self.hideships == 1 and self.edsm == 1 and self.thargoids == 1 and self.guardians == 1 and self.fleet == 1
+        nopatrols = self.canonn == 1 and self.faction == 1 and self.edsm == 1 and self.thargoids == 1 and self.guardians == 1
+
+        debug("no patrols {}".format(nopatrols))
 
         if nopatrols:
             self.grid()
@@ -926,29 +918,27 @@ class CanonnPatrol(Frame):
         """Called when the user clicks OK on the settings dialog."""
         config.set('HideCanonn', self.canonnbtn.get())
         config.set('HideFaction', self.factionbtn.get())
-        config.set('HideShips', self.hideshipsbtn.get())
+        #config.set('HideShips', self.hideshipsbtn.get())
         config.set('HideEDSM', self.edsmbtn.get())
         config.set('HideThargoids', self.thargoidbtn.get())
         config.set('HideGuardians', self.guardianbtn.get())
-        #config.set('HideFleet', self.fleetbtn.get())
+        # config.set('HideFleet', self.fleetbtn.get())
         config.set('CopyPatrol', self.copypatrolbtn.get())
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
-        self.hideships = self.hideshipsbtn.get()
+        #self.hideships = self.hideshipsbtn.get()
         self.edsm = self.edsmbtn.get()
         self.copypatrol = self.copypatrolbtn.get()
         self.thargoids = self.thargoidbtn.get()
         self.gaurdians = self.guardianbtn.get()
-        #self.fleet = self.fleetbtn.get()
-
+        # self.fleet = self.fleetbtn.get()
 
         if self.visible():
             # we should fire off an extra download
             UpdateThread(self).start()
 
-        debug("canonn: {}, faction: {} hideships {} hideEDSM {}".format(self.canonn, self.faction, self.hideships,
-                                                                        self.edsm))
+        debug("canonn: {}, faction: {} hideEDSM {}".format(self.canonn, self.faction, self.edsm))
 
     def trigger(self, system, entry):
         # exit if the events dont match
@@ -1043,66 +1033,6 @@ class CanonnPatrol(Frame):
 
         self.ships = []
         self.system = data.get("lastSystem").get("name")
-
-        current_ship = data.get("commander").get("currentShipId")
-
-        shipsystems = {}
-
-        # debug(json.dumps(data.get("ships"),indent=4))
-
-        for ship in data.get("ships").keys():
-
-            if int(ship) != int(current_ship):
-                ship_system = data.get("ships").get(ship).get("starsystem").get("name")
-                if not shipsystems.get(ship_system):
-                    debug("first: {}".format(ship_system))
-                    shipsystems[ship_system] = []
-                # else:
-                #    debug("second: {}".format(ship_system))
-
-                shipsystems[ship_system].append(data.get("ships").get(ship))
-                # if ship_system == "Celaeno":
-                #    debug(json.dumps(shipsystems[ship_system],indent=4))
-            # else:
-            # debug("skipping {}".format(ship))
-
-        for system in shipsystems.keys():
-            ship_pos = Systems.edsmGetSystem(system)
-            ship_count = len(shipsystems.get(system))
-            # if system == "Celaeno":
-            #    debug(json.dumps(shipsystems.get(system),indent=4))
-            if ship_count == 1:
-                # debug(shipsystems.get(system))
-                ship_type = getShipType(shipsystems.get(system)[0].get("name"))
-                ship_name = shipsystems.get(system)[0].get("shipName")
-                ship_station = shipsystems.get(system)[0].get("station").get("name")
-                ship_info = "Your {}, {} is docked at {}".format(ship_type, ship_name, ship_station)
-            elif ship_count == 2:
-
-                if shipsystems.get(system)[0].get("station").get("name") == shipsystems.get(system)[1].get(
-                        "station").get("name"):
-                    ship_info = "Your {} ({}) and {} ({}) are docked at {}".format(
-                        getShipType(shipsystems.get(system)[0].get("name")),
-                        getShipType(shipsystems.get(system)[0].get("shipName")),
-                        getShipType(shipsystems.get(system)[1].get("name")),
-                        getShipType(shipsystems.get(system)[1].get("shipName")),
-                        shipsystems.get(system)[0].get("station").get("name"))
-                    debug(ship_info)
-                else:
-
-                    ship_info = "Your {} ({}) is docked at {} and your {} ({}) is docked at {}".format(
-                        getShipType(shipsystems.get(system)[0].get("name")),
-                        getShipType(shipsystems.get(system)[0].get("shipName")),
-                        shipsystems.get(system)[1].get("station").get("name"),
-                        getShipType(shipsystems.get(system)[1].get("name")),
-                        getShipType(shipsystems.get(system)[1].get("shipName")),
-                        shipsystems.get(system)[0].get("station").get("name"))
-                    debug(ship_info)
-            else:
-                ship_info = "You have {} ships stored in this system".format(ship_count)
-                debug(ship_info)
-
-            self.ships.append(newPatrol("SHIPS", system, ship_pos, ship_info, None))
 
         self.capi_update = True
         if not self.downloaded:
