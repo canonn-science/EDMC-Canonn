@@ -144,6 +144,7 @@ def journal2edsm(j):
     e = {}
     if j.get("OrbitalPeriod"):
         e["orbitalPeriod"] = j.get("OrbitalPeriod") / 24 / 60 / 60
+
     e["surfaceTemperature"] = int(j.get("SurfaceTemperature"))
     e["distanceToArrival"] = int(round(j.get("DistanceFromArrivalLS"), 0))
     e["bodyId"] = j.get("BodyID")
@@ -1075,7 +1076,8 @@ class CodexTypes():
             # fold the scan data into self.bodies
             if not self.bodies:
                 self.bodies = {}
-            if not "Belt Cluster" in entry.get("BodyName"):
+            # only if not a ring or belt
+            if entry.get("PlanetClass") or entry.get("StarType"):
                 debug("Adding body to self.bodies")
                 bd = journal2edsm(entry)
                 self.bodies[bd.get("bodyId")] = bd
