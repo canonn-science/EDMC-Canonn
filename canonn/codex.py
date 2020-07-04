@@ -1294,8 +1294,8 @@ class guardianSites(Emitter):
             payload["type"] = self.gstype
             payload["systemAddress"] = self.entry.get("SystemAddress")
             payload["bodyName"] = self.body
-            payload["latitude"] = self.entry.get("latitude")
-            payload["longitude"] = self.entry.get("longitude")
+            payload["latitude"] = self.entry.get("Latitude")
+            payload["longitude"] = self.entry.get("Longitude")
             payload["reportComment"] = json.dumps(self.entry, indent=4)
             payload["frontierID"] = self.index
 
