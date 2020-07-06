@@ -585,7 +585,7 @@ class CodexTypes():
             for ring in candidate.get("rings"):
                 if ring.get("name")[-4:] == "Ring":
                     if candidate.get("reserveLevel") and candidate.get("reserveLevel") in (
-                    "Pristine", "PristineResources"):
+                            "Pristine", "PristineResources"):
                         self.merge_poi("Ring", "Pristine {} Rings".format(ring.get("type")), body_code)
                     else:
                         self.merge_poi("Ring", "{} Rings".format(ring.get("type")), body_code)
@@ -695,7 +695,7 @@ class CodexTypes():
                         # Landable Volcanism
                         if b.get('type') == 'Planet' and b.get('volcanismType') and b.get(
                                 'volcanismType') != 'No volcanism' and b.get(
-                                'isLandable'):
+                            'isLandable'):
                             self.merge_poi("Geology", b.get('volcanismType').replace(" volcanism", ""), body_code)
 
                         # water ammonia etc
@@ -1246,8 +1246,7 @@ class guardianSites(Emitter):
 
     def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
 
-        Emitter.__init__(self, cmdr, is_beta, system, x, y, z, entry, entry.get("BodyName"), entry.get("Latitude"),
-                         entry.get("Longitude"), client)
+        Emitter.__init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
 
         example = {"timestamp": "2019-10-10T10:23:32Z",
                    "event": "ApproachSettlement",
@@ -1264,11 +1263,38 @@ class guardianSites(Emitter):
             "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
             "Latitude": -10.090128, "Longitude": 114.505409}
 
+        example = {
+            "Name": "$Codex_Ent_Guardian_Data_Logs_Name;",
+            "event": "CodexEntry",
+            "Region": "$Codex_RegionName_18;",
+            "System": "Synuefe ZL-J d10-109",
+            "EntryID": 3200200,
+            "Category": "$Codex_Category_Civilisations;",
+            "timestamp": "2019-10-15T09:19:51Z",
+            "SubCategory": "$Codex_SubCategory_Guardian;",
+            "SystemAddress": 3755873388891,
+            "VoucherAmount": 2500,
+            "Name_Localised": "Guardian-Codex",
+            "Region_Localised": "Inner Orion Spur",
+            "Category_Localised": "Xenologisch",
+            "NearestDestination": "$Ancient:#index=2;",
+            "SubCategory_Localised": "Guardian-Objekte",
+            "NearestDestination_Localised": "Antike Ruinen (2)"
+        }
+
+        if entry.get("event") == "CodexEntry":
+            siteName = entry.get("NearestDestination")
+        else:
+            siteName = entry.get("Name")
+            self.lat = entry.get("Latitude")
+            self.lon = entry.get("Longitude")
+            self.body = entry.get("BodyName")
+
         self.modelreport = None
 
-        if ":" in entry.get("Name"):
-            prefix, suffix = entry.get("Name").split(':')
-            self.index = self.get_index(entry.get("Name"))
+        if ":" in siteName:
+            prefix, suffix = siteName.split(':')
+            self.index = self.get_index(siteName)
 
             if prefix:
                 prefix = prefix.lower()[1:]
@@ -1294,8 +1320,8 @@ class guardianSites(Emitter):
             payload["type"] = self.gstype
             payload["systemAddress"] = self.entry.get("SystemAddress")
             payload["bodyName"] = self.body
-            payload["latitude"] = self.entry.get("Latitude")
-            payload["longitude"] = self.entry.get("Longitude")
+            payload["latitude"] = self.lat
+            payload["longitude"] = self.lon
             payload["reportComment"] = json.dumps(self.entry, indent=4)
             payload["frontierID"] = self.index
 
@@ -1545,8 +1571,10 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
         "Name": "$Ancient:#index=2;", "Name_Localised": "Ancient Ruins (2)",
         "SystemAddress": 5079737705833,
         "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
-        "Latitude": -10.090128, "Longitude": 114.505409}
-    submit("LCU No Fool Like One", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
+        "Latitude": -10.090128, "Longitude": 114.505409
+    }
+
+    submit("TestUser", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
            "Synuefe LY-I b42-2 C 2", -10.090128, 114.505409, client)
 
     testentry = {"timestamp": "2019-10-10T10:23:32Z",
@@ -1555,15 +1583,54 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
                  "SystemAddress": 5079737705833,
                  "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
                  "Latitude": 52.681084, "Longitude": 115.240822}
-    submit("LCU No Fool Like One", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
+
+    submit("TestUser", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
            "Synuefe LY-I b42-2 C 2", 52.681084, 115.240822, client)
 
+    testentry = {
+        "Name": "$Codex_Ent_Guardian_Data_Logs_Name;",
+        "event": "CodexEntry",
+        "Region": "$Codex_RegionName_18;",
+        "System": "Synuefe ZL-J d10-109",
+        "EntryID": 3200200,
+        "Category": "$Codex_Category_Civilisations;",
+        "timestamp": "2019-10-15T09:19:51Z",
+        "SubCategory": "$Codex_SubCategory_Guardian;",
+        "SystemAddress": 3755873388891,
+        "VoucherAmount": 2500,
+        "Name_Localised": "Guardian-Codex",
+        "Region_Localised": "Inner Orion Spur",
+        "Category_Localised": "Xenologisch",
+        "NearestDestination": "$Ancient:#index=2;",
+        "SubCategory_Localised": "Guardian-Objekte",
+        "NearestDestination_Localised": "Antike Ruinen (2)"
+    }
+
+    submit("TestUser", False, "Synuefe ZL-J d10-109", 852.65625, -51.125, -124.84375, testentry,
+           "Synuefe ZL-J d10-109 E 3", -27, -148, client)
+
+    testentry = {"Name": "$Codex_Ent_Guardian_Sentinel_Name;", "event": "CodexEntry", "Region": "$Codex_RegionName_18;",
+                 "System": "Synuefe CE-R c21-6", "EntryID": 3200600, "Category": "$Codex_Category_Civilisations;",
+                 "timestamp": "2020-04-26T17:28:51Z", "SubCategory": "$Codex_SubCategory_Guardian;",
+                 "SystemAddress": 1734529192634,
+                 "Name_Localised": "Часовой Стражей", "Region_Localised": "Inner Orion Spur",
+                 "Category_Localised": "Ксенологичские находки", "NearestDestination": "$Ancient_Small_001:#index=1;",
+                 "SubCategory_Localised": "Объекты Стражей", "NearestDestination_Localised": "Конструкция Стражей"
+                 }
+
+    submit("TestUser", False, "Synuefe CE-R c21-6", 828.1875 , -78 , -105.1875, testentry,
+           "Synuefe CE-R c21-6 C 1", 42	, 73, client)
 
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
-    if entry["event"] == "CodexEntry":
+    codex_entry = (entry.get("event") == "CodexEntry")
+    approach_settlement = (entry.get("event") == "ApproachSettlement")
+    guardian_codices = (entry.get("EntryID") in [3200200, 3200300, 3200400, 3200500, 3200600])
+    guardian_event = (codex_entry and guardian_codices)
+
+    if codex_entry:
         codexEmitter(cmdr, is_beta, entry.get("System"), x, y, z, entry, body, lat, lon, client).start()
 
-    if entry["event"] == "ApproachSettlement":
+    if approach_settlement or guardian_event:
         guardianSites(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
 
     if entry.get("event") == "SendText" and entry.get("Message") == "codextest":
