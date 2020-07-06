@@ -136,7 +136,7 @@ class fssEmitter(Emitter):
                         })
 
         # is this a code entry and do we want to record it?
-        # We dont want o record any that don't begin with $ and and with ;
+        # We don't want to record any that don't begin with $ and and with ;
         if FSSSignalDiscovered and not excluded and not USS and not isStation and '$' in self.entry.get("SignalName"):
 
             url = self.getUrl()
