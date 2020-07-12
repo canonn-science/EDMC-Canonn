@@ -889,7 +889,7 @@ class CodexTypes():
             # hud category andname match so we will see if teh body is in teh list
             if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
                 tmpb = signals[i].get("body")
-
+                debug("tmpb {} {} {}".format(tmpb,hud_category,english_name))
                 if not body in tmpb.split():
                     self.poidata[i]["body"] = ",".join([tmpb, body])
                 found = True
@@ -1110,17 +1110,6 @@ class CodexTypes():
 
                 self.merge_poi(cat, english_name, bodyVal)
 
-                for x, r in enumerate(self.poidata):
-                    if r.get("hud_category") == cat and r.get("english_name") == english_name:
-                        found = True
-                        if not bodyVal in r.get("body"):
-                            self.poidata[x]["body"] = "{},{}".format(self.poidata[x]["body"], bodyVal)
-                if not found:
-                    self.set_image(cat, True)
-                    self.poidata.append({'body': bodyVal, 'hud_category': cat, 'english_name': english_name})
-
-                debug(self.poidata)
-                debug("cat {} name  {} body {}".format(cat, english_name, bodyVal))
             self.visualise()
             self.allowed = True
 
