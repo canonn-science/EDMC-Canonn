@@ -117,7 +117,7 @@ class fssEmitter(Emitter):
         FSSSignalDiscovered=(self.entry.get("event") == "FSSSignalDiscovered")
         USS=("$USS" in self.entry.get("SignalName"))
         isStation=(self.entry.get("IsStation"))
-        FleetCarrier = (self.entry.get("SignalName_Localised")[-4] == '-' and isStation)
+        FleetCarrier = (self.entry.get("SignalName") and self.entry.get("SignalName")[-4] == '-' and isStation)
         life_event=("$Fixed_Event_Life" in self.entry.get("SignalName"))
         excluded=fssEmitter.excludefss.get(self.entry.get("SignalName"))
 
