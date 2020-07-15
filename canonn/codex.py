@@ -460,7 +460,7 @@ class CodexTypes():
                 debug("flypast: {} distance = {} avgdiameter = {} synodic = {} ".format(body_code, distance, r1 + r2,
                                                                                         period))
                 # average diameter and 4 days synodic period
-                if distance < 2 * (r1 + r2) and period < 4:
+                if distance < 2 * (r1 + r2) and period < 30:
                     self.merge_poi("Tourist", 'Close Flypast', body_code)
 
     def close_bodies(self, candidate, bodies, body_code):
@@ -989,6 +989,22 @@ class CodexTypes():
                 self.frame.grid()
                 self.frame.grid_remove()
 
+    def fake_biology(self,cmdr,system,x,y,z,planet,count,client):
+         bodyname=f"{system} {planet}"
+
+         signal={
+             "timestamp": "2020-07-13T22:37:34Z",
+             "event": "SAASignalsFound",
+             "BodyName": bodyname,
+             "Signals": [
+                 {"Type": "$SAA_SignalType_Biological;",
+                  "Type_Localised": "Biological",
+                  "Count": count}]
+        }
+
+         self.journal_entry(cmdr, None, system, None, signal, None,x , y, z, bodyname, None, None, client)
+
+
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if not self.hidecodex:
             self.journal_entry_wrap(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
@@ -996,6 +1012,13 @@ class CodexTypes():
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         self.system = system
         debug("Codex {}".format(entry.get("event")))
+
+
+        if entry.get("event") == "SendText" and entry.get("Message"):
+            ma =  entry.get("Message").split(' ')
+            if len(ma) == 4 and ma[0] == "fake" and ma[1] == "bio":
+                debug("faking a bio signal")
+                self.fake_biology(cmdr, system, x, y, z, ma[2], ma[3],client)
 
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             # go fetch some data.It will
@@ -1096,7 +1119,7 @@ class CodexTypes():
             bodyName = entry.get("BodyName")
             bodyVal = bodyName.replace(self.system, '')
 
-            debug("SAASignalsFound")
+            debug(f"SAASignalsFound {bodyName}")
 
             signals = entry.get("Signals")
             for i, v in enumerate(signals):
