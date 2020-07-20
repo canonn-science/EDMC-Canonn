@@ -22,7 +22,7 @@ Hyperdiction reporting is logged from the Thargoid Encounter Stats screen. There
 This captures NHSS information from the FSS scanner and USS Drops. Only logs one instance of each threat level per system
 
 ## Codex Icons
-The plugin will look up EDSM and Canonn Databases to identify interesting facts about the system and display icons that whow you what is is there.  THis may be biology, geology or system features such as shepherd moons and close orbits. 
+The plugin will look up EDSM and Canonn Databases to identify interesting facts about the system and display icons that show you what is in the current system.  This may be biology, geology or system features such as earth like worlds, shepherd moons and close orbits. It will also show you how many bodies are recorded in EDSM and how many bodies there are in total.
 
 ## Codex
 
