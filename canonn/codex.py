@@ -1061,17 +1061,23 @@ class CodexTypes():
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
                 '$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
+            debug(entry.get("SignalName"))
             if entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
+                debug("Merging Cloud")
                 self.merge_poi("Cloud", "Life Cloud", "")
             else:
+                debug("Merging Ring")
                 self.merge_poi("Cloud", "Life Ring", "")
             self.allowed = True
-            self.evisualise(None)
+            self.visualise()
+            #self.evisualise(None)
+
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             self.merge_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
-            self.evisualise(None)
+            self.visualise()
+            #self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
             if "NumberStation" in entry.get("SignalName"):
@@ -1085,7 +1091,9 @@ class CodexTypes():
             if "Generation Ship" in entry.get("SignalName"):
                 self.merge_poi("Human", entry.get("SignalName"), body)
             self.allowed = True
-            self.evisualise(None)
+            #self.evisualise(None)
+            self.visualise()
+
 
         if entry.get("event") == "FSSAllBodiesFound":
             # self.remove_poi("Planets", "Unexplored Bodies")
@@ -1105,7 +1113,8 @@ class CodexTypes():
                 bd = journal2edsm(entry)
                 self.bodies[bd.get("bodyId")] = bd
                 # debug(json.dumps(self.bodies, indent=4))
-                self.evisualise(None)
+                self.visualise()
+                #self.evisualise(None)
 
             self.allowed = True
             self.visualise()
