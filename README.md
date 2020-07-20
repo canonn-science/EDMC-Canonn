@@ -1,22 +1,17 @@
 # EDMC-Canonn
 EDMC plugin to automatically collect accurate science data from the galaxy and coordinate missions
 
-Features will be added in the Project Board
-
-# Important
-
-The USS Survey and EDMC-Canonn are no longer compatible. However EDMC-Canonn now writes to the same google sheets as the USS-Survey so if you are using this plugin, then please disable the USS-Survey
-
 # Features
 
 ## Patrol System
-The Patrol system will eventualy be used for directing people to places of interest to Canonn. This will be based on the legacy patrol system for now. In addition we now have two extra patrol types. 
+The Patrol system is used for directing people to places of interest to Canonn and for providing some useful location information. The patrol will display the nearest location to the commander position. Patrols are not automaticaly updated they only get loaded on statup of after going into the configuration screen
  
+ * Canonn patrols usually consist of locations where data is incomplete. 
  * Canonn Influence Patrol: This tells you where systems have a Canonn Presence and gives some informatio about the current state
- * Ship Locations: This tells you where your ships are located
+ * Galactic Mapping POIs show you the nearest Galactic mapping project entry.
+ * Thargoid Sites show you the location of the nearest site and its type. 
+ * Guardian Sites shows you the nearest guardian site 
  
- ToDo: Controls to cycle through patrols.
-
 ## Canonn News Feed
 See the top stories on rotation
 
@@ -26,8 +21,24 @@ Hyperdiction reporting is logged from the Thargoid Encounter Stats screen. There
 ## NHSS Reporting
 This captures NHSS information from the FSS scanner and USS Drops. Only logs one instance of each threat level per system
 
+## Codex Icons
+The plugin will look up EDSM and Canonn Databases to identify interesting facts about the system and display icons that show you what is in the current system.  This may be biology, geology or system features such as earth like worlds, shepherd moons and close orbits. It will also show you how many bodies are recorded in EDSM and how many bodies there are in total.
+
 ## Codex
-This records the codex entries and a bit of extra info about body and lat lon. The codex entries are routed to the appropriate CAPI report. eg fgreports btreports etc.
+
+This records the codex entries and a bit of extra info about body and lat lon. The codex entries are routed to the appropriate CAPI report. eg fgreports btreports etc. Most data gets sent to be stored in the Canonn API https://api.canonn.tech/documentation
+
+We also provide excel sheets with much of the data held in the CAPI
+
+* [Surface Biology](https://docs.google.com/spreadsheets/d/15lqZtqJk7B2qUV5Jb4tlnst6i1B7pXlAUzQnacX64Kc)
+* [Guardian](https://docs.google.com/spreadsheets/d/1p20iT3HWAcRRJ8Cw60Z2tCVTpcBavhycvE0Jgg0h32Y)
+* [Lagrange Clouds](https://docs.google.com/spreadsheets/d/11BCZRci0YlgW0sFdxvB_srq7ssxHzstMAiewhSGHE94)
+
+All Codex data some FSS Events and SAA Signals are stored in a cloud mysql database and used for showing code icons. This data can be accessed through data dumps in compressed json format.
+
+* [Codex Events](https://drive.google.com/file/d/138PgJgUCv1Y10LRDsj3eUnOZh3cf_1v4/view?usp=sharing)
+* [FSS Events](https://drive.google.com/file/d/167wFlOrklf5tT2C1LtYGi8Ryjg-HpFXB/view?usp=sharing)
+* [Signals](https://drive.google.com/file/d/1VyxpC3xux7A9oKYZ9xEApVND-CFeF_Lf/view?usp=sharing)
 
 ## Thargoid Kills 
 This records Thargoids kills. What else did you expect herds of wilderbeast running through the serengeti?
@@ -38,5 +49,3 @@ This records all journal entries that haven't specifically been excluded. NB the
 ## FSS Data
 This records FSSSignalDicovered Messages that havent beenexcluded. Also records AX Conflict Zones in their own model
 
-## Legacy Reporting
-In the interests of launching the new plugin quicker I have integrated the legacy code that is used to opulate the spreadheets this will allow us to run reports in parallel. 
