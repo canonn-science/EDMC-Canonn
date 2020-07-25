@@ -11,20 +11,21 @@ except:
     from urllib import quote_plus
     from urllib import unquote
 
-import canonn.emitter
 import json
 import math
-import myNotebook as nb
 import os
-import requests
 import sys
 import threading
 import webbrowser
+from math import sqrt, pow
+
+import canonn.emitter
+import myNotebook as nb
+import requests
 from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from config import config
-from math import sqrt, pow
 
 nvl = lambda a, b: a or b
 
@@ -449,19 +450,38 @@ class CodexTypes():
 
             # if we share teh same parent and not the same body
             if valid_body and str(p1[0]) == str(p2[0]):
-                a1 = self.aphelion("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
-                a2 = self.aphelion("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
-                r1 = sibling.get("radius") / 299792.5436
-                r2 = body.get("radius") / 299792.5436
+                a1 = self.apoapsis("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
+                a2 = self.apoapsis("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                p1 = self.periapsis("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
+                p2 = self.periapsis("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                r1 = sibling.get("radius")
+                r2 = body.get("radius")
 
-                distance = abs(a1 - a2)
+                # we want this to be in km
+                adistance = (abs(a1 - a2) * 299792.5436) - (r1 + r2)
+                pdistance = (abs(p1 - a2) * 299792.5436) - (r1 + r2)
                 # print("distance {}, radii = {}".format(distance,r1+r2))
                 period = get_synodic_period(body, sibling)
-                debug("flypast: {} distance = {} avgdiameter = {} synodic = {} ".format(body_code, distance, r1 + r2,
-                                                                                        period))
-                # average diameter and 4 days synodic period
-                if distance < 2 * (r1 + r2) and period < 30:
+
+                debugval = {
+                    "body": body,
+                    "distance": {"apoapsis": adistance, "periapsis": pdistance},
+                    "orbitalEccentricity": body.get("orbitalEccentricity"),
+                    "orbitalInclination": body.get("orbitalEccentricity"),
+                    "argOfPeriapsis": body.get("orbitalEccentricity"),
+                    "synodicPeriod": period
+                }
+
+                # its close if less than 100km
+                collision = (adistance < 0 or pdistance < 0)
+                close = (adistance < 100 or pdistance < 100)
+                # only considering a 30 day period
+                if collision and period < 30:
+                    self.merge_poi("Tourist", 'Collision Flypast', body_code)
+                    debug(debugval)
+                elif close and period < 30:
                     self.merge_poi("Tourist", 'Close Flypast', body_code)
+                    debug(debugval)
 
     def close_bodies(self, candidate, bodies, body_code):
         if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
@@ -474,9 +494,9 @@ class CodexTypes():
                 if body and body.get("semiMajorAxis") is not None:
                     # light seconds
 
-                    d1 = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
+                    d1 = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"),
                                        candidate.get("orbitalEccentricity"))
-                    d2 = self.aphelion("semiMajorAxis", body.get("semiMajorAxis"),
+                    d2 = self.apoapsis("semiMajorAxis", body.get("semiMajorAxis"),
                                        body.get("orbitalEccentricity"))
                     # distance = (candidate.get("semiMajorAxis") + body.get("semiMajorAxis")) * 499.005
                     distance = d1 + d2
@@ -485,7 +505,7 @@ class CodexTypes():
                 debug("non-binary")
 
                 body = bodies.get(get_parent(candidate))
-                distance = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
+                distance = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"),
                                          candidate.get("orbitalEccentricity"))
 
             if candidate and body:
@@ -516,7 +536,7 @@ class CodexTypes():
             debug("Ring ring {} {}".format(candidate.get("semiMajorAxis"), candidate.get("orbitalEccentricity")))
             if candidate.get("semiMajorAxis"):
                 debug("Calculating ring distance")
-                apehelion = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
+                apehelion = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"),
                                           candidate.get("orbitalEccentricity") or 0)
                 ring_span = get_outer_radius(candidate) + get_outer_radius(parent)
                 debug("Ring Span: {}".format(ring_span))
@@ -889,7 +909,7 @@ class CodexTypes():
             # hud category andname match so we will see if teh body is in teh list
             if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
                 tmpb = signals[i].get("body")
-                debug("tmpb {} {} {}".format(tmpb,hud_category,english_name))
+                debug("tmpb {} {} {}".format(tmpb, hud_category, english_name))
                 if not body in tmpb.split():
                     self.poidata[i]["body"] = ",".join([tmpb, body])
                 found = True
@@ -944,13 +964,15 @@ class CodexTypes():
 
         return focus
 
-    def aphelion(self, tag, major, eccentricity):
+    def apoapsis(self, tag, major, eccentricity):
         a = float(self.light_seconds(tag, major))
         e = float(eccentricity or 0)
-        focus = a * (1 + e)
-        debug("Apehelion  {}ls".format(a))
+        return a * (1 + e)
 
-        return focus
+    def periapsis(self, tag, major, eccentricity):
+        a = float(self.light_seconds(tag, major))
+        e = float(eccentricity or 0)
+        return a * (1 - e)
 
     def surface_distance(self, d, r1, r2):
         return d - (r1 + r2);
@@ -989,21 +1011,20 @@ class CodexTypes():
                 self.frame.grid()
                 self.frame.grid_remove()
 
-    def fake_biology(self,cmdr,system,x,y,z,planet,count,client):
-         bodyname=f"{system} {planet}"
+    def fake_biology(self, cmdr, system, x, y, z, planet, count, client):
+        bodyname = f"{system} {planet}"
 
-         signal={
-             "timestamp": "2020-07-13T22:37:34Z",
-             "event": "SAASignalsFound",
-             "BodyName": bodyname,
-             "Signals": [
-                 {"Type": "$SAA_SignalType_Biological;",
-                  "Type_Localised": "Biological",
-                  "Count": count}]
+        signal = {
+            "timestamp": "2020-07-13T22:37:34Z",
+            "event": "SAASignalsFound",
+            "BodyName": bodyname,
+            "Signals": [
+                {"Type": "$SAA_SignalType_Biological;",
+                 "Type_Localised": "Biological",
+                 "Count": count}]
         }
 
-         self.journal_entry(cmdr, None, system, None, signal, None,x , y, z, bodyname, None, None, client)
-
+        self.journal_entry(cmdr, None, system, None, signal, None, x, y, z, bodyname, None, None, client)
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if not self.hidecodex:
@@ -1013,12 +1034,11 @@ class CodexTypes():
         self.system = system
         debug("Codex {}".format(entry.get("event")))
 
-
         if entry.get("event") == "SendText" and entry.get("Message"):
-            ma =  entry.get("Message").split(' ')
+            ma = entry.get("Message").split(' ')
             if len(ma) == 4 and ma[0] == "fake" and ma[1] == "bio":
                 debug("faking a bio signal")
-                self.fake_biology(cmdr, system, x, y, z, ma[2], ma[3],client)
+                self.fake_biology(cmdr, system, x, y, z, ma[2], ma[3], client)
 
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             # go fetch some data.It will
@@ -1070,14 +1090,13 @@ class CodexTypes():
                 self.merge_poi("Cloud", "Life Ring", "")
             self.allowed = True
             self.visualise()
-            #self.evisualise(None)
-
+            # self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             self.merge_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
             self.visualise()
-            #self.evisualise(None)
+            # self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
             if "NumberStation" in entry.get("SignalName"):
@@ -1091,9 +1110,8 @@ class CodexTypes():
             if "Generation Ship" in entry.get("SignalName"):
                 self.merge_poi("Human", entry.get("SignalName"), body)
             self.allowed = True
-            #self.evisualise(None)
+            # self.evisualise(None)
             self.visualise()
-
 
         if entry.get("event") == "FSSAllBodiesFound":
             # self.remove_poi("Planets", "Unexplored Bodies")
@@ -1114,7 +1132,7 @@ class CodexTypes():
                 self.bodies[bd.get("bodyId")] = bd
                 # debug(json.dumps(self.bodies, indent=4))
                 self.visualise()
-                #self.evisualise(None)
+                # self.evisualise(None)
 
             self.allowed = True
             self.visualise()
@@ -1639,8 +1657,9 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
                  "SubCategory_Localised": "Объекты Стражей", "NearestDestination_Localised": "Конструкция Стражей"
                  }
 
-    submit("TestUser", False, "Synuefe CE-R c21-6", 828.1875 , -78 , -105.1875, testentry,
-           "Synuefe CE-R c21-6 C 1", 42	, 73, client)
+    submit("TestUser", False, "Synuefe CE-R c21-6", 828.1875, -78, -105.1875, testentry,
+           "Synuefe CE-R c21-6 C 1", 42, 73, client)
+
 
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     codex_entry = (entry.get("event") == "CodexEntry")
