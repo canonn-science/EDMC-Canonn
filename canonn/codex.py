@@ -902,7 +902,7 @@ class CodexTypes():
             self.labels[name].grid_remove()
 
     def merge_poi(self, hud_category, english_name, body):
-        debug("Merge POI")
+        debug(f"Merge POI {hud_category} {english_name} {body}")
         found = False
         signals = self.poidata
         for i, v in enumerate(signals):
