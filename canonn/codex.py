@@ -1067,7 +1067,7 @@ class CodexTypes():
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
                 self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(entry.get("SystemAllegiance")), "")
             self.allowed = True
-            self.visualise()
+            self.evisualise()
 
         if entry.get("event") == "FSSDiscoveryScan":
             debug("setting fsscount {} ".format(entry.get("BodyCount")))
@@ -1089,14 +1089,14 @@ class CodexTypes():
                 debug("Merging Ring")
                 self.merge_poi("Cloud", "Life Ring", "")
             self.allowed = True
-            self.visualise()
-            # self.evisualise(None)
+            #self.visualise()
+            self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             self.merge_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
-            self.visualise()
-            # self.evisualise(None)
+            #self.visualise()
+            self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
             if "NumberStation" in entry.get("SignalName"):
@@ -1110,14 +1110,15 @@ class CodexTypes():
             if "Generation Ship" in entry.get("SignalName"):
                 self.merge_poi("Human", entry.get("SignalName"), body)
             self.allowed = True
-            # self.evisualise(None)
-            self.visualise()
+            self.evisualise(None)
+            #elf.visualise()
 
         if entry.get("event") == "FSSAllBodiesFound":
             # self.remove_poi("Planets", "Unexplored Bodies")
             # CodexTypes.bodycount = CodexTypes.fsscount
             self.allowed = True
-            self.visualise()
+            #self.visualise()
+            self.visualise(None)
 
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
             # debug(json.dumps(entry,indent=4))
@@ -1131,11 +1132,12 @@ class CodexTypes():
                 bd = journal2edsm(entry)
                 self.bodies[bd.get("bodyId")] = bd
                 # debug(json.dumps(self.bodies, indent=4))
-                self.visualise()
-                # self.evisualise(None)
+                #self.visualise()
+                self.evisualise(None)
 
             self.allowed = True
-            self.visualise()
+            #self.visualise()
+            self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
             CodexTypes.parentRadius = self.light_seconds("Radius", entry.get("Radius"))
@@ -1160,7 +1162,8 @@ class CodexTypes():
 
                 self.merge_poi(cat, english_name, bodyVal)
 
-            self.visualise()
+            #self.visualise()
+            self.evisualise(Mone)
             self.allowed = True
 
     @classmethod
