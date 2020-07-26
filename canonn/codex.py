@@ -14,7 +14,6 @@ except:
 import json
 import math
 import os
-import sys
 import threading
 import webbrowser
 from math import sqrt, pow
@@ -628,11 +627,13 @@ class CodexTypes():
                     elif density > 4.917372037815108 + (2 * 297.7768008954368):
                         self.merge_poi("Tourist", "High Density Rings", body_code)
 
+    # this seems horribly confused
     def evisualise(self, event):
         try:
             debug("evisualise")
-            self.poidata = []
-            debug("self.poidata = []")
+
+            #self.poidata = []
+            #debug("self.poidata = []")
             usystem = unquote(self.system)
 
             if self.temp_poidata:
@@ -903,19 +904,22 @@ class CodexTypes():
 
     def merge_poi(self, hud_category, english_name, body):
         debug(f"Merge POI {hud_category} {english_name} {body}")
+        debug(self.poidata)
         found = False
         signals = self.poidata
-        for i, v in enumerate(signals):
+        for i,signal in enumerate(signals):
             # hud category andname match so we will see if teh body is in teh list
-            if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
-                tmpb = signals[i].get("body")
-                debug("tmpb {} {} {}".format(tmpb, hud_category, english_name))
-                if not body in tmpb.split():
+            if signal.get("english_name") == english_name and signal.get("hud_category") == hud_category:
+                tmpb = signal.get("body")
+                debug("tmpb {} {} {} pbody {}".format(tmpb, hud_category, english_name,body))
+                if not body in tmpb.split(','):
                     self.poidata[i]["body"] = ",".join([tmpb, body])
                 found = True
 
         if not found:
+            debug("appending")
             self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
+            debug(self.poidata)
 
     def remove_poi(self, hud_category, english_name):
         debug("Remove POI")
@@ -977,6 +981,7 @@ class CodexTypes():
     def surface_distance(self, d, r1, r2):
         return d - (r1 + r2);
 
+    # this is used to trigger display of merged data
     def visualise(self):
 
         unscanned = nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0)
@@ -1045,6 +1050,7 @@ class CodexTypes():
             CodexTypes.fsscount = None
             CodexTypes.bodycount = None
             self.bodies = None
+            self.poidata=[]
             poiTypes(entry.get("StarSystem"), self.getdata).start()
             self.frame.grid()
             self.frame.grid_remove()
@@ -1089,7 +1095,7 @@ class CodexTypes():
                 debug("Merging Ring")
                 self.merge_poi("Cloud", "Life Ring", "")
             self.allowed = True
-            #self.visualise()
+
             self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
@@ -1110,15 +1116,15 @@ class CodexTypes():
             if "Generation Ship" in entry.get("SignalName"):
                 self.merge_poi("Human", entry.get("SignalName"), body)
             self.allowed = True
+            #self.evisualise(None)
             self.evisualise(None)
-            #elf.visualise()
 
         if entry.get("event") == "FSSAllBodiesFound":
             # self.remove_poi("Planets", "Unexplored Bodies")
             # CodexTypes.bodycount = CodexTypes.fsscount
             self.allowed = True
             #self.visualise()
-            self.visualise(None)
+            self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
             # debug(json.dumps(entry,indent=4))
@@ -1153,7 +1159,7 @@ class CodexTypes():
             signals = entry.get("Signals")
             for i, v in enumerate(signals):
                 found = False
-                type = signals[i].get("Type")
+                type = v.get("Type")
                 english_name = type.replace("$SAA_SignalType_", "").replace("ical;", "y").replace(";", '')
                 if " Ring" in bodyName:
                     cat = "Ring"
@@ -1162,7 +1168,6 @@ class CodexTypes():
 
                 self.merge_poi(cat, english_name, bodyVal)
 
-            #self.visualise()
             self.evisualise(None)
             self.allowed = True
 
