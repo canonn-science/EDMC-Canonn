@@ -1163,7 +1163,7 @@ class CodexTypes():
                 self.merge_poi(cat, english_name, bodyVal)
 
             #self.visualise()
-            self.evisualise(Mone)
+            self.evisualise(None)
             self.allowed = True
 
     @classmethod
