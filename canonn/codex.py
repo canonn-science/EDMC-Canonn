@@ -11,20 +11,19 @@ except:
     from urllib import quote_plus
     from urllib import unquote
 
+import canonn.emitter
 import json
 import math
+import myNotebook as nb
 import os
+import requests
 import threading
 import webbrowser
-from math import sqrt, pow
-
-import canonn.emitter
-import myNotebook as nb
-import requests
 from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from config import config
+from math import sqrt, pow
 
 nvl = lambda a, b: a or b
 
@@ -475,10 +474,10 @@ class CodexTypes():
                 collision = (adistance < 0 or pdistance < 0)
                 close = (adistance < 100 or pdistance < 100)
                 # only considering a 30 day period
-                if collision and period < 30:
+                if collision and period < 40:
                     self.merge_poi("Tourist", 'Collision Flypast', body_code)
                     debug(debugval)
-                elif close and period < 30:
+                elif close and period < 40:
                     self.merge_poi("Tourist", 'Close Flypast', body_code)
                     debug(debugval)
 
@@ -632,8 +631,8 @@ class CodexTypes():
         try:
             debug("evisualise")
 
-            #self.poidata = []
-            #debug("self.poidata = []")
+            # self.poidata = []
+            # debug("self.poidata = []")
             usystem = unquote(self.system)
 
             if self.temp_poidata:
@@ -904,20 +903,41 @@ class CodexTypes():
 
     def merge_poi(self, hud_category, english_name, body):
         debug(f"Merge POI {hud_category} {english_name} {body}")
-        debug(self.poidata)
+        # we could be passing in single body or a comma seperated list or nothing
+
+        # we haven't found our bodies yet
         found = False
         signals = self.poidata
-        for i,signal in enumerate(signals):
-            # hud category andname match so we will see if teh body is in teh list
+
+        for i, signal in enumerate(signals):
+            # hud category and name match so we will see if the body is in the list
             if signal.get("english_name") == english_name and signal.get("hud_category") == hud_category:
-                tmpb = signal.get("body")
-                debug("tmpb {} {} {} pbody {}".format(tmpb, hud_category, english_name,body))
-                if not body in tmpb.split(','):
-                    self.poidata[i]["body"] = ",".join([tmpb, body])
+                # some signals don't have a body so they are already found and we can skip
+                if signal.get("body"):
+                    # we might be be getting a list
+                    pbodies = body.split(',')
+                    # create an array from signals
+                    sbodies = signal.get("body").split(',')
+
+                    # join the two lists
+                    sbodies.extend(pbodies)
+
+                    # sort and make unique
+                    bodies = sorted(list(set(list(map(str.strip, sbodies)))))
+
+                    debug(f"bodies {bodies}")
+                    # convert back to a string
+                    tmpb = ", ".join(bodies)
+                    debug("tmpb '{}' '{}' '{}' bodylist '{}'".format(hud_category, english_name, body, tmpb))
+
+                    # update the poi
+                    self.poidata[i]["body"] = tmpb
                 found = True
 
         if not found:
             debug("appending")
+            if body:
+                body = body.strip()
             self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
             debug(self.poidata)
 
@@ -1050,7 +1070,8 @@ class CodexTypes():
             CodexTypes.fsscount = None
             CodexTypes.bodycount = None
             self.bodies = None
-            self.poidata=[]
+            self.poidata = []
+            self.system=entry.get("StarSystem")
             poiTypes(entry.get("StarSystem"), self.getdata).start()
             self.frame.grid()
             self.frame.grid_remove()
@@ -1073,7 +1094,7 @@ class CodexTypes():
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
                 self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(entry.get("SystemAllegiance")), "")
             self.allowed = True
-            self.evisualise()
+            self.evisualise(None)
 
         if entry.get("event") == "FSSDiscoveryScan":
             debug("setting fsscount {} ".format(entry.get("BodyCount")))
@@ -1101,7 +1122,7 @@ class CodexTypes():
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             self.merge_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
-            #self.visualise()
+            # self.visualise()
             self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
@@ -1116,14 +1137,14 @@ class CodexTypes():
             if "Generation Ship" in entry.get("SignalName"):
                 self.merge_poi("Human", entry.get("SignalName"), body)
             self.allowed = True
-            #self.evisualise(None)
+            # self.evisualise(None)
             self.evisualise(None)
 
         if entry.get("event") == "FSSAllBodiesFound":
             # self.remove_poi("Planets", "Unexplored Bodies")
             # CodexTypes.bodycount = CodexTypes.fsscount
             self.allowed = True
-            #self.visualise()
+            # self.visualise()
             self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
@@ -1138,11 +1159,11 @@ class CodexTypes():
                 bd = journal2edsm(entry)
                 self.bodies[bd.get("bodyId")] = bd
                 # debug(json.dumps(self.bodies, indent=4))
-                #self.visualise()
+                # self.visualise()
                 self.evisualise(None)
 
             self.allowed = True
-            #self.visualise()
+            # self.visualise()
             self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
