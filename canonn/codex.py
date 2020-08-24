@@ -224,6 +224,16 @@ def get_synodic_period(b1, b2):
     Tsyn = 1 / abs((1 / T1) - (1 / T2))
     return Tsyn
 
+class codexName(threading.Thread):
+    def __init__(self,  callback):
+        # debug("initialise POITYpes Thread")
+        threading.Thread.__init__(self)
+        self.callback = callback
+
+    def run(self):
+        # debug("running poitypes")
+        self.callback()
+        # debug("poitypes Callback Complete")
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
@@ -1201,6 +1211,20 @@ class CodexTypes():
             self.allowed = True
 
     @classmethod
+    def get_codex_names(cls):
+        name_ref={}
+        debug("Getting Name Ref from cloud")
+        r = requests.get("https://us-central1-canonn-api-236217.cloudfunctions.net/codexNameRef")
+
+        if r.status_code == requests.codes.ok:
+            for entry in r.json():
+                name_ref[entry.get("entryid")] = entry
+            cls.name_ref=name_ref
+            debug(json.dumps(name_ref,indent=4))
+        else:
+            error("error in get_codex_names")
+
+    @classmethod
     def plugin_start(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
         cls.name_ref={}
@@ -1213,6 +1237,8 @@ class CodexTypes():
         #make this a dict
         for entry in name_ref_array:
             cls.name_ref[entry.get("entryid")]=entry
+
+        codexName(cls.get_codex_names).start()
         #except:
         #    debug("no config file {}".format(file))
 
