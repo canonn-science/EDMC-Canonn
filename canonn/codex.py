@@ -1079,6 +1079,14 @@ class CodexTypes():
 
             # self.visualise()
 
+        if entry.get("event") == "CodexEntry":
+            debug("Displaying Codex")
+            entry_id=entry.get("EntryID")
+            codex_name_ref=CodexTypes.name_ref.get(entry_id)
+            hud_category=codex_name_ref.get("hud_category")
+            if hud_category is not None and hud_category != 'None':
+                self.merge_poi(hud_category,entry.get("Name_Localised"),body.replace(system,''))
+
         if entry.get("event") in ("Location", "StartUp", "CarrierJump"):
             debug("{} Looking for POI data in {}".format(entry.get("event"), system))
             self.bodies = None
@@ -1195,6 +1203,18 @@ class CodexTypes():
     @classmethod
     def plugin_start(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
+        cls.name_ref={}
+        debug("loading codex_name_ref")
+        file = os.path.join(cls.plugin_dir, 'data', 'codex_name_ref.json')
+        #try:
+        with open(file) as json_file:
+            name_ref_array = json.load(json_file)
+
+        #make this a dict
+        for entry in name_ref_array:
+            cls.name_ref[entry.get("entryid")]=entry
+        #except:
+        #    debug("no config file {}".format(file))
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
