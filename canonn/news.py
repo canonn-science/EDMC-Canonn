@@ -19,6 +19,7 @@ from config import config
 import threading
 from canonn.debug import Debug
 from canonn.debug import debug,error
+import html
 
 
 REFRESH_CYCLES = 60 ## how many cycles before we refresh
@@ -137,7 +138,7 @@ class CanonnNews(Frame):
             if self.news_data:
                     news=self.news_data[self.news_pos]
                     self.hyperlink['url'] = news['link']
-                    self.hyperlink['text'] = decode_unicode_references(news['title']['rendered'])
+                    self.hyperlink['text'] = html.unescape(news['title']['rendered'])
             else:
                 debug("News download not complete")
 
@@ -155,7 +156,10 @@ class CanonnNews(Frame):
         if self.isvisible:
         
             debug("Fetching News")
-            self.news_data = requests.get("https://canonn.science/wp-json/wp/v2/posts").json()
+            r=requests.get("https://canonn.science/wp-json/wp/v2/posts")
+            r.encoding = 'utf-8'
+            self.news_data = r.json()
+
             self.news_count=len(self.news_data)-1
             self.news_pos=0
             self.minutes=REFRESH_CYCLES
