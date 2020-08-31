@@ -30,6 +30,7 @@ from config import config
 from contextlib import closing
 from l10n import Locale
 from ttkHyperlinkLabel import HyperlinkLabel
+import html
 
 CYCLE = 60 * 1000 * 60  # 60 minutes
 DEFAULT_URL = ""
@@ -824,7 +825,8 @@ class CanonnPatrol(Frame):
                                   float(entry.get("coordinates")[2])
                               ),
                               "Galactic Mapping Project: {} : {}".format(types.get(entry.get("type")),
-                                                                         entry.get("name").encode('utf-8')),
+                                                                         #entry.get("name").encode('utf-8')),
+                                                                         html.unescape(entry.get("name"))),
                               entry.get("galMapUrl"),
                               None)
                 )
