@@ -17,7 +17,6 @@ import math
 import myNotebook as nb
 import os
 import requests
-import sys
 import threading
 import webbrowser
 from canonn.debug import Debug
@@ -225,6 +224,16 @@ def get_synodic_period(b1, b2):
     Tsyn = 1 / abs((1 / T1) - (1 / T2))
     return Tsyn
 
+class codexName(threading.Thread):
+    def __init__(self,  callback):
+        # debug("initialise POITYpes Thread")
+        threading.Thread.__init__(self)
+        self.callback = callback
+
+    def run(self):
+        # debug("running poitypes")
+        self.callback()
+        # debug("poitypes Callback Complete")
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
@@ -449,19 +458,38 @@ class CodexTypes():
 
             # if we share teh same parent and not the same body
             if valid_body and str(p1[0]) == str(p2[0]):
-                a1 = self.aphelion("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
-                a2 = self.aphelion("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
-                r1 = sibling.get("radius") / 299792.5436
-                r2 = body.get("radius") / 299792.5436
+                a1 = self.apoapsis("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
+                a2 = self.apoapsis("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                p1 = self.periapsis("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
+                p2 = self.periapsis("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                r1 = sibling.get("radius")
+                r2 = body.get("radius")
 
-                distance = abs(a1 - a2)
+                # we want this to be in km
+                adistance = (abs(a1 - a2) * 299792.5436) - (r1 + r2)
+                pdistance = (abs(p1 - a2) * 299792.5436) - (r1 + r2)
                 # print("distance {}, radii = {}".format(distance,r1+r2))
                 period = get_synodic_period(body, sibling)
-                debug("flypast: {} distance = {} avgdiameter = {} synodic = {} ".format(body_code, distance, r1 + r2,
-                                                                                        period))
-                # average diameter and 4 days synodic period
-                if distance < 2 * (r1 + r2) and period < 4:
+
+                debugval = {
+                    "body": body,
+                    "distance": {"apoapsis": adistance, "periapsis": pdistance},
+                    "orbitalEccentricity": body.get("orbitalEccentricity"),
+                    "orbitalInclination": body.get("orbitalEccentricity"),
+                    "argOfPeriapsis": body.get("orbitalEccentricity"),
+                    "synodicPeriod": period
+                }
+
+                # its close if less than 100km
+                collision = (adistance < 0 or pdistance < 0)
+                close = (adistance < 100 or pdistance < 100)
+                # only considering a 30 day period
+                if collision and period < 40:
+                    self.merge_poi("Tourist", 'Collision Flypast', body_code)
+                    debug(debugval)
+                elif close and period < 40:
                     self.merge_poi("Tourist", 'Close Flypast', body_code)
+                    debug(debugval)
 
     def close_bodies(self, candidate, bodies, body_code):
         if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
@@ -474,9 +502,9 @@ class CodexTypes():
                 if body and body.get("semiMajorAxis") is not None:
                     # light seconds
 
-                    d1 = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
+                    d1 = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"),
                                        candidate.get("orbitalEccentricity"))
-                    d2 = self.aphelion("semiMajorAxis", body.get("semiMajorAxis"),
+                    d2 = self.apoapsis("semiMajorAxis", body.get("semiMajorAxis"),
                                        body.get("orbitalEccentricity"))
                     # distance = (candidate.get("semiMajorAxis") + body.get("semiMajorAxis")) * 499.005
                     distance = d1 + d2
@@ -485,7 +513,7 @@ class CodexTypes():
                 debug("non-binary")
 
                 body = bodies.get(get_parent(candidate))
-                distance = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
+                distance = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"),
                                          candidate.get("orbitalEccentricity"))
 
             if candidate and body:
@@ -516,7 +544,7 @@ class CodexTypes():
             debug("Ring ring {} {}".format(candidate.get("semiMajorAxis"), candidate.get("orbitalEccentricity")))
             if candidate.get("semiMajorAxis"):
                 debug("Calculating ring distance")
-                apehelion = self.aphelion("semiMajorAxis", candidate.get("semiMajorAxis"),
+                apehelion = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"),
                                           candidate.get("orbitalEccentricity") or 0)
                 ring_span = get_outer_radius(candidate) + get_outer_radius(parent)
                 debug("Ring Span: {}".format(ring_span))
@@ -585,7 +613,7 @@ class CodexTypes():
             for ring in candidate.get("rings"):
                 if ring.get("name")[-4:] == "Ring":
                     if candidate.get("reserveLevel") and candidate.get("reserveLevel") in (
-                    "Pristine", "PristineResources"):
+                            "Pristine", "PristineResources"):
                         self.merge_poi("Ring", "Pristine {} Rings".format(ring.get("type")), body_code)
                     else:
                         self.merge_poi("Ring", "{} Rings".format(ring.get("type")), body_code)
@@ -608,11 +636,13 @@ class CodexTypes():
                     elif density > 4.917372037815108 + (2 * 297.7768008954368):
                         self.merge_poi("Tourist", "High Density Rings", body_code)
 
+    # this seems horribly confused
     def evisualise(self, event):
         try:
             debug("evisualise")
-            self.poidata = []
-            debug("self.poidata = []")
+
+            # self.poidata = []
+            # debug("self.poidata = []")
             usystem = unquote(self.system)
 
             if self.temp_poidata:
@@ -695,7 +725,7 @@ class CodexTypes():
                         # Landable Volcanism
                         if b.get('type') == 'Planet' and b.get('volcanismType') and b.get(
                                 'volcanismType') != 'No volcanism' and b.get(
-                                'isLandable'):
+                            'isLandable'):
                             self.merge_poi("Geology", b.get('volcanismType').replace(" volcanism", ""), body_code)
 
                         # water ammonia etc
@@ -882,20 +912,44 @@ class CodexTypes():
             self.labels[name].grid_remove()
 
     def merge_poi(self, hud_category, english_name, body):
-        debug("Merge POI")
+        debug(f"Merge POI {hud_category} {english_name} {body}")
+        # we could be passing in single body or a comma seperated list or nothing
+
+        # we haven't found our bodies yet
         found = False
         signals = self.poidata
-        for i, v in enumerate(signals):
-            # hud category andname match so we will see if teh body is in teh list
-            if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
-                tmpb = signals[i].get("body")
 
-                if not body in tmpb.split():
-                    self.poidata[i]["body"] = ",".join([tmpb, body])
+        for i, signal in enumerate(signals):
+            # hud category and name match so we will see if the body is in the list
+            if signal.get("english_name") == english_name and signal.get("hud_category") == hud_category:
+                # some signals don't have a body so they are already found and we can skip
+                if signal.get("body"):
+                    # we might be be getting a list
+                    pbodies = body.split(',')
+                    # create an array from signals
+                    sbodies = signal.get("body").split(',')
+
+                    # join the two lists
+                    sbodies.extend(pbodies)
+
+                    # sort and make unique
+                    bodies = sorted(list(set(list(map(str.strip, sbodies)))))
+
+                    debug(f"bodies {bodies}")
+                    # convert back to a string
+                    tmpb = ", ".join(bodies)
+                    debug("tmpb '{}' '{}' '{}' bodylist '{}'".format(hud_category, english_name, body, tmpb))
+
+                    # update the poi
+                    self.poidata[i]["body"] = tmpb
                 found = True
 
         if not found:
+            debug("appending")
+            if body:
+                body = body.strip()
             self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
+            debug(self.poidata)
 
     def remove_poi(self, hud_category, english_name):
         debug("Remove POI")
@@ -944,17 +998,20 @@ class CodexTypes():
 
         return focus
 
-    def aphelion(self, tag, major, eccentricity):
+    def apoapsis(self, tag, major, eccentricity):
         a = float(self.light_seconds(tag, major))
         e = float(eccentricity or 0)
-        focus = a * (1 + e)
-        debug("Apehelion  {}ls".format(a))
+        return a * (1 + e)
 
-        return focus
+    def periapsis(self, tag, major, eccentricity):
+        a = float(self.light_seconds(tag, major))
+        e = float(eccentricity or 0)
+        return a * (1 - e)
 
     def surface_distance(self, d, r1, r2):
         return d - (r1 + r2);
 
+    # this is used to trigger display of merged data
     def visualise(self):
 
         unscanned = nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0)
@@ -989,6 +1046,21 @@ class CodexTypes():
                 self.frame.grid()
                 self.frame.grid_remove()
 
+    def fake_biology(self, cmdr, system, x, y, z, planet, count, client):
+        bodyname = f"{system} {planet}"
+
+        signal = {
+            "timestamp": "2020-07-13T22:37:34Z",
+            "event": "SAASignalsFound",
+            "BodyName": bodyname,
+            "Signals": [
+                {"Type": "$SAA_SignalType_Biological;",
+                 "Type_Localised": "Biological",
+                 "Count": count}]
+        }
+
+        self.journal_entry(cmdr, None, system, None, signal, None, x, y, z, bodyname, None, None, client)
+
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if not self.hidecodex:
             self.journal_entry_wrap(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
@@ -997,17 +1069,33 @@ class CodexTypes():
         self.system = system
         debug("Codex {}".format(entry.get("event")))
 
+        if entry.get("event") == "SendText" and entry.get("Message"):
+            ma = entry.get("Message").split(' ')
+            if len(ma) == 4 and ma[0] == "fake" and ma[1] == "bio":
+                debug("faking a bio signal")
+                self.fake_biology(cmdr, system, x, y, z, ma[2], ma[3], client)
+
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             # go fetch some data.It will
             CodexTypes.fsscount = None
             CodexTypes.bodycount = None
             self.bodies = None
+            self.poidata = []
+            self.system=entry.get("StarSystem")
             poiTypes(entry.get("StarSystem"), self.getdata).start()
             self.frame.grid()
             self.frame.grid_remove()
             self.allowed = False
 
             # self.visualise()
+
+        if entry.get("event") == "CodexEntry":
+            debug("Displaying Codex")
+            entry_id=entry.get("EntryID")
+            codex_name_ref=CodexTypes.name_ref.get(entry_id)
+            hud_category=codex_name_ref.get("hud_category")
+            if hud_category is not None and hud_category != 'None':
+                self.merge_poi(hud_category,entry.get("Name_Localised"),body.replace(system,''))
 
         if entry.get("event") in ("Location", "StartUp", "CarrierJump"):
             debug("{} Looking for POI data in {}".format(entry.get("event"), system))
@@ -1024,7 +1112,7 @@ class CodexTypes():
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
                 self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(entry.get("SystemAllegiance")), "")
             self.allowed = True
-            self.visualise()
+            self.evisualise(None)
 
         if entry.get("event") == "FSSDiscoveryScan":
             debug("setting fsscount {} ".format(entry.get("BodyCount")))
@@ -1038,16 +1126,21 @@ class CodexTypes():
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
                 '$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
+            debug(entry.get("SignalName"))
             if entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
+                debug("Merging Cloud")
                 self.merge_poi("Cloud", "Life Cloud", "")
             else:
+                debug("Merging Ring")
                 self.merge_poi("Cloud", "Life Ring", "")
             self.allowed = True
+
             self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             self.merge_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
+            # self.visualise()
             self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
@@ -1062,13 +1155,15 @@ class CodexTypes():
             if "Generation Ship" in entry.get("SignalName"):
                 self.merge_poi("Human", entry.get("SignalName"), body)
             self.allowed = True
+            # self.evisualise(None)
             self.evisualise(None)
 
         if entry.get("event") == "FSSAllBodiesFound":
             # self.remove_poi("Planets", "Unexplored Bodies")
             # CodexTypes.bodycount = CodexTypes.fsscount
             self.allowed = True
-            self.visualise()
+            # self.visualise()
+            self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
             # debug(json.dumps(entry,indent=4))
@@ -1082,10 +1177,12 @@ class CodexTypes():
                 bd = journal2edsm(entry)
                 self.bodies[bd.get("bodyId")] = bd
                 # debug(json.dumps(self.bodies, indent=4))
+                # self.visualise()
                 self.evisualise(None)
 
             self.allowed = True
-            self.visualise()
+            # self.visualise()
+            self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
             CodexTypes.parentRadius = self.light_seconds("Radius", entry.get("Radius"))
@@ -1096,12 +1193,12 @@ class CodexTypes():
             bodyName = entry.get("BodyName")
             bodyVal = bodyName.replace(self.system, '')
 
-            debug("SAASignalsFound")
+            debug(f"SAASignalsFound {bodyName}")
 
             signals = entry.get("Signals")
             for i, v in enumerate(signals):
                 found = False
-                type = signals[i].get("Type")
+                type = v.get("Type")
                 english_name = type.replace("$SAA_SignalType_", "").replace("ical;", "y").replace(";", '')
                 if " Ring" in bodyName:
                     cat = "Ring"
@@ -1110,23 +1207,40 @@ class CodexTypes():
 
                 self.merge_poi(cat, english_name, bodyVal)
 
-                for x, r in enumerate(self.poidata):
-                    if r.get("hud_category") == cat and r.get("english_name") == english_name:
-                        found = True
-                        if not bodyVal in r.get("body"):
-                            self.poidata[x]["body"] = "{},{}".format(self.poidata[x]["body"], bodyVal)
-                if not found:
-                    self.set_image(cat, True)
-                    self.poidata.append({'body': bodyVal, 'hud_category': cat, 'english_name': english_name})
-
-                debug(self.poidata)
-                debug("cat {} name  {} body {}".format(cat, english_name, bodyVal))
-            self.visualise()
+            self.evisualise(None)
             self.allowed = True
+
+    @classmethod
+    def get_codex_names(cls):
+        name_ref={}
+        debug("Getting Name Ref from cloud")
+        r = requests.get("https://us-central1-canonn-api-236217.cloudfunctions.net/codexNameRef")
+
+        if r.status_code == requests.codes.ok:
+            for entry in r.json():
+                name_ref[entry.get("entryid")] = entry
+            cls.name_ref=name_ref
+            debug(json.dumps(name_ref,indent=4))
+        else:
+            error("error in get_codex_names")
 
     @classmethod
     def plugin_start(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
+        cls.name_ref={}
+        debug("loading codex_name_ref")
+        file = os.path.join(cls.plugin_dir, 'data', 'codex_name_ref.json')
+        #try:
+        with open(file) as json_file:
+            name_ref_array = json.load(json_file)
+
+        #make this a dict
+        for entry in name_ref_array:
+            cls.name_ref[entry.get("entryid")]=entry
+
+        codexName(cls.get_codex_names).start()
+        #except:
+        #    debug("no config file {}".format(file))
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
@@ -1246,8 +1360,7 @@ class guardianSites(Emitter):
 
     def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
 
-        Emitter.__init__(self, cmdr, is_beta, system, x, y, z, entry, entry.get("BodyName"), entry.get("Latitude"),
-                         entry.get("Longitude"), client)
+        Emitter.__init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
 
         example = {"timestamp": "2019-10-10T10:23:32Z",
                    "event": "ApproachSettlement",
@@ -1264,11 +1377,38 @@ class guardianSites(Emitter):
             "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
             "Latitude": -10.090128, "Longitude": 114.505409}
 
+        example = {
+            "Name": "$Codex_Ent_Guardian_Data_Logs_Name;",
+            "event": "CodexEntry",
+            "Region": "$Codex_RegionName_18;",
+            "System": "Synuefe ZL-J d10-109",
+            "EntryID": 3200200,
+            "Category": "$Codex_Category_Civilisations;",
+            "timestamp": "2019-10-15T09:19:51Z",
+            "SubCategory": "$Codex_SubCategory_Guardian;",
+            "SystemAddress": 3755873388891,
+            "VoucherAmount": 2500,
+            "Name_Localised": "Guardian-Codex",
+            "Region_Localised": "Inner Orion Spur",
+            "Category_Localised": "Xenologisch",
+            "NearestDestination": "$Ancient:#index=2;",
+            "SubCategory_Localised": "Guardian-Objekte",
+            "NearestDestination_Localised": "Antike Ruinen (2)"
+        }
+
+        if entry.get("event") == "CodexEntry":
+            siteName = entry.get("NearestDestination")
+        else:
+            siteName = entry.get("Name")
+            self.lat = entry.get("Latitude")
+            self.lon = entry.get("Longitude")
+            self.body = entry.get("BodyName")
+
         self.modelreport = None
 
-        if ":" in entry.get("Name"):
-            prefix, suffix = entry.get("Name").split(':')
-            self.index = self.get_index(entry.get("Name"))
+        if ":" in siteName:
+            prefix, suffix = siteName.split(':')
+            self.index = self.get_index(siteName)
 
             if prefix:
                 prefix = prefix.lower()[1:]
@@ -1294,8 +1434,8 @@ class guardianSites(Emitter):
             payload["type"] = self.gstype
             payload["systemAddress"] = self.entry.get("SystemAddress")
             payload["bodyName"] = self.body
-            payload["latitude"] = self.entry.get("Latitude")
-            payload["longitude"] = self.entry.get("Longitude")
+            payload["latitude"] = self.lat
+            payload["longitude"] = self.lon
             payload["reportComment"] = json.dumps(self.entry, indent=4)
             payload["frontierID"] = self.index
 
@@ -1545,8 +1685,10 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
         "Name": "$Ancient:#index=2;", "Name_Localised": "Ancient Ruins (2)",
         "SystemAddress": 5079737705833,
         "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
-        "Latitude": -10.090128, "Longitude": 114.505409}
-    submit("LCU No Fool Like One", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
+        "Latitude": -10.090128, "Longitude": 114.505409
+    }
+
+    submit("TestUser", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
            "Synuefe LY-I b42-2 C 2", -10.090128, 114.505409, client)
 
     testentry = {"timestamp": "2019-10-10T10:23:32Z",
@@ -1555,15 +1697,55 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
                  "SystemAddress": 5079737705833,
                  "BodyID": 25, "BodyName": "Synuefe LY-I b42-2 C 2",
                  "Latitude": 52.681084, "Longitude": 115.240822}
-    submit("LCU No Fool Like One", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
+
+    submit("TestUser", False, "Synuefe LY-I b42-2", 814.71875, -222.78125, -151.15625, testentry,
            "Synuefe LY-I b42-2 C 2", 52.681084, 115.240822, client)
+
+    testentry = {
+        "Name": "$Codex_Ent_Guardian_Data_Logs_Name;",
+        "event": "CodexEntry",
+        "Region": "$Codex_RegionName_18;",
+        "System": "Synuefe ZL-J d10-109",
+        "EntryID": 3200200,
+        "Category": "$Codex_Category_Civilisations;",
+        "timestamp": "2019-10-15T09:19:51Z",
+        "SubCategory": "$Codex_SubCategory_Guardian;",
+        "SystemAddress": 3755873388891,
+        "VoucherAmount": 2500,
+        "Name_Localised": "Guardian-Codex",
+        "Region_Localised": "Inner Orion Spur",
+        "Category_Localised": "Xenologisch",
+        "NearestDestination": "$Ancient:#index=2;",
+        "SubCategory_Localised": "Guardian-Objekte",
+        "NearestDestination_Localised": "Antike Ruinen (2)"
+    }
+
+    submit("TestUser", False, "Synuefe ZL-J d10-109", 852.65625, -51.125, -124.84375, testentry,
+           "Synuefe ZL-J d10-109 E 3", -27, -148, client)
+
+    testentry = {"Name": "$Codex_Ent_Guardian_Sentinel_Name;", "event": "CodexEntry", "Region": "$Codex_RegionName_18;",
+                 "System": "Synuefe CE-R c21-6", "EntryID": 3200600, "Category": "$Codex_Category_Civilisations;",
+                 "timestamp": "2020-04-26T17:28:51Z", "SubCategory": "$Codex_SubCategory_Guardian;",
+                 "SystemAddress": 1734529192634,
+                 "Name_Localised": "Часовой Стражей", "Region_Localised": "Inner Orion Spur",
+                 "Category_Localised": "Ксенологичские находки", "NearestDestination": "$Ancient_Small_001:#index=1;",
+                 "SubCategory_Localised": "Объекты Стражей", "NearestDestination_Localised": "Конструкция Стражей"
+                 }
+
+    submit("TestUser", False, "Synuefe CE-R c21-6", 828.1875, -78, -105.1875, testentry,
+           "Synuefe CE-R c21-6 C 1", 42, 73, client)
 
 
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
-    if entry["event"] == "CodexEntry":
+    codex_entry = (entry.get("event") == "CodexEntry")
+    approach_settlement = (entry.get("event") == "ApproachSettlement")
+    guardian_codices = (entry.get("EntryID") in [3200200, 3200300, 3200400, 3200500, 3200600])
+    guardian_event = (codex_entry and guardian_codices)
+
+    if codex_entry:
         codexEmitter(cmdr, is_beta, entry.get("System"), x, y, z, entry, body, lat, lon, client).start()
 
-    if entry["event"] == "ApproachSettlement":
+    if approach_settlement or guardian_event:
         guardianSites(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
 
     if entry.get("event") == "SendText" and entry.get("Message") == "codextest":

@@ -114,8 +114,15 @@ class fssEmitter(Emitter):
 
         self.getExcluded()
 
+        FSSSignalDiscovered=(self.entry.get("event") == "FSSSignalDiscovered")
+        USS=("$USS" in self.entry.get("SignalName"))
+        isStation=(self.entry.get("IsStation"))
+        FleetCarrier = (self.entry.get("SignalName") and self.entry.get("SignalName")[-4] == '-' and isStation)
+        life_event=("$Fixed_Event_Life" in self.entry.get("SignalName"))
+        excluded=fssEmitter.excludefss.get(self.entry.get("SignalName"))
+
         # don't bother sending USS
-        if self.entry["event"] == "FSSSignalDiscovered" and not "$USS" in self.entry.get("SignalName"):
+        if FSSSignalDiscovered and not USS and not FleetCarrier:
             canonn.emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postFSSSignal",
                         {
                             "signalname": self.entry.get("SignalName"),
@@ -129,12 +136,8 @@ class fssEmitter(Emitter):
                         })
 
         # is this a code entry and do we want to record it?
-        # We dont want o record any that don't begin with $ and and with ;
-        if self.entry["event"] == "FSSSignalDiscovered" and \
-                not fssEmitter.excludefss.get(self.entry.get("SignalName")) and \
-                not "$USS" in self.entry.get("SignalName") and \
-                not self.entry.get(      "IsStation") and \
-                '$' in self.entry.get("SignalName"):
+        # We don't want to record any that don't begin with $ and and with ;
+        if FSSSignalDiscovered and not excluded and not USS and not isStation and '$' in self.entry.get("SignalName"):
 
             url = self.getUrl()
 
@@ -142,8 +145,8 @@ class fssEmitter(Emitter):
                 payload = self.getAXPayload()
                 self.gSubmitAXCZ(payload)
                 self.modelreport = "axczfssreports"
-            elif "$Fixed_Event_Life_Cloud" in self.entry.get("SignalName"):
-                debug("Life Cloud")
+            elif life_event:
+                debug(self.entry.get("SignalName"))
 
                 payload = self.getLcPayload()
                 self.modelreport = "lcfssreports"
