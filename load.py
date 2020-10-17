@@ -13,6 +13,7 @@ from canonn import clientreport
 from canonn import codex
 from canonn import factionkill
 from canonn import fssreports
+from canonn import fleet_carrier
 from canonn import hdreport
 from canonn import journaldata
 from canonn import materialReport
@@ -44,7 +45,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "5.21.0"
+this.version = "5.22.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -186,7 +187,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
     return journal_entry_wrapper(cmdr, is_beta, system, this.SysFactionState, this.SysFactionAllegiance,
                                  this.DistFromStarLS, station, entry,
-                                 state, x, y, z, this.body_name, this.nearloc['Latitude'], this.nearloc['Longitude'],
+                                 state, x, y, z, this.body_name, this.nearloc[
+                                     'Latitude'], this.nearloc['Longitude'],
                                  this.client_version)
     # Now Journal_entry_wrapper take additional variable this.SysFactionState, this.SysFactionAllegiance, and this.DistFromStarLS
 
@@ -199,17 +201,26 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     nhss.submit(cmdr, is_beta, system, station, entry, client)
     hdreport.submit(cmdr, is_beta, system, station, entry, client)
     codex.submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
-    fssreports.submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
-    journaldata.submit(cmdr, is_beta, system, station, entry, client, body, lat, lon)
+    fssreports.submit(cmdr, is_beta, system, x, y, z,
+                      entry, body, lat, lon, client)
+    fleet_carrier.submit(cmdr, is_beta, system, x, y, z,
+                         entry, body, lat, lon, client)
+    journaldata.submit(cmdr, is_beta, system, station,
+                       entry, client, body, lat, lon)
     clientreport.submit(cmdr, is_beta, client, entry)
-    this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    whiteList.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    this.patrol.journal_entry(
+        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    this.codexcontrol.journal_entry(
+        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    whiteList.journal_entry(cmdr, is_beta, system, station,
+                            entry, state, x, y, z, body, lat, lon, client)
     materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                           x, y, z, body, lat,
                           lon, client)
-    codex.saaScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    codex.saaScan.journal_entry(
+        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
     guestBook.journal_entry(entry)
+
 
 def dashboard_entry(cmdr, is_beta, entry):
     this.landed = entry['Flags'] & 1 << 1 and True or False
@@ -254,7 +265,7 @@ class guestBook():
         #cls.frame.after(120000, cls.hide)
 
     @classmethod
-    def visit_book(cls,event):
+    def visit_book(cls, event):
         url = "https://forms.gle/Qp1JDiz7ocqwbZRH9"
         webbrowser.open_new(url)
         cls.hide()
@@ -262,30 +273,27 @@ class guestBook():
     @classmethod
     def setup(cls, parent, gridrow):
         cls.frame = tk.Frame(parent)
-        cls.frame.grid(row=gridrow,sticky="NSEW")
+        cls.frame.grid(row=gridrow, sticky="NSEW")
         cls.container = tk.Frame(cls.frame)
         cls.container.columnconfigure(1, weight=1)
         cls.container.grid(row=0)
         #cls.banner = HyperlinkLabel(cls.container, text="Guest Book")
-        #cls.banner["url"]="https://forms.gle/Qp1JDiz7ocqwbZRH9"
+        # cls.banner["url"]="https://forms.gle/Qp1JDiz7ocqwbZRH9"
         #cls.banner.grid(row=0, column=0, columnspan=1, sticky="NSEW")
         #cls.banner.config(font=("Arial Black", 22))
-        cls.instructions = tk.Label(cls.container, text="click here to sign the gnosis guest book", fg="blue", underline=True)
+        cls.instructions = tk.Label(
+            cls.container, text="click here to sign the gnosis guest book", fg="blue", underline=True)
         cls.instructions.grid(row=1, column=0, columnspan=1, sticky="NSEW")
         cls.instructions.config(font=("Arial Black", 8))
-        cls.instructions.bind("<Button-1>",cls.visit_book)
-        cls.visited=False
+        cls.instructions.bind("<Button-1>", cls.visit_book)
+        cls.visited = False
 
         cls.hide()
-        #cls.show()
+        # cls.show()
         return cls.frame
 
     @classmethod
-    def journal_entry(cls,entry):
-        if "The Gnosis" in str(entry) and not cls.visited :
-            cls.visited=True
+    def journal_entry(cls, entry):
+        if "The Gnosis" in str(entry) and not cls.visited:
+            cls.visited = True
             cls.show()
-
-
-
-
