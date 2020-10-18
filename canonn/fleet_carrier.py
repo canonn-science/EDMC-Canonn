@@ -49,7 +49,7 @@ class Fleet():
                 "SignalName")[-4] == '-' and entry.get("SignalName")[-8] == ' ' and isStation)
             if FleetCarrier:
                 payload = {
-                    "StationName": entry.get("SignalName")[-8:],
+                    "StationName": entry.get("SignalName")[-7:],
                     "CarrierName": entry.get("SignalName")[:-8],
                     "StarSystem": data.get("system"),
                     "StarPos":  data.get("coords"),
