@@ -827,8 +827,6 @@ class CodexTypes():
             if Debug.debugswitch == 1:
                 self.merge_poi("Other", 'Plugin Error', None)
                 error(str(e))
-                self.visualise()
-            raise
         self.visualise()
 
     def getdata(self, system):
@@ -1204,19 +1202,26 @@ class CodexTypes():
             self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
+            dovis = False
             if "NumberStation" in entry.get("SignalName"):
                 self.merge_poi("Human", "Unregistered Comms Beacon", body)
+                dovis = True
             if "Megaship" in entry.get("SignalName"):
                 self.merge_poi("Human", "Megaship", body)
+                dovis = True
             if "ListeningPost" in entry.get("SignalName"):
                 self.merge_poi("Human", "Listening Post", body)
+                dovis = True
             if "CAPSHIP" in entry.get("SignalName"):
                 self.merge_poi("Human", "Capital Ship", body)
+                dovis = True
             if "Generation Ship" in entry.get("SignalName"):
                 self.merge_poi("Human", entry.get("SignalName"), body)
+                dovis = True
             self.allowed = True
             # self.evisualise(None)
-            self.evisualise(None)
+            if dovis:
+                self.evisualise(None)
 
         if entry.get("event") == "FSSAllBodiesFound":
             # self.remove_poi("Planets", "Unexplored Bodies")
