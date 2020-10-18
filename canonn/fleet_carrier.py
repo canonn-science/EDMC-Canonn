@@ -40,6 +40,7 @@ class Fleet():
 
     @classmethod
     def process(cls):
+
         while not cls.carriers.empty():
             # process each of the entries
             data = cls.carriers.get()
@@ -87,6 +88,6 @@ def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
         debug("FleetCarrier Put")
         Fleet.put(system, x, y, z, entry)
 
-    if entry.get("event") in ("StartJump", "Location", "Docked") and not is_beta:
+    if entry.get("event") in ("StartJump", "Location", "Docked", "Shutdown", "ShutDown", "SupercruiseExit", "SupercruiseEntry ") and not is_beta:
         debug("FleetCarrier Process")
         fleetProcess(None).start()
