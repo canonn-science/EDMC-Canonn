@@ -1065,7 +1065,9 @@ class CodexTypes():
 
         unscanned = nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0)
 
-        debug("Codex visualise")
+        if not ( threading.current_thread() is threading.main_thread() ):
+            debug("We are not in the main thread")
+        debug("Codex visualise Active Thread {}".format(threading.activeCount()))
         # we may want to try again if the data hasn't been fetched yet
         if CodexTypes.waiting or not self.allowed:
             debug("Still waiting")
@@ -1139,8 +1141,6 @@ class CodexTypes():
             self.frame.grid_remove()
             self.allowed = False
 
-            # self.visualise()
-
         if entry.get("event") == "CodexEntry":
 
             entry_id = entry.get("EntryID")
@@ -1198,7 +1198,7 @@ class CodexTypes():
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             self.merge_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
-            # self.visualise()
+
             self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
@@ -1227,7 +1227,7 @@ class CodexTypes():
             # self.remove_poi("Planets", "Unexplored Bodies")
             # CodexTypes.bodycount = CodexTypes.fsscount
             self.allowed = True
-            # self.visualise()
+
             self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
@@ -1242,11 +1242,11 @@ class CodexTypes():
                 bd = journal2edsm(entry)
                 self.bodies[bd.get("bodyId")] = bd
                 # debug(json.dumps(self.bodies, indent=4))
-                # self.visualise()
+
                 self.evisualise(None)
 
             self.allowed = True
-            # self.visualise()
+
             self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
