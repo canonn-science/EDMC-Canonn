@@ -24,6 +24,28 @@ from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from config import config
 from math import sqrt, pow
+import queue
+
+
+class Queue(queue.Queue):
+    '''
+    A custom queue subclass that provides a :meth:`clear` method.
+    '''
+
+    def clear(self):
+        '''
+        Clears all items from the queue.
+        '''
+
+        with self.mutex:
+            unfinished = self.unfinished_tasks - len(self.queue)
+            if unfinished <= 0:
+                if unfinished < 0:
+                    raise ValueError('task_done() called too many times')
+                self.all_tasks_done.notify_all()
+            self.unfinished_tasks = unfinished
+            self.queue.clear()
+            self.not_full.notify_all()
 
 
 def nvl(a, b): return a or b
@@ -312,6 +334,9 @@ class CodexTypes():
 
     waiting = True
     fsscount = 0
+
+    edsmq = Queue()
+    poiq = Queue()
 
     def __init__(self, parent, gridrow):
         "Initialise the ``Patrol``."
@@ -671,10 +696,14 @@ class CodexTypes():
         try:
             debug("evisualise")
 
-            if self.temp_poidata:
-                for r in self.temp_poidata:
-                    self.merge_poi(r.get("hud_category"), r.get(
-                        "english_name"), r.get("body"))
+            while not self.poiq.empty():
+                r = self.poiq.get()
+                self.merge_poi(r.get("hud_category"), r.get(
+                    "english_name"), r.get("body"))
+
+            while not self.edsmq.empty():
+                # only expecting to go around once
+                self.temp_edsmdata = self.edsmq.get()
 
             # if self.temp_edsmdata:
             if not self.bodies:
@@ -834,6 +863,10 @@ class CodexTypes():
         CodexTypes.waiting = True
         debug("CodexTypes.waiting = True")
 
+        # first we will clear the queues
+        self.edsmq.clear()
+        self.poiq.clear()
+
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
             quote_plus(system.encode('utf8')))
 
@@ -842,7 +875,11 @@ class CodexTypes():
         r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
             debug("got POI Data")
-            self.temp_poidata = r.json()
+            temp_poidata = r.json()
+
+        # push the data ont a queue
+        for v in temp_poidata:
+            self.poiq.put(v)
 
         edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
             quote_plus(system.encode('utf8')))
@@ -851,7 +888,10 @@ class CodexTypes():
         r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
             debug("got EDSM Data")
-            self.temp_edsmdata = r.json()
+            temp_edsmdata = r.json()
+
+        # push edsm data only a queue
+        self.edsmq.put(temp_edsmdata)
 
         CodexTypes.waiting = False
         debug("event_generate")
@@ -1065,7 +1105,7 @@ class CodexTypes():
 
         unscanned = nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0)
 
-        if not ( threading.current_thread() is threading.main_thread() ):
+        if not (threading.current_thread() is threading.main_thread()):
             debug("We are not in the main thread")
         debug("Codex visualise Active Thread {}".format(threading.activeCount()))
         # we may want to try again if the data hasn't been fetched yet
