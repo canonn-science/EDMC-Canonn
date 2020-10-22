@@ -889,9 +889,10 @@ class CodexTypes():
         if r.status_code == requests.codes.ok:
             debug("got EDSM Data")
             temp_edsmdata = r.json()
-
-        # push edsm data only a queue
-        self.edsmq.put(temp_edsmdata)
+            # push edsm data only a queue
+            self.edsmq.put(temp_edsmdata)
+        else:
+            error("EDSM Failed")
 
         CodexTypes.waiting = False
         debug("event_generate")
@@ -1161,6 +1162,11 @@ class CodexTypes():
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         self.system = system
 
+        if body:
+            bodycode = body.replace(system, '')
+        else:
+            bodycode = ""
+
         if entry.get("event") == "SendText" and entry.get("Message"):
             ma = entry.get("Message").split(' ')
             if len(ma) == 4 and ma[0] == "fake" and ma[1] == "bio":
@@ -1189,10 +1195,10 @@ class CodexTypes():
             if hud_category is not None and hud_category != 'None':
                 if body:
                     self.merge_poi(hud_category, entry.get(
-                        "Name_Localised"), body.replace(system, ''))
+                        "Name_Localised"), bodycode)
                 else:
                     self.merge_poi(hud_category, entry.get(
-                        "Name_Localised"), None)
+                        "Name_Localised"), "")
 
         if entry.get("event") in ("Location", "StartUp", "CarrierJump"):
 
@@ -1244,19 +1250,22 @@ class CodexTypes():
         if entry.get("event") == "FSSSignalDiscovered":
             dovis = False
             if "NumberStation" in entry.get("SignalName"):
-                self.merge_poi("Human", "Unregistered Comms Beacon", body)
+                self.merge_poi("Human", "Unregistered Comms Beacon", bodycode)
                 dovis = True
-            if "Megaship" in entry.get("SignalName"):
-                self.merge_poi("Human", "Megaship", body)
+            elif "Megaship" in entry.get("SignalName"):
+                self.merge_poi("Human", "Megaship", bodycode)
                 dovis = True
-            if "ListeningPost" in entry.get("SignalName"):
-                self.merge_poi("Human", "Listening Post", body)
+            elif "ListeningPost" in entry.get("SignalName"):
+                self.merge_poi("Human", "Listening Post", bodycode)
                 dovis = True
-            if "CAPSHIP" in entry.get("SignalName"):
-                self.merge_poi("Human", "Capital Ship", body)
+            elif "CAPSHIP" in entry.get("SignalName"):
+                self.merge_poi("Human", "Capital Ship", bodycode)
                 dovis = True
-            if "Generation Ship" in entry.get("SignalName"):
-                self.merge_poi("Human", entry.get("SignalName"), body)
+            elif "Generation Ship" in entry.get("SignalName"):
+                self.merge_poi("Human", entry.get("SignalName"), bodycode)
+                dovis = True
+            elif entry.get("IsStation"):
+                self.merge_poi("Human", "Station", bodycode)
                 dovis = True
             self.allowed = True
             # self.evisualise(None)
