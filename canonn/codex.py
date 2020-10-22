@@ -1265,7 +1265,12 @@ class CodexTypes():
                 self.merge_poi("Human", entry.get("SignalName"), bodycode)
                 dovis = True
             elif entry.get("IsStation"):
-                self.merge_poi("Human", "Station", bodycode)
+                FleetCarrier = (entry.get("SignalName") and entry.get(
+                    "SignalName")[-4] == '-' and entry.get("SignalName")[-8] == ' ')
+                if FleetCarrier:
+                    self.merge_poi("Human", "Fleet Carrier", "")
+                else:
+                    self.merge_poi("Human", "Station", "")
                 dovis = True
             self.allowed = True
             # self.evisualise(None)
