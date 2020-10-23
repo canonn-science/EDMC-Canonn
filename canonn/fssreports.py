@@ -76,13 +76,13 @@ class FSS():
             "raw_json": entry,
         }
         debug(data)
-        r = requests.put(url, data=json.dumps(
+        r = requests.post(url, data=json.dumps(
             data, ensure_ascii=False).encode('utf8'))
         if not r.status_code == requests.codes.ok:
             headers = r.headers
             contentType = str(headers['content-type'])
             if 'json' in contentType:
-                error(json.dumps(r.content))
+                error(json.dumps(r.json()))
             else:
                 error(r.content)
             error(r.status_code)
