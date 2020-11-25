@@ -1728,7 +1728,7 @@ class codexEmitter(Emitter):
         excluded = (codexEmitter.excludecodices.get(
             self.entry.get("Name").lower()) or stellar_bodies)
 
-        included = (not excluded and green_giant)
+        included = (not excluded or green_giant)
 
         if included:
             self.getReportTypes(self.entry.get("EntryID"))
