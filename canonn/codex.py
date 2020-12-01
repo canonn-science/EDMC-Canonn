@@ -871,6 +871,8 @@ class CodexTypes():
             quote_plus(system.encode('utf8')))
 
         debug(url)
+        debug("request {}:  Active Threads {}".format(
+            url, threading.activeCount()))
         r = requests.get(url)
         r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
@@ -881,10 +883,13 @@ class CodexTypes():
         for v in temp_poidata:
             self.poiq.put(v)
 
-        edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
+        url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
             quote_plus(system.encode('utf8')))
-        debug(edsm)
-        r = requests.get(edsm)
+
+        debug("request {}:  Active Threads {}".format(
+            url, threading.activeCount()))
+
+        r = requests.get(url)
         r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
             debug("got EDSM Data")

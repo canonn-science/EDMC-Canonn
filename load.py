@@ -8,7 +8,8 @@ import json
 import myNotebook as nb
 import requests
 import sys
-
+import os
+import canonn
 from canonn import clientreport
 from canonn import codex
 from canonn import factionkill
@@ -97,6 +98,7 @@ def plugin_start(plugin_dir):
     patrol.CanonnPatrol.plugin_start(plugin_dir)
     codex.CodexTypes.plugin_start(plugin_dir)
     journaldata.plugin_start(plugin_dir)
+    capture.plugin_start(plugin_dir)
 
     return 'Canonn'
 
@@ -219,6 +221,9 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
                           lon, client)
     codex.saaScan.journal_entry(
         cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    capture.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
+                          state, x, y, z, body,
+                          lat, lon, client)
     guestBook.journal_entry(entry)
 
 
@@ -249,6 +254,64 @@ def cmdr_data(data, is_beta):
     """
     # debug(json.dumps(data,indent=4))
     this.patrol.cmdr_data(data, is_beta)
+
+
+class capture():
+    @classmethod
+    def plugin_start(cls, plugin_dir):
+        cls.plugin_dir = plugin_dir
+
+    @classmethod
+    def journal_entry(cls, cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
+                      state, x, y, z, body,
+                      lat, lon, client):
+
+        if entry.get("event") == "SendText":
+            message_part = entry.get("Message").lower().split(' ')
+            canonn_capture = (len(message_part) > 1)
+            canonn_capture = (canonn_capture and message_part[0] == 'canonn')
+            canonn_capture = (canonn_capture and message_part[1] == 'capture')
+
+        if entry.get("event") == "SendText" and canonn_capture:
+            structured_msg = (len(message_part) > 3 and message_part[2] in (
+                "guardian", "thargoid", "human", "other", "nsp") and message_part[3].isnumeric())
+            if structured_msg:
+                site_type = message_part[2]
+                site_index = message_part[3]
+            else:
+                site_type = None
+                site_index = None
+
+            # fetch status.json
+            journal_dir = config.get(
+                'journaldir') or config.default_journal_dir
+            with open(os.path.join(os.path.expanduser(journal_dir), 'status.json')) as json_file:
+                status = json.load(json_file)
+
+            if structured_msg:
+                comment = " ".join(message_part[4:])
+            else:
+                comment = " ".join(message_part[2:])
+
+            debug(status)
+
+            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postStatus",
+                                {
+                                    "cmdr": cmdr,
+                                    "system": system,
+                                    "x": x,
+                                    "y": y,
+                                    "z": z,
+                                    "status": status,
+                                    "body": body,
+                                    "lat": status.get("Latitude"),
+                                    "lon": status.get("Longitude"),
+                                    "heading": status.get("Heading"),
+                                    "altitude": status.get("Altitude"),
+                                    "comment": comment,
+                                    "site_type": site_type,
+                                    "site_index": site_index
+                                })
 
 
 class guestBook():
