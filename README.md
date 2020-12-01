@@ -30,9 +30,10 @@ This records the codex entries and a bit of extra info about body and lat lon. T
 
 We also provide excel sheets with much of the data held in the CAPI
 
-* [Surface Biology](https://docs.google.com/spreadsheets/d/15lqZtqJk7B2qUV5Jb4tlnst6i1B7pXlAUzQnacX64Kc)
-* [Guardian](https://docs.google.com/spreadsheets/d/1p20iT3HWAcRRJ8Cw60Z2tCVTpcBavhycvE0Jgg0h32Y)
+* [Surface Biology](https://canonn.fyi/biosheet)
+* [Guardian](https://canonn.fyi/guardiansheet)
 * [Lagrange Clouds](https://docs.google.com/spreadsheets/d/11BCZRci0YlgW0sFdxvB_srq7ssxHzstMAiewhSGHE94)
+* [Thargoid](https://canonn.fyi/thargoidsheet)
 
 All Codex data some FSS Events and SAA Signals are stored in a cloud mysql database and used for showing code icons. This data can be accessed through data dumps in compressed json format.
 
@@ -49,3 +50,8 @@ This records all journal entries that haven't specifically been excluded. NB the
 ## FSS Data
 This records FSSSignalDicovered Messages that havent beenexcluded. Also records AX Conflict Zones in their own model
 
+## Carrier Location Data
+This records FSSSignalDicovered from carriers. A public API will follow soon.
+
+## Status Capture
+This is a system that captures the status.json and stores it in the database with comments. 

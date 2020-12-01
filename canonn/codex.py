@@ -871,6 +871,8 @@ class CodexTypes():
             quote_plus(system.encode('utf8')))
 
         debug(url)
+        debug("request {}:  Active Threads {}".format(
+            url, threading.activeCount()))
         r = requests.get(url)
         r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
@@ -881,17 +883,21 @@ class CodexTypes():
         for v in temp_poidata:
             self.poiq.put(v)
 
-        edsm = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
+        url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
             quote_plus(system.encode('utf8')))
-        debug(edsm)
-        r = requests.get(edsm)
+
+        debug("request {}:  Active Threads {}".format(
+            url, threading.activeCount()))
+
+        r = requests.get(url)
         r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
             debug("got EDSM Data")
             temp_edsmdata = r.json()
-
-        # push edsm data only a queue
-        self.edsmq.put(temp_edsmdata)
+            # push edsm data only a queue
+            self.edsmq.put(temp_edsmdata)
+        else:
+            error("EDSM Failed")
 
         CodexTypes.waiting = False
         debug("event_generate")
@@ -1161,6 +1167,11 @@ class CodexTypes():
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         self.system = system
 
+        if body:
+            bodycode = body.replace(system, '')
+        else:
+            bodycode = ""
+
         if entry.get("event") == "SendText" and entry.get("Message"):
             ma = entry.get("Message").split(' ')
             if len(ma) == 4 and ma[0] == "fake" and ma[1] == "bio":
@@ -1181,18 +1192,22 @@ class CodexTypes():
             self.frame.grid_remove()
             self.allowed = False
 
-        if entry.get("event") == "CodexEntry":
-
+        if entry.get("event") == "CodexEntry" and not entry.get("Category") == '$Codex_Category_StellarBodies;':
+            # really we need to identify the codex types
             entry_id = entry.get("EntryID")
             codex_name_ref = CodexTypes.name_ref.get(entry_id)
-            hud_category = codex_name_ref.get("hud_category")
-            if hud_category is not None and hud_category != 'None':
-                if body:
-                    self.merge_poi(hud_category, entry.get(
-                        "Name_Localised"), body.replace(system, ''))
-                else:
-                    self.merge_poi(hud_category, entry.get(
-                        "Name_Localised"), None)
+            if codex_name_ref:
+                hud_category = codex_name_ref.get("hud_category")
+                if hud_category is not None and hud_category != 'None':
+                    if body:
+                        self.merge_poi(hud_category, entry.get(
+                            "Name_Localised"), bodycode)
+                    else:
+                        self.merge_poi(hud_category, entry.get(
+                            "Name_Localised"), "")
+            else:
+                self.merge_poi('Other', entry.get(
+                    "Name_Localised"), bodycode)
 
         if entry.get("event") in ("Location", "StartUp", "CarrierJump"):
 
@@ -1244,19 +1259,27 @@ class CodexTypes():
         if entry.get("event") == "FSSSignalDiscovered":
             dovis = False
             if "NumberStation" in entry.get("SignalName"):
-                self.merge_poi("Human", "Unregistered Comms Beacon", body)
+                self.merge_poi("Human", "Unregistered Comms Beacon", bodycode)
                 dovis = True
-            if "Megaship" in entry.get("SignalName"):
-                self.merge_poi("Human", "Megaship", body)
+            elif "Megaship" in entry.get("SignalName"):
+                self.merge_poi("Human", "Megaship", bodycode)
                 dovis = True
-            if "ListeningPost" in entry.get("SignalName"):
-                self.merge_poi("Human", "Listening Post", body)
+            elif "ListeningPost" in entry.get("SignalName"):
+                self.merge_poi("Human", "Listening Post", bodycode)
                 dovis = True
-            if "CAPSHIP" in entry.get("SignalName"):
-                self.merge_poi("Human", "Capital Ship", body)
+            elif "CAPSHIP" in entry.get("SignalName"):
+                self.merge_poi("Human", "Capital Ship", bodycode)
                 dovis = True
-            if "Generation Ship" in entry.get("SignalName"):
-                self.merge_poi("Human", entry.get("SignalName"), body)
+            elif "Generation Ship" in entry.get("SignalName"):
+                self.merge_poi("Human", entry.get("SignalName"), bodycode)
+                dovis = True
+            elif entry.get("IsStation"):
+                FleetCarrier = (entry.get("SignalName") and entry.get(
+                    "SignalName")[-4] == '-' and entry.get("SignalName")[-8] == ' ')
+                if FleetCarrier:
+                    self.merge_poi("Human", "Fleet Carrier", "")
+                else:
+                    self.merge_poi("Human", "Station", "")
                 dovis = True
             self.allowed = True
             # self.evisualise(None)
@@ -1702,9 +1725,17 @@ class codexEmitter(Emitter):
 
         self.getExcluded()
 
-        # is this a code entry and do we want to record it?
-        if not codexEmitter.excludecodices.get(self.entry.get("Name").lower()) and not self.entry.get(
-                "Category") == '$Codex_Category_StellarBodies;':
+        # We don't want stellar bodies unless they are Green Giants
+
+        stellar_bodies = (self.entry.get("Category") ==
+                          '$Codex_Category_StellarBodies;')
+        green_giant = (stellar_bodies and "Green" in self.entry.get("Name"))
+        excluded = (codexEmitter.excludecodices.get(
+            self.entry.get("Name").lower()) or stellar_bodies)
+
+        included = (not excluded or green_giant)
+
+        if included:
             self.getReportTypes(self.entry.get("EntryID"))
             url = self.getUrl()
 
@@ -1723,22 +1754,24 @@ class codexEmitter(Emitter):
                                     "client": self.client}
                                 )
 
-            jid = self.entry.get("EntryID")
-            reportType = codexEmitter.reporttypes.get(str(jid))
+            # CAPI doesnt want any stellar bodies so we will exclude them
+            if not stellar_bodies:
+                jid = self.entry.get("EntryID")
+                reportType = codexEmitter.reporttypes.get(str(jid))
 
-            if reportType:
-                debug(reportType)
-                if reportType.get("location") == "body":
-                    payload = self.getBodyPayload(reportType.get("type"))
-                    self.modelreport = reportType.get("endpoint")
+                if reportType:
+                    debug(reportType)
+                    if reportType.get("location") == "body":
+                        payload = self.getBodyPayload(reportType.get("type"))
+                        self.modelreport = reportType.get("endpoint")
+                    else:
+                        payload = self.getSystemPayload(reportType.get("type"))
+                        self.modelreport = reportType.get("endpoint")
                 else:
-                    payload = self.getSystemPayload(reportType.get("type"))
-                    self.modelreport = reportType.get("endpoint")
-            else:
-                payload = self.getCodexPayload()
-                self.modelreport = "reportcodices"
+                    payload = self.getCodexPayload()
+                    self.modelreport = "reportcodices"
 
-            self.send(payload, url)
+                self.send(payload, url)
 
 
 def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):

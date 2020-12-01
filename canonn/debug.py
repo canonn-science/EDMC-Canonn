@@ -15,6 +15,7 @@ class Debug:
     debugvar = tk.IntVar(value=config.getint("CanonnDebug"))
     debugswitch = debugvar.get()
     print("EDMC-Canonn: Starting the debug sub-system")
+    sys.stdout.flush()
 
     client = "Canonn"
 
@@ -24,7 +25,8 @@ class Debug:
 
     @classmethod
     def p(cls, value):
-        print("{} [{}] {}".format(datetime.datetime.now(), Debug.client, str(value)))
+        print("{} [{}] {}".format(
+            datetime.datetime.now(), Debug.client, str(value)))
         sys.stdout.flush()
 
     @classmethod
@@ -44,7 +46,8 @@ class Debug:
         frame.columnconfigure(1, weight=1)
         frame.grid(row=0, column=0, sticky="NSEW")
 
-        nb.Checkbutton(frame, text="Turn on Debugging", variable=cls.debugvar).grid(row=0, column=0, sticky="NW")
+        nb.Checkbutton(frame, text="Turn on Debugging", variable=cls.debugvar).grid(
+            row=0, column=0, sticky="NW")
 
         return frame
 
