@@ -1229,7 +1229,7 @@ class CodexTypes():
 
         if entry.get("event") == "FSSDiscoveryScan":
 
-            # debug(entry)
+            debug(entry)
             CodexTypes.fsscount = entry.get("BodyCount")
             # if not CodexTypes.fsscount:
             #    CodexTypes.fsscount = 0
@@ -1294,7 +1294,7 @@ class CodexTypes():
             self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
-            # debug(json.dumps(entry,indent=4))
+            debug("Scan {}".format(entry.get("ScanType")))
 
             # fold the scan data into self.bodies
             if not self.bodies:
@@ -1305,8 +1305,6 @@ class CodexTypes():
                 bd = journal2edsm(entry)
                 self.bodies[bd.get("bodyId")] = bd
                 # debug(json.dumps(self.bodies, indent=4))
-
-                self.evisualise(None)
 
             self.allowed = True
 
