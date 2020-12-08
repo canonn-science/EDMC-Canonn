@@ -46,7 +46,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "5.23.0"
+this.version = "5.24.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -274,7 +274,7 @@ class capture():
 
         if entry.get("event") == "SendText" and canonn_capture:
             structured_msg = (len(message_part) > 3 and message_part[2] in (
-                "guardian", "thargoid", "human", "other", "nsp") and message_part[3].isnumeric())
+                "guardian", "thargoid", "human", "biology", "geology", "other", "nsp") and message_part[3].isnumeric())
             if structured_msg:
                 site_type = message_part[2]
                 site_index = message_part[3]
