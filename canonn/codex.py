@@ -874,6 +874,7 @@ class CodexTypes():
         debug("request {}:  Active Threads {}".format(
             url, threading.activeCount()))
         r = requests.get(url)
+        debug("request complete")
         r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
             debug("got POI Data")
@@ -890,6 +891,7 @@ class CodexTypes():
             url, threading.activeCount()))
 
         r = requests.get(url)
+        debug("request complete")
         r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
             debug("got EDSM Data")
@@ -897,6 +899,7 @@ class CodexTypes():
             # push edsm data only a queue
             self.edsmq.put(temp_edsmdata)
         else:
+            debug("EDSM Failed")
             error("EDSM Failed")
 
         CodexTypes.waiting = False
@@ -1032,6 +1035,10 @@ class CodexTypes():
 
                     # sort and make unique
                     bodies = sorted(list(set(list(map(str.strip, sbodies)))))
+                    if self.system:
+                        for index, value in enumerate(bodies):
+                            bodies[index] = value.replace(
+                                self.system, '').strip()
 
                     # convert back to a string
                     tmpb = ", ".join(bodies)
@@ -1165,7 +1172,6 @@ class CodexTypes():
                 cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
 
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
-        self.system = system
 
         if body:
             bodycode = body.replace(system, '')
@@ -1180,6 +1186,7 @@ class CodexTypes():
 
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             # go fetch some data.It will
+
             CodexTypes.fsscount = None
             CodexTypes.bodycount = None
             self.bodies = None
@@ -1194,6 +1201,7 @@ class CodexTypes():
 
         if entry.get("event") == "CodexEntry" and not entry.get("Category") == '$Codex_Category_StellarBodies;':
             # really we need to identify the codex types
+            self.system = system
             entry_id = entry.get("EntryID")
             codex_name_ref = CodexTypes.name_ref.get(entry_id)
             if codex_name_ref:
@@ -1210,7 +1218,7 @@ class CodexTypes():
                     "Name_Localised"), bodycode)
 
         if entry.get("event") in ("Location", "StartUp", "CarrierJump"):
-
+            self.system = system
             self.bodies = None
             poiTypes(system, self.getdata).start()
 
@@ -1221,6 +1229,7 @@ class CodexTypes():
             self.frame.after(10000, self.tvisualise)
 
         if entry.get("event") in ("Location", "StartUp", "FSDJump", "CarrierJump"):
+            self.system = system
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
                 self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(
                     entry.get("SystemAllegiance")), "")
@@ -1228,7 +1237,7 @@ class CodexTypes():
             self.evisualise(None)
 
         if entry.get("event") == "FSSDiscoveryScan":
-
+            self.system = system
             debug(entry)
             CodexTypes.fsscount = entry.get("BodyCount")
             # if not CodexTypes.fsscount:
@@ -1237,8 +1246,8 @@ class CodexTypes():
             self.allowed = True
             self.evisualise(None)
 
-        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
-                '$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
+        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
+            self.system = system
 
             if entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
 
@@ -1251,12 +1260,14 @@ class CodexTypes():
             self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
+            self.system = system
             self.merge_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
 
             self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
+            self.system = system
             dovis = False
             if "NumberStation" in entry.get("SignalName"):
                 self.merge_poi("Human", "Unregistered Comms Beacon", bodycode)
@@ -1287,6 +1298,7 @@ class CodexTypes():
                 self.evisualise(None)
 
         if entry.get("event") == "FSSAllBodiesFound":
+            self.system = system
             # self.remove_poi("Planets", "Unexplored Bodies")
             # CodexTypes.bodycount = CodexTypes.fsscount
             self.allowed = True
@@ -1294,6 +1306,7 @@ class CodexTypes():
             self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
+            self.system = system
             debug("Scan {}".format(entry.get("ScanType")))
 
             # fold the scan data into self.bodies
@@ -1311,11 +1324,13 @@ class CodexTypes():
             self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
+            self.system = system
             CodexTypes.parentRadius = self.light_seconds(
                 "Radius", entry.get("Radius"))
             self.allowed = True
 
         if entry.get("event") == "SAASignalsFound":
+            self.system = system
             # if we arent waiting for new data
             bodyName = entry.get("BodyName")
             bodyVal = bodyName.replace(self.system, '')
