@@ -671,23 +671,20 @@ class CodexTypes():
                     "innerRadius"), ring.get("outerRadius"))
 
                 if "Ring" in ring.get("name").replace(self.system, ''):
-                    if area > 7.604221648984754e+17 + (2 * 2.91663339734517e+19):
-                        self.merge_poi("Tourist", "High Area Rings", body_code)
-                    elif ring.get("outerRadius") > (99395267.84341194 + (2 * 520150745.3976549)):
+
+                    if ring.get("outerRadius") > 1000000:
                         self.merge_poi(
                             "Tourist", "Large Radius Rings", body_code)
-                    elif ring.get("innerRadius") < (45935299.69736346 - (2 * 190463268.57872835)):
+                    elif ring.get("innerRadius") < (45935299.69736346 - (1 * 190463268.57872835)):
                         self.merge_poi(
                             "Tourist", "Small Radius Rings", body_code)
-                    elif area < 7.604221648984754e+17 - (2 * 2.91663339734517e+19):
-                        self.merge_poi("Tourist", "Low Area Rings", body_code)
-                    elif density < 4.917372037815108 - (2 * 297.7768008954368):
+                    elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
+                        self.merge_poi(
+                            "Tourist", "Thin Rings", body_code)
+                    elif density < 0.005:
                         self.merge_poi(
                             "Tourist", "Low Density Rings", body_code)
-                    elif density < 4.917372037815108 - (2 * 297.7768008954368):
-                        self.merge_poi(
-                            "Tourist", "Low Density Rings", body_code)
-                    elif density > 4.917372037815108 + (2 * 297.7768008954368):
+                    elif density > 1000:
                         self.merge_poi(
                             "Tourist", "High Density Rings", body_code)
 
@@ -853,9 +850,9 @@ class CodexTypes():
                 CodexTypes.bodycount = 0
 
         except Exception as e:
-            if Debug.debugswitch == 1:
-                self.merge_poi("Other", 'Plugin Error', None)
-                error(str(e))
+            line = sys.exc_info()[-1].tb_lineno
+            self.merge_poi("Other", 'Plugin Error', None)
+            error("PLUGIN ERROR {} - {}".format(line, str(e)))
         self.visualise()
 
     def getdata(self, system):
