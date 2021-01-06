@@ -870,7 +870,7 @@ class CodexTypes():
         debug(url)
         debug("request {}:  Active Threads {}".format(
             url, threading.activeCount()))
-        r = requests.get(url)
+        r = requests.get(url, timeout=20)
         debug("request complete")
         r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
@@ -887,7 +887,7 @@ class CodexTypes():
         debug("request {}:  Active Threads {}".format(
             url, threading.activeCount()))
 
-        r = requests.get(url)
+        r = requests.get(url, timeout=20)
         debug("request complete")
         r.encoding = 'utf-8'
         if r.status_code == requests.codes.ok:
