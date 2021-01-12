@@ -459,7 +459,6 @@ class CanonnPatrol(Frame):
         r = requests.get(url)
 
         if not r.status_code == requests.codes.ok:
-            error(json.dumps(self.payload))
             headers = r.headers
             contentType = str(headers['content-type'])
             if 'json' in contentType:
@@ -565,7 +564,10 @@ class CanonnPatrol(Frame):
     def getJsonPatrol(self, url):
         canonnpatrol = []
 
-        a, b, c = Systems.edsmGetSystem(self.system)
+        try:
+            a, b, c = Systems.edsmGetSystem(self.system)
+        except:
+            a, b, c = (0, 0, 0)
         if '?' in url:
             newurl = "{}&x={}&y={}&z={}".format(url, a, b, c)
         else:
@@ -734,7 +736,9 @@ class CanonnPatrol(Frame):
             self.patrol_name = "The Gnosis"
             if not self.started:
                 self.event_generate('<<PatrolDisplay>>', when='tail')
-            patrol_list.extend(self.getGnosis())
+            gnosisPatrol = self.getGnosis()
+            if gnosisPatrol:
+                patrol_list.extend(gnosisPatrol)
 
             if self.thargoids != 1:
                 debug("Getting Thargoid Tour")
