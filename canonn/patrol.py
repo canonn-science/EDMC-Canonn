@@ -662,7 +662,7 @@ class CanonnPatrol(Frame):
 
                     elif type == 'tsv':
                         debug("{} Patrol enabled".format(description))
-                        if not self.started:
+                        if not self.started and not config.shutting_down:
                             self.event_generate(
                                 '<<PatrolDisplay>>', when='tail')
                         canonnpatrol = canonnpatrol + self.getTsvPatrol(link)
@@ -713,7 +713,7 @@ class CanonnPatrol(Frame):
             if self.faction != 1:
                 debug("Getting Faction Data")
                 self.patrol_name = "Cannon Factions"
-                if not self.started:
+                if not self.started and not config.shutting_down:
                     self.event_generate('<<PatrolDisplay>>', when='tail')
 
                 # first variable- for patrol_list, second-for ignore existant systems
@@ -734,7 +734,7 @@ class CanonnPatrol(Frame):
 
             debug("Getting Gnosis")
             self.patrol_name = "The Gnosis"
-            if not self.started:
+            if not self.started and not config.shutting_down:
                 self.event_generate('<<PatrolDisplay>>', when='tail')
             gnosisPatrol = self.getGnosis()
             if gnosisPatrol:
@@ -743,14 +743,14 @@ class CanonnPatrol(Frame):
             if self.thargoids != 1:
                 debug("Getting Thargoid Tour")
                 self.patrol_name = "Thargoid Tour"
-                if not self.started:
+                if not self.started and not config.shutting_down:
                     self.event_generate('<<PatrolDisplay>>', when='tail')
                 patrol_list.extend(self.getTsvPatrol(THARGOIDSITES))
 
             if self.guardians != 1:
                 debug("Getting Guardian Tour")
                 self.patrol_name = "Guardian Tour"
-                if not self.started:
+                if not self.started and not config.shutting_down:
                     self.event_generate('<<PatrolDisplay>>', when='tail')
                 patrol_list.extend(self.getJsonPatrol(GUARDIANSITES))
 
@@ -789,7 +789,8 @@ class CanonnPatrol(Frame):
             debug("download done")
             self.started = True
             # poke an evennt safely
-            self.event_generate('<<PatrolDone>>', when='tail')
+            if not config.shutting_down:
+                self.event_generate('<<PatrolDone>>', when='tail')
 
     def getEDSMPatrol(self):
         url = "https://www.edsm.net/en/galactic-mapping/json"
@@ -852,8 +853,8 @@ class CanonnPatrol(Frame):
                               entry.get("galMapUrl"),
                               None)
                 )
-
-        self.event_generate('<<PatrolDone>>', when='tail')
+        if not config.shutting_down:
+            self.event_generate('<<PatrolDone>>', when='tail')
         return edsm_patrol
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
