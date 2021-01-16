@@ -141,6 +141,10 @@ def plugin_app(parent):
 def journal_entry(cmdr, is_beta, system, station, entry, state):
     # capture some stats when we launch not read for that yet
     # startup_stats(cmdr)
+
+    if entry.get("StarSystem") and entry.get("StarPos"):
+        Systems.storeSystem(entry.get("StarSystem"), entry.get("StarPos"))
+
     if "SystemFaction" in entry:
 
         SystemFaction = entry.get("SystemFaction")
