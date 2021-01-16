@@ -1,5 +1,4 @@
 # Try python3 before 2.7
-# Try python3 before 2.7
 try:
     import tkinter as tk
     from tkinter import Frame
@@ -23,6 +22,7 @@ from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from config import config
+
 from math import sqrt, pow
 import queue
 
@@ -901,7 +901,8 @@ class CodexTypes():
 
         CodexTypes.waiting = False
         debug("event_generate")
-        self.frame.event_generate('<<POIData>>', when='head')
+        if not config.shutting_down:
+            self.frame.event_generate('<<POIData>>', when='head')
         debug("Finished getting POI data in thread")
 
     def enter(self, event):
