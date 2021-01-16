@@ -404,7 +404,8 @@ class CodexTypes():
 
     # wrap visualise so we can call from time
     def tvisualise(self):
-        self.evisualise(None)
+        if not config.shutting_down:
+            self.frame.event_generate('<<POIData>>', when='head')
 
     def sheperd_moon(self, body, bodies):
 
