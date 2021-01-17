@@ -130,6 +130,7 @@ class CanonnNews(Frame):
 
         self.update()
         # refesh every 60 seconds
+        debug("Refreshing News")
         self.after(NEWS_CYCLE, self.news_update)
 
     def eupdate(self, event):
