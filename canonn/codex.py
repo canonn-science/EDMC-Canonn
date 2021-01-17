@@ -679,9 +679,9 @@ class CodexTypes():
                     elif ring.get("innerRadius") < (45935299.69736346 - (1 * 190463268.57872835)):
                         self.merge_poi(
                             "Tourist", "Small Radius Rings", body_code)
-                    elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
-                        self.merge_poi(
-                            "Tourist", "Thin Rings", body_code)
+                    # elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
+                    #    self.merge_poi(
+                    #        "Tourist", "Thin Rings", body_code)
                     elif density < 0.005:
                         self.merge_poi(
                             "Tourist", "Low Density Rings", body_code)
