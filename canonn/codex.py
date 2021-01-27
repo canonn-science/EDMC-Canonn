@@ -197,6 +197,8 @@ def journal2edsm(j):
             e["atmosphereType"] = "No atmosphere"
         if j.get("TerraformState") == "Terraformable":
             e["terraformingState"] = 'Candidate for terraforming'
+        elif j.get("TerraformState") == "Terraforming":
+            e["terraformingState"] = 'Terraforming'
         else:
             e["terraformingState"] = 'Not terraformable'
         if j.get("Volcanism") == "":
@@ -774,6 +776,17 @@ class CodexTypes():
                             else:
                                 self.merge_poi(
                                     "Planets", "Terraformable", body_code)
+                        elif b.get('terraformingState') == 'Terraforming':
+                            if b.get('isLandable'):
+                                if not b.get("rings"):
+                                    self.merge_poi(
+                                        "Planets", "Landable Terraforming", body_code)
+                                else:
+                                    self.merge_poi(
+                                        "Planets", "Landable Ringed Terraforming", body_code)
+                            else:
+                                self.merge_poi(
+                                    "Planets", "Terraforming", body_code)
                         else:
                             if b.get("rings") and b.get('isLandable'):
                                 self.merge_poi(
@@ -857,6 +870,7 @@ class CodexTypes():
         self.visualise()
 
     def getdata(self, system):
+
         debug("Getting POI data in thread")
         CodexTypes.waiting = True
         debug("CodexTypes.waiting = True")
@@ -864,41 +878,46 @@ class CodexTypes():
         # first we will clear the queues
         self.edsmq.clear()
         self.poiq.clear()
+        try:
+            url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
+                quote_plus(system.encode('utf8')))
 
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
-            quote_plus(system.encode('utf8')))
+            debug(url)
+            debug("request {}:  Active Threads {}".format(
+                url, threading.activeCount()))
+            r = requests.get(url, timeout=20)
+            debug("request complete")
+            r.encoding = 'utf-8'
+            if r.status_code == requests.codes.ok:
+                debug("got POI Data")
+                temp_poidata = r.json()
 
-        debug(url)
-        debug("request {}:  Active Threads {}".format(
-            url, threading.activeCount()))
-        r = requests.get(url, timeout=20)
-        debug("request complete")
-        r.encoding = 'utf-8'
-        if r.status_code == requests.codes.ok:
-            debug("got POI Data")
-            temp_poidata = r.json()
+            # push the data ont a queue
+            for v in temp_poidata:
+                self.poiq.put(v)
+        except:
+            debug("Error getting POI data")
 
-        # push the data ont a queue
-        for v in temp_poidata:
-            self.poiq.put(v)
+        try:
+            url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
+                quote_plus(system.encode('utf8')))
 
-        url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
-            quote_plus(system.encode('utf8')))
+            debug("request {}:  Active Threads {}".format(
+                url, threading.activeCount()))
 
-        debug("request {}:  Active Threads {}".format(
-            url, threading.activeCount()))
-
-        r = requests.get(url, timeout=20)
-        debug("request complete")
-        r.encoding = 'utf-8'
-        if r.status_code == requests.codes.ok:
-            debug("got EDSM Data")
-            temp_edsmdata = r.json()
-            # push edsm data only a queue
-            self.edsmq.put(temp_edsmdata)
-        else:
-            debug("EDSM Failed")
-            error("EDSM Failed")
+            r = requests.get(url, timeout=20)
+            debug("request complete")
+            r.encoding = 'utf-8'
+            if r.status_code == requests.codes.ok:
+                debug("got EDSM Data")
+                temp_edsmdata = r.json()
+                # push edsm data only a queue
+                self.edsmq.put(temp_edsmdata)
+            else:
+                debug("EDSM Failed")
+                error("EDSM Failed")
+        except:
+            debug("Error getting EDSM data")
 
         CodexTypes.waiting = False
         debug("event_generate")
