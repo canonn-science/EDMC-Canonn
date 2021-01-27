@@ -59,13 +59,12 @@ def plugin_prefs(parent, cmdr, is_beta):
     frame = nb.Frame(parent)
     frame.columnconfigure(1, weight=1)
 
-    this.news.plugin_prefs(frame, cmdr, is_beta, 1)
-    this.release.plugin_prefs(frame, cmdr, is_beta, 2)
-    this.patrol.plugin_prefs(frame, cmdr, is_beta, 3)
-    Debug.plugin_prefs(frame, this.client_version, 4)
-    this.codexcontrol.plugin_prefs(frame, cmdr, is_beta, 5)
-    hdreport.HDInspector(frame, cmdr, is_beta, this.client_version, 6)
-
+    this.news.plugin_prefs(frame, cmdr, is_beta, 0)
+    this.release.plugin_prefs(frame, cmdr, is_beta, 1)
+    this.patrol.plugin_prefs(frame, cmdr, is_beta, 2)
+    this.codexcontrol.plugin_prefs(frame, cmdr, is_beta, 3)
+    hdreport.HDInspector(frame, cmdr, is_beta, this.client_version, 4)
+    Debug.plugin_prefs(frame, this.client_version, 5)
     return frame
 
 
