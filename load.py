@@ -14,7 +14,6 @@ from canonn import clientreport
 from canonn import codex
 from canonn import factionkill
 from canonn import fssreports
-from canonn import fleet_carrier
 from canonn import hdreport
 from canonn import journaldata
 from canonn import materialReport
@@ -208,8 +207,6 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     codex.submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
     fssreports.submit(cmdr, is_beta, system, x, y, z,
                       entry, body, lat, lon, client)
-    fleet_carrier.submit(cmdr, is_beta, system, x, y, z,
-                         entry, body, lat, lon, client)
     journaldata.submit(cmdr, is_beta, system, station,
                        entry, client, body, lat, lon)
     clientreport.submit(cmdr, is_beta, client, entry)
