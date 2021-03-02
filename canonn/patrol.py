@@ -13,6 +13,7 @@ except:
 import codecs
 import csv
 import datetime
+from datetime import date
 import json
 import math
 import myNotebook as nb
@@ -103,6 +104,44 @@ ship_types = {
     'viper_mkiv': 'Viper MkIV',
     'vulture': 'Vulture'
 }
+
+
+def gnosis(ds=None):
+
+    def weeks_between(d1, d2):
+        result = (d1-d2).days//7
+        return result
+
+    if ds:
+        target = datetime.datetime.strptime(ds+" 07", "%Y-%m-%d %H")
+    else:
+        target = datetime.datetime.utcnow()
+
+    ref_date = datetime.datetime.strptime("2020-09-17 07", "%Y-%m-%d %H")
+
+    systems = [
+        {"system": "Varati", "desc": "Visit the home of Canonn Interstellar Research on the Gnosis",
+            "coords": [-178.65625, 77.125, -87.125]},
+        {"system": "HIP 17862",
+            "desc": "Join the Gnosis to investigate the thargoid wreckage", "coords": [-81.4375, -151.90625, -359.59375]},
+        {"system": "Pleiades Sector PN-T b3-0",
+            "desc": "All aboard the Gnosis to investigate the Barnacle Forest", "coords": [-79.53125, -199.9375, -361.593750]},
+        {"system": "Synuefe PR-L b40-1",
+            "desc": "Visit the protolagrange clouds on the Gnosis (Subject to availability)", "coords": [365.78125, -291.75, -188.65625]},
+        {"system": "HIP 18120",
+            "desc": "Space pumpkin carving on board the Gnosis", "coords": [345.75, -435.71875, -125.5]},
+        {"system": "IC 2391 Sector CQ-Y c16",
+            "desc": "Light up the guardian beacons on the Gnosis", "coords": [559.875, -87.15625, -33.15625]},
+        {"system": "Kappa-1 Volantis",
+            "desc": "Join the Gnosis for a relaxing meditation session to the sound of the brain trees", "coords": [396.90625, -142.5625, 106.09375]},
+        {"system": "Epsilon Indi",
+            "desc": "Take a thrilling trip around Mitterand Hollow on the Gnosis", "coords": [3.125, -8.875, 7.125]},
+    ]
+
+    wb = weeks_between(target, ref_date)
+    wp = wb % 8
+
+    return systems[wp]
 
 
 def getShipType(key):
@@ -445,44 +484,12 @@ class CanonnPatrol(Frame):
         return retval
 
     def getGnosis(self):
-
-        def find_closest_thursday():
-            date = datetime.datetime.today()
-            date = date.replace(hour=0, minute=0, second=0, microsecond=0)
-            THURSDAY = 4
-            year, week, day = date.isocalendar()
-            delta = datetime.timedelta(days=THURSDAY - day)
-            return date + delta + datetime.timedelta(hours=8)
-
         patrol = []
-        url = "https://www.edsm.net/en/tools/canonn/gnosis"
-        r = requests.get(url)
-
-        if not r.status_code == requests.codes.ok:
-            headers = r.headers
-            contentType = str(headers['content-type'])
-            if 'json' in contentType:
-                error(json.dumps(r.content))
-            else:
-                error(r.content)
-            error(r.status_code)
-        else:
-            j = r.json()
-
-            update_time = datetime.datetime.strptime(j.get("station").get("updateTime").get("information"),
-                                                     '%Y-%m-%d %H:%M:%S')
-            target_time = find_closest_thursday()
-
-            if update_time > target_time:
-                instructions = "Come and visit The Gnosis, your lab is waiting for you. Distance to arrival {}ls".format(
-                    str(round(float(j.get("station").get("distanceToArrival")), 2)))
-            else:
-                instructions = "The last known position of The Gnosis. Last updated {}".format(
-                    update_time)
-            x, y, z = Systems.edsmGetSystem(j.get("name"))
-
-            patrol.append(newPatrol("GNOSIS", j.get("name"), (float(
-                x), float(y), float(z)), instructions, None, None))
+        gpos = gnosis()
+        patrol.append(
+            newPatrol(
+                "GNOSIS",
+                gpos.get("system"), gpos.get("coords"), gpos.get("desc"), None, None))
         return patrol
 
     def getBGSOveride(self):
