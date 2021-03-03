@@ -3,16 +3,16 @@ Module for managing releases
 """
 
 try:
-    import tkinter as tk    
+    import tkinter as tk
     from tkinter import Frame
     from io import BytesIO
     from io import StringIO
 except:
-    import Tkinter as tk    
+    import Tkinter as tk
     from Tkinter import Frame
     import StringIO
     import StringIO as BytesIO
-    
+
 import json
 import myNotebook as nb
 import os
@@ -107,7 +107,8 @@ class Release(Frame):
         self.hyperlink = ReleaseLink(self)
         self.hyperlink.grid(row=0, column=1, sticky="NSEW")
 
-        self.button = tk.Button(self, text="Click here to upgrade", command=self.click_installer)
+        self.button = tk.Button(
+            self, text="Click here to upgrade", command=self.click_installer)
         self.button.grid(row=1, column=0, columnspan=2, sticky="NSEW")
         self.button.grid_remove()
 
@@ -133,10 +134,10 @@ class Release(Frame):
             except:
                 error("Cant delete {}".format(delete_dir))
 
-            ## lets not keep trying
+            # lets not keep trying
             config.set('Canonn:RemoveBackup', "None")
 
-    def update(self,event):
+    def update(self, event):
         self.release_thread()
         # check again in an hour
         #debug("checking for the next release in one hour")
@@ -151,7 +152,8 @@ class Release(Frame):
 
     def release_pull(self):
         self.latest = {}
-        r = requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest")
+        r = requests.get(
+            "https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest")
         latest = r.json()
         # debug(latest)
         if not r.status_code == requests.codes.ok:
@@ -163,9 +165,10 @@ class Release(Frame):
         else:
             self.latest = latest
             debug("latest release downloaded")
-            self.event_generate('<<ReleaseUpdate>>', when='tail')
+            if not config.shutting_down:
+                self.event_generate('<<ReleaseUpdate>>', when='tail')
 
-    def release_update(self,event):
+    def release_update(self, event):
 
         # if we have just installed a new version we can end the cycle
         if not self.installed:
@@ -173,19 +176,20 @@ class Release(Frame):
             if self.latest:
                 debug("Latest is not null")
 
-
                 # self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
 
                 current = self.version2number(self.release)
                 release = self.version2number(self.latest.get("tag_name"))
 
                 self.hyperlink['url'] = self.latest.get("html_url")
-                self.hyperlink['text'] = "EDMC-Canonn: {}".format(self.latest.get("tag_name"))
+                self.hyperlink['text'] = "EDMC-Canonn: {}".format(
+                    self.latest.get("tag_name"))
 
                 if current == release:
                     self.grid_remove()
                 elif current > release:
-                    self.hyperlink['text'] = "Experimental Release {}".format(self.release)
+                    self.hyperlink['text'] = "Experimental Release {}".format(
+                        self.release)
                     self.grid()
                 else:
 
@@ -197,17 +201,19 @@ class Release(Frame):
                             self.hyperlink['text'] = "Release {}  Installed Please Restart".format(
                                 self.latest.get("tag_name"))
                         else:
-                            self.hyperlink['text'] = "Release {}  Upgrade Failed".format(self.latest.get("tag_name"))
+                            self.hyperlink['text'] = "Release {}  Upgrade Failed".format(
+                                self.latest.get("tag_name"))
 
                     else:
-                        self.hyperlink['text'] = "Please Upgrade {}".format(self.latest.get("tag_name"))
+                        self.hyperlink['text'] = "Please Upgrade {}".format(
+                            self.latest.get("tag_name"))
                         self.button.grid()
                         if self.novoices.get() != 1:
-                            Player(Release.plugin_dir, ["sounds\\prefix.wav", "sounds\\nag1.wav"]).start()
+                            Player(Release.plugin_dir, [
+                                   "sounds\\prefix.wav", "sounds\\nag1.wav"]).start()
                     self.grid()
             else:
                 debug("Latest is null")
-
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
@@ -219,9 +225,12 @@ class Release(Frame):
         frame = nb.Frame(parent)
         frame.columnconfigure(2, weight=1)
         frame.grid(row=gridrow, column=0, sticky="NSEW")
-        nb.Checkbutton(frame, text="Auto Update This Plugin", variable=self.auto).grid(row=0, column=0, sticky="NW")
-        nb.Checkbutton(frame, text="Remove backup", variable=self.rmbackup).grid(row=0, column=1, sticky="NW")
-        nb.Checkbutton(frame, text="Stop talking to me", variable=self.novoices).grid(row=0, column=2, sticky="NW")
+        nb.Checkbutton(frame, text="Auto Update This Plugin",
+                       variable=self.auto).grid(row=0, column=0, sticky="NW")
+        nb.Checkbutton(frame, text="Remove backup", variable=self.rmbackup).grid(
+            row=0, column=1, sticky="NW")
+        nb.Checkbutton(frame, text="Stop talking to me", variable=self.novoices).grid(
+            row=0, column=2, sticky="NW")
 
         return frame
 
@@ -235,9 +244,11 @@ class Release(Frame):
         self.button.grid_remove()
 
         if self.installer():
-            self.hyperlink['text'] = "Release {}  Installed Please Restart".format(self.latest.get("tag_name"))
+            self.hyperlink['text'] = "Release {}  Installed Please Restart".format(
+                self.latest.get("tag_name"))
         else:
-            self.hyperlink['text'] = "Release {}  Upgrade Failed".format(self.latest.get("tag_name"))
+            self.hyperlink['text'] = "Release {}  Upgrade Failed".format(
+                self.latest.get("tag_name"))
 
     def installer(self):
         # need to add some defensive code around this
@@ -245,7 +256,8 @@ class Release(Frame):
 
         debug("Installing {}".format(tag_name))
 
-        new_plugin_dir = os.path.join(os.path.dirname(Release.plugin_dir), "EDMC-Canonn-{}".format(tag_name))
+        new_plugin_dir = os.path.join(os.path.dirname(
+            Release.plugin_dir), "EDMC-Canonn-{}".format(tag_name))
 
         debug("Checking for pre-existence")
         if os.path.isdir(new_plugin_dir):
@@ -255,7 +267,8 @@ class Release(Frame):
 
         try:
             debug("Downloading new version")
-            download = requests.get("https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name),stream=True)
+            download = requests.get(
+                "https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name), stream=True)
 
             try:
                 z = zipfile.ZipFile(BytesIO(download.content))
@@ -273,8 +286,10 @@ class Release(Frame):
 
         debug("disable the current plugin")
         try:
-            os.rename(Release.plugin_dir, "{}.disabled".format(Release.plugin_dir))
-            debug("Renamed {} to {}".format(Release.plugin_dir, "{}.disabled".format(Release.plugin_dir)))
+            os.rename(Release.plugin_dir,
+                      "{}.disabled".format(Release.plugin_dir))
+            debug("Renamed {} to {}".format(Release.plugin_dir,
+                                            "{}.disabled".format(Release.plugin_dir)))
         except:
             error("Upgrade failed reverting: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")
@@ -282,7 +297,8 @@ class Release(Frame):
             return False
 
         if self.rmbackup.get() == 1:
-            config.set('Canonn:RemoveBackup', "{}.disabled".format(Release.plugin_dir))
+            config.set('Canonn:RemoveBackup',
+                       "{}.disabled".format(Release.plugin_dir))
 
         debug("Upgrade complete")
 

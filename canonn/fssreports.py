@@ -33,14 +33,16 @@ class FSS():
     events = Queue()
 
     @classmethod
-    def put(cls, cmdr, system, x, y, z, entry):
+    def put(cls, cmdr, system, x, y, z, entry, client):
         data = {"cmdr": cmdr, "system": system,
-                "coords": [x, y, z], "entry": entry}
+                "coords": [x, y, z], "entry": entry, "client": client}
         debug("Putting FSS Signal on queue")
         cls.events.put(data)
 
     @classmethod
     def process(cls):
+
+        payload = []
 
         while not cls.events.empty():
             # process each of the entries
@@ -53,31 +55,33 @@ class FSS():
             FSSSignalDiscovered = (entry.get("event") == "FSSSignalDiscovered")
             USS = ("$USS" in entry.get("SignalName"))
 
-            if not FleetCarrier and not USS:
-                debug("posting fss to gcloud")
-                FSS.postFSS(data)
+            if not USS:
+
+                payload.append({
+                    "gameState": {
+                        "systemName": data.get("system"),
+                        "systemCoordinates": data.get("coords"),
+                        "clientVersion": data.get("client"),
+                        "isBeta": False
+                    },
+                    "rawEvents":
+                    [entry],
+                    "eventType": entry.get("event"),
+                    "cmdrName": data.get("cmdr")
+                })
+                debug(payload)
+
+        if len(payload) > 0:
+            FSS.postFSS(payload)
 
     @classmethod
     def postFSS(cls, payload):
-        url = "https://europe-west1-canonn-api-236217.cloudfunctions.net/postFSSSignal"
-        x, y, z = payload.get("coords")
-        entry = payload.get("entry")
-        system = payload.get("system")
-        cmdr = payload.get("system")
+        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent"
 
-        data = {
-            "signalname": entry.get("SignalName"),
-            "signalNameLocalised": entry.get("SignalName_Localised"),
-            "cmdr": cmdr,
-            "system": system,
-            "x": x,
-            "y": y,
-            "z": z,
-            "raw_json": entry,
-        }
-        debug(data)
+        debug("posting FSS")
+        debug(payload)
         r = requests.post(url, data=json.dumps(
-            data, ensure_ascii=False).encode('utf8'))
+            payload, ensure_ascii=False).encode('utf8'))
         if not r.status_code == requests.codes.ok:
             headers = r.headers
             contentType = str(headers['content-type'])
@@ -224,7 +228,7 @@ def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
                    entry, body, lat, lon, client).start()
 
     if entry.get("event") == "FSSSignalDiscovered" and not is_beta:
-        FSS.put(cmdr, system, x, y, z, entry)
+        FSS.put(cmdr, system, x, y, z, entry, client)
 
     if entry.get("event") in ("StartJump", "Location", "Docked", "Shutdown", "ShutDown", "SupercruiseExit", "SupercruiseEntry ") and not is_beta:
         debug("FSS Process")

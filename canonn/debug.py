@@ -9,6 +9,7 @@ import datetime
 import myNotebook as nb
 import sys
 from config import config
+from ttkHyperlinkLabel import HyperlinkLabel
 
 
 class Debug:
@@ -44,10 +45,13 @@ class Debug:
 
         frame = nb.Frame(parent)
         frame.columnconfigure(1, weight=1)
-        frame.grid(row=0, column=0, sticky="NSEW")
+        frame.grid(row=gridrow, column=0, sticky="NSEW")
 
         nb.Checkbutton(frame, text="Turn on Debugging", variable=cls.debugvar).grid(
             row=0, column=0, sticky="NW")
+
+        HyperlinkLabel(frame, text=f"Release: {client}",
+                       url="https://github.com/canonn-science/EDMC-Canonn/blob/master/README.md").grid(row=1, column=0, sticky="NW")
 
         return frame
 

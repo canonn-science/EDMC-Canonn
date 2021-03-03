@@ -1,5 +1,4 @@
 # Try python3 before 2.7
-# Try python3 before 2.7
 try:
     import tkinter as tk
     from tkinter import Frame
@@ -23,6 +22,7 @@ from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from config import config
+
 from math import sqrt, pow
 import queue
 
@@ -197,6 +197,8 @@ def journal2edsm(j):
             e["atmosphereType"] = "No atmosphere"
         if j.get("TerraformState") == "Terraformable":
             e["terraformingState"] = 'Candidate for terraforming'
+        elif j.get("TerraformState") == "Terraforming":
+            e["terraformingState"] = 'Terraforming'
         else:
             e["terraformingState"] = 'Not terraformable'
         if j.get("Volcanism") == "":
@@ -283,20 +285,19 @@ class saaScan():
     @classmethod
     def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if entry.get("event") == "SAASignalsFound":
-            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postSAA",
-                                {
-                                    "cmdr": cmdr,
-                                    "beta": is_beta,
-                                    "system": system,
-                                    "x": x,
-                                    "y": y,
-                                    "z": z,
-                                    "entry": entry,
-                                    "body": body,
-                                    "lat": lat,
-                                    "lon": lon,
-                                    "client": client
-                                })
+
+            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent", {
+                "gameState": {
+                    "systemName": system,
+                    "systemCoordinates": [x, y, z],
+                    "bodyName": body,
+                    "clientVersion": client,
+                    "isBeta": is_beta
+                },
+                "rawEvent": entry,
+                "eventType": entry.get("event"),
+                "cmdrName": cmdr
+            })
 
 
 class CodexTypes():
@@ -404,7 +405,8 @@ class CodexTypes():
 
     # wrap visualise so we can call from time
     def tvisualise(self):
-        self.evisualise(None)
+        if not config.shutting_down:
+            self.frame.event_generate('<<POIData>>', when='head')
 
     def sheperd_moon(self, body, bodies):
 
@@ -671,23 +673,20 @@ class CodexTypes():
                     "innerRadius"), ring.get("outerRadius"))
 
                 if "Ring" in ring.get("name").replace(self.system, ''):
-                    if area > 7.604221648984754e+17 + (2 * 2.91663339734517e+19):
-                        self.merge_poi("Tourist", "High Area Rings", body_code)
-                    elif ring.get("outerRadius") > (99395267.84341194 + (2 * 520150745.3976549)):
+
+                    if ring.get("outerRadius") > 1000000:
                         self.merge_poi(
                             "Tourist", "Large Radius Rings", body_code)
-                    elif ring.get("innerRadius") < (45935299.69736346 - (2 * 190463268.57872835)):
+                    elif ring.get("innerRadius") < (45935299.69736346 - (1 * 190463268.57872835)):
                         self.merge_poi(
                             "Tourist", "Small Radius Rings", body_code)
-                    elif area < 7.604221648984754e+17 - (2 * 2.91663339734517e+19):
-                        self.merge_poi("Tourist", "Low Area Rings", body_code)
-                    elif density < 4.917372037815108 - (2 * 297.7768008954368):
+                    # elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
+                    #    self.merge_poi(
+                    #        "Tourist", "Thin Rings", body_code)
+                    elif density < 0.005:
                         self.merge_poi(
                             "Tourist", "Low Density Rings", body_code)
-                    elif density < 4.917372037815108 - (2 * 297.7768008954368):
-                        self.merge_poi(
-                            "Tourist", "Low Density Rings", body_code)
-                    elif density > 4.917372037815108 + (2 * 297.7768008954368):
+                    elif density > 1000:
                         self.merge_poi(
                             "Tourist", "High Density Rings", body_code)
 
@@ -776,6 +775,17 @@ class CodexTypes():
                             else:
                                 self.merge_poi(
                                     "Planets", "Terraformable", body_code)
+                        elif b.get('terraformingState') == 'Terraforming':
+                            if b.get('isLandable'):
+                                if not b.get("rings"):
+                                    self.merge_poi(
+                                        "Planets", "Landable Terraforming", body_code)
+                                else:
+                                    self.merge_poi(
+                                        "Planets", "Landable Ringed Terraforming", body_code)
+                            else:
+                                self.merge_poi(
+                                    "Planets", "Terraforming", body_code)
                         else:
                             if b.get("rings") and b.get('isLandable'):
                                 self.merge_poi(
@@ -853,12 +863,13 @@ class CodexTypes():
                 CodexTypes.bodycount = 0
 
         except Exception as e:
-            if Debug.debugswitch == 1:
-                self.merge_poi("Other", 'Plugin Error', None)
-                error(str(e))
+            line = sys.exc_info()[-1].tb_lineno
+            self.merge_poi("Other", 'Plugin Error', None)
+            error("PLUGIN ERROR {} - {}".format(line, str(e)))
         self.visualise()
 
     def getdata(self, system):
+
         debug("Getting POI data in thread")
         CodexTypes.waiting = True
         debug("CodexTypes.waiting = True")
@@ -866,42 +877,51 @@ class CodexTypes():
         # first we will clear the queues
         self.edsmq.clear()
         self.poiq.clear()
+        try:
+            url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
+                quote_plus(system.encode('utf8')))
 
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
-            quote_plus(system.encode('utf8')))
+            debug(url)
+            debug("request {}:  Active Threads {}".format(
+                url, threading.activeCount()))
+            r = requests.get(url, timeout=20)
+            debug("request complete")
+            r.encoding = 'utf-8'
+            if r.status_code == requests.codes.ok:
+                debug("got POI Data")
+                temp_poidata = r.json()
 
-        debug(url)
-        debug("request {}:  Active Threads {}".format(
-            url, threading.activeCount()))
-        r = requests.get(url)
-        r.encoding = 'utf-8'
-        if r.status_code == requests.codes.ok:
-            debug("got POI Data")
-            temp_poidata = r.json()
+            # push the data ont a queue
+            for v in temp_poidata:
+                self.poiq.put(v)
+        except:
+            debug("Error getting POI data")
 
-        # push the data ont a queue
-        for v in temp_poidata:
-            self.poiq.put(v)
+        try:
+            url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
+                quote_plus(system.encode('utf8')))
 
-        url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
-            quote_plus(system.encode('utf8')))
+            debug("request {}:  Active Threads {}".format(
+                url, threading.activeCount()))
 
-        debug("request {}:  Active Threads {}".format(
-            url, threading.activeCount()))
-
-        r = requests.get(url)
-        r.encoding = 'utf-8'
-        if r.status_code == requests.codes.ok:
-            debug("got EDSM Data")
-            temp_edsmdata = r.json()
-            # push edsm data only a queue
-            self.edsmq.put(temp_edsmdata)
-        else:
-            error("EDSM Failed")
+            r = requests.get(url, timeout=20)
+            debug("request complete")
+            r.encoding = 'utf-8'
+            if r.status_code == requests.codes.ok:
+                debug("got EDSM Data")
+                temp_edsmdata = r.json()
+                # push edsm data only a queue
+                self.edsmq.put(temp_edsmdata)
+            else:
+                debug("EDSM Failed")
+                error("EDSM Failed")
+        except:
+            debug("Error getting EDSM data")
 
         CodexTypes.waiting = False
         debug("event_generate")
-        self.frame.event_generate('<<POIData>>', when='head')
+        if not config.shutting_down:
+            self.frame.event_generate('<<POIData>>', when='head')
         debug("Finished getting POI data in thread")
 
     def enter(self, event):
@@ -1032,6 +1052,10 @@ class CodexTypes():
 
                     # sort and make unique
                     bodies = sorted(list(set(list(map(str.strip, sbodies)))))
+                    if self.system:
+                        for index, value in enumerate(bodies):
+                            bodies[index] = value.replace(
+                                self.system, '').strip()
 
                     # convert back to a string
                     tmpb = ", ".join(bodies)
@@ -1165,7 +1189,6 @@ class CodexTypes():
                 cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
 
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
-        self.system = system
 
         if body:
             bodycode = body.replace(system, '')
@@ -1180,6 +1203,7 @@ class CodexTypes():
 
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             # go fetch some data.It will
+
             CodexTypes.fsscount = None
             CodexTypes.bodycount = None
             self.bodies = None
@@ -1194,6 +1218,7 @@ class CodexTypes():
 
         if entry.get("event") == "CodexEntry" and not entry.get("Category") == '$Codex_Category_StellarBodies;':
             # really we need to identify the codex types
+            self.system = system
             entry_id = entry.get("EntryID")
             codex_name_ref = CodexTypes.name_ref.get(entry_id)
             if codex_name_ref:
@@ -1210,7 +1235,7 @@ class CodexTypes():
                     "Name_Localised"), bodycode)
 
         if entry.get("event") in ("Location", "StartUp", "CarrierJump"):
-
+            self.system = system
             self.bodies = None
             poiTypes(system, self.getdata).start()
 
@@ -1221,6 +1246,7 @@ class CodexTypes():
             self.frame.after(10000, self.tvisualise)
 
         if entry.get("event") in ("Location", "StartUp", "FSDJump", "CarrierJump"):
+            self.system = system
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
                 self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(
                     entry.get("SystemAllegiance")), "")
@@ -1228,8 +1254,8 @@ class CodexTypes():
             self.evisualise(None)
 
         if entry.get("event") == "FSSDiscoveryScan":
-
-            # debug(entry)
+            self.system = system
+            debug(entry)
             CodexTypes.fsscount = entry.get("BodyCount")
             # if not CodexTypes.fsscount:
             #    CodexTypes.fsscount = 0
@@ -1237,8 +1263,8 @@ class CodexTypes():
             self.allowed = True
             self.evisualise(None)
 
-        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in (
-                '$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
+        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
+            self.system = system
 
             if entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
 
@@ -1251,12 +1277,14 @@ class CodexTypes():
             self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
+            self.system = system
             self.merge_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
 
             self.evisualise(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
+            self.system = system
             dovis = False
             if "NumberStation" in entry.get("SignalName"):
                 self.merge_poi("Human", "Unregistered Comms Beacon", bodycode)
@@ -1287,6 +1315,7 @@ class CodexTypes():
                 self.evisualise(None)
 
         if entry.get("event") == "FSSAllBodiesFound":
+            self.system = system
             # self.remove_poi("Planets", "Unexplored Bodies")
             # CodexTypes.bodycount = CodexTypes.fsscount
             self.allowed = True
@@ -1294,7 +1323,8 @@ class CodexTypes():
             self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
-            # debug(json.dumps(entry,indent=4))
+            self.system = system
+            debug("Scan {}".format(entry.get("ScanType")))
 
             # fold the scan data into self.bodies
             if not self.bodies:
@@ -1306,18 +1336,18 @@ class CodexTypes():
                 self.bodies[bd.get("bodyId")] = bd
                 # debug(json.dumps(self.bodies, indent=4))
 
-                self.evisualise(None)
-
             self.allowed = True
 
             self.evisualise(None)
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
+            self.system = system
             CodexTypes.parentRadius = self.light_seconds(
                 "Radius", entry.get("Radius"))
             self.allowed = True
 
         if entry.get("event") == "SAASignalsFound":
+            self.system = system
             # if we arent waiting for new data
             bodyName = entry.get("BodyName")
             bodyVal = bodyName.replace(self.system, '')
@@ -1739,19 +1769,21 @@ class codexEmitter(Emitter):
             self.getReportTypes(self.entry.get("EntryID"))
             url = self.getUrl()
 
-            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postCodex",
+            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent",
                                 {
-                                    "cmdr": self.cmdr,
-                                    "beta": self.is_beta,
-                                    "system": self.system,
-                                    "x": self.x,
-                                    "y": self.y,
-                                    "z": self.z,
-                                    "entry": self.entry,
-                                    "body": self.body,
-                                    "lat": self.lat,
-                                    "lon": self.lon,
-                                    "client": self.client}
+                                    "gameState": {
+                                        "systemName": self.system,
+                                        "systemCoordinates": [self.x, self.y, self.z],
+                                        "bodyName": self.body,
+                                        "latitude": self.lat,
+                                        "longitude": self.lon,
+                                        "clientVersion": self.client,
+                                        "isBeta": self.is_beta
+                                    },
+                                    "rawEvent": self.entry,
+                                    "eventType": self.entry.get("event"),
+                                    "cmdrName": self.cmdr
+                                }
                                 )
 
             # CAPI doesnt want any stellar bodies so we will exclude them

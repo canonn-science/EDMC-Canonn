@@ -8,7 +8,7 @@ except:
     from Tkinter import Button
     from Tkinter import Frame
     from urllib import quote_plus
-    
+
 import canonn.emitter
 import glob
 import json
@@ -40,11 +40,13 @@ class gSubmitHD(threading.Thread):
     def __init__(self, cmdr, x, y, z, entry):
         threading.Thread.__init__(self)
         self.cmdr = quote_plus(cmdr.encode('utf8'))
-        self.system = quote_plus(entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM").encode('utf8'))
+        self.system = quote_plus(entry.get("TG_ENCOUNTERS").get(
+            "TG_ENCOUNTER_TOTAL_LAST_SYSTEM").encode('utf8'))
         self.x = x
         self.y = y
         self.z = z
-        ts = entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_TIMESTAMP")
+        ts = entry.get("TG_ENCOUNTERS").get(
+            "TG_ENCOUNTER_TOTAL_LAST_TIMESTAMP")
         year = int(ts[0:4]) - 1286
         self.eddatetime = "{}-{}:00".format(year, ts[4:])
         debug(self.eddatetime)
@@ -53,7 +55,8 @@ class gSubmitHD(threading.Thread):
 
     def run(self):
         debug("sending gSubmitCodex")
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/submitHD?cmdrName={}".format(self.cmdr)
+        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/submitHD?cmdrName={}".format(
+            self.cmdr)
         url = url + "&systemName={}".format(self.system)
         url = url + "&x={}".format(self.x)
         url = url + "&y={}".format(self.y)
@@ -72,7 +75,8 @@ class HDReport(Emitter):
     hdsystems = {}
 
     def __init__(self, cmdr, is_beta, system, entry, client):
-        Emitter.__init__(self, cmdr, is_beta, system, None, None, None, entry, None, None, None, client)
+        Emitter.__init__(self, cmdr, is_beta, system, None,
+                         None, None, entry, None, None, None, client)
         self.system = system
         self.cmdr = cmdr
         self.is_beta = is_beta
@@ -82,7 +86,8 @@ class HDReport(Emitter):
 
     def setPayload(self):
         payload = {}
-        payload["fromSystemName"] = self.entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM")
+        payload["fromSystemName"] = self.entry.get(
+            "TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM")
         payload["cmdrName"] = self.cmdr
         payload["isbeta"] = self.is_beta
         payload["clientVersion"] = self.client
@@ -100,7 +105,8 @@ class HDReport(Emitter):
                 "{}/{}?cmdrName={}&_sort=created_at:DESC&_limit=100".format(url, self.modelreport, self.cmdr))
             for hd in r.json():
                 debug("excluding: {}".format(hd.get("fromSystemName")))
-                HDReport.hdsystems[hd.get("fromSystemName")] = hd.get("fromSystemName")
+                HDReport.hdsystems[hd.get("fromSystemName")] = hd.get(
+                    "fromSystemName")
 
     # going to overload run so that we can check for the last hdsystem
     def run(self):
@@ -114,7 +120,8 @@ class HDReport(Emitter):
         # debug("excluding: {}".format(hd.get("fromSystemName")))
         # HDReport.hdsystems[hd.get("fromSystemName")]=hd.get("fromSystemName")
 
-        lasthd = self.entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM")
+        lasthd = self.entry.get("TG_ENCOUNTERS").get(
+            "TG_ENCOUNTER_TOTAL_LAST_SYSTEM")
         if lasthd:
             if HDReport.hdsystems.get(lasthd):
                 debug("Hyperdiction already recorded here - server")
@@ -146,7 +153,8 @@ class HDInspector(Frame):
         self.commander = cmdr
         self.is_beta = is_beta
         self.grid(row=gridrow, column=0)
-        self.button = Button(self, text="Click here to scan all your journals for Hyperdictions")
+        self.button = Button(
+            self, text="Click here to scan all your journals for Hyperdictions")
         self.button.bind('<Button-1>', self.run)
         self.button.grid(row=0, column=0)
         Emitter.setRoute(is_beta, client)
@@ -166,7 +174,8 @@ class HDInspector(Frame):
                 "{}/{}?cmdrName={}&_sort=created_at:DESC&_limit=100".format(url, "hdreports", self.commander))
             for hd in r.json():
                 debug("excluding: {}".format(hd.get("fromSystemName")))
-                HDReport.hdsystems[hd.get("fromSystemName")] = hd.get("fromSystemName")
+                HDReport.hdsystems[hd.get("fromSystemName")] = hd.get(
+                    "fromSystemName")
 
     def run(self, event):
         self.button.grid_remove()
@@ -186,7 +195,8 @@ class HDInspector(Frame):
     def detect_hyperdiction(self, entry):
         if entry.get("event") == "Statistics":
             debug("detected")
-            submit(self.commander, self.is_beta, None, None, entry, self.client)
+            submit(self.commander, self.is_beta,
+                   None, None, entry, self.client)
             time.sleep(0.1)
         # else:
         # debug(entry.get("event"))
@@ -229,7 +239,8 @@ class hyperdictionDetector():
         cls.banner = tk.Label(cls.container, text="HYPERDICTION", fg="red")
         cls.banner.grid(row=0, column=0, columnspan=1, sticky="NSEW")
         cls.banner.config(font=("Arial Black", 22))
-        cls.instructions = tk.Label(cls.container, text="Please exit to main menu for confirmation", fg="red")
+        cls.instructions = tk.Label(
+            cls.container, text="Please exit to main menu for confirmation", fg="red")
         cls.instructions.grid(row=1, column=0, columnspan=1, sticky="NSEW")
         cls.instructions.config(font=("Arial Black", 8))
         cls.hide()
@@ -245,10 +256,12 @@ class hyperdictionDetector():
     @classmethod
     def FSDJump(cls, system):
         if cls.state == 1 and not system == cls.target_system:
-            debug("FSDJump setting state 2 {} {}".format(system, cls.target_system))
-            cls.state = 2;
+            debug("FSDJump setting state 2 {} {}".format(
+                system, cls.target_system))
+            cls.state = 2
         else:
-            debug("FSDJUMP resetting state back {} {}".format(system, cls.target_system))
+            debug("FSDJUMP resetting state back {} {}".format(
+                system, cls.target_system))
             cls.state = 0
 
     @classmethod
@@ -257,8 +270,15 @@ class hyperdictionDetector():
             debug("Hyperdiction Detected")
             cls.show()
             x, y, z = Systems.edsmGetSystem(system)
+            dx, dy, dz = Systems.edsmGetSystem(cls.target_system)
             canonn.emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHDDetected",
-                                {"cmdr": cmdr, "system": system, "timestamp": timestamp, "x": x, "y": y, "z": z})
+                                {"cmdr": cmdr,
+                                    "system": system,
+                                    "timestamp": timestamp,
+                                    "x": x, "y": y, "z": z,
+                                    "destination": cls.target_system,
+                                    "dx": dx, "dy": dy, "dz": z
+                                 })
             plug.show_error("Hyperdiction: Exit to main menu")
         else:
             debug("FSDJUMP resetting state back")
@@ -313,8 +333,8 @@ def submit(cmdr, is_beta, system, station, entry, client):
     hyperdictionDetector.submit(cmdr, is_beta, system, station, entry, client)
 
     hdsystems = (
-    "Electra", "Asterope", "Delphi", "Merope", "Celaeno", "Maia", "HR 1185", "HIP 23759", "Witch Head Sector DL-Y d17",
-    "Pleiades Sector HR-W d1-79", "Pleione", "Witch Head Sector GW-W c1-4")
+        "Electra", "Asterope", "Delphi", "Merope", "Celaeno", "Maia", "HR 1185", "HIP 23759", "Witch Head Sector DL-Y d17",
+        "Pleiades Sector HR-W d1-79", "Pleione", "Witch Head Sector GW-W c1-4")
 
     if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
         # post traffic from reference systems
@@ -328,8 +348,10 @@ def submit(cmdr, is_beta, system, station, entry, client):
         # there is no guarentee TG_ENCOUNTER_TOTAL_LAST_SYSTEM will have a value
         if entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM"):
 
-            lastsystem = entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_SYSTEM")
-            gametime = entry.get("TG_ENCOUNTERS").get("TG_ENCOUNTER_TOTAL_LAST_TIMESTAMP")
+            lastsystem = entry.get("TG_ENCOUNTERS").get(
+                "TG_ENCOUNTER_TOTAL_LAST_SYSTEM")
+            gametime = entry.get("TG_ENCOUNTERS").get(
+                "TG_ENCOUNTER_TOTAL_LAST_TIMESTAMP")
             year, remainder = gametime.split("-", 1)
             tgtime = "{}-{}".format(str(int(year) - 1286), remainder)
 

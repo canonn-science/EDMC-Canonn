@@ -14,7 +14,6 @@ from canonn import clientreport
 from canonn import codex
 from canonn import factionkill
 from canonn import fssreports
-from canonn import fleet_carrier
 from canonn import hdreport
 from canonn import journaldata
 from canonn import materialReport
@@ -46,7 +45,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "5.23.0"
+this.version = "5.24.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -59,13 +58,12 @@ def plugin_prefs(parent, cmdr, is_beta):
     frame = nb.Frame(parent)
     frame.columnconfigure(1, weight=1)
 
-    this.news.plugin_prefs(frame, cmdr, is_beta, 1)
-    this.release.plugin_prefs(frame, cmdr, is_beta, 2)
-    this.patrol.plugin_prefs(frame, cmdr, is_beta, 3)
-    Debug.plugin_prefs(frame, this.client_version, 4)
-    this.codexcontrol.plugin_prefs(frame, cmdr, is_beta, 5)
-    hdreport.HDInspector(frame, cmdr, is_beta, this.client_version, 6)
-
+    this.news.plugin_prefs(frame, cmdr, is_beta, 0)
+    this.release.plugin_prefs(frame, cmdr, is_beta, 1)
+    this.patrol.plugin_prefs(frame, cmdr, is_beta, 2)
+    this.codexcontrol.plugin_prefs(frame, cmdr, is_beta, 3)
+    hdreport.HDInspector(frame, cmdr, is_beta, this.client_version, 4)
+    Debug.plugin_prefs(frame, this.client_version, 5)
     return frame
 
 
@@ -141,6 +139,10 @@ def plugin_app(parent):
 def journal_entry(cmdr, is_beta, system, station, entry, state):
     # capture some stats when we launch not read for that yet
     # startup_stats(cmdr)
+
+    if entry.get("StarSystem") and entry.get("StarPos"):
+        Systems.storeSystem(entry.get("StarSystem"), entry.get("StarPos"))
+
     if "SystemFaction" in entry:
 
         SystemFaction = entry.get("SystemFaction")
@@ -205,8 +207,6 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     codex.submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
     fssreports.submit(cmdr, is_beta, system, x, y, z,
                       entry, body, lat, lon, client)
-    fleet_carrier.submit(cmdr, is_beta, system, x, y, z,
-                         entry, body, lat, lon, client)
     journaldata.submit(cmdr, is_beta, system, station,
                        entry, client, body, lat, lon)
     clientreport.submit(cmdr, is_beta, client, entry)
@@ -274,7 +274,7 @@ class capture():
 
         if entry.get("event") == "SendText" and canonn_capture:
             structured_msg = (len(message_part) > 3 and message_part[2] in (
-                "guardian", "thargoid", "human", "other", "nsp") and message_part[3].isnumeric())
+                "guardian", "thargoid", "human", "biology", "geology", "other", "nsp") and message_part[3].isnumeric())
             if structured_msg:
                 site_type = message_part[2]
                 site_index = message_part[3]
