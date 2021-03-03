@@ -1775,6 +1775,8 @@ class codexEmitter(Emitter):
                                         "systemName": self.system,
                                         "systemCoordinates": [self.x, self.y, self.z],
                                         "bodyName": self.body,
+                                        "latitude": self.lat,
+                                        "longitude": self.lon,
                                         "clientVersion": self.client,
                                         "isBeta": self.is_beta
                                     },
