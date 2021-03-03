@@ -285,20 +285,19 @@ class saaScan():
     @classmethod
     def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if entry.get("event") == "SAASignalsFound":
-            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postSAA",
-                                {
-                                    "cmdr": cmdr,
-                                    "beta": is_beta,
-                                    "system": system,
-                                    "x": x,
-                                    "y": y,
-                                    "z": z,
-                                    "entry": entry,
-                                    "body": body,
-                                    "lat": lat,
-                                    "lon": lon,
-                                    "client": client
-                                })
+
+            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent", {
+                "gameState": {
+                    "systemName": system,
+                    "systemCoordinates": [x, y, z],
+                    "bodyName": body,
+                    "clientVersion": client,
+                    "isBeta": is_beta
+                },
+                "rawEvent": entry,
+                "eventType": entry.get("event"),
+                "cmdrName": cmdr
+            })
 
 
 class CodexTypes():
@@ -1770,19 +1769,19 @@ class codexEmitter(Emitter):
             self.getReportTypes(self.entry.get("EntryID"))
             url = self.getUrl()
 
-            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postCodex",
+            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent",
                                 {
-                                    "cmdr": self.cmdr,
-                                    "beta": self.is_beta,
-                                    "system": self.system,
-                                    "x": self.x,
-                                    "y": self.y,
-                                    "z": self.z,
-                                    "entry": self.entry,
-                                    "body": self.body,
-                                    "lat": self.lat,
-                                    "lon": self.lon,
-                                    "client": self.client}
+                                    "gameState": {
+                                        "systemName": self.system,
+                                        "systemCoordinates": [self.x, self.y, self.z],
+                                        "bodyName": self.body,
+                                        "clientVersion": self.client,
+                                        "isBeta": self.is_beta
+                                    },
+                                    "rawEvent": self.entry,
+                                    "eventType": self.entry.get("event"),
+                                    "cmdrName": self.cmdr
+                                }
                                 )
 
             # CAPI doesnt want any stellar bodies so we will exclude them
