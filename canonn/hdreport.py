@@ -277,7 +277,7 @@ class hyperdictionDetector():
                                     "timestamp": timestamp,
                                     "x": x, "y": y, "z": z,
                                     "destination": cls.target_system,
-                                    "dx": dx, "dy": dy, "dz": z
+                                    "dx": dx, "dy": dy, "dz": dz
                                  })
             plug.show_error("Hyperdiction: Exit to main menu")
         else:
