@@ -265,7 +265,7 @@ class hyperdictionDetector():
             cls.state = 0
 
     @classmethod
-    def Music(cls, system, cmdr, timestamp):
+    def Music(cls, system, cmdr, timestamp, client):
         if cls.state == 2:
             debug("Hyperdiction Detected")
             cls.show()
@@ -277,7 +277,9 @@ class hyperdictionDetector():
                                     "timestamp": timestamp,
                                     "x": x, "y": y, "z": z,
                                     "destination": cls.target_system,
-                                    "dx": dx, "dy": dy, "dz": z
+                                    "dx": dx, "dy": dy, "dz": dz,
+                                    "client": client
+
                                  })
             plug.show_error("Hyperdiction: Exit to main menu")
         else:
@@ -299,7 +301,7 @@ class hyperdictionDetector():
             cls.FSDJump(entry.get("StarSystem"))
 
         if entry.get("event") == "Music" and entry.get("MusicTrack") in ("Unknown_Encounter"):
-            cls.Music(system, cmdr, entry.get("timestamp"))
+            cls.Music(system, cmdr, entry.get("timestamp"), client)
 
         if entry.get("event") == "SupercruiseExit":
             cls.SupercruiseExit()

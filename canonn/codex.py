@@ -1137,12 +1137,15 @@ class CodexTypes():
 
         if not (threading.current_thread() is threading.main_thread()):
             debug("We are not in the main thread")
+        else:
+            debug("We are in the main thread")
+
         debug("Codex visualise Active Thread {}".format(threading.activeCount()))
         # we may want to try again if the data hasn't been fetched yet
         if CodexTypes.waiting or not self.allowed:
             debug("Still waiting")
         else:
-
+            debug("setting_images")
             self.set_image("Geology", False)
             self.set_image("Cloud", False)
             self.set_image("Anomaly", False)
@@ -1157,13 +1160,14 @@ class CodexTypes():
             self.set_image("Tourist", False)
 
             if self.poidata or unscanned:
-
+                debug("self.poidata or unscanned")
                 self.frame.grid()
                 self.visible()
                 for r in self.poidata:
                     debug(r)
                     self.set_image(r.get("hud_category"), True)
             else:
+                debug("Grid and Remove")
                 self.frame.grid()
                 self.frame.grid_remove()
 
