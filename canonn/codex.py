@@ -152,7 +152,17 @@ def get_outer_radius(body):
     return result
 
 
+def convert_materials(mats):
+    retval = {}
+    for material in mats.values():
+        name = material.get("Name").captitalize()
+        pct = material.get("Percent")
+        retval[name] = pct
+    return retval
+
 # This function will return a body in edsm format
+
+
 def journal2edsm(j):
     # debug(json.dumps(j, indent=4))
 
@@ -232,6 +242,8 @@ def journal2edsm(j):
         e["semiMajorAxis"] = j.get("SemiMajorAxis") / 149597870700
     if j.get("ReserveLevel"):
         e["reserveLevel"] = j.get("ReserveLevel")
+    if j.get("Materials"):
+        e["materials"] = convert_materials(j.get("Materials"))
 
     return e
 
@@ -351,7 +363,7 @@ class CodexTypes():
         self.frame.bind('<<POIData>>', self.evisualise)
         self.frame.grid(sticky="W")
         self.frame.grid_remove()
-        self.hidecodexbtn = tk.IntVar(value=config.getint("Canonn:HideCodex"))
+        self.hidecodexbtn = tk.IntVar(value=config.getint("CanonnHideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
 
         self.container = Frame(self.frame)
@@ -406,7 +418,9 @@ class CodexTypes():
     # wrap visualise so we can call from time
     def tvisualise(self):
         if not config.shutting_down:
-            self.frame.event_generate('<<POIData>>', when='head')
+            debug("frame.event_generate")
+            #self.frame.event_generate('<<POIData>>', when='head')
+            self.frame.event_generate('<<POIData>>')
 
     def sheperd_moon(self, body, bodies):
 
@@ -693,7 +707,7 @@ class CodexTypes():
     # this seems horribly confused
     def evisualise(self, event):
         try:
-            debug("evisualise")
+            Debug.logger.debug("evisualise")
 
             while not self.poiq.empty():
                 r = self.poiq.get()
@@ -734,6 +748,7 @@ class CodexTypes():
                                 CodexTypes.bodycount, CodexTypes.fsscount)
                     else:
                         # self.remove_poi("Planets", "Unexplored Bodies")
+                        self.progress.grid()
                         self.progress.grid_remove()
 
                     for k in bodies.keys():
@@ -872,7 +887,7 @@ class CodexTypes():
 
         debug("Getting POI data in thread")
         CodexTypes.waiting = True
-        debug("CodexTypes.waiting = True")
+        #debug("CodexTypes.waiting = True")
 
         # first we will clear the queues
         self.edsmq.clear()
@@ -881,14 +896,14 @@ class CodexTypes():
             url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
                 quote_plus(system.encode('utf8')))
 
-            debug(url)
-            debug("request {}:  Active Threads {}".format(
-                url, threading.activeCount()))
+            # debug(url)
+            # debug("request {}:  Active Threads {}".format(
+            #    url, threading.activeCount()))
             r = requests.get(url, timeout=20)
-            debug("request complete")
+            #debug("request complete")
             r.encoding = 'utf-8'
             if r.status_code == requests.codes.ok:
-                debug("got POI Data")
+                #debug("got POI Data")
                 temp_poidata = r.json()
 
             # push the data ont a queue
@@ -901,14 +916,14 @@ class CodexTypes():
             url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
                 quote_plus(system.encode('utf8')))
 
-            debug("request {}:  Active Threads {}".format(
-                url, threading.activeCount()))
+            # debug("request {}:  Active Threads {}".format(
+            #    url, threading.activeCount()))
 
             r = requests.get(url, timeout=20)
-            debug("request complete")
+            #debug("request complete")
             r.encoding = 'utf-8'
             if r.status_code == requests.codes.ok:
-                debug("got EDSM Data")
+                #debug("got EDSM Data")
                 temp_edsmdata = r.json()
                 # push edsm data only a queue
                 self.edsmq.put(temp_edsmdata)
@@ -919,9 +934,8 @@ class CodexTypes():
             debug("Error getting EDSM data")
 
         CodexTypes.waiting = False
-        debug("event_generate")
-        if not config.shutting_down:
-            self.frame.event_generate('<<POIData>>', when='head')
+        debug("Triggering Event")
+        self.tvisualise()
         debug("Finished getting POI data in thread")
 
     def enter(self, event):
@@ -1217,10 +1231,13 @@ class CodexTypes():
             poiTypes(entry.get("StarSystem"), self.getdata).start()
             debug("After Calling PoiTypes")
             self.frame.grid()
+            debug("Calling grid remove after POItypes")
             self.frame.grid_remove()
             self.allowed = False
+            debug("Event complete")
 
         if entry.get("event") == "CodexEntry" and not entry.get("Category") == '$Codex_Category_StellarBodies;':
+            debug("CodexEntry")
             # really we need to identify the codex types
             self.system = system
             entry_id = entry.get("EntryID")
@@ -1238,16 +1255,13 @@ class CodexTypes():
                 self.merge_poi('Other', entry.get(
                     "Name_Localised"), bodycode)
 
-        if entry.get("event") in ("Location", "StartUp", "CarrierJump"):
+        if entry.get("event") in ("Location", "CarrierJump"):
+            debug("Location CarrierJump")
             self.system = system
             self.bodies = None
             poiTypes(system, self.getdata).start()
 
             self.allowed = True
-            # we can't wait for another event so give it 5 seconds
-            # then ten seconds later for good measure
-            self.frame.after(5000, self.tvisualise)
-            self.frame.after(10000, self.tvisualise)
 
         if entry.get("event") in ("Location", "StartUp", "FSDJump", "CarrierJump"):
             self.system = system
@@ -1408,7 +1422,7 @@ class CodexTypes():
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
 
-        self.hidecodexbtn = tk.IntVar(value=config.getint("Canonn:HideCodex"))
+        self.hidecodexbtn = tk.IntVar(value=config.getint("CanonnHideCodex"))
 
         self.hidecodex = self.hidecodexbtn.get()
 
@@ -1425,7 +1439,7 @@ class CodexTypes():
 
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
-        config.set('Canonn:HideCodex', self.hidecodexbtn.get())
+        config.set('CanonnHideCodex', self.hidecodexbtn.get())
 
         self.hidecodex = self.hidecodexbtn.get()
 
