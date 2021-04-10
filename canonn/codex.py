@@ -154,8 +154,8 @@ def get_outer_radius(body):
 
 def convert_materials(mats):
     retval = {}
-    for material in mats.values():
-        name = material.get("Name").captitalize()
+    for material in mats:
+        name = material.get("Name").capitalize()
         pct = material.get("Percent")
         retval[name] = pct
     return retval
@@ -325,7 +325,8 @@ class CodexTypes():
         "Ring": "Planetary Ring Resources",
         "Other": "Other Sites",
         "Planets": "Valuable Planets",
-        "Tourist": "Tourist Informatiom"
+        "Tourist": "Tourist Informatiom",
+        "Jumponium": "Jumponium Planets"
     }
 
     body_types = {
@@ -382,7 +383,7 @@ class CodexTypes():
 
         self.imagetypes = ("Geology", "Cloud", "Anomaly", "Thargoid",
                            "Biology", "Guardian", "Human", "Ring",
-                           "None", "Other", "Planets", "Tourist"
+                           "None", "Other", "Planets", "Tourist", "Jumponium"
                            )
         self.temp_poidata = None
         self.temp_edsmdata = None
@@ -398,6 +399,7 @@ class CodexTypes():
         self.addimage("Other", 9)
         self.addimage("Planets", 10)
         self.addimage("Tourist", 11)
+        self.addimage("Jumponium", 12)
 
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.frame.grid(row=gridrow, column=0)
@@ -670,6 +672,37 @@ class CodexTypes():
         if hasRings:
             self.merge_poi("Tourist", "Ringed Star", body_code)
 
+    def jumponium(self, body, body_code):
+
+        materials = body.get("materials")
+        basic = False
+        standard = False
+        premium = False
+
+        volcanism = (body.get('volcanismType') and body.get(
+            'volcanismType') != 'No volcanism')
+        modifier = ""
+        if volcanism:
+            modifier = "+"
+
+        if materials:
+            debug("Jumponium Mat  Checking")
+            basic = (materials.get("Carbon") and materials.get(
+                "Vanadium") and materials.get("Germanium"))
+            standard = (basic and materials.get("Cadmium")
+                        and materials.get("Niobium"))
+            premium = (materials.get("Carbon") and materials.get("Germanium") and materials.get(
+                "Arsenic") and materials.get("Niobium") and materials.get("Yttrium") and materials.get("Polonium"))
+        if premium:
+            self.merge_poi("Jumponium", f"Premium{modifier}", body_code)
+            return
+        if standard:
+            self.merge_poi("Jumponium", f"Standard{modifier}", body_code)
+            return
+        if basic:
+            self.merge_poi("Jumponium", f"Basic{modifier}", body_code)
+            return
+
     def rings(self, candidate, body_code):
         if candidate.get("rings"):
             for ring in candidate.get("rings"):
@@ -774,6 +807,7 @@ class CodexTypes():
                         self.close_bodies(b, bodies, body_code)
                         self.close_flypast(b, bodies, body_code)
                         self.rings(b, body_code)
+                        self.jumponium(b, body_code)
                         if moon_moon_moon(b):
                             self.merge_poi(
                                 "Tourist", "Moon Moon Moon", body_code)
@@ -869,10 +903,6 @@ class CodexTypes():
                         if float(b.get("orbitalEccentricity") or 0) > CodexTypes.eccentricity:
                             self.merge_poi(
                                 "Tourist", 'Highly Eccentric Orbit', body_code)
-
-                        #    Good jumponium availability (5/6 materials on a single body)
-                        #    Full jumponium availability within a single system
-                        #    Full jumponium availability on a single body
 
             else:
                 CodexTypes.bodycount = 0
@@ -1172,6 +1202,7 @@ class CodexTypes():
             self.set_image("Other", False)
             self.set_image("Planets", False)
             self.set_image("Tourist", False)
+            self.set_image("Jumponium", False)
 
             if self.poidata or unscanned:
                 debug("self.poidata or unscanned")
@@ -1255,8 +1286,8 @@ class CodexTypes():
                 self.merge_poi('Other', entry.get(
                     "Name_Localised"), bodycode)
 
-        if entry.get("event") in ("Location", "CarrierJump"):
-            debug("Location CarrierJump")
+        if entry.get("event") in ("Location", "StartUp" "CarrierJump"):
+            debug("Location CarrierJump, StartUp")
             self.system = system
             self.bodies = None
             poiTypes(system, self.getdata).start()
