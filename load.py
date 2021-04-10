@@ -29,7 +29,30 @@ from config import config
 from ttkHyperlinkLabel import HyperlinkLabel
 import webbrowser
 
+import logging
+from config import appname
+
 this = sys.modules[__name__]
+
+plugin_name = os.path.basename(os.path.dirname(__file__))
+this.logger = logging.getLogger(f'{appname}.{plugin_name}')
+logger = this.logger
+Debug.setLogger(logger)
+
+# If the Logger has handlers then it was already set up by the core code, else
+# it needs setting up here.
+if not logger.hasHandlers():
+    level = logging.INFO  # So logger.info(...) is equivalent to print()
+
+    logger.setLevel(level)
+    logger_channel = logging.StreamHandler()
+    logger_formatter = logging.Formatter(
+        f'%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d:%(funcName)s: %(message)s')
+    logger_formatter.default_time_format = '%Y-%m-%d %H:%M:%S'
+    logger_formatter.default_msec_format = '%s.%03d'
+    logger_channel.setFormatter(logger_formatter)
+    logger.addHandler(logger_channel)
+
 
 this.nearloc = {
     'Latitude': None,
@@ -45,7 +68,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "5.25.0"
+this.version = "5.26.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -75,7 +98,6 @@ def prefs_changed(cmdr, is_beta):
     this.release.prefs_changed(cmdr, is_beta)
     this.patrol.prefs_changed(cmdr, is_beta)
     this.codexcontrol.prefs_changed(cmdr, is_beta)
-    Debug.prefs_changed()
 
 
 def plugin_start3(plugin_dir):
@@ -92,7 +114,6 @@ def plugin_start(plugin_dir):
 
     # print this.patrol
     release.Release.plugin_start(plugin_dir)
-    Debug.setClient(this.client_version)
     patrol.CanonnPatrol.plugin_start(plugin_dir)
     codex.CodexTypes.plugin_start(plugin_dir)
     journaldata.plugin_start(plugin_dir)
