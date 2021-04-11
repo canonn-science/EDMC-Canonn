@@ -672,6 +672,12 @@ class CodexTypes():
         if hasRings:
             self.merge_poi("Tourist", "Ringed Star", body_code)
 
+    def has_bio(self, body):
+        for entry in self.poidata:
+            if entry.get("hud_category") == 'Biology' and entry.get("body").trim() == body.trim():
+                return True
+        return False
+
     def jumponium(self, body, body_code):
 
         materials = body.get("materials")
@@ -681,12 +687,17 @@ class CodexTypes():
 
         volcanism = (body.get('volcanismType') and body.get(
             'volcanismType') != 'No volcanism')
+
+        biology = self.has_bio(body)
+
         modifier = ""
         if volcanism:
-            modifier = "+"
+            modifier = "+v"
+        if biology:
+            modifier = f"{modifier}+b"
 
         if materials:
-            debug("Jumponium Mat  Checking")
+
             basic = (materials.get("Carbon") and materials.get(
                 "Vanadium") and materials.get("Germanium"))
             standard = (basic and materials.get("Cadmium")
@@ -738,18 +749,19 @@ class CodexTypes():
                             "Tourist", "High Density Rings", body_code)
 
     # this seems horribly confused
+
     def evisualise(self, event):
         try:
             Debug.logger.debug("evisualise")
+
+            while not self.edsmq.empty():
+                # only expecting to go around once
+                self.temp_edsmdata = self.edsmq.get()
 
             while not self.poiq.empty():
                 r = self.poiq.get()
                 self.merge_poi(r.get("hud_category"), r.get(
                     "english_name"), r.get("body"))
-
-            while not self.edsmq.empty():
-                # only expecting to go around once
-                self.temp_edsmdata = self.edsmq.get()
 
             # if self.temp_edsmdata:
             if not self.bodies:
@@ -915,7 +927,7 @@ class CodexTypes():
 
     def getdata(self, system):
 
-        debug("Getting POI data in thread")
+        Debug.logger.debug("Getting POI data in thread")
         CodexTypes.waiting = True
         #debug("CodexTypes.waiting = True")
 
@@ -958,15 +970,15 @@ class CodexTypes():
                 # push edsm data only a queue
                 self.edsmq.put(temp_edsmdata)
             else:
-                debug("EDSM Failed")
-                error("EDSM Failed")
+                Debug.logger.debug("EDSM Failed")
+                Debug.logger.error("EDSM Failed")
         except:
-            debug("Error getting EDSM data")
+            Debug.logger.debug("Error getting EDSM data")
 
         CodexTypes.waiting = False
-        debug("Triggering Event")
+        Debug.logger.debug("Triggering Event")
         self.tvisualise()
-        debug("Finished getting POI data in thread")
+        Debug.logger.debug("Finished getting POI data in thread")
 
     def enter(self, event):
 
@@ -1184,12 +1196,10 @@ class CodexTypes():
         else:
             debug("We are in the main thread")
 
-        debug("Codex visualise Active Thread {}".format(threading.activeCount()))
         # we may want to try again if the data hasn't been fetched yet
         if CodexTypes.waiting or not self.allowed:
-            debug("Still waiting")
+            Debug.logger.debug("Still waiting")
         else:
-            debug("setting_images")
             self.set_image("Geology", False)
             self.set_image("Cloud", False)
             self.set_image("Anomaly", False)
@@ -1205,14 +1215,12 @@ class CodexTypes():
             self.set_image("Jumponium", False)
 
             if self.poidata or unscanned:
-                debug("self.poidata or unscanned")
+
                 self.frame.grid()
                 self.visible()
                 for r in self.poidata:
-                    debug(r)
                     self.set_image(r.get("hud_category"), True)
             else:
-                debug("Grid and Remove")
                 self.frame.grid()
                 self.frame.grid_remove()
 
@@ -1258,17 +1266,14 @@ class CodexTypes():
             self.bodies = None
             self.poidata = []
             self.system = entry.get("StarSystem")
-            debug("Calling PoiTypes")
+            Debug.logger.debug("Calling PoiTypes")
             poiTypes(entry.get("StarSystem"), self.getdata).start()
-            debug("After Calling PoiTypes")
+
             self.frame.grid()
-            debug("Calling grid remove after POItypes")
             self.frame.grid_remove()
             self.allowed = False
-            debug("Event complete")
 
         if entry.get("event") == "CodexEntry" and not entry.get("Category") == '$Codex_Category_StellarBodies;':
-            debug("CodexEntry")
             # really we need to identify the codex types
             self.system = system
             entry_id = entry.get("EntryID")
@@ -1287,7 +1292,6 @@ class CodexTypes():
                     "Name_Localised"), bodycode)
 
         if entry.get("event") in ("Location", "StartUp" "CarrierJump"):
-            debug("Location CarrierJump, StartUp")
             self.system = system
             self.bodies = None
             poiTypes(system, self.getdata).start()
@@ -1304,7 +1308,6 @@ class CodexTypes():
 
         if entry.get("event") == "FSSDiscoveryScan":
             self.system = system
-            debug(entry)
             CodexTypes.fsscount = entry.get("BodyCount")
             # if not CodexTypes.fsscount:
             #    CodexTypes.fsscount = 0
@@ -1316,10 +1319,8 @@ class CodexTypes():
             self.system = system
 
             if entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
-
                 self.merge_poi("Cloud", "Life Cloud", "")
             else:
-
                 self.merge_poi("Cloud", "Life Ring", "")
             self.allowed = True
 
@@ -1373,7 +1374,6 @@ class CodexTypes():
 
         if entry.get("event") == "Scan" and entry.get("ScanType") in ("Detailed", "AutoScan"):
             self.system = system
-            debug("Scan {}".format(entry.get("ScanType")))
 
             # fold the scan data into self.bodies
             if not self.bodies:
@@ -1428,7 +1428,6 @@ class CodexTypes():
             for entry in r.json():
                 name_ref[entry.get("entryid")] = entry
             cls.name_ref = name_ref
-            #debug(json.dumps(name_ref, indent=4))
         else:
             error("error in get_codex_names")
 
@@ -1776,7 +1775,7 @@ class codexEmitter(Emitter):
         if not codexEmitter.reporttypes.get(id):
             url = "{}/reporttypes?journalID={}&_limit=1000".format(
                 self.getUrl(), id)
-            debug(url)
+            Debug.logger.debug(url)
             r = requests.get(
                 "{}/reporttypes?journalID={}&_limit=1000".format(self.getUrl(), id))
             if r.status_code == requests.codes.ok:
@@ -1787,7 +1786,7 @@ class codexEmitter(Emitter):
                                                                                "type": exc["type"]}
 
             else:
-                error("error in getReportTypes")
+                Debug.logger.error("error in getReportTypes")
 
     def getExcluded(self):
         if not codexEmitter.excludecodices:
@@ -1841,7 +1840,6 @@ class codexEmitter(Emitter):
                 reportType = codexEmitter.reporttypes.get(str(jid))
 
                 if reportType:
-                    debug(reportType)
                     if reportType.get("location") == "body":
                         payload = self.getBodyPayload(reportType.get("type"))
                         self.modelreport = reportType.get("endpoint")
