@@ -23,6 +23,7 @@ from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from config import config
 
+import plug
 from math import sqrt, pow
 import queue
 
@@ -421,7 +422,7 @@ class CodexTypes():
     def tvisualise(self):
         if not config.shutting_down:
             debug("frame.event_generate")
-            #self.frame.event_generate('<<POIData>>', when='head')
+            # self.frame.event_generate('<<POIData>>', when='head')
             self.frame.event_generate('<<POIData>>')
 
     def sheperd_moon(self, body, bodies):
@@ -678,6 +679,30 @@ class CodexTypes():
                 return True
         return False
 
+    def green_system(self, bodies):
+        mats = [
+            "Carbon",
+            "Vanadium",
+            "Germanium",
+            "Cadmium",
+            "Niobium",
+            "Arsenic",
+            "Yttrium",
+            "Polonium"
+        ]
+        sysmats = {}
+        for body in bodies.values():
+            materials = body.get("materials")
+            if materials:
+                for mat in materials.keys():
+                    sysmats[mat] = mat
+
+        if sysmats:
+            for target in mats:
+                if not sysmats.get(target):
+                    return False
+            self.merge_poi("Jumponium", "Green System", None)
+
     def jumponium(self, body, body_code):
 
         materials = body.get("materials")
@@ -792,7 +817,7 @@ class CodexTypes():
                             self.progress["text"] = "{}/{}".format(
                                 CodexTypes.bodycount, CodexTypes.fsscount)
                     else:
-                        # self.remove_poi("Planets", "Unexplored Bodies")
+
                         self.progress.grid()
                         self.progress.grid_remove()
 
@@ -820,6 +845,7 @@ class CodexTypes():
                         self.close_flypast(b, bodies, body_code)
                         self.rings(b, body_code)
                         self.jumponium(b, body_code)
+                        self.green_system(bodies)
                         if moon_moon_moon(b):
                             self.merge_poi(
                                 "Tourist", "Moon Moon Moon", body_code)
@@ -929,7 +955,7 @@ class CodexTypes():
 
         Debug.logger.debug("Getting POI data in thread")
         CodexTypes.waiting = True
-        #debug("CodexTypes.waiting = True")
+        # debug("CodexTypes.waiting = True")
 
         # first we will clear the queues
         self.edsmq.clear()
@@ -942,10 +968,10 @@ class CodexTypes():
             # debug("request {}:  Active Threads {}".format(
             #    url, threading.activeCount()))
             r = requests.get(url, timeout=20)
-            #debug("request complete")
+            # debug("request complete")
             r.encoding = 'utf-8'
             if r.status_code == requests.codes.ok:
-                #debug("got POI Data")
+                # debug("got POI Data")
                 temp_poidata = r.json()
 
             # push the data ont a queue
@@ -962,10 +988,10 @@ class CodexTypes():
             #    url, threading.activeCount()))
 
             r = requests.get(url, timeout=20)
-            #debug("request complete")
+            # debug("request complete")
             r.encoding = 'utf-8'
             if r.status_code == requests.codes.ok:
-                #debug("got EDSM Data")
+                # debug("got EDSM Data")
                 temp_edsmdata = r.json()
                 # push edsm data only a queue
                 self.edsmq.put(temp_edsmdata)
@@ -1127,11 +1153,11 @@ class CodexTypes():
             self.poidata.append(
                 {"hud_category": hud_category, "english_name": english_name, "body": body})
 
-    def remove_poi(self, hud_category, english_name):
+    def remove_poi(self, hud_category, english_name, body):
 
         signals = self.poidata
         for i, v in enumerate(signals):
-            if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category:
+            if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category and signals[i].get("body") == body:
                 del self.poidata[i]
 
     def light_seconds(self, tag, value):
@@ -1186,7 +1212,61 @@ class CodexTypes():
     def surface_distance(self, d, r1, r2):
         return d - (r1 + r2)
 
+    """
+        Standard, Standard+b, Standard+v Standard+v+b
+        The longers gets precedence
+    """
+
+    def compare_jumponioum(self, v1, v2):
+
+        if len(v1) > len(v2):
+            Debug.logging.debug(f"{v1} vs {v2} = {v1}")
+            return v1
+        else:
+            Debug.logging.debug(f"{v1} vs {v2} = {v2}")
+            return v2
+
+    def cleanup_poidata(self):
+        # if we have bio or geo then remove Bio Bio and Geo Geo
+        # if we have Jumponium+ and Jumponium then use the best value
+        # We can't simply loop because there is an order of precedence
+
+        bodies = {}
+        for poi in self.poidata:
+            if not bodies.get(poi.get("body")):
+                bodies[poi.get("body")] = {"name": poi.get("body")}
+                bodies[poi.get("body")][poi.get("hud_category")] = 0
+            if not bodies.get(poi.get("body")) and not bodies.get(poi.get("body")).get(poi.get("hud_category")):
+                bodies[poi.get("body")][poi.get("hud_category")] = 0
+
+            bodies[poi.get("body")][poi.get("hud_category")] += 1
+
+            if poi.get("hud_category") == "Jumponium":
+                if not bodies[poi.get("body")].get("Jumplevel"):
+                    bodies[poi.get("body")]["Jumplevel"] = poi.get(
+                        "english_name")
+                else:
+                    bodies[poi.get("body")]["Jumplevel"] = self.compare_jumponioum(
+                        poi.get("english_name"), bodies[poi.get("body")]["Jumplevel"])
+
+        for k in bodies.keys():
+            body = bodies.get(k)
+            bodyname = body.get("name")
+
+            for cat in ("Biology", "Geology", "Thargoid", "Guardian"):
+
+                if body.get(cat) and body.get(cat) > 1:
+                    self.remove_poi(cat, cat, body.get("name"))
+
+            for jumplevel in ("Basic", "Standard", "Premium"):
+                for mod in ("+v", "+b", "+v+b", "+b+v"):
+                    if body.get("Jumplevel") and not body.get("Jumplevel") == f"{jumplevel}{mod}":
+                        Debug.logging.debug(f"removing {jumplevel}{mod}")
+                        self.remove_poi(
+                            Jumponium, f"{jumplevel}{mod}", body.get("name"))
+
     # this is used to trigger display of merged data
+
     def visualise(self):
 
         unscanned = nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0)
@@ -1218,6 +1298,10 @@ class CodexTypes():
 
                 self.frame.grid()
                 self.visible()
+                try:
+                    self.cleanup_poidata()
+                except:
+                    plug.show_error("cleanup poidata failed")
                 for r in self.poidata:
                     self.set_image(r.get("hud_category"), True)
             else:
@@ -1366,7 +1450,6 @@ class CodexTypes():
 
         if entry.get("event") == "FSSAllBodiesFound":
             self.system = system
-            # self.remove_poi("Planets", "Unexplored Bodies")
             # CodexTypes.bodycount = CodexTypes.fsscount
             self.allowed = True
 
