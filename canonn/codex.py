@@ -675,7 +675,7 @@ class CodexTypes():
 
     def has_bio(self, body):
         for entry in self.poidata:
-            if entry.get("hud_category") == 'Biology' and entry.get("body").trim() == body.trim():
+            if entry.get("hud_category") == 'Biology' and entry.get("body") == body:
                 return True
         return False
 
@@ -1256,6 +1256,7 @@ class CodexTypes():
             for cat in ("Biology", "Geology", "Thargoid", "Guardian"):
 
                 if body.get(cat) and body.get(cat) > 1:
+                    Debug.logging.debug(f"removing {cat}")
                     self.remove_poi(cat, cat, body.get("name"))
 
             for jumplevel in ("Basic", "Standard", "Premium"):
@@ -1302,6 +1303,7 @@ class CodexTypes():
                     self.cleanup_poidata()
                 except:
                     plug.show_error("cleanup poidata failed")
+                    pass
                 for r in self.poidata:
                     self.set_image(r.get("hud_category"), True)
             else:
