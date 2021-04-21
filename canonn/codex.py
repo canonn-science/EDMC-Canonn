@@ -327,7 +327,8 @@ class CodexTypes():
         "Other": "Other Sites",
         "Planets": "Valuable Planets",
         "Tourist": "Tourist Informatiom",
-        "Jumponium": "Jumponium Planets"
+        "Jumponium": "Jumponium Planets",
+        "GreenSystem": "Jumponium Planets"
     }
 
     body_types = {
@@ -352,6 +353,7 @@ class CodexTypes():
 
     edsmq = Queue()
     poiq = Queue()
+    raw_mats = None
 
     def __init__(self, parent, gridrow):
         "Initialise the ``Patrol``."
@@ -384,7 +386,7 @@ class CodexTypes():
 
         self.imagetypes = ("Geology", "Cloud", "Anomaly", "Thargoid",
                            "Biology", "Guardian", "Human", "Ring",
-                           "None", "Other", "Planets", "Tourist", "Jumponium"
+                           "None", "Other", "Planets", "Tourist", "Jumponium", "GreenSystem"
                            )
         self.temp_poidata = None
         self.temp_edsmdata = None
@@ -401,6 +403,7 @@ class CodexTypes():
         self.addimage("Planets", 10)
         self.addimage("Tourist", 11)
         self.addimage("Jumponium", 12)
+        self.addimage("GreenSystem", 13)
 
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.frame.grid(row=gridrow, column=0)
@@ -679,6 +682,12 @@ class CodexTypes():
                 return True
         return False
 
+    def remove_jumponium(self):
+        for entry in self.poidata:
+            if entry.get("hud_category") in ('Jumponium', 'GreenSystem'):
+                self.remove_poi(entry.get("hud_category"), entry.get(
+                    "english_name"), entry.get("body"))
+
     def green_system(self, bodies):
         mats = [
             "Carbon",
@@ -690,6 +699,9 @@ class CodexTypes():
             "Yttrium",
             "Polonium"
         ]
+
+        jclass = "GreenSystem"
+
         sysmats = {}
         for body in bodies.values():
             materials = body.get("materials")
@@ -700,10 +712,17 @@ class CodexTypes():
         if sysmats:
             for target in mats:
                 if not sysmats.get(target):
-                    return False
-            self.merge_poi("Jumponium", "Green System", None)
+                    jclass = "Jumponium"
 
-    def jumponium(self, body, body_code):
+        if jclass == "GreenSystem":
+            # we will remove jumponium because we will be displaying green
+            self.remove_jumponium()
+
+        for body in bodies.values():
+            body_code = body.get("name").replace(self.system, '')
+            self.jumponium(body, body_code, jclass)
+
+    def jumponium(self, body, body_code, jclass):
 
         materials = body.get("materials")
         basic = False
@@ -721,7 +740,26 @@ class CodexTypes():
         if biology:
             modifier = f"{modifier}+b"
 
+        mats = [
+            "Carbon",
+            "Vanadium",
+            "Germanium",
+            "Cadmium",
+            "Niobium",
+            "Arsenic",
+            "Yttrium",
+            "Polonium"
+        ]
+
         if materials:
+            for target in mats:
+                if CodexTypes.raw_mats.get(target.lower()):
+                    quantity = CodexTypes.raw_mats.get(target.lower())
+                else:
+                    quantity = 0
+                if materials.get(target) and int(quantity) < 150:
+                    self.merge_poi(
+                        jclass, f"{target}{modifier}", body_code)
 
             basic = (materials.get("Carbon") and materials.get(
                 "Vanadium") and materials.get("Germanium"))
@@ -730,13 +768,13 @@ class CodexTypes():
             premium = (materials.get("Carbon") and materials.get("Germanium") and materials.get(
                 "Arsenic") and materials.get("Niobium") and materials.get("Yttrium") and materials.get("Polonium"))
         if premium:
-            self.merge_poi("Jumponium", f"Premium{modifier}", body_code)
+            self.merge_poi(jclass, f"Premium{modifier}", body_code)
             return
         if standard:
-            self.merge_poi("Jumponium", f"Standard{modifier}", body_code)
+            self.merge_poi(jclass, f"Standard{modifier}", body_code)
             return
         if basic:
-            self.merge_poi("Jumponium", f"Basic{modifier}", body_code)
+            self.merge_poi(jclass, f"Basic{modifier}", body_code)
             return
 
     def rings(self, candidate, body_code):
@@ -844,7 +882,6 @@ class CodexTypes():
                         self.close_bodies(b, bodies, body_code)
                         self.close_flypast(b, bodies, body_code)
                         self.rings(b, body_code)
-                        self.jumponium(b, body_code)
                         self.green_system(bodies)
                         if moon_moon_moon(b):
                             self.merge_poi(
@@ -1232,7 +1269,7 @@ class CodexTypes():
         # We can't simply loop because there is an order of precedence
 
         bodies = {}
-        for poi in self.poidata:
+        """ for poi in self.poidata:
             if not bodies.get(poi.get("body")):
                 bodies[poi.get("body")] = {"name": poi.get("body")}
                 bodies[poi.get("body")][poi.get("hud_category")] = 0
@@ -1247,7 +1284,7 @@ class CodexTypes():
                         "english_name")
                 else:
                     bodies[poi.get("body")]["Jumplevel"] = self.compare_jumponioum(
-                        poi.get("english_name"), bodies[poi.get("body")]["Jumplevel"])
+                        poi.get("english_name"), bodies[poi.get("body")]["Jumplevel"]) """
 
         for k in bodies.keys():
             body = bodies.get(k)
@@ -1259,12 +1296,12 @@ class CodexTypes():
                     Debug.logging.debug(f"removing {cat}")
                     self.remove_poi(cat, cat, body.get("name"))
 
-            for jumplevel in ("Basic", "Standard", "Premium"):
+            """ for jumplevel in ("Basic", "Standard", "Premium"):
                 for mod in ("+v", "+b", "+v+b", "+b+v"):
                     if body.get("Jumplevel") and not body.get("Jumplevel") == f"{jumplevel}{mod}":
                         Debug.logging.debug(f"removing {jumplevel}{mod}")
                         self.remove_poi(
-                            Jumponium, f"{jumplevel}{mod}", body.get("name"))
+                            Jumponium, f"{jumplevel}{mod}", body.get("name")) """
 
     # this is used to trigger display of merged data
 
@@ -1294,16 +1331,14 @@ class CodexTypes():
             self.set_image("Planets", False)
             self.set_image("Tourist", False)
             self.set_image("Jumponium", False)
+            self.set_image("GreenSystem", False)
 
             if self.poidata or unscanned:
 
                 self.frame.grid()
                 self.visible()
-                try:
-                    self.cleanup_poidata()
-                except:
-                    plug.show_error("cleanup poidata failed")
-                    pass
+                self.cleanup_poidata()
+
                 for r in self.poidata:
                     self.set_image(r.get("hud_category"), True)
             else:
@@ -1332,6 +1367,9 @@ class CodexTypes():
                 cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
 
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
+
+        if state.get("Raw"):
+            CodexTypes.raw_mats = state.get("Raw")
 
         if body:
             bodycode = body.replace(system, '')
