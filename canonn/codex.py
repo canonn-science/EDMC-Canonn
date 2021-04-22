@@ -267,14 +267,14 @@ def get_synodic_period(b1, b2):
 
 class codexName(threading.Thread):
     def __init__(self,  callback):
-        debug("initialise POITYpes Thread")
+        debug("initialise codexName Thread")
         threading.Thread.__init__(self)
         self.callback = callback
 
     def run(self):
-        debug("running poitypes")
+        debug("running codexName")
         self.callback()
-        debug("poitypes Callback Complete")
+        debug("codexName Callback Complete")
 
 
 class poiTypes(threading.Thread):
@@ -419,6 +419,7 @@ class CodexTypes():
         self.progress = tk.Label(self.container, text="?")
         self.progress.grid(row=0, column=0)
         self.progress.grid_remove()
+        self.event = None
         # self.progress.grid_remove()
 
     # wrap visualise so we can call from time
@@ -815,7 +816,7 @@ class CodexTypes():
 
     def evisualise(self, event):
         try:
-            Debug.logger.debug("evisualise")
+            #Debug.logger.debug(f"evisualise {self.event}")
 
             while not self.edsmq.empty():
                 # only expecting to go around once
@@ -838,6 +839,9 @@ class CodexTypes():
                 for b in edsm_bodies:
                     if not "Belt Cluster" in b.get("name"):
                         self.bodies[b.get("bodyId")] = b
+
+            # Debug.logger.debug("self.bodies")
+            # Debug.logger.debug(self.bodies)
 
             if len(self.bodies) > 0:
                 # bodies = self.temp_edsmdata.json().get("bodies")
@@ -983,14 +987,17 @@ class CodexTypes():
                 CodexTypes.bodycount = 0
 
         except Exception as e:
-            line = sys.exc_info()[-1].tb_lineno
+            #line = sys.exc_info()[-1].tb_lineno
             self.merge_poi("Other", 'Plugin Error', None)
-            error("PLUGIN ERROR {} - {}".format(line, str(e)))
+            Debug.logger.error("Plugin Error")
+
+        #Debug.logger.debug(f"evisualise end {self.event}")
         self.visualise()
 
     def getdata(self, system):
 
-        Debug.logger.debug("Getting POI data in thread")
+        Debug.logger.debug(
+            f"Getting POI data in thread {self.event} - system = {system}")
         CodexTypes.waiting = True
         # debug("CodexTypes.waiting = True")
 
@@ -1004,7 +1011,7 @@ class CodexTypes():
             # debug(url)
             # debug("request {}:  Active Threads {}".format(
             #    url, threading.activeCount()))
-            r = requests.get(url, timeout=20)
+            r = requests.get(url, timeout=30)
             # debug("request complete")
             r.encoding = 'utf-8'
             if r.status_code == requests.codes.ok:
@@ -1024,7 +1031,7 @@ class CodexTypes():
             # debug("request {}:  Active Threads {}".format(
             #    url, threading.activeCount()))
 
-            r = requests.get(url, timeout=20)
+            r = requests.get(url, timeout=30)
             # debug("request complete")
             r.encoding = 'utf-8'
             if r.status_code == requests.codes.ok:
@@ -1309,10 +1316,19 @@ class CodexTypes():
 
         unscanned = nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0)
 
-        if not (threading.current_thread() is threading.main_thread()):
+        """ if not (threading.current_thread() is threading.main_thread()):
             debug("We are not in the main thread")
         else:
-            debug("We are in the main thread")
+            debug("We are in the main thread") """
+
+        # we have set an event type that can override waiting
+        if self.event:
+            Debug.logger.debug(f"Allowed event {self.event}")
+            CodexTypes.waiting = False
+            self.allowed = True
+            self.event = None
+        else:
+            Debug.logger.debug(f"Not allowed event")
 
         # we may want to try again if the data hasn't been fetched yet
         if CodexTypes.waiting or not self.allowed:
@@ -1415,14 +1431,19 @@ class CodexTypes():
                 self.merge_poi('Other', entry.get(
                     "Name_Localised"), bodycode)
 
-        if entry.get("event") in ("Location", "StartUp" "CarrierJump"):
+        if entry.get("event") in ("Location", "StartUp"):
             self.system = system
+            if entry.get("event") == "StartUp":
+                system = entry.get("StarSystem")
             self.bodies = None
-            poiTypes(system, self.getdata).start()
-
             self.allowed = True
 
+            self.event = entry.get("event")
+            Debug.logger.debug(f"setting allowed event {self.event}")
+            poiTypes(system, self.getdata).start()
+
         if entry.get("event") in ("Location", "StartUp", "FSDJump", "CarrierJump"):
+            # if entry.get("event") in ("FSDJump", "CarrierJump"):
             self.system = system
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
                 self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(
