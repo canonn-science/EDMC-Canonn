@@ -230,7 +230,7 @@ class InfoLink(HyperlinkLabel):
             debug("Patrol: Info widget resize")
             self.resized = True
             self.configure(wraplength=event.width)
-            self.after(500, self.__reset)
+            self.after(1000, self.__reset)
 
 
 class CanonnPatrol(Frame):
