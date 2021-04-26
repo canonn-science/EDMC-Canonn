@@ -20,25 +20,13 @@ import sys
 import threading
 import time
 import myNotebook as nb
+from ttkHyperlinkLabel import HyperlinkLabel
 
 from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.systems import Systems
 from config import config
 
-
-# class UpdateRadius(threading.Thread):
-    # def __init__(self, widget, system, body):
-        # # debug("initialise EDSM_requests Thread")
-        # threading.Thread.__init__(self)
-        # self.widget = widget
-        # self.system = system
-        # self.body = body
-
-    # def run(self):
-        # # debug("running EDSM_requests")
-        # self.widget.getRadius(self.system, self.body)
-        # # debug("EDSM_requests Callback Complete")
 
 class BearingDestination():
     state = 0
@@ -56,8 +44,14 @@ class BearingDestination():
         self.container = tk.Frame(self.frame)
         self.container.columnconfigure(1, weight=1)
         self.container.grid(row=1)
+        self.bearing_cancel = tk.Label(self.container)
+        self.bearing_cancel.grid(row=0, column=0, sticky="NSEW")
+        self.bearing_cancel['text'] = "X"
+        self.bearing_cancel['fg'] = "blue"
+        self.bearing_cancel['cursor'] = "hand2"
+        self.bearing_cancel.bind("<ButtonPress>", self.eventDeactivate)
         self.bearing_status = tk.Label(self.container)
-        self.bearing_status.grid(row=0, column=0, columnspan=1, sticky="NSEW")
+        self.bearing_status.grid(row=0, column=1, sticky="NSEW")
         #self.bearing_status.config(font=("Arial Black", 22))
         self.hide()
     
@@ -70,38 +64,7 @@ class BearingDestination():
     
     def show(self):
         self.frame.grid()
-    
-    # @classmethod
-    # def startJump(cls, target_system):
-        # debug("startJump setting state 1 {}".format(target_system))
-        # cls.hide()
-        # cls.state = 1
-        # cls.target_system = target_system
 
-    # @classmethod
-    # def FSDJump(cls, system):
-        # if cls.state == 1 and not system == cls.target_system:
-            # debug("FSDJump setting state 2 {} {}".format(
-                # system, cls.target_system))
-            # cls.state = 2
-        # else:
-            # debug("FSDJUMP resetting state back {} {}".format(
-                # system, cls.target_system))
-            # cls.state = 0
-
-    # @classmethod
-    # def SupercruiseExit(cls):
-        # cls.hide()
-        # state = 0
-
-    # @classmethod
-    # def submit(cls, cmdr, is_beta, system, entry, body, client):
-        # if entry.get("event") == "SendText":
-            # cls.getDestination(cmdr, is_beta, system, body)
-        # return
-        # # if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
-            # # cls.startJump(entry.get("StarSystem"))
-    
     def journal_entry(self, cmdr, is_beta, system, entry, client):
         
         if entry.get("event") == "SendText":
@@ -129,35 +92,13 @@ class BearingDestination():
                 self.hide()
             self.setTargetLatLon(lat,lon)
             self.calculateBearing(self.body, self.radius, self.latitude, self.longitude)
-            
     
-    # def getRadius(self, system, body):
-        # try:
-            # url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
-                # quote_plus(system.encode('utf8')))
-
-            # # debug("request {}:  Active Threads {}".format(
-            # #    url, threading.activeCount()))
-
-            # r = requests.get(url, timeout=30)
-            # # debug("request complete")
-            # r.encoding = 'utf-8'
-            # if r.status_code == requests.codes.ok:
-                # # debug("got EDSM Data")
-                # edsm_system = r.json()
-                # for edsm_body in edsm_system['bodies']:
-                    # if edsm_body['name'] == body:
-                        # self.radius = edsm_body['radius']
-                        # self.body = edsm_body['name']
-            # else:
-                # Debug.logger.debug("EDSM Failed")
-                # Debug.logger.error("EDSM Failed")
-                
-            # self.state = 1
-        # except:
-            # Debug.logger.debug("Error getting EDSM data")
-            # self.radius = None
-            # self.state = 0
+    def eventDeactivate(self, event):
+        lat = None
+        lon = None
+        self.setTargetLatLon(lat,lon)
+        self.state = 0
+        self.hide()
     
     def setTargetLatLon(self, lat, lon):
         if (lat is not None) or (lon is not None):
@@ -173,7 +114,7 @@ class BearingDestination():
         self.target_lat = lat
         self.target_lon = lon
     
-    def updatePosition(self, body, radius, lat, lon):
+    def updatePosition(self, cmdr, is_beta, body, radius, lat, lon):
         self.latitude = lat
         self.longitude = lon
         self.radius = radius

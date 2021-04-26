@@ -283,7 +283,8 @@ def dashboard_entry(cmdr, is_beta, entry):
     
 def dashboard_entry_wrapper(cmdr, is_beta, body, radius, lat, lon, entry, ):
     
-    extool.updatePosition(body, radius, lat, lon)
+    this.codexcontrol.updatePlanet(cmdr, is_beta, body)
+    extool.updatePosition(cmdr, is_beta, body, radius, lat, lon)
     
     
 def cmdr_data(data, is_beta):

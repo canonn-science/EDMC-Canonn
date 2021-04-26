@@ -378,11 +378,14 @@ class CodexTypes():
 
         # self.tooltiplist=tk.Frame(self.tooltip)
         self.tooltiplist = tk.Frame(self.frame)
+        self.planetlist = tk.Frame(self.frame)
 
         self.images = {}
         self.labels = {}
         self.tooltipcol1 = []
         self.tooltipcol2 = []
+        self.planetcol1 = []
+        self.planetcol2 = []
 
         self.imagetypes = ("Geology", "Cloud", "Anomaly", "Thargoid",
                            "Biology", "Guardian", "Human", "Ring",
@@ -411,8 +414,10 @@ class CodexTypes():
         self.poidata = []
         # self.tooltip.grid_remove()
         self.tooltiplist.grid()
+        self.planetlist.grid()
         self.frame.grid()
         self.tooltiplist.grid_remove()
+        self.planetlist.grid_remove()
         self.frame.grid_remove()
         self.allowed = False
         self.bodies = None
@@ -420,6 +425,8 @@ class CodexTypes():
         self.progress.grid(row=0, column=0)
         self.progress.grid_remove()
         self.event = None
+        self.lock = False
+        self.planetlist_show = False
         # self.progress.grid_remove()
 
     # wrap visualise so we can call from time
@@ -1051,72 +1058,82 @@ class CodexTypes():
         Debug.logger.debug("Finished getting POI data in thread")
 
     def enter(self, event):
+        
+        if not self.lock:
+            type = event.widget["text"]
+            # clear it if it exists
+            for col in self.tooltipcol1:
+                col["text"] = ""
+                try:
+                    col.grid()
+                    col.grid_remove()
+                except:
+                    error("Col1 grid_remove error")
+            for col in self.tooltipcol2:
+                col["text"] = ""
+                try:
+                    col.grid()
+                    col.grid_remove()
+                except:
+                    error("Col2 grid_remove error")
 
-        type = event.widget["text"]
-        # clear it if it exists
-        for col in self.tooltipcol1:
-            col["text"] = ""
-            try:
-                col.grid()
-                col.grid_remove()
-            except:
-                error("Col1 grid_remove error")
-        for col in self.tooltipcol2:
-            col["text"] = ""
-            try:
-                col.grid()
-                col.grid_remove()
-            except:
-                error("Col2 grid_remove error")
+            poicount = 0
 
-        poicount = 0
+            # need to initialise if not exists
+            if len(self.tooltipcol1) == 0:
+                self.tooltipcol1.append(tk.Label(self.tooltiplist, text=""))
+                self.tooltipcol2.append(tk.Label(self.tooltiplist, text=""))
 
-        # need to initialise if not exists
-        if len(self.tooltipcol1) == 0:
-            self.tooltipcol1.append(tk.Label(self.tooltiplist, text=""))
-            self.tooltipcol2.append(tk.Label(self.tooltiplist, text=""))
+            for poi in self.poidata:
+                if poi.get("hud_category") == type:
+                    # add a new label if it dont exist
+                    if len(self.tooltipcol1) == poicount:
+                        self.tooltipcol1.append(
+                            tk.Label(self.tooltiplist, text=poi.get("english_name")))
+                        self.tooltipcol2.append(
+                            tk.Label(self.tooltiplist, text=poi.get("body")))
+                    else:  # just set the label
+                        self.tooltipcol1[poicount]["text"] = poi.get(
+                            "english_name")
+                        self.tooltipcol2[poicount]["text"] = poi.get("body")
 
-        for poi in self.poidata:
-            if poi.get("hud_category") == type:
-                # add a new label if it dont exist
-                if len(self.tooltipcol1) == poicount:
-                    self.tooltipcol1.append(
-                        tk.Label(self.tooltiplist, text=poi.get("english_name")))
-                    self.tooltipcol2.append(
-                        tk.Label(self.tooltiplist, text=poi.get("body")))
-                else:  # just set the label
-                    self.tooltipcol1[poicount]["text"] = poi.get(
-                        "english_name")
-                    self.tooltipcol2[poicount]["text"] = poi.get("body")
+                    # remember to grid them
+                    self.tooltipcol1[poicount].grid(
+                        row=poicount, column=0, columnspan=1, sticky="NSEW")
+                    self.tooltipcol2[poicount].grid(
+                        row=poicount, column=1, sticky="NSEW")
+                    poicount = poicount + 1
 
-                # remember to grid them
+            if poicount == 0:
+                self.tooltipcol1[poicount]["text"] = CodexTypes.tooltips.get(type)
                 self.tooltipcol1[poicount].grid(
-                    row=poicount, column=0, columnspan=1, sticky="NSEW")
-                self.tooltipcol2[poicount].grid(
-                    row=poicount, column=1, sticky="NSEW")
-                poicount = poicount + 1
+                    row=poicount, column=0, columnspan=2)
+                self.tooltipcol2[poicount].grid_remove()
 
-        if poicount == 0:
-            self.tooltipcol1[poicount]["text"] = CodexTypes.tooltips.get(type)
-            self.tooltipcol1[poicount].grid(
-                row=poicount, column=0, columnspan=2)
-            self.tooltipcol2[poicount].grid_remove()
+            # self.tooltip.grid(sticky="NSEW")
+            self.tooltiplist.grid(sticky="NSEW")
 
-        # self.tooltip.grid(sticky="NSEW")
-        self.tooltiplist.grid(sticky="NSEW")
-
-        # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
+            # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
 
     def leave(self, event):
         # self.tooltip.grid_remove()
-
-        self.tooltiplist.grid()
-        self.tooltiplist.grid_remove()
+        
+        if not self.lock:
+            self.tooltiplist.grid()
+            self.tooltiplist.grid_remove()
 
     def click_icon(self, name):
-
-        webbrowser.open(
-            "https://tools.canonn.tech/Signals?system={}".format(quote_plus(self.system)))
+        
+        #webbrowser.open("https://tools.canonn.tech/Signals?system={}".format(quote_plus(self.system)))
+        if self.lock:
+            self.lock = False
+            for image in self.labels:
+                self.labels[image]["image"] = self.images[image]
+        else:
+            self.lock = True
+            for image in self.labels:
+                if image != name:
+                    self.labels[image]["image"] = self.images["{}_grey".format(image)]
 
     def addimage(self, name, col):
 
@@ -1131,8 +1148,7 @@ class CodexTypes():
 
         self.labels[name].bind("<Enter>", self.enter)
         self.labels[name].bind("<Leave>", self.leave)
-        self.labels[name].bind(
-            "<ButtonPress>", lambda event, x=name: self.click_icon(x))
+        self.labels[name].bind("<ButtonPress>", lambda event, x=name: self.click_icon(x))
         self.labels[name]["image"] = self.images[name]
 
     def set_image(self, name, enabled):
@@ -1376,7 +1392,47 @@ class CodexTypes():
 
         self.journal_entry(cmdr, None, system, None, signal,
                            None, x, y, z, bodyname, None, None, client)
+    
+    def updatePlanet(self, cmdr, is_beta, body):
+        if body is None:
+            self.planetlist.grid_remove()
+            self.planetlist_show = False
+            self.planetcol1 = []
+            self.planetcol2 = []
+        else:
+            if not self.planetlist_show:
+                
+                for col in self.planetcol1:
+                    col["text"] = ""
+                    try:
+                        col.grid()
+                        col.grid_remove()
+                    except:
+                        error("Col1 grid_remove error")
+                for col in self.planetcol2:
+                    col["text"] = ""
+                    try:
+                        col.grid()
+                        col.grid_remove()
+                    except:
+                        error("Col2 grid_remove error")
 
+                self.planetcol1.append(tk.Label(self.planetlist, text=body))
+                self.planetcol2.append(tk.Label(self.planetlist, text=""))
+                
+                poicount = 0
+                # remember to grid them
+                self.planetcol1[poicount].grid(row=poicount, column=0, columnspan=1, sticky="NSEW")
+                self.planetcol2[poicount].grid(row=poicount, column=1, sticky="NSEW")
+
+                # self.tooltip.grid(sticky="NSEW")
+                self.planetlist.grid(sticky="NSEW")
+
+                # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
+                
+                self.planetlist.grid()
+                self.planetlist_show = True
+    
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if not self.hidecodex:
             self.journal_entry_wrap(
@@ -1404,6 +1460,7 @@ class CodexTypes():
             CodexTypes.fsscount = None
             CodexTypes.bodycount = None
             self.bodies = None
+            self.lock = False
             self.poidata = []
             self.system = entry.get("StarSystem")
             Debug.logger.debug("Calling PoiTypes")
@@ -1437,6 +1494,7 @@ class CodexTypes():
                 system = entry.get("StarSystem")
             self.bodies = None
             self.allowed = True
+            self.lock = False
 
             self.event = entry.get("event")
             Debug.logger.debug(f"setting allowed event {self.event}")
@@ -1449,6 +1507,7 @@ class CodexTypes():
                 self.merge_poi(entry.get("SystemAllegiance"), "{} Controlled".format(
                     entry.get("SystemAllegiance")), "")
             self.allowed = True
+            self.lock = False
             self.evisualise(None)
 
         if entry.get("event") == "FSSDiscoveryScan":
