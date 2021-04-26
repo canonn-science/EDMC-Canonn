@@ -37,7 +37,7 @@ this = sys.modules[__name__]
 plugin_name = os.path.basename(os.path.dirname(__file__))
 this.logger = logging.getLogger(f'{appname}.{plugin_name}')
 logger = this.logger
-Debug.setLogger(logger)
+
 
 # If the Logger has handlers then it was already set up by the core code, else
 # it needs setting up here.
@@ -52,6 +52,8 @@ if not logger.hasHandlers():
     logger_formatter.default_msec_format = '%s.%03d'
     logger_channel.setFormatter(logger_formatter)
     logger.addHandler(logger_channel)
+
+Debug.setLogger(logger)
 
 
 this.nearloc = {
@@ -68,7 +70,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "5.26.0"
+this.version = "5.27.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None

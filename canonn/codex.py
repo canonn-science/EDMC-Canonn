@@ -945,7 +945,7 @@ class CodexTypes():
                                                'Ringed {}'.format(
                                                    CodexTypes.body_types.get(b.get('subType'))),
                                                body_code)
-                            if b.get("parents")[0].get("Planet"):
+                            if b.get("parents") and b.get("parents")[0] and b.get("parents")[0].get("Planet"):
                                 self.merge_poi("Tourist",
                                                '{} Moon'.format(
                                                    CodexTypes.body_types.get(b.get('subType'))),
@@ -990,6 +990,7 @@ class CodexTypes():
             #line = sys.exc_info()[-1].tb_lineno
             self.merge_poi("Other", 'Plugin Error', None)
             Debug.logger.error("Plugin Error")
+            Debug.logger.exception("Message")
 
         #Debug.logger.debug(f"evisualise end {self.event}")
         self.visualise()
