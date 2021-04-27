@@ -149,7 +149,7 @@ def plugin_app(parent):
     table = tk.Frame(frame)
     table.columnconfigure(1, weight=1)
     table.grid(sticky="NSEW")
-    
+
     this.news = news.CanonnNews(table, 0)
     this.release = release.Release(table, this.version, 1)
     this.codexcontrol = codex.CodexTypes(table, 2)
@@ -275,19 +275,20 @@ def dashboard_entry(cmdr, is_beta, entry):
         this.body_name = entry.get("BodyName")
     else:
         this.body_name = None
-    
+
     if entry.get("PlanetRadius"):
         this.planet_radius = entry.get("PlanetRadius")
     else:
         this.planet_radius = None
-    
+
     return dashboard_entry_wrapper(cmdr, is_beta, this.body_name, this.planet_radius, this.nearloc['Latitude'], this.nearloc['Longitude'], entry)
-    
+
+
 def dashboard_entry_wrapper(cmdr, is_beta, body, radius, lat, lon, entry, ):
-    
-    extool.updatePosition(body, radius, lat, lon)
-    
-    
+
+    extool.updatePosition(body, radius, lat, lon, entry.get("Heading"))
+
+
 def cmdr_data(data, is_beta):
     """
     We have new data on our commander
@@ -332,9 +333,9 @@ class capture():
                 comment = " ".join(message_part[4:])
             else:
                 comment = " ".join(message_part[2:])
-            
-            #maybe need to verify if structured_msg AND commented are not empty
-            
+
+            # maybe need to verify if structured_msg AND commented are not empty
+
             debug(status)
 
             canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postStatus",
@@ -354,7 +355,7 @@ class capture():
                                     "site_type": site_type,
                                     "site_index": site_index
                                 })
-    
+
     @classmethod
     def plugin_prefs(cls, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
@@ -362,9 +363,11 @@ class capture():
         cls.frame = nb.Frame(parent)
         cls.frame.columnconfigure(1, weight=1)
         cls.frame.grid(row=gridrow, column=0, sticky="NSEW")
-        nb.Label(cls.frame, text=f"These followed in-game text command are used to save personnal POI :\ncanonn capture <type> <number> <comment>\ncanonn capture <comment>\n\t<type> = guardian, thargoid, human, biology, geology, other, nsp\n\t<number> = integer\n\t<comment> = string", justify=tk.LEFT, anchor="w").grid(row=0, column=0, sticky="NW")
+        nb.Label(cls.frame, text=f"These followed in-game text command are used to save personnal POI :\ncanonn capture <type> <number> <comment>\ncanonn capture <comment>\n\t<type> = guardian, thargoid, human, biology, geology, other, nsp\n\t<number> = integer\n\t<comment> = string",
+                 justify=tk.LEFT, anchor="w").grid(row=0, column=0, sticky="NW")
 
         return cls.frame
+
 
 class guestBook():
     state = 0
