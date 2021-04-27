@@ -151,10 +151,11 @@ def plugin_app(parent):
     this.news = news.CanonnNews(table, 0)
     this.release = release.Release(table, this.version, 1)
     this.codexcontrol = codex.CodexTypes(table, 2)
-    this.patrol = patrol.CanonnPatrol(table, 3)
-    this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 4)
-    this.guestbook = guestBook.setup(table, 5)
-    this.extool = extool.BearingDestination(table, 6)
+    this.extool = extool.BearingDestination(table, 3)
+    this.codexcontrol.setDestinationWidget(this.extool)
+    this.patrol = patrol.CanonnPatrol(table, 4)
+    this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 5)
+    this.guestbook = guestBook.setup(table, 6)
 
     whitelist = whiteList(parent)
     whitelist.fetchData()
@@ -238,15 +239,13 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     clientreport.submit(cmdr, is_beta, client, entry)
     this.patrol.journal_entry(
         cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    this.codexcontrol.journal_entry(
-        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    whiteList.journal_entry(cmdr, is_beta, system, station,
-                            entry, state, x, y, z, body, lat, lon, client)
+    this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    whiteList.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
     materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                           x, y, z, body, lat,
                           lon, client)
-    codex.saaScan.journal_entry(
-        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    codex.saaScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    codex.organicScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
     capture.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                           state, x, y, z, body,
                           lat, lon, client)
@@ -283,7 +282,7 @@ def dashboard_entry(cmdr, is_beta, entry):
     
 def dashboard_entry_wrapper(cmdr, is_beta, body, radius, lat, lon, entry, ):
     
-    this.codexcontrol.updatePlanet(cmdr, is_beta, body)
+    this.codexcontrol.updatePlanetData(cmdr, is_beta, body)
     extool.updatePosition(cmdr, is_beta, body, radius, lat, lon)
     
     

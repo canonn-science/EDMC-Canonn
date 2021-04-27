@@ -100,6 +100,11 @@ class BearingDestination():
         self.state = 0
         self.hide()
     
+    def ActivateTarget(self, lat, lon):
+        self.setTargetLatLon(lat, lon)
+        self.state = 1
+        self.calculateBearing(self.body, self.radius, self.latitude, self.longitude)
+        
     def setTargetLatLon(self, lat, lon):
         if (lat is not None) or (lon is not None):
             if (lat < -90) or (lat > 90):
