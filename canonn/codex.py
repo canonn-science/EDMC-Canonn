@@ -813,11 +813,11 @@ class CodexTypes():
         
         if hud_category not in self.ppoidata:
             self.ppoidata[hud_category] = {}
-        if "Unknown" not in self.ppoidata:
+        if "Unknown" not in self.ppoidata[hud_category]:
             self.ppoidata[hud_category]["Unknown"] = []
-        if type not in self.ppoidata:
+        if type not in self.ppoidata[hud_category]:
             self.ppoidata[hud_category][type] = []
-            
+        
         if index > len(self.ppoidata[hud_category]["Unknown"])+len(self.ppoidata[hud_category][type]):
             self.ppoidata[hud_category][type].append(["#"+str(index), "("+str(lat)+","+str(lon)+")"])
             self.update_ppoi()
@@ -825,7 +825,7 @@ class CodexTypes():
             find_i = False
             for i in range(len(self.ppoidata[hud_category]["Unknown"])):
                 poi = self.ppoidata[hud_category]["Unknown"][i]
-                if "#"+index == poi[0]:
+                if "#"+str(index) == poi[0]:
                     del self.ppoidata[hud_category]["Unknown"][i]
                     find_i = True
                 if find_i:
@@ -1175,6 +1175,8 @@ class CodexTypes():
             #self.ppoidata[category] = sorted(self.ppoidata[category])
             
             for type in self.ppoidata[category]:
+                if len(self.ppoidata[category][type])==0:
+                    continue
                 self.planetcol1.append(tk.Label(self.planetlist, text="   "+type))
                 self.planetcol2.append(tk.Frame(self.planetlist))
                 
