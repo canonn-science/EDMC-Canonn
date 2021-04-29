@@ -408,18 +408,14 @@ class CodexTypes():
         self.parent = parent
         self.frame.bind('<<refreshPOIData>>', self.refreshPOIData)
         self.frame.bind('<<refreshPlanetData>>', self.refreshPlanetData)
-        self.frame.grid(sticky="W")
-        self.frame.grid_remove()
         self.hidecodexbtn = tk.IntVar(value=config.getint("CanonnHideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
 
-        self.systemlist = Frame(self.frame, highlightthickness=1)
+        self.systemlist = Frame(self.frame, bg="Gray95", highlightthickness=1, highlightbackground="Gray70")
         self.container = Frame(self.systemlist)
-        self.container.columnconfigure(1, weight=1)
         
-        self.planetlist = Frame(self.frame, highlightthickness=1)
+        self.planetlist = Frame(self.frame, bg="Gray95", highlightthickness=1, highlightbackground="Gray30")
         self.container_planet = Frame(self.planetlist)
-        self.container_planet.columnconfigure(1, weight=1)
         
         self.images = {}
         self.labels = {}
@@ -464,8 +460,11 @@ class CodexTypes():
         self.addimage_planet("Tourist", 7)
         
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
-        self.frame.grid(row=gridrow, column=0)
+        self.frame.columnconfigure(0, weight=1)
+        self.frame.grid(row=gridrow, column=0, sticky="NSEW",columnspan=2)
+        self.container.columnconfigure(1, weight=1)
         self.container.grid(row=0, column=1, sticky="W")
+        self.container_planet.columnconfigure(1, weight=1)
         self.container_planet.grid(row=0, column=1, sticky="W")
         # self.tooltip.grid_remove()
         self.systemlist.grid()
@@ -500,7 +499,10 @@ class CodexTypes():
     # this seems horribly confused
     def refreshPOIData(self, event):
     
-        Debug.logger.debug(f"refreshPOIData {self.event}")
+        Debug.logger.debug(f"refreshPOIData {self.event} {self.waitingPOI}")
+        
+        if self.waitingPOI:
+            return
         
         try:
             while not self.edsmq.empty():
@@ -670,7 +672,10 @@ class CodexTypes():
     
     def refreshPlanetData(self, event):
         
-        Debug.logger.debug(f"refreshPlanetData {self.event}")
+        Debug.logger.debug(f"refreshPlanetData {self.event} {self.waitingPlanet}")
+        
+        if self.waitingPlanet:
+            return
         
         try:
             while not self.planetq.empty():
@@ -911,6 +916,7 @@ class CodexTypes():
         
             debug("getPOIdata frame.event_generate <<refreshPOIData>>")
             self.frame.event_generate('<<refreshPOIData>>', when='head')
+            self.frame.event_generate('<<refreshPlanetData>>', when='head')
         
             Debug.logger.debug("Finished getting POI data in thread")
         
@@ -989,52 +995,7 @@ class CodexTypes():
             
             Debug.logger.debug("get planet data in shut sown")
     
-    def cleanup_poidata(self):
-        # if we have bio or geo then remove Bio Bio and Geo Geo
-        # if we have Jumponium+ and Jumponium then use the best value
-        # We can't simply loop because there is an order of precedence
-
-        bodies = {}
-        """ for poi in self.poidata:
-            if not bodies.get(poi.get("body")):
-                bodies[poi.get("body")] = {"name": poi.get("body")}
-                bodies[poi.get("body")][poi.get("hud_category")] = 0
-            if not bodies.get(poi.get("body")) and not bodies.get(poi.get("body")).get(poi.get("hud_category")):
-                bodies[poi.get("body")][poi.get("hud_category")] = 0
-
-            bodies[poi.get("body")][poi.get("hud_category")] += 1
-
-            if poi.get("hud_category") == "Jumponium":
-                if not bodies[poi.get("body")].get("Jumplevel"):
-                    bodies[poi.get("body")]["Jumplevel"] = poi.get(
-                        "english_name")
-                else:
-                    bodies[poi.get("body")]["Jumplevel"] = self.compare_jumponioum(
-                        poi.get("english_name"), bodies[poi.get("body")]["Jumplevel"]) """
-
-        for k in bodies.keys():
-            body = bodies.get(k)
-            bodyname = body.get("name")
-
-            for cat in ("Biology", "Geology", "Thargoid", "Guardian"):
-
-                if body.get(cat) and body.get(cat) > 1:
-                    Debug.logging.debug(f"removing {cat}")
-                    self.remove_poi(cat, cat, body.get("name"))
-
-            """ for jumplevel in ("Basic", "Standard", "Premium"):
-                for mod in ("+v", "+b", "+v+b", "+b+v"):
-                    if body.get("Jumplevel") and not body.get("Jumplevel") == f"{jumplevel}{mod}":
-                        Debug.logging.debug(f"removing {jumplevel}{mod}")
-                        self.remove_poi(
-                            Jumponium, f"{jumplevel}{mod}", body.get("name")) """
-
-    # this is used to trigger display of merged data
-
-    def visualisePOIData(self):
-        
-        poicount = 0
-        # clear it if it exists
+    def cleanPOIPanel(self):
         for col in self.systemcol1:
             try:
                 col.destroy()
@@ -1047,109 +1008,107 @@ class CodexTypes():
                 error("Col2 grid_remove error")
         self.systemcol1 = []
         self.systemcol2 = []
+    
+    def visualisePOIData(self):
+        # clear it if it exists
+        self.cleanPOIPanel()
         
-        unscanned = nvl(self.fsscount, 0) > nvl(self.bodycount, 0)
-
-        """ if not (threading.current_thread() is threading.main_thread()):
-            debug("We are not in the main thread")
-        else:
-            debug("We are in the main thread") """
+        Debug.logger.debug(f"visualise POI Data event={self.event}")
+        
+        #unscanned = nvl(self.fsscount, 0) > nvl(self.bodycount, 0)
 
         # we have set an event type that can override waiting
-        if self.event:
-            Debug.logger.debug(f"Allowed event {self.event}")
-            self.waitingPOI = False
-            self.allowed = True
-            self.event = None
-        else:
-            Debug.logger.debug(f"Not allowed event")
+        # if self.event:
+            # Debug.logger.debug(f"Allowed event {self.event}")
+            # self.waitingPOI = False
+            # self.allowed = True
+            # self.event = None
+        # else:
+            # Debug.logger.debug(f"Not allowed event")
 
         # we may want to try again if the data hasn't been fetched yet
-        if self.waitingPOI or not self.allowed:
-            Debug.logger.debug(f"Still waiting for POI data")
-        else:
-            self.set_image("Geology", False)
-            self.set_image("Cloud", False)
-            self.set_image("Anomaly", False)
-            self.set_image("Thargoid", False)
-            self.set_image("Biology", False)
-            self.set_image("Guardian", False)
-            self.set_image("Human", False)
-            self.set_image("Ring", False)
-            self.set_image("None", False)
-            self.set_image("Other", False)
-            self.set_image("Personal", False)
-            self.set_image("Planets", False)
-            self.set_image("Tourist", False)
-            self.set_image("Jumponium", False)
-            self.set_image("GreenSystem", False)
-            
-            Debug.logger.debug(f"visualise POI Data")
-            
-            #if self.poidata or unscanned:
+        # if self.waitingPOI or not self.allowed:
+            # Debug.logger.debug(f"Still waiting for POI data")
+        # else:
+        self.set_image("Geology", False)
+        self.set_image("Cloud", False)
+        self.set_image("Anomaly", False)
+        self.set_image("Thargoid", False)
+        self.set_image("Biology", False)
+        self.set_image("Guardian", False)
+        self.set_image("Human", False)
+        self.set_image("Ring", False)
+        self.set_image("None", False)
+        self.set_image("Other", False)
+        self.set_image("Personal", False)
+        self.set_image("Planets", False)
+        self.set_image("Tourist", False)
+        self.set_image("Jumponium", False)
+        self.set_image("GreenSystem", False)
+        
+        #if self.poidata or unscanned:
 
-            self.frame.grid()
-                #self.visible()
-                #self.cleanup_poidata()
+        self.frame.grid()
+            #self.visible()
+            #self.cleanup_poidata()
 
-            for r in self.poidata:
-                self.set_image(r.get("hud_category"), True)
-            #else:
-            #    self.frame.grid()
-            #    self.frame.grid_remove()
+        for r in self.poidata:
+            self.set_image(r.get("hud_category"), True)
+        #else:
+        #    self.frame.grid()
+        #    self.frame.grid_remove()
 
-            # need to initialise if not exists
-            if len(self.systemcol1) == 0:
-                self.systemcol1.append(tk.Label(self.systemlist, text=self.system))
-                self.systemcol2.append(tk.Label(self.systemlist, text=""))
-                self.systemcol1[-1].grid(row=0, column=0, sticky="NSEW")
+        # need to initialise if not exists
+        if len(self.systemcol1) == 0:
+            self.systemcol1.append(tk.Label(self.systemlist, text=self.system))
+            self.systemcol2.append(tk.Label(self.systemlist, text=""))
+            self.systemcol1[-1].grid(row=0, column=0, sticky="NSEW")
+        
+        category_list = []
+        for poi in self.poidata:
+            if poi.get("hud_category") not in category_list:
+                category_list.append(poi.get("hud_category"))
+        
+        prev_subcategory = "Others"
+        isSubcategory=""
+        for category in category_list:
+            if category in self.lock:
+                continue
+            self.systemcol1.append(tk.Label(self.systemlist, text=category+":"))
+            self.systemcol2.append(tk.Label(self.systemlist, text=""))
+            self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
+            self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
             
-            category_list = []
+            self.poidata = sorted(self.poidata, key=lambda poi: poi.get("english_name"))
+            
             for poi in self.poidata:
-                if poi.get("hud_category") not in category_list:
-                    category_list.append(poi.get("hud_category"))
-            
-            prev_subcategory = "Others"
-            isSubcategory=""
-            for category in category_list:
-                if category in self.lock:
-                    continue
-                self.systemcol1.append(tk.Label(self.systemlist, text=category+":"))
-                self.systemcol2.append(tk.Label(self.systemlist, text=""))
-                self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
-                self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
-                
-                self.poidata = sorted(self.poidata, key=lambda poi: poi.get("english_name"))
-                
-                for poi in self.poidata:
-                    if poi.get("hud_category") == category:
-                        # add a new label if it dont exist
-                            if "$" in poi.get("english_name"):
-                                subcategory = poi.get("english_name").split(":")[0][1:]
-                                name = poi.get("english_name").split(":")[1]
-                            else:
-                                subcategory = "Others"
-                                name = poi.get("english_name")
-                                
-                            if subcategory != prev_subcategory:
-                                isSubcategory="   "
-                                prev_subcategory = subcategory
-                                self.systemcol1.append(tk.Label(self.systemlist, text="   "+subcategory))
-                                self.systemcol2.append(tk.Label(self.systemlist, text=""))
-                                self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
-                                self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
-                                
-                            self.systemcol1.append(tk.Label(self.systemlist, text="   "+isSubcategory+name))
-                            self.systemcol2.append(tk.Label(self.systemlist, text=poi.get("body")))
+                if poi.get("hud_category") == category:
+                    # add a new label if it dont exist
+                        if "$" in poi.get("english_name"):
+                            subcategory = poi.get("english_name").split(":")[0][1:]
+                            name = poi.get("english_name").split(":")[1]
+                        else:
+                            subcategory = "Others"
+                            name = poi.get("english_name")
+                            
+                        if subcategory != prev_subcategory:
+                            isSubcategory="   "
+                            prev_subcategory = subcategory
+                            self.systemcol1.append(tk.Label(self.systemlist, text="   "+subcategory))
+                            self.systemcol2.append(tk.Label(self.systemlist, text=""))
                             self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
                             self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
+                            
+                        self.systemcol1.append(tk.Label(self.systemlist, text="   "+isSubcategory+name))
+                        self.systemcol2.append(tk.Label(self.systemlist, text=poi.get("body")))
+                        self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
+                        self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
 
-            self.systemlist.grid(sticky="NSEW")
+        self.systemlist.grid(sticky="NSEW")
 
-            # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
+        # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
         
-    def visualisePlanetData(self):
-        poicount = 0
+    def cleanPlanetPanel(self):
         for col in self.planetcol1:
             try:
                 col.destroy()
@@ -1162,6 +1121,13 @@ class CodexTypes():
                 error("Col2 grid_remove error")
         self.planetcol1 = []
         self.planetcol2 = []
+    
+    
+    def visualisePlanetData(self):
+        
+        self.cleanPlanetPanel()
+        
+        Debug.logger.debug(f"visualise Planet Data event={self.event}")
         
         self.set_image("Geology_planet", False)
         self.set_image("Thargoid_planet", False)
@@ -1220,8 +1186,9 @@ class CodexTypes():
                         i+=1
                 self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
                 self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
-                
-        self.planetlist.grid(sticky="NSEW")
+        
+        if self.planetlist_show:
+            self.planetlist.grid(sticky="NSEW")
     
     def activateDestination(self, latlon):
         lat = float(latlon.split(",")[0][1:])
@@ -1247,7 +1214,6 @@ class CodexTypes():
         self.visualisePlanetData()
     
     def addimage(self, name, col):
-
         grey = "{}_grey".format(name)
         self.images[name] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
         self.images[grey] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
@@ -1348,6 +1314,48 @@ class CodexTypes():
         for i, v in enumerate(signals):
             if signals[i].get("english_name") == english_name and signals[i].get("hud_category") == hud_category and signals[i].get("body") == body:
                 del self.poidata[i]
+    
+    def cleanup_poidata(self):
+        # if we have bio or geo then remove Bio Bio and Geo Geo
+        # if we have Jumponium+ and Jumponium then use the best value
+        # We can't simply loop because there is an order of precedence
+
+        bodies = {}
+        """ for poi in self.poidata:
+            if not bodies.get(poi.get("body")):
+                bodies[poi.get("body")] = {"name": poi.get("body")}
+                bodies[poi.get("body")][poi.get("hud_category")] = 0
+            if not bodies.get(poi.get("body")) and not bodies.get(poi.get("body")).get(poi.get("hud_category")):
+                bodies[poi.get("body")][poi.get("hud_category")] = 0
+
+            bodies[poi.get("body")][poi.get("hud_category")] += 1
+
+            if poi.get("hud_category") == "Jumponium":
+                if not bodies[poi.get("body")].get("Jumplevel"):
+                    bodies[poi.get("body")]["Jumplevel"] = poi.get(
+                        "english_name")
+                else:
+                    bodies[poi.get("body")]["Jumplevel"] = self.compare_jumponioum(
+                        poi.get("english_name"), bodies[poi.get("body")]["Jumplevel"]) """
+
+        for k in bodies.keys():
+            body = bodies.get(k)
+            bodyname = body.get("name")
+
+            for cat in ("Biology", "Geology", "Thargoid", "Guardian"):
+
+                if body.get(cat) and body.get(cat) > 1:
+                    Debug.logging.debug(f"removing {cat}")
+                    self.remove_poi(cat, cat, body.get("name"))
+
+            """ for jumplevel in ("Basic", "Standard", "Premium"):
+                for mod in ("+v", "+b", "+v+b", "+b+v"):
+                    if body.get("Jumplevel") and not body.get("Jumplevel") == f"{jumplevel}{mod}":
+                        Debug.logging.debug(f"removing {jumplevel}{mod}")
+                        self.remove_poi(
+                            Jumponium, f"{jumplevel}{mod}", body.get("name")) """
+
+    # this is used to trigger display of merged data
     
     def sheperd_moon(self, body, bodies):
 

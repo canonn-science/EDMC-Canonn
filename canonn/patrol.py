@@ -248,13 +248,10 @@ class CanonnPatrol(Frame):
         )
         self.ships = []
         self.bind('<<PatrolDone>>', self.update_ui)
-        self.IMG_PREV = tk.PhotoImage(file=os.path.join(
-            CanonnPatrol.plugin_dir, "icons", "left_arrow.gif"))
-        self.IMG_NEXT = tk.PhotoImage(file=os.path.join(
-            CanonnPatrol.plugin_dir, "icons", "right_arrow.gif"))
+        self.IMG_PREV = tk.PhotoImage(file=os.path.join(CanonnPatrol.plugin_dir, "icons", "left_arrow.gif"))
+        self.IMG_NEXT = tk.PhotoImage(file=os.path.join(CanonnPatrol.plugin_dir, "icons", "right_arrow.gif"))
 
-        self.patrol_config = os.path.join(
-            Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
+        self.patrol_config = os.path.join(Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
 
         self.canonnbtn = tk.IntVar(value=config.getint("HideCanonn"))
         self.factionbtn = tk.IntVar(value=config.getint("HideFaction"))
@@ -294,17 +291,15 @@ class CanonnPatrol(Frame):
         self.infolink.grid_remove()
 
         # buttons for the patrol
-        self.prev = tk.Button(
-            self, text="Prev", image=self.IMG_PREV, width=14, height=14, borderwidth=0)
+        self.prev = tk.Button(self, text="Prev", image=self.IMG_PREV, width=14, height=14, borderwidth=0)
         # self.submit=tk.Button(self, text="Open")
-        self.next = tk.Button(
-            self, text="Next", image=self.IMG_NEXT, width=14, height=14, borderwidth=0)
-        self.prev.grid(row=0, column=1, sticky="W")
+        self.next = tk.Button(self, text="Next", image=self.IMG_NEXT, width=14, height=14, borderwidth=0)
 
         # self.submit.grid(row = 2, column = 1,sticky="NSW")
+        self.prev.grid(row=0, column=1, sticky="W")
         self.next.grid(row=0, column=4, sticky="E")
-        self.next.bind('<Button-1>', self.patrol_next)
         self.prev.bind('<Button-1>', self.patrol_prev)
+        self.next.bind('<Button-1>', self.patrol_next)
 
         self.prev.grid_remove()
         self.next.grid_remove()
