@@ -389,12 +389,16 @@ class CodexTypes():
     waitingPOI = True
     waitingPlanet = True
     fsscount = 0
-
+    
+    logqueue = True
+    logq = Queue()
+    
     edsmq = Queue()
     edsm_stationq = Queue()
     poiq = Queue()
     cmdrq = Queue()
     planetq = Queue()
+    canonnq = Queue()
     raw_mats = None
 
     def __init__(self, parent, gridrow):
@@ -410,11 +414,13 @@ class CodexTypes():
         self.frame.bind('<<refreshPlanetData>>', self.refreshPlanetData)
         self.hidecodexbtn = tk.IntVar(value=config.getint("CanonnHideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
+        self.humandetailedbtn = tk.IntVar(value=config.getint("CanonnHumanDetailed"))
+        self.humandetailed = self.humandetailedbtn.get()
 
         self.systemlist = Frame(self.frame, bg="Gray95", highlightthickness=1, highlightbackground="Gray70")
         self.container = Frame(self.systemlist)
         
-        self.planetlist = Frame(self.frame, bg="Gray95", highlightthickness=1, highlightbackground="Gray30")
+        self.planetlist = Frame(self.frame, bg="Gray95", highlightthickness=1, highlightbackground="Gray70")
         self.container_planet = Frame(self.planetlist)
         
         self.images = {}
@@ -424,7 +430,10 @@ class CodexTypes():
         self.planetcol1 = []
         self.planetcol2 = []
         self.poidata = []
+        self.stationdata = {}
         self.ppoidata = {}
+        self.saadata = {}
+        self.stationPlanetData = {}
 
         self.temp_poidata = None
         self.temp_edsmdata = None
@@ -519,6 +528,30 @@ class CodexTypes():
                 if temp_cmdrdata.get("body") not in self.temp_cmdrdata:
                     self.temp_cmdrdata[temp_cmdrdata.get("body")] = []
                 self.temp_cmdrdata[temp_cmdrdata.get("body")].append(temp_cmdrdata)
+            
+            while not self.edsm_stationq.empty():
+                # only expecting to go around once
+                temp_stationdata = self.edsm_stationq.get()
+                
+                # restructure the EDSM data
+                if temp_stationdata:
+                    edsm_stations = temp_stationdata.get("stations")
+                else:
+                    edsm_stations = {}
+                if edsm_stations:
+                    for s in edsm_stations:
+                        if "body" in s:
+                            if s["body"].get("name") not in self.stationPlanetData:
+                                self.stationPlanetData[s["body"].get("name")] = []
+                            self.stationPlanetData[s["body"].get("name")].append({"name":s["name"], "type":s["type"], "latitude":s["body"].get("latitude"), "longitude":s["body"].get("longitude")})
+                        else:
+                            if s["name"] not in self.stationdata:
+                                if s["type"] != "Fleet Carrier":
+                                    self.stationdata[s["name"]] = {"type":s["type"]}
+                                    if self.humandetailed:
+                                        self.merge_poi("Human", "$Station:"+s["name"], None)
+                                    else:
+                                        self.merge_poi("Human", "Station", None)
             
             # if self.temp_edsmdata:
             if not self.bodies:
@@ -660,6 +693,12 @@ class CodexTypes():
                     body_code = c.replace(self.system, '')
                     self.merge_poi("Personal", name, body_code)
             
+            self.logqueue = False
+            while not self.logq.empty():
+                (tmpcmdr, tmpis_beta, tmpsystem, tmptation, tmpentry, tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient) = self.logq.get()
+                self.journal_entry(tmpcmdr, tmpis_beta, tmpsystem, tmptation, tmpentry, tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient)
+            
+            
         except Exception as e:
             #line = sys.exc_info()[-1].tb_lineno
             self.merge_poi("Other", 'Plugin Error', None)
@@ -710,24 +749,20 @@ class CodexTypes():
             
             self.update_unknown_ppoi()
             
-            while not self.edsm_stationq.empty():
-                # only expecting to go around once
-                temp_edsmdata = self.edsm_stationq.get()
-                
-                # restructure the EDSM data
-                if temp_edsmdata:
-                    edsm_stations = temp_edsmdata.get("stations")
-                else:
-                    edsm_stations = {}
-                if edsm_stations:
-                    for s in edsm_stations:
-                        if "body" in s:
-                            latlon = "("+str(round(s["body"].get("latitude"),2))+","+str(round(s["body"].get("longitude"),2))+")"
-                            if "Human" not in self.ppoidata:
-                                self.ppoidata["Human"] = {}
-                            if s.get("name") not in self.ppoidata["Human"]:
-                                self.ppoidata["Human"][s.get("name")] = []
-                            self.ppoidata["Human"][s.get("name")].append([None, latlon])
+            
+            while not self.canonnq.empty():
+                temp_canonndata = self.canonnq.get()
+                #need to add the parser for canonn data
+            
+            for c in self.stationPlanetData:
+                if c == self.body:
+                    for station in self.stationPlanetData[c]:
+                        latlon = "("+str(round(station["latitude"],2))+","+str(round(station["longitude"],2))+")"
+                        if "Human" not in self.ppoidata:
+                            self.ppoidata["Human"] = {}
+                        if station["name"] not in self.ppoidata["Human"]:
+                            self.ppoidata["Human"][station["name"]] = []
+                        self.ppoidata["Human"][station["name"]].append([None, latlon])
             
             for c in self.temp_cmdrdata:
                 if c == self.body:
@@ -765,6 +800,12 @@ class CodexTypes():
                     for poi in self.ppoidata[category][type]:
                         if int(poi[0][1:]) > max_category[category]:
                             max_category[category] = int(poi[0][1:])
+        
+        if self.body in self.saadata:
+            if "Geology" in self.saadata[self.body]:
+                max_category["Geology"] = self.saadata[self.body]["Geology"]
+            if "Biology" in self.saadata[self.body]:
+                max_category["Biology"] = self.saadata[self.body]["Biology"]
         
         for category in max_category:
             for i in range(1,max_category[category]+1):
@@ -847,7 +888,9 @@ class CodexTypes():
             # debug("CodexTypes.waiting = True")
             
             # first we will clear the queues
+            self.logq.clear()
             self.edsmq.clear()
+            self.edsm_stationq.clear()
             self.poiq.clear()
             self.cmdrq.clear()
             
@@ -886,6 +929,27 @@ class CodexTypes():
                     temp_edsmdata = r.json()
                     # push edsm data only a queue
                     self.edsmq.put(temp_edsmdata)
+                else:
+                    Debug.logger.debug("EDSM Failed")
+                    Debug.logger.error("EDSM Failed")
+            except:
+                Debug.logger.debug("Error getting EDSM data")
+            
+            try:
+                url = "https://www.edsm.net/api-system-v1/stations?systemName={}".format(
+                    quote_plus(system.encode('utf8')))
+
+                # debug("request {}:  Active Threads {}".format(
+                #    url, threading.activeCount()))
+
+                r = requests.get(url, timeout=30)
+                # debug("request complete")
+                r.encoding = 'utf-8'
+                if r.status_code == requests.codes.ok:
+                    # debug("got EDSM Data")
+                    temp_edsmdata = r.json()
+                    # push edsm data only a queue
+                    self.edsm_stationq.put(temp_edsmdata)
                 else:
                     Debug.logger.debug("EDSM Failed")
                     Debug.logger.error("EDSM Failed")
@@ -933,7 +997,7 @@ class CodexTypes():
             
             # first we will clear the queues
             self.planetq.clear()
-            self.edsm_stationq.clear()
+            self.canonnq.clear()
             
             try:
                 #url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}&cmdr={}".format(
@@ -963,25 +1027,19 @@ class CodexTypes():
                 debug("Error getting planet data")
             
             try:
-                url = "https://www.edsm.net/api-system-v1/stations?systemName={}".format(
-                    quote_plus(system.encode('utf8')))
-
-                # debug("request {}:  Active Threads {}".format(
-                #    url, threading.activeCount()))
+                url = "https://api.canonn.tech/bodies?bodyName={}".format(quote_plus(body.encode('utf8')))
 
                 r = requests.get(url, timeout=30)
                 # debug("request complete")
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
-                    # debug("got EDSM Data")
-                    temp_edsmdata = r.json()
-                    # push edsm data only a queue
-                    self.edsm_stationq.put(temp_edsmdata)
+                    # push canonn data only a queue
+                    self.canonnq.put(r.json())
                 else:
-                    Debug.logger.debug("EDSM Failed")
-                    Debug.logger.error("EDSM Failed")
+                    Debug.logger.debug("Canonn Failed")
+                    Debug.logger.error("Canonn Failed")
             except:
-                Debug.logger.debug("Error getting EDSM data")
+                Debug.logger.debug("Error getting Canonn data")
             
             self.waitingPlanet = False
             Debug.logger.debug("Triggering Event")
@@ -1069,8 +1127,6 @@ class CodexTypes():
             if poi.get("hud_category") not in category_list:
                 category_list.append(poi.get("hud_category"))
         
-        prev_subcategory = "Others"
-        isSubcategory=""
         for category in category_list:
             if category in self.lock:
                 continue
@@ -1081,6 +1137,8 @@ class CodexTypes():
             
             self.poidata = sorted(self.poidata, key=lambda poi: poi.get("english_name"))
             
+            prev_subcategory = "Others"
+            isSubcategory=""
             for poi in self.poidata:
                 if poi.get("hud_category") == category:
                     # add a new label if it dont exist
@@ -1166,9 +1224,11 @@ class CodexTypes():
                 
                 i=0
                 for poi in self.ppoidata[category][type]:
+                    col = (i % 10)+1
+                    row = int(i/10)
                     if poi[0] is not None:
                         label.append(tk.Label(self.planetcol2[-1], text=poi[0]))
-                        label[-1].grid(row=0, column=i, sticky="NSEW")
+                        label[-1].grid(row=row, column=col, sticky="NSEW")
                         if poi[1] is not None:
                             label[-1]['fg'] = "blue"
                             label[-1]['cursor'] = "hand2"
@@ -1177,7 +1237,7 @@ class CodexTypes():
                     if poi[1] is not None:
                         if poi[0] is None:
                             label.append(tk.Label(self.planetcol2[-1], text=poi[1]))
-                            label[-1].grid(row=0, column=i, sticky="NSEW")
+                            label[-1].grid(row=row, column=col, sticky="NSEW")
                             label[-1]['fg'] = "blue"
                             label[-1]['cursor'] = "hand2"
                             label[-1].bind('<ButtonPress>', lambda event, latlon=poi[1] : self.activateDestination(latlon))
@@ -1791,10 +1851,17 @@ class CodexTypes():
     
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if not self.hidecodex:
-            self.journal_entry_wrap(
-                cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+            self.journal_entry_wrap(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
 
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
+        
+        if entry.get("event") in ("Location", "StartUp", "StartJump", "JumpType"):
+            self.logqueue = False
+            self.logq.clear()
+        
+        if self.logqueue:
+            self.logq.put((cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client))
+            return
         
         if state.get("Raw"):
             CodexTypes.raw_mats = state.get("Raw")
@@ -1818,8 +1885,12 @@ class CodexTypes():
             CodexTypes.bodycount = None
             self.bodies = None
             self.poidata = []
+            self.stationdata = {}
             self.ppoidata = {}
+            self.saadata = {}
+            self.stationPlanetData = {}
             self.temp_cmdrdata = {}
+            self.logqueue = True
             self.system = entry.get("StarSystem")
             Debug.logger.debug("Calling PoiTypes")
             poiTypes(entry.get("StarSystem"), cmdr, self.getPOIdata).start()
@@ -1875,8 +1946,12 @@ class CodexTypes():
             CodexTypes.fsscount = None
             CodexTypes.bodycount = None
             self.poidata = []
+            self.stationdata = {}
             self.ppoidata = {}
+            self.saadata = {}
+            self.stationPlanetData = {}
             self.temp_cmdrdata = {}
+            self.logqueue = True
             self.planetlist_show = False
             Debug.logger.debug(f"setting allowed event {self.event}")
             poiTypes(system, cmdr, self.getPOIdata).start()
@@ -1937,7 +2012,12 @@ class CodexTypes():
             # elif "Generation Ship" in entry.get("SignalName"):
                 # self.merge_poi("Human", entry.get("SignalName"), None)
                 # dovis = True
-            if "MULTIPLAYER_SCENARIO" in entry.get("SignalName"):
+            print("test")
+            print(entry.get("SignalName"))
+            print(self.stationdata)
+            if entry.get("SignalName") in self.stationdata:
+                dovis = False
+            elif "MULTIPLAYER_SCENARIO" in entry.get("SignalName"):
                 dovis = False
             elif "Warzone_PointRace" in entry.get("SignalName"):
                 dovis = False
@@ -1947,6 +2027,12 @@ class CodexTypes():
             elif "Aftermath" in entry.get("SignalName"):
                 self.merge_poi("Human", "Distress Call", None)
                 dovis = True
+            elif "$" in entry.get("SignalName"):
+                if self.humandetailed:
+                    self.merge_poi("Human", "$Warning:"+entry.get("Name_Localised"), None)
+                    dovis = True
+                else:
+                    dovis = False
             elif entry.get("IsStation"):
                 if len(entry.get("SignalName"))>8:
                     FleetCarrier = (entry.get("SignalName") and entry.get("SignalName")[-4] == '-' and entry.get("SignalName")[-8] == ' ')
@@ -1958,8 +2044,10 @@ class CodexTypes():
                     #self.merge_poi("Human", "$FleetCarrier:"+entry.get("SignalName"), None)
                     self.merge_poi("Human", "Fleet Carrier", None)
                 else:
-                    #self.merge_poi("Human", "$Station:"+entry.get("SignalName"), None)
-                    self.merge_poi("Human", "Station", None)
+                    if self.humandetailed:
+                        self.merge_poi("Human", "$Station:"+entry.get("SignalName"), None)
+                    else:
+                        self.merge_poi("Human", "Station", None)
                 dovis = True
             else:
                 code = entry.get("SignalName").split(" ")[-1]
@@ -1968,11 +2056,15 @@ class CodexTypes():
                 else:
                     Megaship = False
                 if Megaship:
-                    #self.merge_poi("Human", "$Megaship:"+entry.get("SignalName"), None)
-                    self.merge_poi("Human", "Megaship", None)
+                    if self.humandetailed:
+                        self.merge_poi("Human", "$Megaship:"+entry.get("SignalName"), None)
+                    else:
+                        self.merge_poi("Human", "Megaship", None)
                 else:
-                    #self.merge_poi("Human", "$Installation:"+entry.get("SignalName"), None)
-                    self.merge_poi("Human", "Installation", None)
+                    if self.humandetailed:
+                        self.merge_poi("Human", "$Installation:"+entry.get("SignalName"), None)
+                    else:
+                        self.merge_poi("Human", "Installation", None)
                 dovis = True
             self.allowed = True
             # self.refreshPOIData(None)
@@ -2024,6 +2116,11 @@ class CodexTypes():
                     cat = english_name
 
                 self.merge_poi(cat, english_name, bodyVal)
+                
+                if bodyName not in self.saadata:
+                    self.saadata[bodyName] = {}
+                if cat not in self.saadata[bodyName]:
+                    self.saadata[bodyName][cat] = int(v.get("Count"))
 
             self.refreshPOIData(None)
             self.allowed = True
@@ -2075,14 +2172,19 @@ class CodexTypes():
             row=0, column=0, sticky="NW")
         nb.Checkbutton(frame, text="Hide Codex Icons", variable=self.hidecodexbtn).grid(
             row=1, column=0, sticky="NW")
-
+        nb.Checkbutton(frame, text="Human Detailed", variable=self.humandetailedbtn).grid(
+            row=1, column=1, sticky="NW")
+        
         return frame
 
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
         config.set('CanonnHideCodex', self.hidecodexbtn.get())
+        config.set('CanonnHumanDetailed', self.humandetailedbtn.get())
 
         self.hidecodex = self.hidecodexbtn.get()
+        self.humandetailed = self.humandetailedbtn.get()
+        
 
         # dont check the retval
         self.visualisePOIData()
