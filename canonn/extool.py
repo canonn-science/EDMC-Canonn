@@ -126,7 +126,7 @@ class BearingDestination():
         self.body = body
         self.calculateBearing(body, radius, lat, lon, heading)
     
-    def calculateBearing(self, body, radius, lat, lon, heading):
+    def calculateBearing(self, body, radius, lat, lon, heading = None):
         if self.state == 1:
             if (lat is not None) and (lon is not None) and (radius is not None) and (body is not None) :
                 radius = radius/1000

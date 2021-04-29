@@ -362,6 +362,7 @@ class CodexTypes():
         "Human": "Human Sites",
         "Ring": "Planetary Ring Resources",
         "Other": "Other Sites",
+        "Personal": "Personal Sites",
         "Planets": "Valuable Planets",
         "Tourist": "Tourist Informatiom",
         "Jumponium": "Jumponium Planets",
@@ -385,7 +386,8 @@ class CodexTypes():
     close_orbit = 0.02
     eccentricity = 0.9
 
-    waiting = True
+    waitingPOI = True
+    waitingPlanet = True
     fsscount = 0
 
     edsmq = Queue()
@@ -414,8 +416,7 @@ class CodexTypes():
         self.systemlist = Frame(self.frame, highlightthickness=1)
         self.container = Frame(self.systemlist)
         self.container.columnconfigure(1, weight=1)
-        #self.container_planet = Frame(self.frame)
-        #self.container_planet.columnconfigure(1, weight=1)
+        
         self.planetlist = Frame(self.frame, highlightthickness=1)
         self.container_planet = Frame(self.planetlist)
         self.container_planet.columnconfigure(1, weight=1)
@@ -435,8 +436,8 @@ class CodexTypes():
         
         self.imagetypes = ("Geology", "Cloud", "Anomaly", "Thargoid",
                            "Biology", "Guardian", "Human", "Ring",
-                           "None", "Other", "Planets", "Tourist", "Jumponium", "GreenSystem"
-                           )
+                           "None", "Other", "Personal", "Planets", 
+                           "Tourist", "Jumponium", "GreenSystem")
         self.addimage("Geology", 0)
         self.addimage("Cloud", 1)
         self.addimage("Anomaly", 2)
@@ -447,10 +448,11 @@ class CodexTypes():
         self.addimage("Ring", 7)
         self.addimage("None", 8)
         self.addimage("Other", 9)
-        self.addimage("Planets", 10)
-        self.addimage("Tourist", 11)
-        self.addimage("Jumponium", 12)
-        self.addimage("GreenSystem", 13)
+        self.addimage("Personal", 10)
+        self.addimage("Planets", 11)
+        self.addimage("Tourist", 12)
+        self.addimage("Jumponium", 13)
+        self.addimage("GreenSystem", 14)
         
         self.addimage_planet("Geology", 0)
         self.addimage_planet("Thargoid", 1)
@@ -458,7 +460,8 @@ class CodexTypes():
         self.addimage_planet("Guardian", 3)
         self.addimage_planet("Human", 4)
         self.addimage_planet("Other", 5)
-        self.addimage_planet("Tourist", 6)
+        self.addimage_planet("Personal", 6)
+        self.addimage_planet("Tourist", 7)
         
         # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
         self.frame.grid(row=gridrow, column=0)
@@ -467,7 +470,6 @@ class CodexTypes():
         # self.tooltip.grid_remove()
         self.systemlist.grid()
         self.planetlist.grid()
-        self.frame.grid()
         self.systemlist.grid_remove()
         self.planetlist.grid_remove()
         #self.frame.grid_remove()
@@ -497,7 +499,9 @@ class CodexTypes():
 
     # this seems horribly confused
     def refreshPOIData(self, event):
+    
         Debug.logger.debug(f"refreshPOIData {self.event}")
+        
         try:
             while not self.edsmq.empty():
                 # only expecting to go around once
@@ -575,100 +579,74 @@ class CodexTypes():
                         self.rings(b, body_code)
                         self.green_system(bodies)
                         if moon_moon_moon(b):
-                            self.merge_poi(
-                                "Tourist", "Moon Moon Moon", body_code)
+                            self.merge_poi("Tourist", "Moon Moon Moon", body_code)
 
                         # Terraforming
                         if b.get('terraformingState') == 'Candidate for terraforming':
                             if b.get('isLandable'):
                                 if not b.get("rings"):
-                                    self.merge_poi(
-                                        "Planets", "Landable Terraformable", body_code)
+                                    self.merge_poi("Planets", "Landable Terraformable", body_code)
                                 else:
-                                    self.merge_poi(
-                                        "Planets", "Landable Ringed Terraformable", body_code)
+                                    self.merge_poi("Planets", "Landable Ringed Terraformable", body_code)
                             else:
-                                self.merge_poi(
-                                    "Planets", "Terraformable", body_code)
+                                self.merge_poi("Planets", "Terraformable", body_code)
                         elif b.get('terraformingState') == 'Terraforming':
                             if b.get('isLandable'):
                                 if not b.get("rings"):
-                                    self.merge_poi(
-                                        "Planets", "Landable Terraforming", body_code)
+                                    self.merge_poi("Planets", "Landable Terraforming", body_code)
                                 else:
-                                    self.merge_poi(
-                                        "Planets", "Landable Ringed Terraforming", body_code)
+                                    self.merge_poi("Planets", "Landable Ringed Terraforming", body_code)
                             else:
-                                self.merge_poi(
-                                    "Planets", "Terraforming", body_code)
+                                self.merge_poi("Planets", "Terraforming", body_code)
                         else:
                             if b.get("rings") and b.get('isLandable'):
-                                self.merge_poi(
-                                    "Tourist", "Landable Ringed Body", body_code)
+                                self.merge_poi("Tourist", "Landable Ringed Body", body_code)
 
                         # Landable Volcanism
                         if b.get('type') == 'Planet' and b.get('volcanismType') and b.get(
-                                'volcanismType') != 'No volcanism' and b.get(
-                                'isLandable'):
-                            self.merge_poi("Geology", b.get('volcanismType').replace(
-                                " volcanism", ""), body_code)
+                                'volcanismType') != 'No volcanism' and b.get('isLandable'):
+                            self.merge_poi("Geology", b.get('volcanismType').replace(" volcanism", ""), body_code)
 
                         # water ammonia etc
                         if b.get('subType') in CodexTypes.body_types.keys():
 
-                            self.merge_poi("Planets", CodexTypes.body_types.get(
-                                b.get('subType')), body_code)
+                            self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')), body_code)
 
                         # fast orbits
                         if b.get('orbitalPeriod'):
                             if abs(float(b.get('orbitalPeriod'))) <= 0.042:
-                                self.merge_poi(
-                                    "Tourist", 'Fast Orbital Period', body_code)
+                                self.merge_poi("Tourist", 'Fast Orbital Period', body_code)
 
                         # Ringed ELW etc
                         if b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
-                                self.merge_poi("Tourist",
-                                               'Ringed {}'.format(
-                                                   CodexTypes.body_types.get(b.get('subType'))),
-                                               body_code)
+                                self.merge_poi("Tourist",'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))), body_code)
                             if b.get("parents") and b.get("parents")[0] and b.get("parents")[0].get("Planet"):
-                                self.merge_poi("Tourist",
-                                               '{} Moon'.format(
-                                                   CodexTypes.body_types.get(b.get('subType'))),
-                                               body_code)
-                        if b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get(
-                                'rotationalPeriodTidallyLocked'):
-                            self.merge_poi("Tourist", 'Tidal Locked Earthlike Word',
-                                           body_code)
+                                self.merge_poi("Tourist",'{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))), body_code)
+                        if b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                            self.merge_poi("Tourist", 'Tidal Locked Earthlike Word', body_code)
 
                         #    Landable high-g (>3g)
                         if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
-                            self.merge_poi(
-                                "Tourist", 'High Gravity', body_code)
+                            self.merge_poi("Tourist", 'High Gravity', body_code)
 
                         #    Landable large (>18000km radius)
                         if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
-                            self.merge_poi(
-                                "Tourist", 'Large Radius Landable', body_code)
+                            self.merge_poi("Tourist", 'Large Radius Landable', body_code)
 
                         #    Moons of moons
 
                         #    Tiny objects (<300km radius)
                         if b.get('type') == 'Planet' and b.get('radius') < 300 and b.get('isLandable'):
-                            self.merge_poi(
-                                "Tourist", 'Tiny Radius Landable', body_code)
+                            self.merge_poi("Tourist", 'Tiny Radius Landable', body_code)
 
                         #    Fast and non-locked rotation
-                        if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get(
-                                "rotationalPeriodTidallyLocked"):
-                            self.merge_poi(
-                                "Tourist", 'Fast unlocked rotation', body_code)
+                        if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get("rotationalPeriodTidallyLocked"):
+                            self.merge_poi("Tourist", 'Fast unlocked rotation', body_code)
 
                         #    High eccentricity
                         if float(b.get("orbitalEccentricity") or 0) > CodexTypes.eccentricity:
-                            self.merge_poi(
-                                "Tourist", 'Highly Eccentric Orbit', body_code)
+                            self.merge_poi("Tourist", 'Highly Eccentric Orbit', body_code)
 
             else:
                 CodexTypes.bodycount = 0
@@ -678,7 +656,7 @@ class CodexTypes():
                     name = cmdrdata["comment"]
                     latlon = "("+str(round(float(cmdrdata["latitude"]),2))+","+str(round(float(cmdrdata["longitude"]),2))+")"
                     body_code = c.replace(self.system, '')
-                    self.merge_poi("Other", name, body_code)
+                    self.merge_poi("Personal", name, body_code)
             
         except Exception as e:
             #line = sys.exc_info()[-1].tb_lineno
@@ -692,8 +670,9 @@ class CodexTypes():
     
     def refreshPlanetData(self, event):
         
+        Debug.logger.debug(f"refreshPlanetData {self.event}")
+        
         try:
-            Debug.logger.debug(f"refreshPlanetData {self.event}")
             while not self.planetq.empty():
                 r = self.planetq.get()
                 
@@ -724,8 +703,7 @@ class CodexTypes():
                 
                 self.ppoidata[r.get("hud_category")][r.get("english_name")].append([index, latlon])
             
-            
-            self.update_ppoi()
+            self.update_unknown_ppoi()
             
             while not self.edsm_stationq.empty():
                 # only expecting to go around once
@@ -751,11 +729,11 @@ class CodexTypes():
                     for cmdrdata in self.temp_cmdrdata[c]:
                         name = cmdrdata["comment"]
                         latlon = "("+str(round(float(cmdrdata["latitude"]),2))+","+str(round(float(cmdrdata["longitude"]),2))+")"
-                        if "Other" not in self.ppoidata:
-                            self.ppoidata["Other"] = {}
-                        if name not in self.ppoidata["Other"]:
-                            self.ppoidata["Other"][name] = []
-                        self.ppoidata["Other"][name].append([None, latlon])
+                        if "Personal" not in self.ppoidata:
+                            self.ppoidata["Personal"] = {}
+                        if name not in self.ppoidata["Personal"]:
+                            self.ppoidata["Personal"][name] = []
+                        self.ppoidata["Personal"][name].append([None, latlon])
             
         except Exception as e:
             #line = sys.exc_info()[-1].tb_lineno
@@ -766,7 +744,13 @@ class CodexTypes():
         
         self.visualisePlanetData()
     
-    def update_ppoi(self):
+    def update_unknown_ppoi(self):
+        """
+        get the maximum index in Geology and Biology category
+        and generate unknown for missing index
+        """
+        
+        Debug.logger.debug(f"update_unknown_ppoi")
         
         max_category = {}
         for category in self.ppoidata:
@@ -793,6 +777,12 @@ class CodexTypes():
                     self.ppoidata[category]["Unknown"].append(["#"+str(i), None])
     
     def remove_ppoi(self, hud_category, index):
+        """
+        remove the index in the hud_category
+        and add it in the unknown list for this hud_category
+        """
+        
+        Debug.logger.debug(f"remove_ppoi {hud_category} {index}")
         
         find_i = False
         for type in self.ppoidata[hud_category]:
@@ -810,6 +800,12 @@ class CodexTypes():
             self.ppoidata[hud_category]["Unknown"].append(["#"+str(index), None])
     
     def add_ppoi(self, hud_category, type, index, lat, lon):
+        """
+        add new index
+        check if it exist in the unknown list and remove it
+        """
+        
+        Debug.logger.debug(f"add_ppoi {hud_category} {type} {index} {lat} {lon}")
         
         if hud_category not in self.ppoidata:
             self.ppoidata[hud_category] = {}
@@ -818,9 +814,13 @@ class CodexTypes():
         if type not in self.ppoidata[hud_category]:
             self.ppoidata[hud_category][type] = []
         
-        if index > len(self.ppoidata[hud_category]["Unknown"])+len(self.ppoidata[hud_category][type]):
+        total_index = 0
+        for t in self.ppoidata[hud_category]:
+            total_index += len(self.ppoidata[hud_category][t])
+        
+        if index > total_index:
             self.ppoidata[hud_category][type].append(["#"+str(index), "("+str(lat)+","+str(lon)+")"])
-            self.update_ppoi()
+            self.update_unknown_ppoi()
         else:
             find_i = False
             for i in range(len(self.ppoidata[hud_category]["Unknown"])):
@@ -834,150 +834,160 @@ class CodexTypes():
                 self.ppoidata[hud_category][type].append(["#"+str(index), "("+str(lat)+","+str(lon)+")"])
     
     def getPOIdata(self, system, cmdr):
-
-        Debug.logger.debug(f"Getting POI data in thread {self.event} - system = {system}")
-        CodexTypes.waiting = True
-        # debug("CodexTypes.waiting = True")
-        
-        # first we will clear the queues
-        self.edsmq.clear()
-        self.poiq.clear()
-        self.cmdrq.clear()
-        try:
-            url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
-                quote_plus(system.encode('utf8')))
-
-            # debug(url)
-            # debug("request {}:  Active Threads {}".format(
-            #    url, threading.activeCount()))
-            r = requests.get(url, timeout=30)
-            # debug("request complete")
-            r.encoding = 'utf-8'
-            if r.status_code == requests.codes.ok:
-                # debug("got POI Data")
-                temp_poidata = r.json()
-
-            # push the data ont a queue
-            for v in temp_poidata:
-                self.poiq.put(v)
-        except:
-            debug("Error getting POI data")
-
-        try:
-            url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
-                quote_plus(system.encode('utf8')))
-
-            # debug("request {}:  Active Threads {}".format(
-            #    url, threading.activeCount()))
-
-            r = requests.get(url, timeout=30)
-            # debug("request complete")
-            r.encoding = 'utf-8'
-            if r.status_code == requests.codes.ok:
-                # debug("got EDSM Data")
-                temp_edsmdata = r.json()
-                # push edsm data only a queue
-                self.edsmq.put(temp_edsmdata)
-            else:
-                Debug.logger.debug("EDSM Failed")
-                Debug.logger.error("EDSM Failed")
-        except:
-            Debug.logger.debug("Error getting EDSM data")
-        
-        try:
-            url = "https://us-central1-canonn-api-236217.cloudfunctions.net/get_cmdr_status?cmdr={}".format(quote_plus(cmdr.encode('utf8')))
-            # debug(url)
-            # debug("request {}:  Active Threads {}".format(
-            #    url, threading.activeCount()))
-            r = requests.get(url, timeout=30)
-            # debug("request complete")
-            r.encoding = 'utf-8'
-            if r.status_code == requests.codes.ok:
-                # debug("got planet Data")
-                temp_cmdrdata = r.json()
-
-            # push the data ont a queue
-            for v in temp_cmdrdata:
-                if (v["system"] == self.system):
-                    self.cmdrq.put(v)
-        except:
-            debug("Error getting cmdr data")
-        
-        CodexTypes.waiting = False
-        Debug.logger.debug("Triggering Event")
         
         if not config.shutting_down:
+        
+            Debug.logger.debug(f"Getting POI data in thread {self.event} - system = {system}")
+            self.waitingPOI = True
+            # debug("CodexTypes.waiting = True")
+            
+            # first we will clear the queues
+            self.edsmq.clear()
+            self.poiq.clear()
+            self.cmdrq.clear()
+            
+            try:
+                url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
+                    quote_plus(system.encode('utf8')))
+
+                # debug(url)
+                # debug("request {}:  Active Threads {}".format(
+                #    url, threading.activeCount()))
+                r = requests.get(url, timeout=30)
+                # debug("request complete")
+                r.encoding = 'utf-8'
+                if r.status_code == requests.codes.ok:
+                    # debug("got POI Data")
+                    temp_poidata = r.json()
+
+                # push the data ont a queue
+                for v in temp_poidata:
+                    self.poiq.put(v)
+            except:
+                debug("Error getting POI data")
+
+            try:
+                url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
+                    quote_plus(system.encode('utf8')))
+
+                # debug("request {}:  Active Threads {}".format(
+                #    url, threading.activeCount()))
+
+                r = requests.get(url, timeout=30)
+                # debug("request complete")
+                r.encoding = 'utf-8'
+                if r.status_code == requests.codes.ok:
+                    # debug("got EDSM Data")
+                    temp_edsmdata = r.json()
+                    # push edsm data only a queue
+                    self.edsmq.put(temp_edsmdata)
+                else:
+                    Debug.logger.debug("EDSM Failed")
+                    Debug.logger.error("EDSM Failed")
+            except:
+                Debug.logger.debug("Error getting EDSM data")
+            
+            try:
+                url = "https://us-central1-canonn-api-236217.cloudfunctions.net/get_cmdr_status?cmdr={}".format(quote_plus(cmdr.encode('utf8')))
+                # debug(url)
+                # debug("request {}:  Active Threads {}".format(
+                #    url, threading.activeCount()))
+                r = requests.get(url, timeout=30)
+                # debug("request complete")
+                r.encoding = 'utf-8'
+                if r.status_code == requests.codes.ok:
+                    # debug("got planet Data")
+                    temp_cmdrdata = r.json()
+
+                # push the data ont a queue
+                for v in temp_cmdrdata:
+                    if (v["system"] == self.system):
+                        self.cmdrq.put(v)
+            except:
+                debug("Error getting cmdr data")
+            
+            self.waitingPOI = False
+            Debug.logger.debug("Triggering Event")
+        
             debug("getPOIdata frame.event_generate <<refreshPOIData>>")
             self.frame.event_generate('<<refreshPOIData>>', when='head')
-            self.frame.event_generate('<<refreshPlanetData>>', when='head')
         
-        Debug.logger.debug("Finished getting POI data in thread")
+            Debug.logger.debug("Finished getting POI data in thread")
+        
+        else:
+            
+            Debug.logger.debug("get POI data in shut sown")
         
     def getPlanetData(self, system, body, cmdr):
-
-        Debug.logger.debug(f"Getting planet data in thread {self.event} - system = {system} - body = {body} - cmdr = {cmdr}")
-        #CodexTypes.waiting = True
-        
-        # first we will clear the queues
-        self.planetq.clear()
-        self.edsm_stationq.clear()
-        
-        try:
-            #url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}&cmdr={}".format(
-            #    quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')), "test")
-            #url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}&cmdr={}".format(
-            #    quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')), quote_plus(cmdr.encode('utf8')))
-            url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}".format(
-                quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')))
-            # debug(url)
-            # debug("request {}:  Active Threads {}".format(
-            #    url, threading.activeCount()))
-            r = requests.get(url, timeout=30)
-            # debug("request complete")
-            r.encoding = 'utf-8'
-            if r.status_code == requests.codes.ok:
-                # debug("got planet Data")
-                temp_planetdata = r.json()
-
-            # push the data ont a queue
-            for v in temp_planetdata:
-                if (v["hud_category"] == "Geology") or (v["hud_category"] == "Biology"):
-                    if v["index_id"] is not None:
-                        self.planetq.put(v)
-                else:
-                    self.planetq.put(v)
-        except:
-            debug("Error getting planet data")
-        
-        try:
-            url = "https://www.edsm.net/api-system-v1/stations?systemName={}".format(
-                quote_plus(system.encode('utf8')))
-
-            # debug("request {}:  Active Threads {}".format(
-            #    url, threading.activeCount()))
-
-            r = requests.get(url, timeout=30)
-            # debug("request complete")
-            r.encoding = 'utf-8'
-            if r.status_code == requests.codes.ok:
-                # debug("got EDSM Data")
-                temp_edsmdata = r.json()
-                # push edsm data only a queue
-                self.edsm_stationq.put(temp_edsmdata)
-            else:
-                Debug.logger.debug("EDSM Failed")
-                Debug.logger.error("EDSM Failed")
-        except:
-            Debug.logger.debug("Error getting EDSM data")
-        
-        #CodexTypes.waiting = False
-        Debug.logger.debug("Triggering Event")
         
         if not config.shutting_down:
+        
+            Debug.logger.debug(f"Getting planet data in thread {self.event} - system = {system} - body = {body} - cmdr = {cmdr}")
+            self.waitingPlanet = True
+            
+            # first we will clear the queues
+            self.planetq.clear()
+            self.edsm_stationq.clear()
+            
+            try:
+                #url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}&cmdr={}".format(
+                #    quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')), "test")
+                #url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}&cmdr={}".format(
+                #    quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')), quote_plus(cmdr.encode('utf8')))
+                url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}".format(
+                    quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')))
+                # debug(url)
+                # debug("request {}:  Active Threads {}".format(
+                #    url, threading.activeCount()))
+                r = requests.get(url, timeout=30)
+                # debug("request complete")
+                r.encoding = 'utf-8'
+                if r.status_code == requests.codes.ok:
+                    # debug("got planet Data")
+                    temp_planetdata = r.json()
+
+                # push the data ont a queue
+                for v in temp_planetdata:
+                    if (v["hud_category"] == "Geology") or (v["hud_category"] == "Biology"):
+                        if v["index_id"] is not None:
+                            self.planetq.put(v)
+                    else:
+                        self.planetq.put(v)
+            except:
+                debug("Error getting planet data")
+            
+            try:
+                url = "https://www.edsm.net/api-system-v1/stations?systemName={}".format(
+                    quote_plus(system.encode('utf8')))
+
+                # debug("request {}:  Active Threads {}".format(
+                #    url, threading.activeCount()))
+
+                r = requests.get(url, timeout=30)
+                # debug("request complete")
+                r.encoding = 'utf-8'
+                if r.status_code == requests.codes.ok:
+                    # debug("got EDSM Data")
+                    temp_edsmdata = r.json()
+                    # push edsm data only a queue
+                    self.edsm_stationq.put(temp_edsmdata)
+                else:
+                    Debug.logger.debug("EDSM Failed")
+                    Debug.logger.error("EDSM Failed")
+            except:
+                Debug.logger.debug("Error getting EDSM data")
+            
+            self.waitingPlanet = False
+            Debug.logger.debug("Triggering Event")
+        
             debug("getPlanetData frame.event_generate <<refreshPlanetData>>")
             self.frame.event_generate('<<refreshPlanetData>>', when='head')
         
-        Debug.logger.debug("Finished getting planet data in thread")
+            Debug.logger.debug("Finished getting planet data in thread")
+            
+        else:
+            
+            Debug.logger.debug("get planet data in shut sown")
     
     def cleanup_poidata(self):
         # if we have bio or geo then remove Bio Bio and Geo Geo
@@ -1038,7 +1048,7 @@ class CodexTypes():
         self.systemcol1 = []
         self.systemcol2 = []
         
-        unscanned = nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0)
+        unscanned = nvl(self.fsscount, 0) > nvl(self.bodycount, 0)
 
         """ if not (threading.current_thread() is threading.main_thread()):
             debug("We are not in the main thread")
@@ -1048,15 +1058,15 @@ class CodexTypes():
         # we have set an event type that can override waiting
         if self.event:
             Debug.logger.debug(f"Allowed event {self.event}")
-            CodexTypes.waiting = False
+            self.waitingPOI = False
             self.allowed = True
             self.event = None
         else:
             Debug.logger.debug(f"Not allowed event")
 
         # we may want to try again if the data hasn't been fetched yet
-        if CodexTypes.waiting or not self.allowed:
-            Debug.logger.debug(f"Still waiting")
+        if self.waitingPOI or not self.allowed:
+            Debug.logger.debug(f"Still waiting for POI data")
         else:
             self.set_image("Geology", False)
             self.set_image("Cloud", False)
@@ -1068,6 +1078,7 @@ class CodexTypes():
             self.set_image("Ring", False)
             self.set_image("None", False)
             self.set_image("Other", False)
+            self.set_image("Personal", False)
             self.set_image("Planets", False)
             self.set_image("Tourist", False)
             self.set_image("Jumponium", False)
@@ -1075,14 +1086,14 @@ class CodexTypes():
             
             Debug.logger.debug(f"visualise POI Data")
             
-            if self.poidata or unscanned:
+            #if self.poidata or unscanned:
 
-                self.frame.grid()
-                self.visible()
-                self.cleanup_poidata()
+            self.frame.grid()
+                #self.visible()
+                #self.cleanup_poidata()
 
-                for r in self.poidata:
-                    self.set_image(r.get("hud_category"), True)
+            for r in self.poidata:
+                self.set_image(r.get("hud_category"), True)
             #else:
             #    self.frame.grid()
             #    self.frame.grid_remove()
@@ -1098,6 +1109,8 @@ class CodexTypes():
                 if poi.get("hud_category") not in category_list:
                     category_list.append(poi.get("hud_category"))
             
+            prev_subcategory = "Others"
+            isSubcategory=""
             for category in category_list:
                 if category in self.lock:
                     continue
@@ -1111,17 +1124,26 @@ class CodexTypes():
                 for poi in self.poidata:
                     if poi.get("hud_category") == category:
                         # add a new label if it dont exist
-                            self.systemcol1.append(tk.Label(self.systemlist, text="   "+poi.get("english_name")))
+                            if "$" in poi.get("english_name"):
+                                subcategory = poi.get("english_name").split(":")[0][1:]
+                                name = poi.get("english_name").split(":")[1]
+                            else:
+                                subcategory = "Others"
+                                name = poi.get("english_name")
+                                
+                            if subcategory != prev_subcategory:
+                                isSubcategory="   "
+                                prev_subcategory = subcategory
+                                self.systemcol1.append(tk.Label(self.systemlist, text="   "+subcategory))
+                                self.systemcol2.append(tk.Label(self.systemlist, text=""))
+                                self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
+                                self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
+                                
+                            self.systemcol1.append(tk.Label(self.systemlist, text="   "+isSubcategory+name))
                             self.systemcol2.append(tk.Label(self.systemlist, text=poi.get("body")))
                             self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
                             self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
 
-            #if poicount == 0:
-            #    self.systemcol1[poicount]["text"] = CodexTypes.tooltips.get(type)
-            #    self.systemcol1[poicount].grid(row=poicount, column=0, columnspan=2)
-            #    self.systemcol2[poicount].grid_remove()
-
-            # self.tooltip.grid(sticky="NSEW")
             self.systemlist.grid(sticky="NSEW")
 
             # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
@@ -1147,6 +1169,7 @@ class CodexTypes():
         self.set_image("Guardian_planet", False)
         self.set_image("Human_planet", False)
         self.set_image("Other_planet", False)
+        self.set_image("Personal_planet", False)
         self.set_image("Tourist_planet", False)
         
         for category in self.ppoidata:
@@ -1158,11 +1181,6 @@ class CodexTypes():
             #self.planetcol1[-1].config(font=(self.planetcol1[-1]['font'], 12))
             self.planetcol1[-1].grid(row=0, column=0, sticky="NSEW")
         
-        #self.planetcol1.append(tk.Label(self.planetlist, text=body))
-        #self.planetcol2.append(tk.Label(self.planetlist, text=""))
-        
-        
-        
         label = []
         for category in self.ppoidata:
             if category in self.lockPlanet:
@@ -1171,8 +1189,6 @@ class CodexTypes():
             self.planetcol2.append(tk.Label(self.planetlist, text=""))
             self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
             self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
-            
-            #self.ppoidata[category] = sorted(self.ppoidata[category])
             
             for type in self.ppoidata[category]:
                 if len(self.ppoidata[category][type])==0:
@@ -1202,28 +1218,10 @@ class CodexTypes():
                         #else:
                         #    ttp = CreateToolTip(label[-1], poi[1])
                         i+=1
-                    #if (poi[0] is not None) or (poi[1] is not None):
-                    #    label.append(tk.Label(self.planetcol2[-1], text=","))
-                    #    label[-1].grid(row=0, column=i, padx=0, ipadx=0, sticky="W")
-                    #    i+=1
-                    #self.planetcol2[-1]["text"] = self.planetcol2[-1]["text"] + "  " + poi[0] + " " + poi[1]
-
                 self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
                 self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
-        
-        # remember to grid them
-        #self.planetcol1[poicount].grid(row=poicount, column=0, columnspan=1, sticky="NSEW")
-        #self.planetcol2[poicount].grid(row=poicount, column=1, sticky="NSEW")
-        
-        #if poicount == 0:
-        #    self.planetcol1[poicount]["text"] = CodexTypes.tooltips.get(type)
-        #    self.planetcol1[poicount].grid(row=poicount, column=0, columnspan=2)
-        #    self.planetcol2[poicount].grid_remove()
-        
-        # self.tooltip.grid(sticky="NSEW")
+                
         self.planetlist.grid(sticky="NSEW")
-
-        # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
     
     def activateDestination(self, latlon):
         lat = float(latlon.split(",")[0][1:])
@@ -1314,20 +1312,21 @@ class CodexTypes():
             if signal.get("english_name") == english_name and signal.get("hud_category") == hud_category:
                 # some signals don't have a body so they are already found and we can skip
                 if signal.get("body"):
-                    # we might be be getting a list
-                    pbodies = body.split(',')
+                
                     # create an array from signals
                     sbodies = signal.get("body").split(',')
-
-                    # join the two lists
-                    sbodies.extend(pbodies)
-
+                    
+                    if body is not None:
+                        # we might be be getting a list
+                        pbodies = body.split(',')
+                        # join the two lists
+                        sbodies.extend(pbodies)
+                    
                     # sort and make unique
                     bodies = sorted(list(set(list(map(str.strip, sbodies)))))
                     if self.system:
                         for index, value in enumerate(bodies):
-                            bodies[index] = value.replace(
-                                self.system, '').strip()
+                            bodies[index] = value.replace(self.system, '').strip()
 
                     # convert back to a string
                     tmpb = ", ".join(bodies)
@@ -1367,25 +1366,21 @@ class CodexTypes():
         body_code = body.get("name").replace(self.system, '')
         if body.get("parents"):
             parent = body.get("parents")[0]
-            if parent.get("Planet") and bodies.get(parent.get("Planet")) and bodies.get(parent.get("Planet")).get(
-                    "rings"):
+            if parent.get("Planet") and bodies.get(parent.get("Planet")) and bodies.get(parent.get("Planet")).get("rings"):
 
                 # If the parent body has a ring
                 for ring in bodies.get(parent.get("Planet")).get("rings"):
                     if 'Belt' not in ring.get("name"):
-                        density = get_density(ring.get("mass"), ring.get(
-                            "innerRadius"), ring.get("outerRadius"))
+                        density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
 
                         r1 = float(ring.get("outerRadius")) * 1000  # m
                         # convert au to km
                         r2 = float(body.get("semiMajorAxis")) * 149597870691
-                        r3 = float(body.get("radius")
-                                   or body.get("solarRadius")) * 1000
+                        r3 = float(body.get("radius") or body.get("solarRadius")) * 1000
                         # and the orbit of the body is close to the outer radius
 
                         if r2 - r3 < r1 + 15000000:
-                            self.merge_poi(
-                                "Tourist", 'Shepherd Moon', body_code)
+                            self.merge_poi("Tourist", 'Shepherd Moon', body_code)
 
             # gah i need to refector this to avoid duplication
             if parent.get("Star") and bodies.get(parent.get("Star")) and bodies.get(parent.get("Star")).get("rings"):
@@ -1393,19 +1388,16 @@ class CodexTypes():
                 # If the parent body has a ring
                 for ring in bodies.get(parent.get("Star")).get("rings"):
                     if 'Belt' not in ring.get("name"):
-                        density = get_density(ring.get("mass"), ring.get(
-                            "innerRadius"), ring.get("outerRadius"))
+                        density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
 
                         r1 = float(ring.get("outerRadius")) * 1000  # m
                         # convert au to km
                         r2 = float(body.get("semiMajorAxis")) * 149597870691
-                        r3 = float(body.get("radius")
-                                   or body.get("solarRadius")) * 1000
+                        r3 = float(body.get("radius") or body.get("solarRadius")) * 1000
                         # and the orbit of the body is close to the outer radius
 
                         if r2 - r3 < r1 + 15000000:
-                            self.merge_poi(
-                                "Tourist", 'Shepherd Planet', body_code)
+                            self.merge_poi("Tourist", 'Shepherd Planet', body_code)
 
     def radius_ly(self, body):
         if body.get("type") == 'Star' and body.get("solarRadius"):
@@ -1423,28 +1415,20 @@ class CodexTypes():
             valid_body = (p2 and valid_body)
             valid_body = (p1 and valid_body)
             valid_body = (body.get("semiMajorAxis") is not None and valid_body)
-            valid_body = (sibling.get("semiMajorAxis")
-                          is not None and valid_body)
-            valid_body = (body.get("orbitalEccentricity")
-                          is not None and valid_body)
-            valid_body = (sibling.get("orbitalEccentricity")
-                          is not None and valid_body)
+            valid_body = (sibling.get("semiMajorAxis") is not None and valid_body)
+            valid_body = (body.get("orbitalEccentricity") is not None and valid_body)
+            valid_body = (sibling.get("orbitalEccentricity") is not None and valid_body)
             valid_body = (body.get("orbitalPeriod") is not None and valid_body)
-            valid_body = (sibling.get("orbitalPeriod")
-                          is not None and valid_body)
+            valid_body = (sibling.get("orbitalPeriod") is not None and valid_body)
             not_self = (body.get("bodyId") != sibling.get("bodyId"))
             valid_body = (not_self and valid_body)
 
             # if we share teh same parent and not the same body
             if valid_body and str(p1[0]) == str(p2[0]):
-                a1 = self.apoapsis("semiMajorAxis", body.get(
-                    "semiMajorAxis"), body.get("orbitalEccentricity"))
-                a2 = self.apoapsis("semiMajorAxis", sibling.get(
-                    "semiMajorAxis"), sibling.get("orbitalEccentricity"))
-                p1 = self.periapsis("semiMajorAxis", body.get(
-                    "semiMajorAxis"), body.get("orbitalEccentricity"))
-                p2 = self.periapsis("semiMajorAxis", sibling.get(
-                    "semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                a1 = self.apoapsis("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
+                a2 = self.apoapsis("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                p1 = self.periapsis("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
+                p2 = self.periapsis("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
                 r1 = sibling.get("radius")
                 r2 = body.get("radius")
 
@@ -1483,18 +1467,15 @@ class CodexTypes():
                 if body and body.get("semiMajorAxis") is not None:
                     # light seconds
 
-                    d1 = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"),
-                                       candidate.get("orbitalEccentricity"))
-                    d2 = self.apoapsis("semiMajorAxis", body.get("semiMajorAxis"),
-                                       body.get("orbitalEccentricity"))
+                    d1 = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"), candidate.get("orbitalEccentricity"))
+                    d2 = self.apoapsis("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
                     # distance = (candidate.get("semiMajorAxis") + body.get("semiMajorAxis")) * 499.005
                     distance = d1 + d2
 
             if not isBinary(candidate):
 
                 body = bodies.get(get_parent(candidate))
-                distance = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"),
-                                         candidate.get("orbitalEccentricity"))
+                distance = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"), candidate.get("orbitalEccentricity"))
 
             if candidate and body:
                 r1 = self.radius_ly(body)
@@ -1506,8 +1487,7 @@ class CodexTypes():
                 if distance is not None and distance < comparitor:
 
                     if candidate.get("isLandable"):
-                        self.merge_poi(
-                            "Tourist", 'Close Orbit Landable', body_code)
+                        self.merge_poi("Tourist", 'Close Orbit Landable', body_code)
                     else:
                         self.merge_poi("Tourist", 'Close Orbit', body_code)
 
@@ -1525,30 +1505,23 @@ class CodexTypes():
 
             if candidate.get("semiMajorAxis"):
 
-                apehelion = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"),
-                                          candidate.get("orbitalEccentricity") or 0)
-                ring_span = get_outer_radius(
-                    candidate) + get_outer_radius(parent)
+                apehelion = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"), candidate.get("orbitalEccentricity") or 0)
+                ring_span = get_outer_radius(candidate) + get_outer_radius(parent)
 
                 if binary:
-                    distance = ((candidate.get("semiMajorAxis") +
-                                 parent.get("semiMajorAxis")) * 499.005) - ring_span
+                    distance = ((candidate.get("semiMajorAxis") + parent.get("semiMajorAxis")) * 499.005) - ring_span
                 else:
                     distance = apehelion - ring_span
 
                 if distance < 2 and binary:
                     parent_code = parent.get("name").replace(self.system, '')
-                    self.merge_poi(
-                        "Tourist", "Close Ring Proximity", body_code)
-                    self.merge_poi(
-                        "Tourist", "Close Ring Proximity", parent_code)
+                    self.merge_poi("Tourist", "Close Ring Proximity", body_code)
+                    self.merge_poi("Tourist", "Close Ring Proximity", parent_code)
 
                 if distance < 2 and not binary:
                     parent_code = parent.get("name").replace(self.system, '')
-                    self.merge_poi(
-                        "Tourist", "Close Ring Proximity", body_code)
-                    self.merge_poi(
-                        "Tourist", "Close Ring Proximity", parent_code)
+                    self.merge_poi("Tourist", "Close Ring Proximity", body_code)
+                    self.merge_poi("Tourist", "Close Ring Proximity", parent_code)
 
     def trojan(self, candidate, bodies):
         # https://forums.frontier.co.uk/threads/hunt-for-trojans.369380/page-7
@@ -1560,18 +1533,12 @@ class CodexTypes():
                 if body.get("argOfPeriapsis") and candidate.get("argOfPeriapsis"):
                     not_self = (body.get("bodyId") != candidate.get("bodyId"))
                     sibling = (get_parent(body) == get_parent(candidate))
-                    axis_match = (body.get("semiMajorAxis") ==
-                                  candidate.get("semiMajorAxis"))
-                    eccentricity_match = (
-                        body.get("orbitalEccentricity") == candidate.get("orbitalEccentricity"))
-                    inclination_match = (
-                        body.get("orbitalInclination") == candidate.get("orbitalInclination"))
-                    period_match = (body.get("orbitalPeriod") ==
-                                    candidate.get("orbitalPeriod"))
-                    non_binary = (
-                        180 != abs(float(body.get("argOfPeriapsis")) - float(candidate.get("argOfPeriapsis"))))
-                    attribute_match = (
-                        axis_match and eccentricity_match and inclination_match and period_match)
+                    axis_match = (body.get("semiMajorAxis") == candidate.get("semiMajorAxis"))
+                    eccentricity_match = (body.get("orbitalEccentricity") == candidate.get("orbitalEccentricity"))
+                    inclination_match = (body.get("orbitalInclination") == candidate.get("orbitalInclination"))
+                    period_match = (body.get("orbitalPeriod") == candidate.get("orbitalPeriod"))
+                    non_binary = (180 != abs(float(body.get("argOfPeriapsis")) - float(candidate.get("argOfPeriapsis"))))
+                    attribute_match = (axis_match and eccentricity_match and inclination_match and period_match)
 
                     if candidate.get("rings"):
                         ringo = "Ringed "
@@ -1580,11 +1547,9 @@ class CodexTypes():
 
                     if not_self and sibling and attribute_match and non_binary:
                         if candidate.get('subType') in CodexTypes.body_types.keys():
-                            self.merge_poi("Tourist", "{}Trojan {}".format(ringo, CodexTypes.body_types.get(
-                                candidate.get('subType'))), body_code)
+                            self.merge_poi("Tourist", "{}Trojan {}".format(ringo, CodexTypes.body_types.get(candidate.get('subType'))), body_code)
                         else:
-                            self.merge_poi("Tourist", "{}Trojan {}".format(
-                                ringo, candidate.get("type")), body_code)
+                            self.merge_poi("Tourist", "{}Trojan {}".format(ringo, candidate.get("type")), body_code)
 
     def ringed_star(self, candidate):
         hasRings = False
@@ -1607,8 +1572,7 @@ class CodexTypes():
     def remove_jumponium(self):
         for entry in self.poidata:
             if entry.get("hud_category") in ('Jumponium', 'GreenSystem'):
-                self.remove_poi(entry.get("hud_category"), entry.get(
-                    "english_name"), entry.get("body"))
+                self.remove_poi(entry.get("hud_category"), entry.get("english_name"), entry.get("body"))
 
     def green_system(self, bodies):
         mats = [
@@ -1651,8 +1615,7 @@ class CodexTypes():
         standard = False
         premium = False
 
-        volcanism = (body.get('volcanismType') and body.get(
-            'volcanismType') != 'No volcanism')
+        volcanism = (body.get('volcanismType') and body.get('volcanismType') != 'No volcanism')
 
         biology = self.has_bio(body)
 
@@ -1680,13 +1643,10 @@ class CodexTypes():
                 else:
                     quantity = 0
                 if materials.get(target) and int(quantity) < 150:
-                    self.merge_poi(
-                        jclass, f"{target}{modifier}", body_code)
+                    self.merge_poi(jclass, f"{target}{modifier}", body_code)
 
-            basic = (materials.get("Carbon") and materials.get(
-                "Vanadium") and materials.get("Germanium"))
-            standard = (basic and materials.get("Cadmium")
-                        and materials.get("Niobium"))
+            basic = (materials.get("Carbon") and materials.get("Vanadium") and materials.get("Germanium"))
+            standard = (basic and materials.get("Cadmium") and materials.get("Niobium"))
             premium = (materials.get("Carbon") and materials.get("Germanium") and materials.get(
                 "Arsenic") and materials.get("Niobium") and materials.get("Yttrium") and materials.get("Polonium"))
         if premium:
@@ -1703,35 +1663,25 @@ class CodexTypes():
         if candidate.get("rings"):
             for ring in candidate.get("rings"):
                 if ring.get("name")[-4:] == "Ring":
-                    if candidate.get("reserveLevel") and candidate.get("reserveLevel") in (
-                            "Pristine", "PristineResources"):
-                        self.merge_poi("Ring", "Pristine {} Rings".format(
-                            ring.get("type")), body_code)
+                    if candidate.get("reserveLevel") and candidate.get("reserveLevel") in ("Pristine", "PristineResources"):
+                        self.merge_poi("Ring", "Pristine {} Rings".format(ring.get("type")), body_code)
                     else:
-                        self.merge_poi("Ring", "{} Rings".format(
-                            ring.get("type")), body_code)
-                area = get_area(ring.get("innerRadius"),
-                                ring.get("outerRadius"))
-                density = get_density(ring.get("mass"), ring.get(
-                    "innerRadius"), ring.get("outerRadius"))
+                        self.merge_poi("Ring", "{} Rings".format(ring.get("type")), body_code)
+                area = get_area(ring.get("innerRadius"), ring.get("outerRadius"))
+                density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
 
                 if "Ring" in ring.get("name").replace(self.system, ''):
-
                     if ring.get("outerRadius") > 1000000:
-                        self.merge_poi(
-                            "Tourist", "Large Radius Rings", body_code)
+                        self.merge_poi("Tourist", "Large Radius Rings", body_code)
                     elif ring.get("innerRadius") < (45935299.69736346 - (1 * 190463268.57872835)):
-                        self.merge_poi(
-                            "Tourist", "Small Radius Rings", body_code)
+                        self.merge_poi("Tourist", "Small Radius Rings", body_code)
                     # elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
                     #    self.merge_poi(
                     #        "Tourist", "Thin Rings", body_code)
                     elif density < 0.005:
-                        self.merge_poi(
-                            "Tourist", "Low Density Rings", body_code)
+                        self.merge_poi("Tourist", "Low Density Rings", body_code)
                     elif density > 1000:
-                        self.merge_poi(
-                            "Tourist", "High Density Rings", body_code)
+                        self.merge_poi("Tourist", "High Density Rings", body_code)
     
     def light_seconds(self, tag, value):
 
@@ -1813,8 +1763,7 @@ class CodexTypes():
                  "Count": count}]
         }
 
-        self.journal_entry(cmdr, None, system, None, signal,
-                           None, x, y, z, bodyname, None, None, client)
+        self.journal_entry(cmdr, None, system, None, signal, None, x, y, z, bodyname, None, None, client)
     
     def updatePlanetData(self, cmdr, is_beta, body, lat, lon):
         if body is None:
@@ -1861,6 +1810,7 @@ class CodexTypes():
             CodexTypes.bodycount = None
             self.bodies = None
             self.poidata = []
+            self.ppoidata = {}
             self.temp_cmdrdata = {}
             self.system = entry.get("StarSystem")
             Debug.logger.debug("Calling PoiTypes")
@@ -1914,7 +1864,12 @@ class CodexTypes():
             #    system = entry.get("StarSystem")
             self.bodies = None
             self.allowed = True
-            
+            CodexTypes.fsscount = None
+            CodexTypes.bodycount = None
+            self.poidata = []
+            self.ppoidata = {}
+            self.temp_cmdrdata = {}
+            self.planetlist_show = False
             Debug.logger.debug(f"setting allowed event {self.event}")
             poiTypes(system, cmdr, self.getPOIdata).start()
 
@@ -1956,28 +1911,60 @@ class CodexTypes():
         if entry.get("event") == "FSSSignalDiscovered":
             self.system = system
             dovis = False
-            if "NumberStation" in entry.get("SignalName"):
-                self.merge_poi("Human", "Unregistered Comms Beacon", bodycode)
-                dovis = True
-            elif "Megaship" in entry.get("SignalName"):
-                self.merge_poi("Human", "Megaship", bodycode)
-                dovis = True
+            # if "NumberStation" in entry.get("SignalName"):
+                # self.merge_poi("Human", "Unregistered Comms Beacon", None)
+                # dovis = True
+            # elif "Megaship" in entry.get("SignalName"):
+                # self.merge_poi("Human", entry.get("SignalName"), None)
+                # dovis = True
+            # elif ("Class" in entry.get("SignalName")) and ("Vessel" in entry.get("SignalName")):
+                # self.merge_poi("Human", entry.get("SignalName"), None)
+                # dovis = True
+            # elif "ListeningPost" in entry.get("SignalName"):
+                # self.merge_poi("Human", "Listening Post", None)
+                # dovis = True
+            # elif "CAPSHIP" in entry.get("SignalName"):
+                # self.merge_poi("Human", "Capital Ship", None)
+                # dovis = True
+            # elif "Generation Ship" in entry.get("SignalName"):
+                # self.merge_poi("Human", entry.get("SignalName"), None)
+                # dovis = True
+            if "MULTIPLAYER_SCENARIO" in entry.get("SignalName"):
+                dovis = False
+            elif "Warzone_PointRace" in entry.get("SignalName"):
+                dovis = False
             elif "ListeningPost" in entry.get("SignalName"):
-                self.merge_poi("Human", "Listening Post", bodycode)
+                self.merge_poi("Human", "Listening Post", None)
                 dovis = True
-            elif "CAPSHIP" in entry.get("SignalName"):
-                self.merge_poi("Human", "Capital Ship", bodycode)
-                dovis = True
-            elif "Generation Ship" in entry.get("SignalName"):
-                self.merge_poi("Human", entry.get("SignalName"), bodycode)
+            elif "Aftermath" in entry.get("SignalName"):
+                self.merge_poi("Human", "Distress Call", None)
                 dovis = True
             elif entry.get("IsStation"):
-                FleetCarrier = (entry.get("SignalName") and entry.get(
-                    "SignalName")[-4] == '-' and entry.get("SignalName")[-8] == ' ')
-                if FleetCarrier:
-                    self.merge_poi("Human", "Fleet Carrier", "")
+                if len(entry.get("SignalName"))>8:
+                    FleetCarrier = (entry.get("SignalName") and entry.get("SignalName")[-4] == '-' and entry.get("SignalName")[-8] == ' ')
+                elif len(entry.get("SignalName"))==7:
+                    FleetCarrier = (entry.get("SignalName") and entry.get("SignalName")[-4] == '-')
                 else:
-                    self.merge_poi("Human", "Station", "")
+                    FleetCarrier = False
+                if FleetCarrier:
+                    #self.merge_poi("Human", "$FleetCarrier:"+entry.get("SignalName"), None)
+                    self.merge_poi("Human", "Fleet Carrier", None)
+                else:
+                    #self.merge_poi("Human", "$Station:"+entry.get("SignalName"), None)
+                    self.merge_poi("Human", "Station", None)
+                dovis = True
+            else:
+                code = entry.get("SignalName").split(" ")[-1]
+                if len(code)>4:
+                    Megaship = (entry.get("SignalName") and code[3] == '-')
+                else:
+                    Megaship = False
+                if Megaship:
+                    #self.merge_poi("Human", "$Megaship:"+entry.get("SignalName"), None)
+                    self.merge_poi("Human", "Megaship", None)
+                else:
+                    #self.merge_poi("Human", "$Installation:"+entry.get("SignalName"), None)
+                    self.merge_poi("Human", "Installation", None)
                 dovis = True
             self.allowed = True
             # self.refreshPOIData(None)
@@ -2009,8 +1996,7 @@ class CodexTypes():
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
             self.system = system
-            CodexTypes.parentRadius = self.light_seconds(
-                "Radius", entry.get("Radius"))
+            CodexTypes.parentRadius = self.light_seconds("Radius", entry.get("Radius"))
             self.allowed = True
 
         if entry.get("event") == "SAASignalsFound":
@@ -2023,8 +2009,7 @@ class CodexTypes():
             for i, v in enumerate(signals):
                 found = False
                 type = v.get("Type")
-                english_name = type.replace("$SAA_SignalType_", "").replace(
-                    "ical;", "y").replace(";", '')
+                english_name = type.replace("$SAA_SignalType_", "").replace("ical;", "y").replace(";", '')
                 if " Ring" in bodyName:
                     cat = "Ring"
                 if "$SAA_SignalType_" in type:
