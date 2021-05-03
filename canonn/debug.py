@@ -69,8 +69,8 @@ class fakeSystem():
         values = message.split(" ")
         debug(values)
         debug(len(values))
-        if len(values) == 3:
-            cls.system = values[2]
+        if len(values) > 2:
+            cls.system = " ".join(values[2:])
         else:
             plug.show_error("fakejump no system to jump to")
             return
@@ -96,10 +96,10 @@ class fakeSystem():
         cls.wrapper(cls.cmdr, True, cls.system, None, None, None, None, event,
                     {"dummy": "dummy"}, cls.coords["x"], cls.coords["y"], cls.coords["z"], None,
                     None, None, cls.client)
-        cls.parent.after(30000, cls.FSDJump)
+        cls.parent.after(10000, cls.FSDJump)
 
     @ classmethod
-    def FSDJump(cls, system):
+    def FSDJump(cls):
         plug.show_error("FSDJump")
         now = datetime.now()
         event = {
@@ -118,7 +118,7 @@ class fakeSystem():
             "SystemSecurity": "$GAlAXY_MAP_INFO_state_anarchy;",
             "SystemSecurity_Localised": "Anarchy",
             "Population": 0,
-            "Body": f"{system} A",
+            "Body": f"{cls.system} A",
             "BodyID": 1,
             "BodyType": "Star",
             "JumpDist": 57.624,
