@@ -76,6 +76,8 @@ class fakeSystem():
             return
         try:
             cls.systemInfo = getSystemInfo(cls.system)
+            # use the name so we can get the correct case
+            cls.system = cls.systemInfo.get("name")
             cls.coords = cls.systemInfo.get("coords")
             cls.id64 = cls.systemInfo.get("id64")
         except:
@@ -137,6 +139,6 @@ def inject(cmdr, is_beta, system, station,
         sendText and "canonn fakejump" in entry.get("Message").lower())
 
     if bFakeJump:
-        message = entry.get("Message").lower()
+        message = entry.get("Message")
         fakeSystem.StartJump(cmdr, client, message,
                              journal_entry_wrapper, frame)
