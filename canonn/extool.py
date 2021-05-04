@@ -142,19 +142,20 @@ class BearingDestination():
                 self.updateBearing(round(brng, 2), round(dist, 3), heading)
             else:
                 self.state = 0
-                self.updateBearing("-", "-", "-")
+                #self.updateBearing("-", "-", "-")
+                self.updateBearing(None, None, None)
                 #UpdateRadius(self, self.system, my_body).start()
 
     def updateBearing(self, bearing=None, distance=None, heading=None):
-
+        debug({"heading": heading, "bearing": bearing})
         fg = "grey"
 
         if (bearing and heading):
-            if round(heading, 0) == round(bearing, 0):
+            if int(heading) == round(bearing, 0):
                 fg = "green"
             bupper = (round(bearing, 0)+1) % 360
             blower = (round(bearing, 0)-1) % 360
-            if round(heading, 0) in (bupper, blower):
+            if int(heading) in (bupper, blower):
                 fg = "orange"
 
         self.bearing_status["foreground"] = fg
