@@ -428,26 +428,50 @@ class CodexTypes():
         #    self,
         #   parent
         # )
-
-        self.frame = Frame(parent)
         self.parent = parent
-        self.frame.bind('<<refreshPOIData>>', self.refreshPOIData)
-        self.frame.bind('<<refreshPlanetData>>', self.refreshPlanetData)
         self.hidecodexbtn = tk.IntVar(value=config.getint("CanonnHideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
         self.humandetailedbtn = tk.IntVar(value=config.getint("CanonnHumanDetailed"))
         self.humandetailed = self.humandetailedbtn.get()
 
-        self.systemlist = Frame(self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
-        self.container = Frame(self.systemlist)
+        self.frame = Frame(parent)
+        self.frame.columnconfigure(0, weight=1)
+        self.frame.grid(row=gridrow, column=0, sticky="NSEW",columnspan=2)
+        self.frame.bind('<<refreshPOIData>>', self.refreshPOIData)
+        self.frame.bind('<<refreshPlanetData>>', self.refreshPlanetData)
         
-        self.planetlist = Frame(self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
-        self.container_planet = Frame(self.planetlist)
+        self.systempanel = Frame(self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
+        self.systempanel.grid(row=0, column=0, sticky="NSEW")
+        self.systempanel.grid_remove()
+        
+        self.systemtitle = Frame(self.systempanel)
+        self.systemtitle.grid(row=0, column=0, sticky="NSEW")
+        self.systemtitle_name = tk.Label(self.systemtitle, text="?")
+        self.systemtitle_name.grid(row=0, column=0, sticky="NSEW")
+        self.systemprogress = tk.Label(self.systemtitle, text="?")
+        self.systemprogress.grid(row=0, column=1, sticky="NSEW")
+        self.systemprogress.grid_remove()
+        
+        
+        self.planetpanel = Frame(self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
+        self.planetpanel.grid(row=1, column=0, sticky="NSEW")
+        self.planetpanel.grid_remove()
+        
+        self.planettitle = Frame(self.planetpanel)
+        self.planettitle.grid(row=0, column=0, sticky="NSEW")
+        self.planettitle_name = tk.Label(self.planettitle, text="?")
+        self.planettitle_name.grid(row=0, column=0, sticky="NSEW")
+        self.planetprogress = tk.Label(self.planettitle, text="?")
+        self.planetprogress.grid(row=0, column=1, sticky="NSEW")
+        self.planetprogress.grid_remove()
+        
         
         self.images = {}
         self.labels = {}
+        self.systemlist = {}
         self.systemcol1 = []
         self.systemcol2 = []
+        self.planetlist = {}
         self.planetcol1 = []
         self.planetcol2 = []
         self.poidata = []
@@ -462,48 +486,27 @@ class CodexTypes():
         self.temp_edsmdata = None
         self.temp_cmdrdata = {}
         
-        self.imagetypes = ("Geology", "Cloud", "Anomaly", "Thargoid",
-                           "Biology", "Guardian", "Human", "Ring",
-                           "None", "Other", "Personal", "Planets", 
-                           "Tourist", "Jumponium", "GreenSystem")
-        self.addimage("Geology", 0)
-        self.addimage("Cloud", 1)
-        self.addimage("Anomaly", 2)
-        self.addimage("Thargoid", 3)
-        self.addimage("Biology", 4)
-        self.addimage("Guardian", 5)
-        self.addimage("Human", 6)
-        self.addimage("Ring", 7)
-        self.addimage("None", 8)
-        self.addimage("Other", 9)
-        self.addimage("Personal", 10)
-        self.addimage("Planets", 11)
-        self.addimage("Tourist", 12)
-        self.addimage("Jumponium", 13)
-        self.addimage("GreenSystem", 14)
+        self.types = ("Geology", "Cloud", "Anomaly", "Thargoid",
+                      "Biology", "Guardian", "Human", "Ring",
+                      "None", "Other", "Personal", "Planets", 
+                      "Tourist", "Jumponium", "GreenSystem")
+        k=0
+        for category in self.types:
+            self.addimage(category, k)
+            self.systemlist[category] = Frame(self.systempanel)
+            self.systemlist[category].grid(row=k+1, column=0, sticky="W")
+            self.systemlist[category].grid_remove()
+            k+=1
         
-        self.addimage_planet("Geology", 0)
-        self.addimage_planet("Thargoid", 1)
-        self.addimage_planet("Biology", 2)
-        self.addimage_planet("Guardian", 3)
-        self.addimage_planet("Human", 4)
-        self.addimage_planet("Other", 5)
-        self.addimage_planet("Personal", 6)
-        self.addimage_planet("Tourist", 7)
-        
-        # self.grid(row = gridrow, column = 0, sticky="NSEW",columnspan=2)
-        self.frame.columnconfigure(0, weight=1)
-        self.frame.grid(row=gridrow, column=0, sticky="NSEW",columnspan=2)
-        self.container.columnconfigure(1, weight=1)
-        self.container.grid(row=0, column=1, sticky="W")
-        self.container_planet.columnconfigure(1, weight=1)
-        self.container_planet.grid(row=0, column=1, sticky="W")
-        # self.tooltip.grid_remove()
-        self.systemlist.grid()
-        self.planetlist.grid()
-        self.systemlist.grid_remove()
-        self.planetlist.grid_remove()
-        #self.frame.grid_remove()
+        self.typesPlanet = ("Geology", "Thargoid", "Biology", "Guardian", 
+                            "Human", "Other", "Personal", "Tourist")
+        k=0
+        for category in self.typesPlanet:
+            self.addimage_planet(category, k)
+            self.planetlist[category] = Frame(self.planetpanel)
+            self.planetlist[category].grid(row=k+1, column=0, sticky="W")
+            self.planetlist[category].grid_remove()
+            k+=1
         
         self.event = None
         self.system = None
@@ -514,16 +517,9 @@ class CodexTypes():
         self.allowed = False
         self.lock = []
         self.lockPlanet = []
-        for category in self.tooltips:
-            self.lock.append(category)
-            self.lockPlanet.append(category)
-        
-        self.progress = tk.Label(self.container, text="?")
-        self.progress.grid(row=0, column=0)
-        self.progress.grid_remove()
         
         self.planetlist_show = False
-        # self.progress.grid_remove()
+        # self.systemprogress.grid_remove()
 
     def setDestinationWidget(self, widget):
         self.dest_widget = widget
@@ -603,14 +599,14 @@ class CodexTypes():
                     if nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0):
                         # self.merge_poi("Planets", "Unexplored Bodies", "")
                         if CodexTypes.fsscount > 0:
-                            self.progress.grid()
-                            # self.progress["text"]="{}%".format(round((float(CodexTypes.bodycount)/float(CodexTypes.fsscount))*100,1))
-                            self.progress["text"] = "{}/{}".format(
+                            self.systemprogress.grid()
+                            # self.systemprogress["text"]="{}%".format(round((float(CodexTypes.bodycount)/float(CodexTypes.fsscount))*100,1))
+                            self.systemprogress["text"] = "{}/{}".format(
                                 CodexTypes.bodycount, CodexTypes.fsscount)
                     else:
 
-                        self.progress.grid()
-                        self.progress.grid_remove()
+                        self.systemprogress.grid()
+                        self.systemprogress.grid_remove()
 
                     for k in bodies.keys():
                         if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
@@ -798,7 +794,7 @@ class CodexTypes():
                         if "Human" not in self.ppoidata:
                             self.ppoidata["Human"] = {}
                         if station["name"] not in self.ppoidata["Human"]:
-                            self.ppoidata["Human"][station["name"]] = [None, latlon]
+                            self.ppoidata["Human"][station["name"]] = [[None, latlon]]
                         #self.ppoidata["Human"][station["name"]].append([None, latlon])
             
             for c in self.temp_cmdrdata:
@@ -1166,21 +1162,13 @@ class CodexTypes():
         #    self.frame.grid_remove()
 
         # need to initialise if not exists
-        if len(self.systemcol1) == 0:
-            self.systemcol1.append(tk.Label(self.systemlist, text=self.system))
-            self.systemcol2.append(tk.Label(self.systemlist, text=""))
-            self.systemcol1[-1].grid(row=0, column=0, sticky="NSEW")
+        self.systemtitle_name["text"] = self.system
         
-        category_list = []
-        for poi in self.poidata:
-            if poi.get("hud_category") not in category_list:
-                category_list.append(poi.get("hud_category"))
-        
-        for category in category_list:
-            if category in self.lock:
-                continue
-            self.systemcol1.append(tk.Label(self.systemlist, text=category+":"))
-            self.systemcol2.append(tk.Label(self.systemlist, text=""))
+        for category in self.types:
+            self.systemlist[category].grid_remove()
+            
+            self.systemcol1.append(tk.Label(self.systemlist[category], text=category+":"))
+            self.systemcol2.append(tk.Label(self.systemlist[category], text=""))
             self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
             self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
             
@@ -1205,18 +1193,20 @@ class CodexTypes():
                             if subcategory == "Others":
                                 if self.nfss != 0:
                                     n_fss = "WarZone ["+str(self.nfss)+"]"
-                            self.systemcol1.append(tk.Label(self.systemlist, text="   "+subcategory+":"))
-                            self.systemcol2.append(tk.Label(self.systemlist, text=n_fss))
+                            self.systemcol1.append(tk.Label(self.systemlist[category], text="   "+subcategory+":"))
+                            self.systemcol2.append(tk.Label(self.systemlist[category], text=n_fss))
                             self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
                             self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
                             
-                        self.systemcol1.append(tk.Label(self.systemlist, text="   "+isSubcategory+name))
-                        self.systemcol2.append(tk.Label(self.systemlist, text=poi.get("body")))
+                        self.systemcol1.append(tk.Label(self.systemlist[category], text="   "+isSubcategory+name))
+                        self.systemcol2.append(tk.Label(self.systemlist[category], text=poi.get("body")))
                         self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
                         self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
-
-        self.systemlist.grid(sticky="NSEW")
-
+            
+            if category in self.lock:
+                self.systemlist[category].grid()
+        
+        self.systempanel.grid()
         # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
         
     def cleanPlanetPanel(self):
@@ -1249,60 +1239,59 @@ class CodexTypes():
         self.set_image("Personal_planet", False)
         self.set_image("Tourist_planet", False)
         
-        print(self.ppoidata)
-        
         for category in self.ppoidata:
             self.set_image(category+"_planet", True)
         
-        if len(self.planetcol1) == 0:
-            self.planetcol1.append(tk.Label(self.planetlist, text=self.body))
-            self.planetcol2.append(tk.Label(self.planetlist, text=""))
-            #self.planetcol1[-1].config(font=(self.planetcol1[-1]['font'], 12))
-            self.planetcol1[-1].grid(row=0, column=0, sticky="NSEW")
+        self.planettitle_name["text"] = self.body
         
-        label = []
-        for category in self.ppoidata:
-            if category in self.lockPlanet:
-                continue
-            self.planetcol1.append(tk.Label(self.planetlist, text=category+":"))
-            self.planetcol2.append(tk.Label(self.planetlist, text=""))
+        for category in self.typesPlanet:
+            self.planetlist[category].grid_remove()
+            
+            self.planetcol1.append(tk.Label(self.planetlist[category], text=category+":"))
+            self.planetcol2.append(tk.Label(self.planetlist[category], text=""))
             self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
             self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
             
-            for type in self.ppoidata[category]:
-                if len(self.ppoidata[category][type])==0:
-                    continue
-                self.planetcol1.append(tk.Label(self.planetlist, text="   "+type))
-                self.planetcol2.append(tk.Frame(self.planetlist))
-                
-                self.ppoidata[category][type] = sorted(self.ppoidata[category][type], key=lambda poi: int(nvl(poi[0], "#0")[1:]))
-                
-                i=0
-                for poi in self.ppoidata[category][type]:
-                    col = (i % 10)+1
-                    row = int(i/10)
-                    if poi[0] is not None:
-                        label.append(tk.Label(self.planetcol2[-1], text=poi[0]))
-                        label[-1].grid(row=row, column=col, sticky="NSEW")
-                        if poi[1] is not None:
-                            label[-1]['fg'] = "blue"
-                            label[-1]['cursor'] = "hand2"
-                            label[-1].bind('<ButtonPress>', lambda event, latlon=poi[1] : self.activateDestination(latlon))
-                    if poi[1] is not None:
-                        if poi[0] is None:
-                            label.append(tk.Label(self.planetcol2[-1], text=poi[1]))
+            if category in self.ppoidata:
+                label = []
+                for type in self.ppoidata[category]:
+                    if len(self.ppoidata[category][type])==0:
+                        continue
+                    self.planetcol1.append(tk.Label(self.planetlist[category], text="   "+type))
+                    self.planetcol2.append(tk.Frame(self.planetlist[category]))
+                    
+                    self.ppoidata[category][type] = sorted(self.ppoidata[category][type], key=lambda poi: int(nvl(poi[0], "#0")[1:]))
+                    
+                    i=0
+                    for poi in self.ppoidata[category][type]:
+                        col = (i % 10)+1
+                        row = int(i/10)
+                        if poi[0] is not None:
+                            label.append(tk.Label(self.planetcol2[-1], text=poi[0]))
                             label[-1].grid(row=row, column=col, sticky="NSEW")
-                            label[-1]['fg'] = "blue"
-                            label[-1]['cursor'] = "hand2"
-                            label[-1].bind('<ButtonPress>', lambda event, latlon=poi[1] : self.activateDestination(latlon))
-                        #else:
-                        #    ttp = CreateToolTip(label[-1], poi[1])
-                    i+=1
-                self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
-                self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
-        
+                            if poi[1] is not None:
+                                label[-1]['fg'] = "blue"
+                                label[-1]['cursor'] = "hand2"
+                                label[-1].bind('<ButtonPress>', lambda event, latlon=poi[1] : self.activateDestination(latlon))
+                        if poi[1] is not None:
+                            if poi[0] is None:
+                                label.append(tk.Label(self.planetcol2[-1], text=poi[1]))
+                                label[-1].grid(row=row, column=col, sticky="NSEW")
+                                label[-1]['fg'] = "blue"
+                                label[-1]['cursor'] = "hand2"
+                                label[-1].bind('<ButtonPress>', lambda event, latlon=poi[1] : self.activateDestination(latlon))
+                            #else:
+                            #    ttp = CreateToolTip(label[-1], poi[1])
+                        i+=1
+                    self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
+                    self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
+            
+            
+            if category in self.lockPlanet:
+                self.planetlist[category].grid()
+            
         if self.planetlist_show:
-            self.planetlist.grid(sticky="NSEW")
+            self.planetpanel.grid(sticky="NSEW")
     
     def activateDestination(self, latlon):
         lat = float(latlon.split(",")[0][1:])
@@ -1310,30 +1299,61 @@ class CodexTypes():
         self.dest_widget.ActivateTarget(lat,lon)
     
     def lockPOIData(self, name):
-        if name in self.lock:
-            self.lock.remove(name)
+        if name not in self.lock:
+            self.lock.append(name)
+            self.systemlist[name].grid()
             self.labels[name]["image"] = self.images[name]
         else:
-            self.lock.append(name)
+            self.lock.remove(name)
+            self.systemlist[name].grid_remove()
             self.labels[name]["image"] = self.images["{}_grey".format(name)]
-        self.visualisePOIData()
+        #self.visualisePOIData()
     
     def lockPlanetData(self, name):
-        if name in self.lockPlanet:
-            self.lockPlanet.remove(name)
+        if name not in self.lockPlanet:
+            self.lockPlanet.append(name)
+            self.planetlist[name].grid()
             self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
         else:
-            self.lockPlanet.append(name)
+            self.lockPlanet.remove(name)
+            self.planetlist[name].grid_remove()
             self.labels[name+"_planet"]["image"] = self.images["{}_grey_planet".format(name)]
-        self.visualisePlanetData()
+        #self.visualisePlanetData()
     
+    def enter(self, event):
+        name = event.widget["text"]
+        if name[len(name)-7:] == "_planet":
+            name = name[:len(name)-7]
+            if len(self.lockPlanet)==0:
+                self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
+                self.planetlist[name].grid()
+        else:
+            if len(self.lock)==0:
+                self.labels[name]["image"] = self.images[name]
+                self.systemlist[name].grid()
+                
+        
+    def leave(self, event):
+        name = event.widget["text"]
+        if name[len(name)-7:] == "_planet":
+            name = name[:len(name)-7]
+            if len(self.lockPlanet)==0:
+                self.labels[name+"_planet"]["image"] = self.images["{}_grey_planet".format(name)]
+                self.planetlist[name].grid_remove()
+        else:
+            if len(self.lock)==0:
+                self.labels[name]["image"] = self.images["{}_grey".format(name)]
+                self.systemlist[name].grid_remove()
+
     def addimage(self, name, col):
         grey = "{}_grey".format(name)
         self.images[name] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
         self.images[grey] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
-        self.labels[name] = tk.Label(self.container, image=self.images.get(grey), text=name)
-        self.labels[name].grid(row=0, column=col + 1)
+        self.labels[name] = tk.Label(self.systemtitle, image=self.images.get(grey), text=name)
+        self.labels[name].grid(row=0, column=col + 2)
         self.labels[name].grid_remove()
+        self.labels[name].bind("<Enter>", self.enter)
+        self.labels[name].bind("<Leave>", self.leave)
         self.labels[name].bind("<ButtonPress>", lambda event, x=name: self.lockPOIData(x))
         self.labels[name]["image"] = self.images[name]
     
@@ -1341,29 +1361,33 @@ class CodexTypes():
         grey = "{}_grey".format(name)
         self.images[name+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
         self.images[grey+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
-        self.labels[name+"_planet"] = tk.Label(self.container_planet, image=self.images.get(grey+"_planet"), text=name+"_planet")
+        self.labels[name+"_planet"] = tk.Label(self.planettitle, image=self.images.get(grey+"_planet"), text=name+"_planet")
         self.labels[name+"_planet"].grid(row=0, column=col + 1)
         self.labels[name+"_planet"].grid_remove()
+        self.labels[name+"_planet"].bind("<Enter>", self.enter)
+        self.labels[name+"_planet"].bind("<Leave>", self.leave)
         self.labels[name+"_planet"].bind("<ButtonPress>", lambda event, x=name: self.lockPlanetData(x))
         self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
     
     def set_image(self, name, enabled):
         forplanet = False
         lock = self.lock
+        types = self.types
         if name[len(name)-7:] == "_planet":
             name = name[:len(name)-7]
             forplanet = True
             lock = self.lockPlanet
+            types = self.typesPlanet
         
         if name == None:
             error("set_image: name is None")
             return
-        if name not in self.imagetypes:
+        if name not in types:
             error("set_image: name {} is not allowed")
         
         grey = "{}_grey".format(name)
         
-        if name in lock:
+        if name not in lock:
             setting = grey
         else:
             setting = name
@@ -1892,7 +1916,7 @@ class CodexTypes():
             self.body = None
             self.latitude = None
             self.longitude = None
-            self.planetlist.grid_remove()
+            self.planetpanel.grid_remove()
             self.planetlist_show = False
             self.ppoidata = {}
         else:
