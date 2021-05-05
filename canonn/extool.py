@@ -37,7 +37,7 @@ class BearingDestination():
     longitude = None
     target_lat = None
     target_lon = None
-    
+
     def __init__(self, parent, gridrow):
         self.frame = tk.Frame(parent)
         self.frame.grid(row=gridrow)
@@ -54,19 +54,22 @@ class BearingDestination():
         self.bearing_status.grid(row=0, column=1, sticky="NSEW")
         #self.bearing_status.config(font=("Arial Black", 22))
         self.hide()
-    
+
     @classmethod
     def plugin_start(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
-    
+
     def hide(self):
         self.frame.grid_remove()
-    
+
     def show(self):
         self.frame.grid()
 
     def journal_entry(self, cmdr, is_beta, system, entry, client):
-        
+
+        if entry.get("event") == "LeaveBody":
+            self.eventDeactivate(None)
+
         if entry.get("event") == "SendText":
             message_part = entry.get("Message").lower().split(' ')
             canonn_dest = (len(message_part) > 1)
@@ -76,12 +79,12 @@ class BearingDestination():
         if entry.get("event") == "SendText" and canonn_dest:
             self.system = system
             try:
-                if len(message_part)==2:
+                if len(message_part) == 2:
                     raise
-                elif len(message_part)==3:
+                elif len(message_part) == 3:
                     lat = float(message_part[2].split(",")[0])
                     lon = float(message_part[2].split(",")[1])
-                elif len(message_part)==4:
+                elif len(message_part) == 4:
                     lat = float(message_part[2])
                     lon = float(message_part[3])
                 self.state = 1
@@ -90,21 +93,23 @@ class BearingDestination():
                 lon = None
                 self.state = 0
                 self.hide()
-            self.setTargetLatLon(lat,lon)
-            self.calculateBearing(self.body, self.radius, self.latitude, self.longitude)
-    
+            self.setTargetLatLon(lat, lon)
+            self.calculateBearing(self.body, self.radius,
+                                  self.latitude, self.longitude)
+
     def eventDeactivate(self, event):
         lat = None
         lon = None
-        self.setTargetLatLon(lat,lon)
+        self.setTargetLatLon(lat, lon)
         self.state = 0
         self.hide()
-    
+
     def ActivateTarget(self, lat, lon):
         self.setTargetLatLon(lat, lon)
         self.state = 1
-        self.calculateBearing(self.body, self.radius, self.latitude, self.longitude)
-        
+        self.calculateBearing(self.body, self.radius,
+                              self.latitude, self.longitude)
+
     def setTargetLatLon(self, lat, lon):
         if (lat is not None) or (lon is not None):
             if (lat < -90) or (lat > 90):
@@ -118,36 +123,39 @@ class BearingDestination():
             lon = None
         self.target_lat = lat
         self.target_lon = lon
-    
+
     def updatePosition(self, body, radius, lat, lon, heading):
         self.latitude = lat
         self.longitude = lon
         self.radius = radius
         self.body = body
         self.calculateBearing(body, radius, lat, lon, heading)
-    
-    def calculateBearing(self, body, radius, lat, lon, heading = None):
+
+    def calculateBearing(self, body, radius, lat, lon, heading=None):
         if self.state == 1:
-            if (lat is not None) and (lon is not None) and (radius is not None) and (body is not None) :
+            if (lat is not None) and (lon is not None) and (radius is not None) and (body is not None):
                 radius = radius/1000
-                dist = calc_distance(lat, lon, self.target_lat, self.target_lon, radius)
-                brng = calc_bearing(lat, lon, self.target_lat, self.target_lon, radius)
+                dist = calc_distance(
+                    lat, lon, self.target_lat, self.target_lon, radius)
+                brng = calc_bearing(lat, lon, self.target_lat,
+                                    self.target_lon, radius)
                 self.updateBearing(round(brng, 2), round(dist, 3), heading)
             else:
                 self.state = 0
-                self.updateBearing("-", "-", "-")
+                #self.updateBearing("-", "-", "-")
+                self.updateBearing(None, None, None)
                 #UpdateRadius(self, self.system, my_body).start()
-        
-    def updateBearing(self, bearing = None, distance = None, heading=None):
-        
+
+    def updateBearing(self, bearing=None, distance=None, heading=None):
+        debug({"heading": heading, "bearing": bearing})
         fg = "grey"
-        
+
         if (bearing and heading):
-            if round(heading, 0) == round(bearing, 0):
+            if int(heading) == round(bearing, 0):
                 fg = "green"
             bupper = (round(bearing, 0)+1) % 360
             blower = (round(bearing, 0)-1) % 360
-            if round(heading, 0) in (bupper, blower):
+            if int(heading) in (bupper, blower):
                 fg = "orange"
 
         self.bearing_status["foreground"] = fg
@@ -158,7 +166,7 @@ class BearingDestination():
         else:
             self.hide()
         debug("updateBearing = {} / {}".format(bearing, distance))
-    
+
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
 
@@ -169,9 +177,11 @@ class BearingDestination():
 
         return self.frame
 
+
 def calc_distance(phi_a, lambda_a, phi_b, lambda_b, radius):
 
-    debug("calc_distance = {} {} {} {} {}".format(phi_a, lambda_a, phi_b, lambda_b, radius))
+    debug("calc_distance = {} {} {} {} {}".format(
+        phi_a, lambda_a, phi_b, lambda_b, radius))
 
     if radius is None:
         return 0.0
@@ -183,14 +193,17 @@ def calc_distance(phi_a, lambda_a, phi_b, lambda_b, radius):
 
     if(phi_a != phi_b or lambda_b != lambda_a):
         d_lambda = lambda_b - lambda_a
-        S_ab = math.acos(math.sin(phi_a)*math.sin(phi_b)+math.cos(phi_a)*math.cos(phi_b)*math.cos(d_lambda))
+        S_ab = math.acos(math.sin(phi_a)*math.sin(phi_b) +
+                         math.cos(phi_a)*math.cos(phi_b)*math.cos(d_lambda))
         return S_ab * radius
     else:
         return 0.0
-        
+
+
 def calc_bearing(phi_a, lambda_a, phi_b, lambda_b, radius):
-       
-    debug("calc_bearing = {} {} {} {} {}".format(phi_a, lambda_a, phi_b, lambda_b, radius))
+
+    debug("calc_bearing = {} {} {} {} {}".format(
+        phi_a, lambda_a, phi_b, lambda_b, radius))
 
     if radius is None:
         return 0.0
@@ -203,9 +216,10 @@ def calc_bearing(phi_a, lambda_a, phi_b, lambda_b, radius):
     if(phi_a != phi_b or lambda_b != lambda_a):
         d_lambda = lambda_b - lambda_a
         y = math.sin(d_lambda)*math.cos(phi_b)
-        x = math.cos(phi_a)*math.sin(phi_b)-math.sin(phi_a)*math.cos(phi_b)*math.cos(d_lambda)
-        brng = math.atan2(y,x)*180./math.pi
-        if brng<0:
+        x = math.cos(phi_a)*math.sin(phi_b)-math.sin(phi_a) * \
+            math.cos(phi_b)*math.cos(d_lambda)
+        brng = math.atan2(y, x)*180./math.pi
+        if brng < 0:
             brng += 360.
         return brng
     else:
