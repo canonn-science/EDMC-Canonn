@@ -15,6 +15,7 @@ import json
 import math
 import myNotebook as nb
 import os
+import re
 import requests
 import threading
 import webbrowser
@@ -368,6 +369,25 @@ class CodexTypes():
         "Jumponium": "Jumponium Planets",
         "GreenSystem": "Jumponium Planets"
     }
+    
+    canonndata = {
+        "apsites": ["Biology", "Amphora Plants"],
+        "bmsites": ["Biology", "Bark Mounds"],
+        "btsites": ["Biology", "Brain Trees"],
+        "cssites": ["Biology", "Crystalline Shards"],
+        "fgsites": ["Biology", "Fungal Gourds"],
+        "fmsites": ["Geology", "Fumaroles"],
+        "gbsites": ["Guardian", "Guardian Beacons"],
+        "gensites": ["Human", "Generation Ships"],
+        "grsites": ["Guardian", "Guardian Ruins"],
+        "gssites": ["Guardian", "Guardian Structures"],
+        "gvsites": ["Geology", "Gas Vents"],
+        "gysites": ["Geology", "Geysers"],
+        "lssites": ["Geology", "Lava Spouts"],
+        "tbsites": ["Thargoid", "Thargoid Barnacles"],
+        "tssites": ["Thargoid", "Thargoid Structures"],
+        "twsites": ["Biology", "Tube Worms"],
+    }
 
     body_types = {
         'Metal-rich body': 'Metal-Rich Body',
@@ -389,6 +409,7 @@ class CodexTypes():
     waitingPOI = True
     waitingPlanet = True
     fsscount = 0
+    fccount = 0
     
     logqueue = True
     logq = Queue()
@@ -417,10 +438,10 @@ class CodexTypes():
         self.humandetailedbtn = tk.IntVar(value=config.getint("CanonnHumanDetailed"))
         self.humandetailed = self.humandetailedbtn.get()
 
-        self.systemlist = Frame(self.frame, bg="Gray95", highlightthickness=1, highlightbackground="Gray70")
+        self.systemlist = Frame(self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
         self.container = Frame(self.systemlist)
         
-        self.planetlist = Frame(self.frame, bg="Gray95", highlightthickness=1, highlightbackground="Gray70")
+        self.planetlist = Frame(self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
         self.container_planet = Frame(self.planetlist)
         
         self.images = {}
@@ -433,6 +454,8 @@ class CodexTypes():
         self.stationdata = {}
         self.ppoidata = {}
         self.saadata = {}
+        self.nfss = 0
+        self.fccount = 0
         self.stationPlanetData = {}
 
         self.temp_poidata = None
@@ -638,13 +661,11 @@ class CodexTypes():
                                 self.merge_poi("Tourist", "Landable Ringed Body", body_code)
 
                         # Landable Volcanism
-                        if b.get('type') == 'Planet' and b.get('volcanismType') and b.get(
-                                'volcanismType') != 'No volcanism' and b.get('isLandable'):
-                            self.merge_poi("Geology", b.get('volcanismType').replace(" volcanism", ""), body_code)
+                        if b.get('type') == 'Planet' and b.get('volcanismType') and b.get('volcanismType') != 'No volcanism' and b.get('isLandable'):
+                            self.merge_poi("Geology", "$Volcanism:"+b.get('volcanismType').replace(" volcanism", ""), body_code)
 
                         # water ammonia etc
                         if b.get('subType') in CodexTypes.body_types.keys():
-
                             self.merge_poi("Planets", CodexTypes.body_types.get(b.get('subType')), body_code)
 
                         # fast orbits
@@ -695,8 +716,8 @@ class CodexTypes():
             
             self.logqueue = False
             while not self.logq.empty():
-                (tmpcmdr, tmpis_beta, tmpsystem, tmptation, tmpentry, tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient) = self.logq.get()
-                self.journal_entry(tmpcmdr, tmpis_beta, tmpsystem, tmptation, tmpentry, tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient)
+                (tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry, tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient) = self.logq.get()
+                self.journal_entry(tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry, tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient)
             
             
         except Exception as e:
@@ -752,6 +773,22 @@ class CodexTypes():
             
             while not self.canonnq.empty():
                 temp_canonndata = self.canonnq.get()
+                temp_canonndata = temp_canonndata[0]
+                for sites in self.canonndata:
+                    category = self.canonndata[sites][0]
+                    name = self.canonndata[sites][1]
+                    for site in temp_canonndata[sites]:
+                        if site["verified"]:
+                            if site["frontierID"] is not None:
+                                index = "#"+str(site["frontierID"])
+                            else:
+                                index = None
+                            latlon = "("+str(round(site["latitude"],2))+","+str(round(site["longitude"],2))+")"
+                            if category not in self.ppoidata:
+                                self.ppoidata[category] = {}
+                            if name not in self.ppoidata[category]:
+                                self.ppoidata[category][name] = []
+                            self.ppoidata[category][name].append([index, latlon])
                 #need to add the parser for canonn data
             
             for c in self.stationPlanetData:
@@ -761,19 +798,25 @@ class CodexTypes():
                         if "Human" not in self.ppoidata:
                             self.ppoidata["Human"] = {}
                         if station["name"] not in self.ppoidata["Human"]:
-                            self.ppoidata["Human"][station["name"]] = []
-                        self.ppoidata["Human"][station["name"]].append([None, latlon])
+                            self.ppoidata["Human"][station["name"]] = [None, latlon]
+                        #self.ppoidata["Human"][station["name"]].append([None, latlon])
             
             for c in self.temp_cmdrdata:
                 if c == self.body:
                     for cmdrdata in self.temp_cmdrdata[c]:
-                        name = cmdrdata["comment"]
+                        if cmdrdata["comment"] is None:
+                            name = cmdrdata["category"]
+                            index = cmdrdata["index_id"]
+                        else:
+                            name = cmdrdata["comment"]
+                            index = None
                         latlon = "("+str(round(float(cmdrdata["latitude"]),2))+","+str(round(float(cmdrdata["longitude"]),2))+")"
                         if "Personal" not in self.ppoidata:
                             self.ppoidata["Personal"] = {}
                         if name not in self.ppoidata["Personal"]:
                             self.ppoidata["Personal"][name] = []
-                        self.ppoidata["Personal"][name].append([None, latlon])
+                        if [index, latlon] not in self.ppoidata["Personal"][name]:
+                            self.ppoidata["Personal"][name].append([index, latlon])
             
         except Exception as e:
             #line = sys.exc_info()[-1].tb_lineno
@@ -801,11 +844,16 @@ class CodexTypes():
                         if int(poi[0][1:]) > max_category[category]:
                             max_category[category] = int(poi[0][1:])
         
+        print("saadata",self.saadata)
         if self.body in self.saadata:
             if "Geology" in self.saadata[self.body]:
                 max_category["Geology"] = self.saadata[self.body]["Geology"]
+                if "Geology" not in self.ppoidata:
+                    self.ppoidata["Geology"] = {}
             if "Biology" in self.saadata[self.body]:
                 max_category["Biology"] = self.saadata[self.body]["Biology"]
+                if "Biology" not in self.ppoidata:
+                    self.ppoidata["Biology"] = {}
         
         for category in max_category:
             for i in range(1,max_category[category]+1):
@@ -1034,7 +1082,8 @@ class CodexTypes():
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
                     # push canonn data only a queue
-                    self.canonnq.put(r.json())
+                    #self.canonnq.put(r.json())
+                    pass
                 else:
                     Debug.logger.debug("Canonn Failed")
                     Debug.logger.error("Canonn Failed")
@@ -1152,8 +1201,12 @@ class CodexTypes():
                         if subcategory != prev_subcategory:
                             isSubcategory="   "
                             prev_subcategory = subcategory
-                            self.systemcol1.append(tk.Label(self.systemlist, text="   "+subcategory))
-                            self.systemcol2.append(tk.Label(self.systemlist, text=""))
+                            n_fss = ""
+                            if subcategory == "Others":
+                                if self.nfss != 0:
+                                    n_fss = "WarZone ["+str(self.nfss)+"]"
+                            self.systemcol1.append(tk.Label(self.systemlist, text="   "+subcategory+":"))
+                            self.systemcol2.append(tk.Label(self.systemlist, text=n_fss))
                             self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
                             self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
                             
@@ -1196,6 +1249,8 @@ class CodexTypes():
         self.set_image("Personal_planet", False)
         self.set_image("Tourist_planet", False)
         
+        print(self.ppoidata)
+        
         for category in self.ppoidata:
             self.set_image(category+"_planet", True)
         
@@ -1233,7 +1288,6 @@ class CodexTypes():
                             label[-1]['fg'] = "blue"
                             label[-1]['cursor'] = "hand2"
                             label[-1].bind('<ButtonPress>', lambda event, latlon=poi[1] : self.activateDestination(latlon))
-                        i+=1
                     if poi[1] is not None:
                         if poi[0] is None:
                             label.append(tk.Label(self.planetcol2[-1], text=poi[1]))
@@ -1243,7 +1297,7 @@ class CodexTypes():
                             label[-1].bind('<ButtonPress>', lambda event, latlon=poi[1] : self.activateDestination(latlon))
                         #else:
                         #    ttp = CreateToolTip(label[-1], poi[1])
-                        i+=1
+                    i+=1
                 self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
                 self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
         
@@ -1254,7 +1308,7 @@ class CodexTypes():
         lat = float(latlon.split(",")[0][1:])
         lon = float(latlon.split(",")[1][:-1])
         self.dest_widget.ActivateTarget(lat,lon)
-
+    
     def lockPOIData(self, name):
         if name in self.lock:
             self.lock.remove(name)
@@ -1732,9 +1786,9 @@ class CodexTypes():
             for ring in candidate.get("rings"):
                 if ring.get("name")[-4:] == "Ring":
                     if candidate.get("reserveLevel") and candidate.get("reserveLevel") in ("Pristine", "PristineResources"):
-                        self.merge_poi("Ring", "Pristine {} Rings".format(ring.get("type")), body_code)
+                        self.merge_poi("Ring", "$Rings:"+"Pristine {} Rings".format(ring.get("type")), body_code)
                     else:
-                        self.merge_poi("Ring", "{} Rings".format(ring.get("type")), body_code)
+                        self.merge_poi("Ring", "$Rings:"+"{} Rings".format(ring.get("type")), body_code)
                 area = get_area(ring.get("innerRadius"), ring.get("outerRadius"))
                 density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
 
@@ -1888,6 +1942,8 @@ class CodexTypes():
             self.stationdata = {}
             self.ppoidata = {}
             self.saadata = {}
+            self.nfss = 0
+            self.fccount = 0
             self.stationPlanetData = {}
             self.temp_cmdrdata = {}
             self.logqueue = True
@@ -1949,6 +2005,8 @@ class CodexTypes():
             self.stationdata = {}
             self.ppoidata = {}
             self.saadata = {}
+            self.nfss = 0
+            self.fccount = 0
             self.stationPlanetData = {}
             self.temp_cmdrdata = {}
             self.logqueue = True
@@ -2012,15 +2070,16 @@ class CodexTypes():
             # elif "Generation Ship" in entry.get("SignalName"):
                 # self.merge_poi("Human", entry.get("SignalName"), None)
                 # dovis = True
-            print("test")
-            print(entry.get("SignalName"))
-            print(self.stationdata)
             if entry.get("SignalName") in self.stationdata:
                 dovis = False
             elif "MULTIPLAYER_SCENARIO" in entry.get("SignalName"):
                 dovis = False
             elif "Warzone_PointRace" in entry.get("SignalName"):
+                self.nfss += 1
                 dovis = False
+            elif "Generation Ship" in entry.get("SignalName"):
+                self.merge_poi("Human", entry.get("SignalName"), None)
+                dovis = True
             elif "ListeningPost" in entry.get("SignalName"):
                 self.merge_poi("Human", "Listening Post", None)
                 dovis = True
@@ -2029,7 +2088,8 @@ class CodexTypes():
                 dovis = True
             elif "$" in entry.get("SignalName"):
                 if self.humandetailed:
-                    self.merge_poi("Human", "$Warning:"+entry.get("Name_Localised"), None)
+                    self.merge_poi("Human", "$Warning:"+entry.get("SignalName"), None)
+                    print("WARNING : ",entry)
                     dovis = True
                 else:
                     dovis = False
@@ -2041,8 +2101,10 @@ class CodexTypes():
                 else:
                     FleetCarrier = False
                 if FleetCarrier:
+                    self.remove_poi("Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
+                    self.fccount += 1
                     #self.merge_poi("Human", "$FleetCarrier:"+entry.get("SignalName"), None)
-                    self.merge_poi("Human", "Fleet Carrier", None)
+                    self.merge_poi("Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
                 else:
                     if self.humandetailed:
                         self.merge_poi("Human", "$Station:"+entry.get("SignalName"), None)
@@ -2050,9 +2112,11 @@ class CodexTypes():
                         self.merge_poi("Human", "Station", None)
                 dovis = True
             else:
-                code = entry.get("SignalName").split(" ")[-1]
-                if len(code)>4:
-                    Megaship = (entry.get("SignalName") and code[3] == '-')
+                #^HIP 454-4( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$
+                prog = re.compile("^"+self.system+"( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$")
+                result = prog.match(entry.get("SignalName"))
+                if result:
+                    Megaship = True
                 else:
                     Megaship = False
                 if Megaship:
@@ -2123,6 +2187,7 @@ class CodexTypes():
                     self.saadata[bodyName][cat] = int(v.get("Count"))
 
             self.refreshPOIData(None)
+            self.refreshPlanetData(None)
             self.allowed = True
 
     @classmethod
@@ -2688,25 +2753,20 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     codex_entry = (entry.get("event") == "CodexEntry")
     approach_settlement = (entry.get("event") == "ApproachSettlement")
-    guardian_codices = (entry.get("EntryID") in [
-                        3200200, 3200300, 3200400, 3200500, 3200600])
+    guardian_codices = (entry.get("EntryID") in [3200200, 3200300, 3200400, 3200500, 3200600])
     guardian_event = (codex_entry and guardian_codices)
 
     if codex_entry:
-        codexEmitter(cmdr, is_beta, entry.get("System"), x, y,
-                     z, entry, body, lat, lon, client).start()
+        codexEmitter(cmdr, is_beta, entry.get("System"), x, y, z, entry, body, lat, lon, client).start()
 
     if approach_settlement or guardian_event:
-        guardianSites(cmdr, is_beta, system, x, y, z,
-                      entry, body, lat, lon, client).start()
+        guardianSites(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
 
     if entry.get("event") == "SendText" and entry.get("Message") == "codextest":
         test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
 
-    gnosis_station = entry.get("StationName") and entry.get(
-        "StationName") == "The Gnosis"
-    gnosis_fss = entry.get("FSSSignalDiscovered") and entry.get(
-        "SignalName") == "The Gnosis"
+    gnosis_station = entry.get("StationName") and entry.get("StationName") == "The Gnosis"
+    gnosis_fss = entry.get("FSSSignalDiscovered") and entry.get("SignalName") == "The Gnosis"
 
     if gnosis_station or gnosis_fss:
         debug("Hey it's The Gnosis!")
