@@ -434,37 +434,47 @@ class CodexTypes():
         self.humandetailedbtn = tk.IntVar(value=config.getint("CanonnHumanDetailed"))
         self.humandetailed = self.humandetailedbtn.get()
 
-        self.frame = Frame(parent)
+        self.frame = Frame(parent, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
         self.frame.columnconfigure(0, weight=1)
         self.frame.grid(row=gridrow, column=0, sticky="NSEW",columnspan=2)
         self.frame.bind('<<refreshPOIData>>', self.refreshPOIData)
         self.frame.bind('<<refreshPlanetData>>', self.refreshPlanetData)
         
-        self.systempanel = Frame(self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
-        self.systempanel.grid(row=0, column=0, sticky="NSEW")
+        self.titlepanel = Frame(self.frame)
+        self.titlepanel.grid(row=0, column=0, sticky="NSEW")
+        
+        self.systempanel = Frame(self.frame)
+        self.systempanel.grid(row=1, column=0, sticky="NSEW")
         self.systempanel.grid_remove()
         
-        self.systemtitle = Frame(self.systempanel)
+        self.systemtitle = Frame(self.titlepanel)
         self.systemtitle.grid(row=0, column=0, sticky="NSEW")
+        self.systemtitle.grid_remove()
         self.systemtitle_name = tk.Label(self.systemtitle, text="?")
         self.systemtitle_name.grid(row=0, column=0, sticky="NSEW")
         self.systemprogress = tk.Label(self.systemtitle, text="?")
         self.systemprogress.grid(row=0, column=1, sticky="NSEW")
         self.systemprogress.grid_remove()
         
-        
-        self.planetpanel = Frame(self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
-        self.planetpanel.grid(row=1, column=0, sticky="NSEW")
+        self.planetpanel = Frame(self.frame)
+        self.planetpanel.grid(row=2, column=0, sticky="NSEW")
         self.planetpanel.grid_remove()
         
-        self.planettitle = Frame(self.planetpanel)
-        self.planettitle.grid(row=0, column=0, sticky="NSEW")
-        self.planettitle_name = tk.Label(self.planettitle, text="?")
-        self.planettitle_name.grid(row=0, column=0, sticky="NSEW")
-        self.planetprogress = tk.Label(self.planettitle, text="?")
-        self.planetprogress.grid(row=0, column=1, sticky="NSEW")
-        self.planetprogress.grid_remove()
+        self.planettitle = Frame(self.titlepanel)
+        self.planettitle.grid(row=1, column=0, sticky="NSEW")
+        self.planettitle.grid_remove()
         
+        #self.images_prev = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "left_arrow.gif"))
+        #self.planettitle_prev = tk.Label(self.planettitle, image=self.images_prev)
+        #self.planettitle_prev.grid(row=0, column=0, sticky="NSEW")
+        #self.images_next = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "right_arrow.gif"))
+        #self.planettitle_next = tk.Label(self.planettitle, image=self.images_next)
+        #self.planettitle_next.grid(row=0, column=1, sticky="NSEW")
+        self.planettitle_name = tk.Label(self.planettitle, text="?")
+        self.planettitle_name.grid(row=0, column=2, sticky="NSEW")
+        self.planetprogress = tk.Label(self.planettitle, text="?")
+        self.planetprogress.grid(row=0, column=3, sticky="NSEW")
+        self.planetprogress.grid_remove()
         
         self.images = {}
         self.labels = {}
@@ -492,7 +502,7 @@ class CodexTypes():
                       "Tourist", "Jumponium", "GreenSystem")
         k=0
         for category in self.types:
-            self.addimage(category, k)
+            self.addimage(category, k+2)
             self.systemlist[category] = Frame(self.systempanel)
             self.systemlist[category].grid(row=k+1, column=0, sticky="W")
             self.systemlist[category].grid_remove()
@@ -502,7 +512,7 @@ class CodexTypes():
                             "Human", "Other", "Personal", "Tourist")
         k=0
         for category in self.typesPlanet:
-            self.addimage_planet(category, k)
+            self.addimage_planet(category, k+4)
             self.planetlist[category] = Frame(self.planetpanel)
             self.planetlist[category].grid(row=k+1, column=0, sticky="W")
             self.planetlist[category].grid_remove()
@@ -1206,6 +1216,7 @@ class CodexTypes():
             if category in self.lock:
                 self.systemlist[category].grid()
         
+        self.systemtitle.grid()
         self.systempanel.grid()
         # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
         
@@ -1291,7 +1302,8 @@ class CodexTypes():
                 self.planetlist[category].grid()
             
         if self.planetlist_show:
-            self.planetpanel.grid(sticky="NSEW")
+            self.planettitle.grid()
+            self.planetpanel.grid()
     
     def activateDestination(self, latlon):
         lat = float(latlon.split(",")[0][1:])
@@ -1300,22 +1312,30 @@ class CodexTypes():
     
     def lockPOIData(self, name):
         if name not in self.lock:
+            if len(self.lock)==0:
+                self.systempanel.grid()
             self.lock.append(name)
             self.systemlist[name].grid()
             self.labels[name]["image"] = self.images[name]
         else:
             self.lock.remove(name)
+            if len(self.lock)==0:
+                self.systempanel.grid_remove()
             self.systemlist[name].grid_remove()
             self.labels[name]["image"] = self.images["{}_grey".format(name)]
         #self.visualisePOIData()
     
     def lockPlanetData(self, name):
         if name not in self.lockPlanet:
+            if len(self.lockPlanet)==0:
+                self.planetpanel.grid()
             self.lockPlanet.append(name)
             self.planetlist[name].grid()
             self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
         else:
             self.lockPlanet.remove(name)
+            if len(self.lockPlanet)==0:
+                self.planetpanel.grid_remove()
             self.planetlist[name].grid_remove()
             self.labels[name+"_planet"]["image"] = self.images["{}_grey_planet".format(name)]
         #self.visualisePlanetData()
@@ -1324,33 +1344,39 @@ class CodexTypes():
         name = event.widget["text"]
         if name[len(name)-7:] == "_planet":
             name = name[:len(name)-7]
-            if len(self.lockPlanet)==0:
+            if name not in self.lockPlanet:
                 self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
                 self.planetlist[name].grid()
+                self.planetpanel.grid()
         else:
-            if len(self.lock)==0:
+            if name not in self.lock:
                 self.labels[name]["image"] = self.images[name]
                 self.systemlist[name].grid()
+                self.systempanel.grid()
                 
         
     def leave(self, event):
         name = event.widget["text"]
         if name[len(name)-7:] == "_planet":
             name = name[:len(name)-7]
-            if len(self.lockPlanet)==0:
+            if name not in self.lockPlanet:
                 self.labels[name+"_planet"]["image"] = self.images["{}_grey_planet".format(name)]
                 self.planetlist[name].grid_remove()
+                if len(self.lockPlanet)==0:
+                    self.planetpanel.grid_remove()
         else:
-            if len(self.lock)==0:
+            if name not in self.lock:
                 self.labels[name]["image"] = self.images["{}_grey".format(name)]
                 self.systemlist[name].grid_remove()
+                if len(self.lock)==0:
+                    self.systempanel.grid_remove()
 
     def addimage(self, name, col):
         grey = "{}_grey".format(name)
         self.images[name] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
         self.images[grey] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
         self.labels[name] = tk.Label(self.systemtitle, image=self.images.get(grey), text=name)
-        self.labels[name].grid(row=0, column=col + 2)
+        self.labels[name].grid(row=0, column=col)
         self.labels[name].grid_remove()
         self.labels[name].bind("<Enter>", self.enter)
         self.labels[name].bind("<Leave>", self.leave)
@@ -1362,7 +1388,7 @@ class CodexTypes():
         self.images[name+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
         self.images[grey+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
         self.labels[name+"_planet"] = tk.Label(self.planettitle, image=self.images.get(grey+"_planet"), text=name+"_planet")
-        self.labels[name+"_planet"].grid(row=0, column=col + 1)
+        self.labels[name+"_planet"].grid(row=0, column=col)
         self.labels[name+"_planet"].grid_remove()
         self.labels[name+"_planet"].bind("<Enter>", self.enter)
         self.labels[name+"_planet"].bind("<Leave>", self.leave)
@@ -1916,6 +1942,7 @@ class CodexTypes():
             self.body = None
             self.latitude = None
             self.longitude = None
+            self.planettitle.grid_remove()
             self.planetpanel.grid_remove()
             self.planetlist_show = False
             self.ppoidata = {}
@@ -1977,6 +2004,8 @@ class CodexTypes():
 
             self.frame.grid()
             self.frame.grid_remove()
+            self.planettitle.grid_remove()
+            self.planetpanel.grid_remove()
             self.allowed = False
 
         if entry.get("event") == "CodexEntry" and not entry.get("Category") == '$Codex_Category_StellarBodies;':
