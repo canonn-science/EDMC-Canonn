@@ -1107,7 +1107,7 @@ class CodexTypes():
                 # push the data ont a queue
                 for v in temp_poidata["codex"]:
                     self.poiq.put(v)
-                for v in temp_poidata["signals"]:
+                for v in temp_poidata["SAAsignals"]:
                     self.saaq.put(v)
             except:
                 debug("Error getting POI data")
@@ -1347,7 +1347,26 @@ class CodexTypes():
                             self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
                             
                         self.systemcol1.append(tk.Label(self.systemlist[category], text="   "+isSubcategory+name))
-                        self.systemcol2.append(tk.Label(self.systemlist[category], text=poi.get("body")))
+                        self.systemcol2.append(tk.Frame(self.systemlist[category]))
+                        
+                        if poi.get("body") is not None:
+                            label = []
+                            i=0
+                            col = 0
+                            for body in poi.get("body").split(", "):
+                                label.append(tk.Label(self.systemcol2[-1], text=body))
+                                label[-1].grid(row=0, column=col, sticky="NSEW")
+                                if body in self.ppoidata:
+                                    label[-1]['fg'] = "blue"
+                                    label[-1]['cursor'] = "hand2"
+                                    label[-1].bind('<ButtonPress>', lambda event, body=body : self.bodyFocus(body))
+                                col += 1
+                                i+=1
+                                if i < len(poi.get("body").split(", ")):
+                                    label.append(tk.Label(self.systemcol2[-1], text=","))
+                                    label[-1].grid(row=0, column=col, sticky="NSEW")
+                                    col += 1
+                        
                         self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
                         self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
             
@@ -1357,7 +1376,12 @@ class CodexTypes():
         self.systemtitle.grid()
         self.systempanel.grid()
         # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
-        
+    
+    def bodyFocus(self, body):
+        self.planetlist_body = body
+        self.planetlist_show = True
+        self.visualisePlanetData()
+    
     def cleanPlanetPanel(self):
         for col in self.planetcol1:
             col.destroy()
@@ -1622,8 +1646,7 @@ class CodexTypes():
 
             if body:
                 body = body.strip()
-            self.poidata.append(
-                {"hud_category": hud_category, "english_name": english_name, "body": body})
+            self.poidata.append({"hud_category": hud_category, "english_name": english_name, "body": body})
 
     def remove_poi(self, hud_category, english_name, body):
 
