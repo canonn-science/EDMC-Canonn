@@ -435,16 +435,20 @@ class CodexTypes():
         self.humandetailedbtn = tk.IntVar(value=config.getint("CanonnHumanDetailed"))
         self.humandetailed = self.humandetailedbtn.get()
 
-        self.frame = Frame(parent, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
+        self.frame = Frame(parent)
         self.frame.columnconfigure(0, weight=1)
         self.frame.grid(row=gridrow, column=0, sticky="NSEW",columnspan=2)
         self.frame.bind('<<refreshPOIData>>', self.refreshPOIData)
         #self.frame.bind('<<refreshPlanetData>>', self.refreshPlanetData)
         
-        self.titlepanel = Frame(self.frame)
+        self.container = Frame(self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
+        self.container.grid(row=0, column=0, sticky="NSEW")
+        self.container.grid_remove()
+        
+        self.titlepanel = Frame(self.container)
         self.titlepanel.grid(row=0, column=0, sticky="NSEW")
         
-        self.systempanel = Frame(self.frame)
+        self.systempanel = Frame(self.container)
         self.systempanel.grid(row=1, column=0, sticky="NSEW")
         self.systempanel.grid_remove()
         
@@ -454,10 +458,10 @@ class CodexTypes():
         self.systemtitle_name = tk.Label(self.systemtitle, text="?")
         self.systemtitle_name.grid(row=0, column=0, sticky="NSEW")
         self.systemprogress = tk.Label(self.systemtitle, text="?")
-        self.systemprogress.grid(row=0, column=1, sticky="NSEW")
+        self.systemprogress.grid(row=0, column=2, sticky="NSEW")
         self.systemprogress.grid_remove()
         
-        self.planetpanel = Frame(self.frame)
+        self.planetpanel = Frame(self.container)
         self.planetpanel.grid(row=2, column=0, sticky="NSEW")
         self.planetpanel.grid_remove()
         
@@ -499,20 +503,29 @@ class CodexTypes():
         self.temp_edsmdata = None
         #self.cmdrData = {}
         
+        self.images_body = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body.gif"))
+        self.images_body_auto = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body_auto.gif"))
+        self.images_body_grey = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body_grey.gif"))
+        self.icon_body = tk.Label(self.systemtitle, image=self.images_body_auto, text="Body_auto")
+        self.icon_body.grid(row=0, column=1)
+        self.icon_body.bind("<ButtonPress>", self.nextBodyMode)
+        self.icon_body.grid_remove()
+        
         self.types = ("Geology", "Cloud", "Anomaly", "Thargoid",
                       "Biology", "Guardian", "Human", "Ring",
                       "None", "Other", "Personal", "Planets", 
                       "Tourist", "Jumponium", "GreenSystem")
         k=0
         for category in self.types:
-            self.addimage(category, k+2)
+            self.addimage(category, k+3)
             self.systemlist[category] = Frame(self.systempanel)
             self.systemlist[category].grid(row=k+1, column=0, sticky="W")
             self.systemlist[category].grid_remove()
             k+=1
         
         self.typesPlanet = ("Geology", "Thargoid", "Biology", "Guardian", 
-                            "Human", "Other", "Personal", "Tourist")
+                            "Human", "Other", "Personal", "Tourist", 
+                            "Jumponium", "GreenSystem")
         k=0
         for category in self.typesPlanet:
             self.addimage_planet(category, k+4)
@@ -533,7 +546,39 @@ class CodexTypes():
         
         self.planetlist_body = None
         self.planetlist_show = False
+        self.planetlist_auto = True
         # self.systemprogress.grid_remove()
+
+    def nextBodyMode(self, event):
+        Debug.logger.debug(f"nextBodyMode {self.event}")
+        if self.icon_body["text"] == "Body":
+            self.switchBodyMode("Body_auto")
+        elif self.icon_body["text"] == "Body_auto":
+            self.switchBodyMode("Body_grey")
+        elif self.icon_body["text"] == "Body_grey":
+            self.switchBodyMode("Body")
+        
+    def switchBodyMode(self, mode):
+        Debug.logger.debug(f"switchBodyMode {mode}")
+        if mode == "Body":
+            self.planetlist_auto = False
+            self.planetlist_show = True
+            if self.planetlist_body is None:
+                self.planetlist_body = next(iter(self.ppoidata))
+            self.icon_body["image"] = self.images_body
+            self.icon_body["text"] = "Body"
+        elif mode == "Body_auto":
+            self.planetlist_auto = True
+            self.planetlist_show = False
+            self.icon_body["image"] = self.images_body_auto
+            self.icon_body["text"] = "Body_auto"
+        elif mode == "Body_grey":
+            self.planetlist_auto = False
+            self.planetlist_show = False
+            self.planetlist_body = None
+            self.icon_body["image"] = self.images_body_grey
+            self.icon_body["text"] = "Body_grey"
+        self.visualisePlanetData()
 
     def setDestinationWidget(self, widget):
         self.dest_widget = widget
@@ -556,6 +601,7 @@ class CodexTypes():
         else:
             self.planetlist_body = body_list[k_selected-1]
         
+        self.switchBodyMode("Body")
         self.visualisePlanetData()
     
     def nextPlanetShow(self, event):
@@ -576,7 +622,187 @@ class CodexTypes():
         else:
             self.planetlist_body = body_list[k_selected+1]
         
+        self.switchBodyMode("Body")
         self.visualisePlanetData()
+    
+    def bodyFocus(self, body):
+        self.planetlist_body = body
+        self.switchBodyMode("Body")
+    
+    def activateDestination(self, latlon):
+        lat = float(latlon.split(",")[0][1:])
+        lon = float(latlon.split(",")[1][:-1])
+        self.dest_widget.ActivateTarget(lat,lon)
+    
+    def switchPOI(self, category):
+        if category in self.types:
+            if category in self.lock:
+                self.lock.remove(category)
+                self.systemlist[category].grid_remove()
+                self.labels[category]["image"] = self.images["{}_grey".format(category)]
+                if len(self.lock)==0:
+                    self.systempanel.grid_remove()
+            else:
+                self.lock.append(category)
+                self.systemlist[category].grid()
+                self.labels[category]["image"] = self.images[category]
+        else:
+            if category in self.lock:
+                self.lock.remove(category)
+            else:
+                self.lock.append(category)
+    
+    def switchPlanet(self, category):
+        if category in self.typesPlanet:
+            if category in self.lockPlanet:
+                self.lockPlanet.remove(category)
+                self.planetlist[category].grid_remove()
+                self.labels[category+"_planet"]["image"] = self.images["{}_grey_planet".format(category)]
+                remove_panel = True
+                for c in self.ppoidata[self.planetlist_body]:
+                    if c in self.lockPlanet:
+                        remove_panel = False
+                if remove_panel:
+                    self.planetpanel.grid_remove()
+            else:
+                self.lockPlanet.append(category)
+                self.planetlist[category].grid()
+                self.labels[category+"_planet"]["image"] = self.images[category+"_planet"]
+        else:
+            if category in self.lockPlanet:
+                self.lockPlanet.remove(category)
+            else:
+                self.lockPlanet.append(category)
+    
+    def lockPOIData(self, name):
+        if name not in self.lock:
+            self.switchPOI(name)
+            self.systempanel.grid()
+            self.planetpanel.grid_remove()
+            for category in self.typesPlanet:
+                if category in self.lockPlanet:
+                    self.switchPlanet(category)
+            if self.planetlist_auto and self.planetlist_show:
+                self.switchBodyMode("Body")
+        else:
+            self.switchPOI(name)
+        #self.visualisePOIData()
+    
+    def lockPlanetData(self, name):
+        if name not in self.lockPlanet:
+            self.switchPlanet(name)
+            self.planetpanel.grid()
+            self.systempanel.grid_remove()
+            for category in self.types:
+                if category in self.lock:
+                    self.switchPOI(category)
+        else:
+            self.switchPlanet(name)
+        #self.visualisePlanetData()
+    
+    def enter(self, event):
+        name = event.widget["text"]
+        if name[len(name)-7:] == "_planet":
+            name = name[:len(name)-7]
+            if name not in self.lockPlanet:
+                self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
+                self.planetlist[name].grid()
+                self.planetpanel.grid()
+                self.systempanel.grid_remove()
+        else:
+            if name not in self.lock:
+                self.labels[name]["image"] = self.images[name]
+                self.systemlist[name].grid()
+                self.systempanel.grid()
+                self.planetpanel.grid_remove()
+                
+        
+    def leave(self, event):
+        name = event.widget["text"]
+        if name[len(name)-7:] == "_planet":
+            name = name[:len(name)-7]
+            if name not in self.lockPlanet:
+                self.labels[name+"_planet"]["image"] = self.images["{}_grey_planet".format(name)]
+                self.planetlist[name].grid_remove()
+                remove_panel = True
+                for category in self.ppoidata[self.planetlist_body]:
+                    if category in self.lockPlanet:
+                        remove_panel = False
+                if remove_panel:
+                    self.planetpanel.grid_remove()
+                if len(self.lock)!=0:
+                    self.systempanel.grid()
+        else:
+            if name not in self.lock:
+                self.labels[name]["image"] = self.images["{}_grey".format(name)]
+                self.systemlist[name].grid_remove()
+                if len(self.lock)==0:
+                    self.systempanel.grid_remove()
+                if len(self.lockPlanet)!=0:
+                    remove_panel = True
+                    for category in self.ppoidata[self.planetlist_body]:
+                        if category in self.lockPlanet:
+                            remove_panel = False
+                    if not remove_panel:
+                        self.planetpanel.grid()
+
+    def addimage(self, name, col):
+        grey = "{}_grey".format(name)
+        self.images[name] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
+        self.images[grey] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
+        self.labels[name] = tk.Label(self.systemtitle, image=self.images.get(grey), text=name)
+        self.labels[name].grid(row=0, column=col)
+        self.labels[name].grid_remove()
+        self.labels[name].bind("<Enter>", self.enter)
+        self.labels[name].bind("<Leave>", self.leave)
+        self.labels[name].bind("<ButtonPress>", lambda event, x=name: self.lockPOIData(x))
+        self.labels[name]["image"] = self.images[name]
+    
+    def addimage_planet(self, name, col):
+        grey = "{}_grey".format(name)
+        self.images[name+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
+        self.images[grey+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
+        self.labels[name+"_planet"] = tk.Label(self.planettitle, image=self.images.get(grey+"_planet"), text=name+"_planet")
+        self.labels[name+"_planet"].grid(row=0, column=col)
+        self.labels[name+"_planet"].grid_remove()
+        self.labels[name+"_planet"].bind("<Enter>", self.enter)
+        self.labels[name+"_planet"].bind("<Leave>", self.leave)
+        self.labels[name+"_planet"].bind("<ButtonPress>", lambda event, x=name: self.lockPlanetData(x))
+        self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
+    
+    def set_image(self, name, enabled):
+        forplanet = False
+        lock = self.lock
+        types = self.types
+        if name[len(name)-7:] == "_planet":
+            name = name[:len(name)-7]
+            forplanet = True
+            lock = self.lockPlanet
+            types = self.typesPlanet
+        
+        if name == None:
+            error("set_image: name is None")
+            return
+        if name not in types:
+            error("set_image: name {} is not allowed")
+        
+        grey = "{}_grey".format(name)
+        
+        if name not in lock:
+            setting = grey
+        else:
+            setting = name
+        
+        if forplanet:
+            setting = setting+"_planet"
+            name = name+"_planet"
+
+        if enabled and self.labels.get(name):
+            self.labels[name]["image"] = self.images[setting]
+            self.labels[name].grid()
+        else:
+            self.labels[name].grid()
+            self.labels[name].grid_remove()
     
     # this seems horribly confused
     def refreshPOIData(self, event):
@@ -596,11 +822,14 @@ class CodexTypes():
                 body = r.get("body")
                 body_code = body.replace(self.system+" ", '')
                 
-                self.merge_poi(r.get("hud_category"), r.get("english_name"), body_code)
+                if r.get("hud_category") == "Geology":
+                    subcat = "$Sites:"+r.get("english_name")
+                else:
+                    subcat = r.get("english_name")
+                self.merge_poi(r.get("hud_category"), subcat, body_code)
                 
                 if (r.get("latitude") is None) or (r.get("longitude") is None):
                     latlon = None
-                    # continue
                 else:
                     latlon = "("+str(r.get("latitude"))+","+str(r.get("longitude"))+")"
                 
@@ -623,8 +852,23 @@ class CodexTypes():
                 body = r.get("body")
                 body_code = body.replace(self.system+" ", '')
                 
-                self.merge_poi(r.get("hud_category"), r.get("english_name"), body_code)
-            
+                if body_code not in self.saadata:
+                    self.saadata[body_code] = {}
+                self.saadata[body_code][r.get("hud_category")] = r.get("count")
+                
+                if r.get("hud_category") == "Ring":
+                    self.merge_poi(r.get("hud_category"), "$Hotspots:"+r.get("english_name"), body_code)
+                elif r.get("hud_category") == "Geology":
+                    nsites = 0
+                    if body_code in self.ppoidata:
+                        if r.get("hud_category") in self.ppoidata[body_code]:
+                            for type in self.ppoidata[body_code][r.get("hud_category")]:
+                                nsites += len(self.ppoidata[body_code][r.get("hud_category")][type])
+                    if nsites != r.get("count"):
+                        self.merge_poi(r.get("hud_category"), "$Sites:Unknown", body_code)
+                        if body_code not in self.ppoidata:
+                            self.ppoidata[body_code] = {}
+                
             while not self.cmdrq.empty():
                 # only expecting to go around once
                 temp_cmdrdata = self.cmdrq.get()
@@ -943,7 +1187,6 @@ class CodexTypes():
                         if int(poi[0][1:]) > max_category[category]:
                             max_category[category] = int(poi[0][1:])
         
-        print("saadata",self.saadata)
         if body in self.saadata:
             if "Geology" in self.saadata[body]:
                 max_category["Geology"] = self.saadata[body]["Geology"]
@@ -1001,7 +1244,7 @@ class CodexTypes():
         check if it exist in the unknown list and remove it
         """
         
-        Debug.logger.debug(f"add_ppoi {hud_category} {type} {index} {lat} {lon}")
+        Debug.logger.debug(f"add_ppoi {body} {hud_category} {type} {index} {lat} {lon}")
         
         if body not in self.ppoidata:
             return
@@ -1263,6 +1506,7 @@ class CodexTypes():
     def visualisePOIData(self):
         # clear it if it exists
         self.cleanPOIPanel()
+        self.systempanel.grid_remove()
         
         Debug.logger.debug(f"visualise POI Data event={self.event}")
         
@@ -1297,11 +1541,13 @@ class CodexTypes():
         self.set_image("Jumponium", False)
         self.set_image("GreenSystem", False)
         
+        if len(self.ppoidata)>0:
+            self.icon_body.grid()
+        
         #if self.poidata or unscanned:
 
-        self.frame.grid()
-            #self.visible()
-            #self.cleanup_poidata()
+        #self.frame.grid()
+        #self.cleanup_poidata()
 
         for r in self.poidata:
             self.set_image(r.get("hud_category"), True)
@@ -1311,6 +1557,9 @@ class CodexTypes():
 
         # need to initialise if not exists
         self.systemtitle_name["text"] = self.system
+        
+        if self.planetlist_show:
+            return
         
         for category in self.types:
             self.systemlist[category].grid_remove()
@@ -1373,14 +1622,11 @@ class CodexTypes():
             if category in self.lock:
                 self.systemlist[category].grid()
         
+        self.visible()
         self.systemtitle.grid()
         self.systempanel.grid()
         # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
     
-    def bodyFocus(self, body):
-        self.planetlist_body = body
-        self.planetlist_show = True
-        self.visualisePlanetData()
     
     def cleanPlanetPanel(self):
         for col in self.planetcol1:
@@ -1394,12 +1640,16 @@ class CodexTypes():
     def visualisePlanetData(self):
         
         self.cleanPlanetPanel()
+        self.planettitle.grid_remove()
+        self.planetpanel.grid_remove()
         
         Debug.logger.debug(f"visualise Planet Data event={self.event} body={self.planetlist_body}")
         
         if self.planetlist_body not in self.ppoidata:
             self.planetlist_body = None
             self.planetlist_show = False
+        
+        if not self.planetlist_show:
             return
         
         self.set_image("Geology_planet", False)
@@ -1410,12 +1660,14 @@ class CodexTypes():
         self.set_image("Other_planet", False)
         self.set_image("Personal_planet", False)
         self.set_image("Tourist_planet", False)
+                
+        #refresh ppoi for unknown list
+        self.update_unknown_ppoi(self.planetlist_body)
         
         for category in self.ppoidata[self.planetlist_body]:
             self.set_image(category+"_planet", True)
         
         self.planettitle_name["text"] = self.planetlist_body
-        self.planetpanel.grid_remove()
         
         for category in self.typesPlanet:
             self.planetlist[category].grid_remove()
@@ -1426,9 +1678,6 @@ class CodexTypes():
                 self.planetcol2.append(tk.Label(self.planetlist[category], text=""))
                 self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
                 self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
-                
-                #refresh ppoi for unknown list
-                self.update_unknown_ppoi(self.planetlist_body)
                 
                 label = []
                 for type in self.ppoidata[self.planetlist_body][category]:
@@ -1476,136 +1725,7 @@ class CodexTypes():
             if not remove_panel:
                 self.planetpanel.grid()
         
-    def activateDestination(self, latlon):
-        lat = float(latlon.split(",")[0][1:])
-        lon = float(latlon.split(",")[1][:-1])
-        self.dest_widget.ActivateTarget(lat,lon)
     
-    def lockPOIData(self, name):
-        if name not in self.lock:
-            self.lock.append(name)
-            self.systemlist[name].grid()
-            self.systempanel.grid()
-            self.labels[name]["image"] = self.images[name]
-        else:
-            self.lock.remove(name)
-            self.systemlist[name].grid_remove()
-            if len(self.lock)==0:
-                self.systempanel.grid_remove()
-            self.labels[name]["image"] = self.images["{}_grey".format(name)]
-        #self.visualisePOIData()
-    
-    def lockPlanetData(self, name):
-        if name not in self.lockPlanet:
-            self.lockPlanet.append(name)
-            self.planetlist[name].grid()
-            self.planetpanel.grid()
-            self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
-        else:
-            self.lockPlanet.remove(name)
-            self.planetlist[name].grid_remove()
-            self.labels[name+"_planet"]["image"] = self.images["{}_grey_planet".format(name)]
-            remove_panel = True
-            for category in self.ppoidata[self.planetlist_body]:
-                if category in self.lockPlanet:
-                    remove_panel = False
-            if remove_panel:
-                self.planetpanel.grid_remove()
-        #self.visualisePlanetData()
-    
-    def enter(self, event):
-        name = event.widget["text"]
-        if name[len(name)-7:] == "_planet":
-            name = name[:len(name)-7]
-            if name not in self.lockPlanet:
-                self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
-                self.planetlist[name].grid()
-                self.planetpanel.grid()
-        else:
-            if name not in self.lock:
-                self.labels[name]["image"] = self.images[name]
-                self.systemlist[name].grid()
-                self.systempanel.grid()
-                
-        
-    def leave(self, event):
-        name = event.widget["text"]
-        if name[len(name)-7:] == "_planet":
-            name = name[:len(name)-7]
-            if name not in self.lockPlanet:
-                self.labels[name+"_planet"]["image"] = self.images["{}_grey_planet".format(name)]
-                self.planetlist[name].grid_remove()
-                remove_panel = True
-                for category in self.ppoidata[self.planetlist_body]:
-                    if category in self.lockPlanet:
-                        remove_panel = False
-                if remove_panel:
-                    self.planetpanel.grid_remove()
-        else:
-            if name not in self.lock:
-                self.labels[name]["image"] = self.images["{}_grey".format(name)]
-                self.systemlist[name].grid_remove()
-                if len(self.lock)==0:
-                    self.systempanel.grid_remove()
-
-    def addimage(self, name, col):
-        grey = "{}_grey".format(name)
-        self.images[name] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
-        self.images[grey] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
-        self.labels[name] = tk.Label(self.systemtitle, image=self.images.get(grey), text=name)
-        self.labels[name].grid(row=0, column=col)
-        self.labels[name].grid_remove()
-        self.labels[name].bind("<Enter>", self.enter)
-        self.labels[name].bind("<Leave>", self.leave)
-        self.labels[name].bind("<ButtonPress>", lambda event, x=name: self.lockPOIData(x))
-        self.labels[name]["image"] = self.images[name]
-    
-    def addimage_planet(self, name, col):
-        grey = "{}_grey".format(name)
-        self.images[name+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
-        self.images[grey+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
-        self.labels[name+"_planet"] = tk.Label(self.planettitle, image=self.images.get(grey+"_planet"), text=name+"_planet")
-        self.labels[name+"_planet"].grid(row=0, column=col)
-        self.labels[name+"_planet"].grid_remove()
-        self.labels[name+"_planet"].bind("<Enter>", self.enter)
-        self.labels[name+"_planet"].bind("<Leave>", self.leave)
-        self.labels[name+"_planet"].bind("<ButtonPress>", lambda event, x=name: self.lockPlanetData(x))
-        self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
-    
-    def set_image(self, name, enabled):
-        forplanet = False
-        lock = self.lock
-        types = self.types
-        if name[len(name)-7:] == "_planet":
-            name = name[:len(name)-7]
-            forplanet = True
-            lock = self.lockPlanet
-            types = self.typesPlanet
-        
-        if name == None:
-            error("set_image: name is None")
-            return
-        if name not in types:
-            error("set_image: name {} is not allowed")
-        
-        grey = "{}_grey".format(name)
-        
-        if name not in lock:
-            setting = grey
-        else:
-            setting = name
-        
-        if forplanet:
-            setting = setting+"_planet"
-            name = name+"_planet"
-
-        if enabled and self.labels.get(name):
-            self.labels[name]["image"] = self.images[setting]
-            self.labels[name].grid()
-        else:
-            self.labels[name].grid()
-            self.labels[name].grid_remove()
-
     def merge_poi(self, hud_category, english_name, body):
 
         # we could be passing in single body or a comma seperated list or nothing
@@ -2118,20 +2238,31 @@ class CodexTypes():
             self.body = None
             self.latitude = None
             self.longitude = None
-            self.planettitle.grid_remove()
-            self.planetpanel.grid_remove()
-            self.planetlist_show = False
-            self.ppoidata = {}
+            if self.planetlist_auto:
+                if self.planetlist_show:
+                    tmplock = self.lockPlanet.copy()
+                    for category in tmplock:
+                        self.switchPlanet(category)
+                        self.switchPOI(category)
+                    self.planetlist_show = False
+                    self.visualisePOIData()
+                    self.visualisePlanetData()
         else:
-            bodycode = body.replace(self.system+" ", '')
-            self.body = bodycode
+            self.body = body
             self.latitude = lat
             self.longitude = lon
-            if not self.planetlist_show:
-                self.planetlist_body = bodycode
+            if self.planetlist_auto:
+                if not self.planetlist_show:
+                    tmplock = self.lock.copy()
+                    for category in tmplock:
+                        self.switchPOI(category)
+                        self.switchPlanet(category)
+                    self.planetlist_show = True
+                    self.planetlist_body = body.replace(self.system+" ", '')
+                    self.visualisePlanetData()
 #                planetTypes(self.system, body, cmdr, self.getPlanetData).start()
-                self.planetlist_show = True
-    
+        
+        
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if not self.hidecodex:
             self.journal_entry_wrap(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
@@ -2180,8 +2311,8 @@ class CodexTypes():
             Debug.logger.debug("Calling PoiTypes")
             poiTypes(entry.get("StarSystem"), cmdr, self.getPOIdata).start()
 
-            self.frame.grid()
-            self.frame.grid_remove()
+            #self.frame.grid()
+            #self.frame.grid_remove()
             self.planettitle.grid_remove()
             self.planetpanel.grid_remove()
             self.allowed = False
@@ -2200,7 +2331,11 @@ class CodexTypes():
                     
                     #refresh system panel
                     if body:
-                        self.merge_poi(hud_category, english_name, bodycode)
+                        if hud_category == "Geology":
+                            subcat = "$Sites:"+english_name
+                        else:
+                            subcat = english_name
+                        self.merge_poi(hud_category, subcat, bodycode)
                     else:
                         self.merge_poi(hud_category, english_name, "")
                     
@@ -2211,7 +2346,7 @@ class CodexTypes():
                             if (near_dest[2].split("=")[0] == "#index"):
                                 idx = int(near_dest[2].split("=")[1][:-1])
                                 self.add_ppoi(bodycode, hud_category, english_name, idx, round(self.latitude,2), round(self.longitude,2))
-                                #self.visualisePlanetData()
+                                self.visualisePlanetData()
                             #$SAA_Unknown_Signal:#type=$SAA_SignalType_Geological;:#index=16;
             else:
                 self.merge_poi('Other', entry.get("Name_Localised"), bodycode)
@@ -2398,7 +2533,7 @@ class CodexTypes():
             self.system = system
             # if we arent waiting for new data
             bodyName = entry.get("BodyName")
-            bodyVal = bodyName.replace(self.system, '')
+            bodyVal = bodyName.replace(self.system+" ", '')
 
             signals = entry.get("Signals")
             for i, v in enumerate(signals):
@@ -2412,10 +2547,10 @@ class CodexTypes():
 
                 self.merge_poi(cat, english_name, bodyVal)
                 
-                if bodyName not in self.saadata:
-                    self.saadata[bodyName] = {}
-                if cat not in self.saadata[bodyName]:
-                    self.saadata[bodyName][cat] = int(v.get("Count"))
+                if bodyVal not in self.saadata:
+                    self.saadata[bodyVal] = {}
+                if cat not in self.saadata[bodyVal]:
+                    self.saadata[bodyVal][cat] = int(v.get("Count"))
 
             self.refreshPOIData(None)
             #self.refreshPlanetData(None)
@@ -2491,12 +2626,12 @@ class CodexTypes():
         noicons = (self.hidecodex == 1)
 
         if noicons:
-            self.frame.grid()
-            self.frame.grid_remove()
+            self.container.grid()
+            self.container.grid_remove()
             self.isvisible = False
             return False
         else:
-            self.frame.grid()
+            self.container.grid()
             self.isvisible = True
             return True
 
