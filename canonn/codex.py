@@ -858,23 +858,6 @@ class CodexTypes():
                     self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")].remove([None, latlon])
                 
                 self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")].append([index, latlon])
-                
-                if r.get("hud_category") == "Geology":
-                    if "Unknown" in self.ppoidata[body_code]["Geology"]:
-                        if len(self.ppoidata[body_code]["Geology"]["Unknown"]) == 0:
-                            self.remove_poi("Geology", "$Sites:Unknown", body_code)
-                            self.remove_poi("MissingData", "$Geology:Unknown", body_code)
-                        elif len(self.ppoidata[body_code]["Geology"]["Unknown"]) > 0:
-                            self.add_poi("Geology", "$Sites:Unknown", body_code)
-                            self.add_poi("MissingData", "$Geology:Unknown", body_code)
-                elif r.get("hud_category") == "Biology":
-                    if "Unknown" in self.ppoidata[body_code]["Biology"]:
-                        if len(self.ppoidata[body_code]["Biology"]["Unknown"]) == 0:
-                            self.remove_poi("Biology", "Unknown", body_code)
-                            self.remove_poi("MissingData", "$Biology:Unknown", body_code)
-                        elif len(self.ppoidata[body_code]["Biology"]["Unknown"]) > 0:
-                            self.add_poi("Biology", "Unknown", body_code)
-                            self.add_poi("MissingData", "$Biology:Unknown", body_code)
                     
             while not self.saaq.empty():
                 r = self.saaq.get()
@@ -1007,13 +990,11 @@ class CodexTypes():
 
                     for k in bodies.keys():
                         if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
-                            CodexTypes.parentRadius = self.light_seconds("solarRadius",
-                                                                         bodies.get(k).get("solarRadius"))
+                            CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies.get(k).get("solarRadius"))
 
                         # lets normalise radius between planets and stars
                         if bodies.get(k).get("solarRadius") is not None:
-                            bodies[k]["radius"] = bodies.get(
-                                k).get("solarRadius")
+                            bodies[k]["radius"] = bodies.get(k).get("solarRadius")
 
                     for k in bodies.keys():
                         b = bodies.get(k)
@@ -1064,7 +1045,11 @@ class CodexTypes():
                                 if "Geology" not in self.ppoidata[body_code]:
                                     self.add_poi("Geology", "$Sites:NoSAA", body_code)
                                     self.add_poi("MissingData", "$Geology:NoSAA", body_code)
-
+                        
+                        # Thin Atmosphere
+                        if b.get('type') == 'Planet' and 'thin ' in b.get('atmosphereType'):
+                            self.add_poi("MissingData", "$ThinAtmosphere:NoSAA", body_code)
+                        
                         # water ammonia etc
                         if b.get('subType') in CodexTypes.body_types.keys():
                             self.add_poi("Planets", CodexTypes.body_types.get(b.get('subType')), body_code)
@@ -2317,7 +2302,7 @@ class CodexTypes():
             self.latitude = lat
             self.longitude = lon
             if self.planetlist_auto:
-                if not self.planetlist_show:
+                if (not self.planetlist_show) or (self.planetlist_body != body.replace(self.system+" ", '')):
                     tmplock = self.lock.copy()
                     for category in tmplock:
                         self.switchPOI(category)
@@ -2412,6 +2397,24 @@ class CodexTypes():
                             if (near_dest[2].split("=")[0] == "#index"):
                                 idx = int(near_dest[2].split("=")[1][:-1])
                                 self.add_ppoi(bodycode, hud_category, english_name, idx, round(self.latitude,2), round(self.longitude,2))
+                                
+                                if hud_category == "Geology":
+                                    if "Unknown" in self.ppoidata[bodycode]["Geology"]:
+                                        if len(self.ppoidata[bodycode]["Geology"]["Unknown"]) == 0:
+                                            self.remove_poi("Geology", "$Sites:Unknown", bodycode)
+                                            self.remove_poi("MissingData", "$Geology:Unknown", bodycode)
+                                        elif len(self.ppoidata[bodycode]["Geology"]["Unknown"]) > 0:
+                                            self.add_poi("Geology", "$Sites:Unknown", bodycode)
+                                            self.add_poi("MissingData", "$Geology:Unknown", bodycode)
+                                elif hud_category == "Biology":
+                                    if "Unknown" in self.ppoidata[bodycode]["Biology"]:
+                                        if len(self.ppoidata[bodycode]["Biology"]["Unknown"]) == 0:
+                                            self.remove_poi("Biology", "Unknown", bodycode)
+                                            self.remove_poi("MissingData", "$Biology:Unknown", bodycode)
+                                        elif len(self.ppoidata[bodycode]["Biology"]["Unknown"]) > 0:
+                                            self.add_poi("Biology", "Unknown", bodycode)
+                                            self.add_poi("MissingData", "$Biology:Unknown", bodycode)
+                                
                                 self.refreshPOIData(None)
                             #$SAA_Unknown_Signal:#type=$SAA_SignalType_Geological;:#index=16;
             else:
