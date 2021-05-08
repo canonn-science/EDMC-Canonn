@@ -495,6 +495,7 @@ class CodexTypes():
         self.poidata = {}
         self.ppoidata = {}
         self.saadata = {}
+        self.fssdata = {}
         self.nfss = 0
         self.fccount = 0
         #self.stationPlanetData = {}
@@ -509,7 +510,7 @@ class CodexTypes():
         self.icon_body = tk.Label(self.systemtitle, image=self.images_body_auto, text="Body_auto")
         self.icon_body.grid(row=0, column=1)
         self.icon_body.bind("<ButtonPress>", self.nextBodyMode)
-        self.icon_body.grid_remove()
+        #self.icon_body.grid_remove()
         
         self.types = ("Geology", "Cloud", "Anomaly", "Thargoid",
                       "Biology", "Guardian", "Human", "Ring",
@@ -771,6 +772,10 @@ class CodexTypes():
         self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
     
     def set_image(self, name, enabled):
+        
+        if name not in self.labels:
+            return
+            
         forplanet = False
         lock = self.lock
         types = self.types
@@ -796,7 +801,7 @@ class CodexTypes():
         if forplanet:
             setting = setting+"_planet"
             name = name+"_planet"
-
+        
         if enabled and self.labels.get(name):
             self.labels[name]["image"] = self.images[setting]
             self.labels[name].grid()
@@ -838,6 +843,10 @@ class CodexTypes():
                 else:
                     index = "#"+str(r.get("index_id"))
                 
+                #if (r.get("hud_category") == "Geology") or (r.get("hud_category") == "Biology"):
+                #    if index is None:
+                #        continue
+                
                 if body_code not in self.ppoidata:
                     self.ppoidata[body_code] = {}
                 if r.get("hud_category") not in self.ppoidata[body_code]:
@@ -845,8 +854,28 @@ class CodexTypes():
                 if r.get("english_name") not in self.ppoidata[body_code][r.get("hud_category")]:
                     self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")] = []
                 
+                if [None, latlon] in self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")]:
+                    self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")].remove([None, latlon])
+                
                 self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")].append([index, latlon])
-            
+                
+                if r.get("hud_category") == "Geology":
+                    if "Unknown" in self.ppoidata[body_code]["Geology"]:
+                        if len(self.ppoidata[body_code]["Geology"]["Unknown"]) == 0:
+                            self.remove_poi("Geology", "$Sites:Unknown", body_code)
+                            self.remove_poi("MissingData", "$Geology:Unknown", body_code)
+                        elif len(self.ppoidata[body_code]["Geology"]["Unknown"]) > 0:
+                            self.add_poi("Geology", "$Sites:Unknown", body_code)
+                            self.add_poi("MissingData", "$Geology:Unknown", body_code)
+                elif r.get("hud_category") == "Biology":
+                    if "Unknown" in self.ppoidata[body_code]["Biology"]:
+                        if len(self.ppoidata[body_code]["Biology"]["Unknown"]) == 0:
+                            self.remove_poi("Biology", "Unknown", body_code)
+                            self.remove_poi("MissingData", "$Biology:Unknown", body_code)
+                        elif len(self.ppoidata[body_code]["Biology"]["Unknown"]) > 0:
+                            self.add_poi("Biology", "Unknown", body_code)
+                            self.add_poi("MissingData", "$Biology:Unknown", body_code)
+                    
             while not self.saaq.empty():
                 r = self.saaq.get()
                 body = r.get("body")
@@ -855,20 +884,33 @@ class CodexTypes():
                 if body_code not in self.saadata:
                     self.saadata[body_code] = {}
                 self.saadata[body_code][r.get("hud_category")] = r.get("count")
+                self.remove_poi("Geology", "$Sites:NoSAA", body_code)
+                self.remove_poi("MissingData", "$Geology:NoSAA", body_code)
                 
                 if r.get("hud_category") == "Ring":
                     self.add_poi(r.get("hud_category"), "$Hotspots:"+r.get("english_name"), body_code)
                 elif r.get("hud_category") == "Geology":
                     nsites = 0
                     if body_code in self.ppoidata:
-                        if r.get("hud_category") in self.ppoidata[body_code]:
-                            for type in self.ppoidata[body_code][r.get("hud_category")]:
-                                nsites += len(self.ppoidata[body_code][r.get("hud_category")][type])
-                    if nsites != r.get("count"):
-                        self.add_poi(r.get("hud_category"), "$Sites:Unknown", body_code)
+                        if "Geology" in self.ppoidata[body_code]:
+                            for type in self.ppoidata[body_code]["Geology"]:
+                                nsites += len(self.ppoidata[body_code]["Geology"][type])
+                    if nsites < r.get("count"):
+                        self.add_poi("Geology", "$Sites:Unknown", body_code)
+                        self.add_poi("MissingData", "$Geology:Unknown", body_code)
                         if body_code not in self.ppoidata:
                             self.ppoidata[body_code] = {}
-                
+                elif r.get("hud_category") == "Biology":
+                    nsites = 0
+                    if body_code in self.ppoidata:
+                        if "Biology" in self.ppoidata[body_code]:
+                            for type in self.ppoidata[body_code]["Biology"]:
+                                nsites += len(self.ppoidata[body_code]["Biology"][type])
+                    if nsites < r.get("count"):
+                        self.add_poi("Biology", "Unknown", body_code)
+                        self.add_poi("MissingData", "$Biology:Unknown", body_code)
+                        if body_code not in self.ppoidata:
+                            self.ppoidata[body_code] = {}
                 self.update_unknown_ppoi(body_code)
                 
             while not self.cmdrq.empty():
@@ -908,15 +950,16 @@ class CodexTypes():
                 if edsm_stations:
                     for s in edsm_stations:
                         if "body" in s:
-                            bodycode = s["body"].get("name").replace(self.system+" ", '')
-                            latlon = "("+str(round(s["body"].get("latitude"),2))+","+str(round(s["body"].get("longitude"),2))+")"
-                            if bodycode not in self.ppoidata:
-                                self.ppoidata[bodycode] = {}
-                            if "Human" not in self.ppoidata[bodycode]:
-                                self.ppoidata[bodycode]["Human"] = {}
-                            if s["name"] not in self.ppoidata[bodycode]["Human"]:
-                                self.ppoidata[bodycode]["Human"][s["name"]] = [[None, latlon]]
-                            #self.ppoidata["Human"][station["name"]].append([None, latlon])
+                            if s["type"] != "Fleet Carrier":
+                                bodycode = s["body"].get("name").replace(self.system+" ", '')
+                                latlon = "("+str(round(s["body"].get("latitude"),2))+","+str(round(s["body"].get("longitude"),2))+")"
+                                if bodycode not in self.ppoidata:
+                                    self.ppoidata[bodycode] = {}
+                                if "Human" not in self.ppoidata[bodycode]:
+                                    self.ppoidata[bodycode]["Human"] = {}
+                                if s["name"] not in self.ppoidata[bodycode]["Human"]:
+                                    self.ppoidata[bodycode]["Human"][s["name"]] = [[None, latlon]]
+                                #self.ppoidata["Human"][station["name"]].append([None, latlon])
                         else:
                             if s["name"] not in self.stationdata:
                                 if s["type"] != "Fleet Carrier":
@@ -1013,6 +1056,14 @@ class CodexTypes():
                         # Landable Volcanism
                         if b.get('type') == 'Planet' and b.get('volcanismType') and b.get('volcanismType') != 'No volcanism' and b.get('isLandable'):
                             self.add_poi("Geology", "$Volcanism:"+b.get('volcanismType').replace(" volcanism", ""), body_code)
+                            #check SAA signals
+                            if body_code not in self.ppoidata:
+                                self.add_poi("Geology", "$Sites:NoSAA", body_code)
+                                self.add_poi("MissingData", "$Geology:NoSAA", body_code)
+                            else:
+                                if "Geology" not in self.ppoidata[body_code]:
+                                    self.add_poi("Geology", "$Sites:NoSAA", body_code)
+                                    self.add_poi("MissingData", "$Geology:NoSAA", body_code)
 
                         # water ammonia etc
                         if b.get('subType') in CodexTypes.body_types.keys():
@@ -1186,8 +1237,9 @@ class CodexTypes():
                 max_category[category] = 0
                 for type in self.ppoidata[body][category]:
                     for poi in self.ppoidata[body][category][type]:
-                        if int(poi[0][1:]) > max_category[category]:
-                            max_category[category] = int(poi[0][1:])
+                        if poi[0] is not None:
+                            if int(poi[0][1:]) > max_category[category]:
+                                max_category[category] = int(poi[0][1:])
         
         if body in self.saadata:
             if "Geology" in self.saadata[body]:
@@ -1543,16 +1595,21 @@ class CodexTypes():
         self.set_image("Jumponium", False)
         self.set_image("GreenSystem", False)
         
-        if len(self.ppoidata)>0:
-            self.icon_body.grid()
+        #if len(self.ppoidata)>0:
+        #    self.icon_body.grid()
+        #else:
+        #    self.icon_body.grid_remove()
         
         #if self.poidata or unscanned:
 
         #self.frame.grid()
         #self.cleanup_poidata()
-
+        
+        print(self.poidata)
+        nothing = True
         for category in self.poidata:
             self.set_image(category, True)
+            nothing = False
         #else:
         #    self.frame.grid()
         #    self.frame.grid_remove()
@@ -1560,9 +1617,7 @@ class CodexTypes():
         # need to initialise if not exists
         self.systemtitle_name["text"] = self.system
         
-        if self.planetlist_show:
-            return
-        
+        openlist = False
         for category in self.types:
             self.systemlist[category].grid_remove()
             
@@ -1573,7 +1628,7 @@ class CodexTypes():
                 self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
                 self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
                 
-                #self.poidata[category] = sorted(self.poidata[category])
+                self.poidata[category] = dict(sorted(self.poidata[category].items()))
                 
                 prev_subcategory = "Others"
                 isSubcategory=""
@@ -1638,11 +1693,14 @@ class CodexTypes():
                     self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
                 
                 if category in self.lock:
+                    openlist = True
                     self.systemlist[category].grid()
         
-        self.visible()
-        self.systemtitle.grid()
-        self.systempanel.grid()
+        if not nothing:
+            self.visible()
+            self.systemtitle.grid()
+            if openlist:
+                self.systempanel.grid()
         # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
     
     
@@ -2046,7 +2104,7 @@ class CodexTypes():
         return False
 
     def remove_jumponium(self):
-        for category in self.poidata:
+        for category in self.poidata.copy():
             if category in ('Jumponium', 'GreenSystem'):
                 del self.poidata[category]
 
@@ -2309,6 +2367,7 @@ class CodexTypes():
             self.poidata = {}
             self.ppoidata = {}
             self.saadata = {}
+            self.fssdata = {}
             self.nfss = 0
             self.fccount = 0
             #self.stationPlanetData = {}
@@ -2378,6 +2437,7 @@ class CodexTypes():
             self.poidata = {}
             self.ppoidata = {}
             self.saadata = {}
+            self.fssdata = {}
             self.nfss = 0
             self.fccount = 0
             #self.stationPlanetData = {}
@@ -2446,7 +2506,20 @@ class CodexTypes():
             if entry.get("SignalName") in self.stationdata:
                 dovis = False
             elif "MULTIPLAYER_SCENARIO" in entry.get("SignalName"):
-                dovis = False
+                dovis = True
+                if "MULTIPLAYER_SCENARIO42_TITLE" in entry.get("SignalName"):
+                    self.add_poi("Human", "Nav Beacon", None)
+                elif "MULTIPLAYER_SCENARIO14_TITLE" in entry.get("SignalName"):
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site", None)
+                elif "MULTIPLAYER_SCENARIO77_TITLE" in entry.get("SignalName"):
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [Low]", None)
+                elif "MULTIPLAYER_SCENARIO78_TITLE" in entry.get("SignalName"):
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [High]", None)
+                elif "MULTIPLAYER_SCENARIO79_TITLE" in entry.get("SignalName"):
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [Danger]", None)
+                else:
+                    self.add_poi("Human", "$ConflictZone:"+entry.get("SignalName"), None)
+                    dovis = False
             elif "Warzone_PointRace" in entry.get("SignalName"):
                 self.nfss += 1
                 dovis = False
