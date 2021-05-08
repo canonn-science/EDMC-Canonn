@@ -1379,7 +1379,8 @@ class CodexTypes():
                 # debug(url)
                 # debug("request {}:  Active Threads {}".format(
                 #    url, threading.activeCount()))
-                r = requests.get(url, timeout=30)
+                headers = {"Accept-Encoding": "gzip, deflate", }
+                r = requests.get(url, headers=headers, timeout=30)
                 # debug("request complete")
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
