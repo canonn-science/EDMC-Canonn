@@ -1020,7 +1020,7 @@ class CodexTypes():
 
                         # Landable Volcanism
                         if b.get('type') == 'Planet' and b.get('volcanismType') and b.get('volcanismType') != 'No volcanism' and b.get('isLandable'):
-                            self.add_poi("Geology", "$Volcanism:"+b.get('volcanismType').replace(" volcanism", ""), body_code)
+                            self.add_poi("Geology", "$Volcanism:"+b.get('volcanismType').replace(" Volcanism", ""), body_code)
                             #check SAA signals
                             if body_code not in self.ppoidata:
                                 self.add_poi("Geology", "$Sites:NoSAA", body_code)
@@ -2153,13 +2153,13 @@ class CodexTypes():
             premium = (materials.get("Carbon") and materials.get("Germanium") and materials.get(
                 "Arsenic") and materials.get("Niobium") and materials.get("Yttrium") and materials.get("Polonium"))
         if premium:
-            self.add_poi(jclass, f"Premium{modifier}", body_code)
+            self.add_poi(jclass, f"$BoostFSD:Premium{modifier}", body_code)
             return
         if standard:
-            self.add_poi(jclass, f"Standard{modifier}", body_code)
+            self.add_poi(jclass, f"$BoostFSD:Standard{modifier}", body_code)
             return
         if basic:
-            self.add_poi(jclass, f"Basic{modifier}", body_code)
+            self.add_poi(jclass, f"$BoostFSD:Basic{modifier}", body_code)
             return
 
     def rings(self, candidate, body_code):
@@ -2213,7 +2213,6 @@ class CodexTypes():
         a = float(self.light_seconds(tag, major))
         e = float(eccentricity or 0)
         minor = sqrt(pow(a, 2) * (1 - pow(e, 2)))
-
         return minor
     
     # The focus is the closest point of the orbit
@@ -2454,9 +2453,9 @@ class CodexTypes():
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
             self.system = system
             if entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
-                self.add_poi("Cloud", "Life Cloud", "")
+                self.add_poi("Cloud", "Life Cloud", None)
             else:
-                self.add_poi("Cloud", "Life Ring", "")
+                self.add_poi("Cloud", "Life Ring", None)
             self.allowed = True
             self.refreshPOIData(None)
 
@@ -2518,7 +2517,7 @@ class CodexTypes():
                 dovis = True
             elif "$" in entry.get("SignalName"):
                 if self.humandetailed:
-                    self.add_poi("Human", "$Warning:"+entry.get("SignalName"), None)
+                    self.add_poi("Other", "$Warning:"+entry.get("SignalName"), None)
                     print("WARNING : ",entry)
                     dovis = True
                 else:
