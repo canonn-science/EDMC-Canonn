@@ -292,7 +292,7 @@ class poiTypes(threading.Thread):
         self.callback(self.system, self.cmdr)
         # debug("poitypes Callback Complete")
 
-#class planetTypes(threading.Thread):
+# class planetTypes(threading.Thread):
 #    def __init__(self, system, body, cmdr, callback):
 #        # debug("initialise POITYpes Thread")
 #        threading.Thread.__init__(self)
@@ -305,6 +305,7 @@ class poiTypes(threading.Thread):
 #        # debug("running poitypes")
 #        self.callback(self.system, self.body, self.cmdr)
 #        # debug("poitypes Callback Complete")
+
 
 class saaScan():
 
@@ -327,7 +328,8 @@ class saaScan():
                 "eventType": entry.get("event"),
                 "cmdrName": cmdr
             })
-            
+
+
 class organicScan():
 
     def __init__(self):
@@ -369,7 +371,7 @@ class CodexTypes():
         "Jumponium": "Jumponium Planets",
         "GreenSystem": "Jumponium Planets"
     }
-    
+
     canonndata = {
         "apsites": ["Biology", "Amphora Plants"],
         "bmsites": ["Biology", "Bark Mounds"],
@@ -410,10 +412,10 @@ class CodexTypes():
     waitingPlanet = True
     fsscount = 0
     fccount = 0
-    
+
     logqueue = True
     logq = Queue()
-    
+
     edsm_bodyq = Queue()
     edsm_stationq = Queue()
     poiq = Queue()
@@ -430,28 +432,30 @@ class CodexTypes():
         #   parent
         # )
         self.parent = parent
-        self.hidecodexbtn = tk.IntVar(value=config.getint("CanonnHideCodex"))
+        self.hidecodexbtn = tk.IntVar(value=config.get_int("CanonnHideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
-        self.humandetailedbtn = tk.IntVar(value=config.getint("CanonnHumanDetailed"))
+        self.humandetailedbtn = tk.IntVar(
+            value=config.get_int("CanonnHumanDetailed"))
         self.humandetailed = self.humandetailedbtn.get()
 
         self.frame = Frame(parent)
         self.frame.columnconfigure(0, weight=1)
-        self.frame.grid(row=gridrow, column=0, sticky="NSEW",columnspan=2)
+        self.frame.grid(row=gridrow, column=0, sticky="NSEW", columnspan=2)
         self.frame.bind('<<refreshPOIData>>', self.refreshPOIData)
         #self.frame.bind('<<refreshPlanetData>>', self.refreshPlanetData)
-        
-        self.container = Frame(self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
+
+        self.container = Frame(
+            self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
         self.container.grid(row=0, column=0, sticky="NSEW")
         self.container.grid_remove()
-        
+
         self.titlepanel = Frame(self.container)
         self.titlepanel.grid(row=0, column=0, sticky="NSEW")
-        
+
         self.systempanel = Frame(self.container)
         self.systempanel.grid(row=1, column=0, sticky="NSEW")
         self.systempanel.grid_remove()
-        
+
         self.systemtitle = Frame(self.titlepanel)
         self.systemtitle.grid(row=0, column=0, sticky="NSEW")
         self.systemtitle.grid_remove()
@@ -460,29 +464,35 @@ class CodexTypes():
         self.systemprogress = tk.Label(self.systemtitle, text="?")
         self.systemprogress.grid(row=0, column=2, sticky="NSEW")
         self.systemprogress.grid_remove()
-        
+
         self.planetpanel = Frame(self.container)
         self.planetpanel.grid(row=2, column=0, sticky="NSEW")
         self.planetpanel.grid_remove()
-        
+
         self.planettitle = Frame(self.titlepanel)
         self.planettitle.grid(row=1, column=0, sticky="NSEW")
         self.planettitle.grid_remove()
-        
-        self.images_prev = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "left_arrow.gif"))
-        self.planettitle_prev = tk.Label(self.planettitle, image=self.images_prev, cursor="hand2")
+
+        self.images_prev = tk.PhotoImage(file=os.path.join(
+            CodexTypes.plugin_dir, "icons", "left_arrow.gif"))
+        self.planettitle_prev = tk.Label(
+            self.planettitle, image=self.images_prev, cursor="hand2")
         self.planettitle_prev.grid(row=0, column=0, sticky="NSEW")
-        self.planettitle_prev.bind('<ButtonPress>', lambda event, x=-1: self.changeBodyFocus(event, x))
-        self.images_next = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "right_arrow.gif"))
-        self.planettitle_next = tk.Label(self.planettitle, image=self.images_next, cursor="hand2")
+        self.planettitle_prev.bind(
+            '<ButtonPress>', lambda event, x=-1: self.changeBodyFocus(event, x))
+        self.images_next = tk.PhotoImage(file=os.path.join(
+            CodexTypes.plugin_dir, "icons", "right_arrow.gif"))
+        self.planettitle_next = tk.Label(
+            self.planettitle, image=self.images_next, cursor="hand2")
         self.planettitle_next.grid(row=0, column=1, sticky="NSEW")
-        self.planettitle_next.bind('<ButtonPress>', lambda event, x=1: self.changeBodyFocus(event, x))
+        self.planettitle_next.bind(
+            '<ButtonPress>', lambda event, x=1: self.changeBodyFocus(event, x))
         self.planettitle_name = tk.Label(self.planettitle, text="?")
         self.planettitle_name.grid(row=0, column=2, sticky="NSEW")
         self.planetprogress = tk.Label(self.planettitle, text="?")
         self.planetprogress.grid(row=0, column=3, sticky="NSEW")
         self.planetprogress.grid_remove()
-        
+
         self.images = {}
         self.labels = {}
         self.systemlist = {}
@@ -503,38 +513,42 @@ class CodexTypes():
         self.temp_poidata = None
         self.temp_edsmdata = None
         #self.cmdrData = {}
-        
-        self.images_body = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body.gif"))
-        self.images_body_auto = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body_auto.gif"))
-        self.images_body_grey = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body_grey.gif"))
-        self.icon_body = tk.Label(self.systemtitle, image=self.images_body_auto, text="Body_auto")
+
+        self.images_body = tk.PhotoImage(file=os.path.join(
+            CodexTypes.plugin_dir, "icons", "Body.gif"))
+        self.images_body_auto = tk.PhotoImage(file=os.path.join(
+            CodexTypes.plugin_dir, "icons", "Body_auto.gif"))
+        self.images_body_grey = tk.PhotoImage(file=os.path.join(
+            CodexTypes.plugin_dir, "icons", "Body_grey.gif"))
+        self.icon_body = tk.Label(
+            self.systemtitle, image=self.images_body_auto, text="Body_auto")
         self.icon_body.grid(row=0, column=1)
         self.icon_body.bind("<ButtonPress>", self.nextBodyMode)
-        #self.icon_body.grid_remove()
-        
+        # self.icon_body.grid_remove()
+
         self.types = ("Geology", "Cloud", "Anomaly", "Thargoid",
                       "Biology", "Guardian", "Human", "Ring",
-                      "None", "Other", "Personal", "Planets", 
+                      "None", "Other", "Personal", "Planets",
                       "Tourist", "Jumponium", "GreenSystem")
-        k=0
+        k = 0
         for category in self.types:
             self.addimage(category, k+3)
             self.systemlist[category] = Frame(self.systempanel)
             self.systemlist[category].grid(row=k+1, column=0, sticky="W")
             self.systemlist[category].grid_remove()
-            k+=1
-        
-        self.typesPlanet = ("Geology", "Thargoid", "Biology", "Guardian", 
-                            "Human", "Other", "Personal", "Tourist", 
+            k += 1
+
+        self.typesPlanet = ("Geology", "Thargoid", "Biology", "Guardian",
+                            "Human", "Other", "Personal", "Tourist",
                             "Jumponium", "GreenSystem")
-        k=0
+        k = 0
         for category in self.typesPlanet:
             self.addimage_planet(category, k+4)
             self.planetlist[category] = Frame(self.planetpanel)
             self.planetlist[category].grid(row=k+1, column=0, sticky="W")
             self.planetlist[category].grid_remove()
-            k+=1
-        
+            k += 1
+
         self.event = None
         self.system = None
         self.bodies = None
@@ -544,7 +558,7 @@ class CodexTypes():
         self.allowed = False
         self.lock = []
         self.lockPlanet = []
-        
+
         self.planetlist_body = None
         self.planetlist_show = False
         self.planetlist_auto = True
@@ -561,7 +575,7 @@ class CodexTypes():
                 self.switchBodyMode("Body")
             else:
                 self.switchBodyMode("Body_auto")
-        
+
     def switchBodyMode(self, mode):
         Debug.logger.debug(f"switchBodyMode {mode}")
         if mode == "Body":
@@ -586,20 +600,20 @@ class CodexTypes():
 
     def setDestinationWidget(self, widget):
         self.dest_widget = widget
-    
+
     def changeBodyFocus(self, event, inext):
-        
+
         body_list = []
         for body in self.ppoidata:
             body_list.append(body)
-        
+
         body_list = sorted(body_list)
-        k=0
+        k = 0
         for body in body_list:
             if self.planetlist_body == body:
                 k_selected = k
-            k+=1
-        
+            k += 1
+
         if inext == -1:
             if k_selected-1 < 0:
                 self.planetlist_body = body_list[len(body_list)-1]
@@ -610,26 +624,27 @@ class CodexTypes():
                 self.planetlist_body = body_list[0]
             else:
                 self.planetlist_body = body_list[k_selected+1]
-        
+
         self.switchBodyMode("Body")
         self.visualisePlanetData()
-    
+
     def bodyFocus(self, body):
         self.planetlist_body = body
         self.switchBodyMode("Body")
-    
+
     def activateDestination(self, latlon):
         lat = float(latlon.split(",")[0][1:])
         lon = float(latlon.split(",")[1][:-1])
-        self.dest_widget.ActivateTarget(lat,lon)
-    
+        self.dest_widget.ActivateTarget(lat, lon)
+
     def switchPOI(self, category):
         if category in self.types:
             if category in self.lock:
                 self.lock.remove(category)
                 self.systemlist[category].grid_remove()
-                self.labels[category]["image"] = self.images["{}_grey".format(category)]
-                if len(self.lock)==0:
+                self.labels[category]["image"] = self.images["{}_grey".format(
+                    category)]
+                if len(self.lock) == 0:
                     self.systempanel.grid_remove()
             else:
                 self.lock.append(category)
@@ -640,13 +655,14 @@ class CodexTypes():
                 self.lock.remove(category)
             else:
                 self.lock.append(category)
-    
+
     def switchPlanet(self, category):
         if category in self.typesPlanet:
             if category in self.lockPlanet:
                 self.lockPlanet.remove(category)
                 self.planetlist[category].grid_remove()
-                self.labels[category+"_planet"]["image"] = self.images["{}_grey_planet".format(category)]
+                self.labels[category +
+                            "_planet"]["image"] = self.images["{}_grey_planet".format(category)]
                 remove_panel = True
                 for c in self.ppoidata[self.planetlist_body]:
                     if c in self.lockPlanet:
@@ -656,13 +672,14 @@ class CodexTypes():
             else:
                 self.lockPlanet.append(category)
                 self.planetlist[category].grid()
-                self.labels[category+"_planet"]["image"] = self.images[category+"_planet"]
+                self.labels[category +
+                            "_planet"]["image"] = self.images[category+"_planet"]
         else:
             if category in self.lockPlanet:
                 self.lockPlanet.remove(category)
             else:
                 self.lockPlanet.append(category)
-    
+
     def lockPOIData(self, name):
         if name not in self.lock:
             self.switchPOI(name)
@@ -675,8 +692,8 @@ class CodexTypes():
                 self.switchBodyMode("Body")
         else:
             self.switchPOI(name)
-        #self.visualisePOIData()
-    
+        # self.visualisePOIData()
+
     def lockPlanetData(self, name):
         if name not in self.lockPlanet:
             self.switchPlanet(name)
@@ -687,14 +704,15 @@ class CodexTypes():
                     self.switchPOI(category)
         else:
             self.switchPlanet(name)
-        #self.visualisePlanetData()
-    
+        # self.visualisePlanetData()
+
     def enter(self, event):
         name = event.widget["text"]
         if name[len(name)-7:] == "_planet":
             name = name[:len(name)-7]
             if name not in self.lockPlanet:
-                self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
+                self.labels[name +
+                            "_planet"]["image"] = self.images[name+"_planet"]
                 self.planetlist[name].grid()
                 self.planetpanel.grid()
                 self.systempanel.grid_remove()
@@ -704,14 +722,14 @@ class CodexTypes():
                 self.systemlist[name].grid()
                 self.systempanel.grid()
                 self.planetpanel.grid_remove()
-                
-        
+
     def leave(self, event):
         name = event.widget["text"]
         if name[len(name)-7:] == "_planet":
             name = name[:len(name)-7]
             if name not in self.lockPlanet:
-                self.labels[name+"_planet"]["image"] = self.images["{}_grey_planet".format(name)]
+                self.labels[name +
+                            "_planet"]["image"] = self.images["{}_grey_planet".format(name)]
                 self.planetlist[name].grid_remove()
                 remove_panel = True
                 for category in self.ppoidata[self.planetlist_body]:
@@ -719,15 +737,16 @@ class CodexTypes():
                         remove_panel = False
                 if remove_panel:
                     self.planetpanel.grid_remove()
-                if len(self.lock)!=0:
+                if len(self.lock) != 0:
                     self.systempanel.grid()
         else:
             if name not in self.lock:
-                self.labels[name]["image"] = self.images["{}_grey".format(name)]
+                self.labels[name]["image"] = self.images["{}_grey".format(
+                    name)]
                 self.systemlist[name].grid_remove()
-                if len(self.lock)==0:
+                if len(self.lock) == 0:
                     self.systempanel.grid_remove()
-                if len(self.lockPlanet)!=0:
+                if len(self.lockPlanet) != 0:
                     remove_panel = True
                     for category in self.ppoidata[self.planetlist_body]:
                         if category in self.lockPlanet:
@@ -737,33 +756,41 @@ class CodexTypes():
 
     def addimage(self, name, col):
         grey = "{}_grey".format(name)
-        self.images[name] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
-        self.images[grey] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
-        self.labels[name] = tk.Label(self.systemtitle, image=self.images.get(grey), text=name)
+        self.images[name] = tk.PhotoImage(file=os.path.join(
+            CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
+        self.images[grey] = tk.PhotoImage(file=os.path.join(
+            CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
+        self.labels[name] = tk.Label(
+            self.systemtitle, image=self.images.get(grey), text=name)
         self.labels[name].grid(row=0, column=col)
         self.labels[name].grid_remove()
         self.labels[name].bind("<Enter>", self.enter)
         self.labels[name].bind("<Leave>", self.leave)
-        self.labels[name].bind("<ButtonPress>", lambda event, x=name: self.lockPOIData(x))
+        self.labels[name].bind(
+            "<ButtonPress>", lambda event, x=name: self.lockPOIData(x))
         self.labels[name]["image"] = self.images[name]
-    
+
     def addimage_planet(self, name, col):
         grey = "{}_grey".format(name)
-        self.images[name+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
-        self.images[grey+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
-        self.labels[name+"_planet"] = tk.Label(self.planettitle, image=self.images.get(grey+"_planet"), text=name+"_planet")
+        self.images[name+"_planet"] = tk.PhotoImage(file=os.path.join(
+            CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
+        self.images[grey+"_planet"] = tk.PhotoImage(file=os.path.join(
+            CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
+        self.labels[name+"_planet"] = tk.Label(
+            self.planettitle, image=self.images.get(grey+"_planet"), text=name+"_planet")
         self.labels[name+"_planet"].grid(row=0, column=col)
         self.labels[name+"_planet"].grid_remove()
         self.labels[name+"_planet"].bind("<Enter>", self.enter)
         self.labels[name+"_planet"].bind("<Leave>", self.leave)
-        self.labels[name+"_planet"].bind("<ButtonPress>", lambda event, x=name: self.lockPlanetData(x))
+        self.labels[name+"_planet"].bind("<ButtonPress>",
+                                         lambda event, x=name: self.lockPlanetData(x))
         self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
-    
+
     def set_image(self, name, enabled):
-        
+
         if name not in self.labels:
             return
-            
+
         forplanet = False
         lock = self.lock
         types = self.types
@@ -772,39 +799,39 @@ class CodexTypes():
             forplanet = True
             lock = self.lockPlanet
             types = self.typesPlanet
-        
+
         if name == None:
             error("set_image: name is None")
             return
         if name not in types:
             error("set_image: name {} is not allowed")
-        
+
         grey = "{}_grey".format(name)
-        
+
         if name not in lock:
             setting = grey
         else:
             setting = name
-        
+
         if forplanet:
             setting = setting+"_planet"
             name = name+"_planet"
-        
+
         if enabled and self.labels.get(name):
             self.labels[name]["image"] = self.images[setting]
             self.labels[name].grid()
         else:
             self.labels[name].grid()
             self.labels[name].grid_remove()
-    
+
     # this seems horribly confused
     def refreshPOIData(self, event):
-    
+
         Debug.logger.debug(f"refreshPOIData {self.event} {self.waitingPOI}")
-        
+
         if self.waitingPOI:
             return
-        
+
         try:
             while not self.edsm_bodyq.empty():
                 # only expecting to go around once
@@ -814,57 +841,64 @@ class CodexTypes():
                 r = self.poiq.get()
                 body = r.get("body")
                 body_code = body.replace(self.system+" ", '')
-                
+
                 if r.get("hud_category") == "Geology":
                     subcat = "$Sites:"+r.get("english_name")
                 else:
                     subcat = r.get("english_name")
                 self.add_poi(r.get("hud_category"), subcat, body_code)
-                
+
                 if (r.get("latitude") is None) or (r.get("longitude") is None):
                     latlon = None
                 else:
-                    latlon = "("+str(r.get("latitude"))+","+str(r.get("longitude"))+")"
-                
+                    latlon = "("+str(r.get("latitude")) + \
+                        ","+str(r.get("longitude"))+")"
+
                 if (r.get("index_id") is None):
                     index = None
                 else:
                     index = "#"+str(r.get("index_id"))
-                
+
                 if body_code not in self.ppoidata:
                     self.ppoidata[body_code] = {}
                 if r.get("hud_category") not in self.ppoidata[body_code]:
                     self.ppoidata[body_code][r.get("hud_category")] = {}
                 if r.get("english_name") not in self.ppoidata[body_code][r.get("hud_category")]:
-                    self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")] = []
-                
+                    self.ppoidata[body_code][r.get(
+                        "hud_category")][r.get("english_name")] = []
+
                 if [None, latlon] in self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")]:
-                    self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")].remove([None, latlon])
-                
-                self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")].append([index, latlon])
-                    
+                    self.ppoidata[body_code][r.get("hud_category")][r.get(
+                        "english_name")].remove([None, latlon])
+
+                self.ppoidata[body_code][r.get("hud_category")][r.get(
+                    "english_name")].append([index, latlon])
+
             while not self.saaq.empty():
                 r = self.saaq.get()
                 body = r.get("body")
                 body_code = body.replace(self.system+" ", '')
-                
+
                 if body_code not in self.saadata:
                     self.saadata[body_code] = {}
                 self.saadata[body_code][r.get("hud_category")] = r.get("count")
                 self.remove_poi("Geology", "$Sites:NoSAA", body_code)
                 self.remove_poi("MissingData", "$Geology:NoSAA", body_code)
-                
+
                 if r.get("hud_category") == "Ring":
-                    self.add_poi(r.get("hud_category"), "$Hotspots:"+r.get("english_name"), body_code)
+                    self.add_poi(r.get("hud_category"),
+                                 "$Hotspots:"+r.get("english_name"), body_code)
                 elif r.get("hud_category") == "Geology":
                     nsites = 0
                     if body_code in self.ppoidata:
                         if "Geology" in self.ppoidata[body_code]:
                             for type in self.ppoidata[body_code]["Geology"]:
-                                nsites += len(self.ppoidata[body_code]["Geology"][type])
+                                nsites += len(self.ppoidata[body_code]
+                                              ["Geology"][type])
                     if nsites < r.get("count"):
                         self.add_poi("Geology", "$Sites:Unknown", body_code)
-                        self.add_poi("MissingData", "$Geology:Unknown", body_code)
+                        self.add_poi(
+                            "MissingData", "$Geology:Unknown", body_code)
                         if body_code not in self.ppoidata:
                             self.ppoidata[body_code] = {}
                 elif r.get("hud_category") == "Biology":
@@ -872,29 +906,32 @@ class CodexTypes():
                     if body_code in self.ppoidata:
                         if "Biology" in self.ppoidata[body_code]:
                             for type in self.ppoidata[body_code]["Biology"]:
-                                nsites += len(self.ppoidata[body_code]["Biology"][type])
+                                nsites += len(self.ppoidata[body_code]
+                                              ["Biology"][type])
                     if nsites < r.get("count"):
                         self.add_poi("Biology", "Unknown", body_code)
-                        self.add_poi("MissingData", "$Biology:Unknown", body_code)
+                        self.add_poi(
+                            "MissingData", "$Biology:Unknown", body_code)
                         if body_code not in self.ppoidata:
                             self.ppoidata[body_code] = {}
                 self.update_unknown_ppoi(body_code)
-                
+
             while not self.cmdrq.empty():
                 # only expecting to go around once
                 temp_cmdrdata = self.cmdrq.get()
                 body = temp_cmdrdata.get("body")
                 body_code = body.replace(self.system+" ", '')
-                
+
                 if temp_cmdrdata["comment"] is None:
                     name = temp_cmdrdata["category"]
                     index = temp_cmdrdata["index_id"]
                 else:
                     name = temp_cmdrdata["comment"]
                     index = None
-                latlon = "("+str(round(float(temp_cmdrdata["latitude"]),2))+","+str(round(float(temp_cmdrdata["longitude"]),2))+")"
+                latlon = "("+str(round(float(temp_cmdrdata["latitude"]), 2))+","+str(
+                    round(float(temp_cmdrdata["longitude"]), 2))+")"
                 self.add_poi("Personal", name, body_code)
-                
+
                 if body_code not in self.ppoidata:
                     self.ppoidata[body_code] = {}
                 if "Personal" not in self.ppoidata[body_code]:
@@ -902,40 +939,46 @@ class CodexTypes():
                 if name not in self.ppoidata[body_code]["Personal"]:
                     self.ppoidata[body_code]["Personal"][name] = []
                 if [index, latlon] not in self.ppoidata[body_code]["Personal"][name]:
-                    self.ppoidata[body_code]["Personal"][name].append([index, latlon])
-            
+                    self.ppoidata[body_code]["Personal"][name].append(
+                        [index, latlon])
+
             while not self.edsm_stationq.empty():
                 # only expecting to go around once
                 temp_stationdata = self.edsm_stationq.get()
-                
+
                 # restructure the EDSM data
                 if temp_stationdata:
                     edsm_stations = temp_stationdata.get("stations")
                 else:
                     edsm_stations = {}
-                
+
                 if edsm_stations:
                     for s in edsm_stations:
                         if "body" in s:
                             if s["type"] != "Fleet Carrier":
-                                bodycode = s["body"].get("name").replace(self.system+" ", '')
-                                latlon = "("+str(round(s["body"].get("latitude"),2))+","+str(round(s["body"].get("longitude"),2))+")"
+                                bodycode = s["body"].get(
+                                    "name").replace(self.system+" ", '')
+                                latlon = "("+str(round(s["body"].get("latitude"), 2))+","+str(
+                                    round(s["body"].get("longitude"), 2))+")"
                                 if bodycode not in self.ppoidata:
                                     self.ppoidata[bodycode] = {}
                                 if "Human" not in self.ppoidata[bodycode]:
                                     self.ppoidata[bodycode]["Human"] = {}
                                 if s["name"] not in self.ppoidata[bodycode]["Human"]:
-                                    self.ppoidata[bodycode]["Human"][s["name"]] = [[None, latlon]]
+                                    self.ppoidata[bodycode]["Human"][s["name"]] = [
+                                        [None, latlon]]
                                 #self.ppoidata["Human"][station["name"]].append([None, latlon])
                         else:
                             if s["name"] not in self.stationdata:
                                 if s["type"] != "Fleet Carrier":
-                                    self.stationdata[s["name"]] = {"type":s["type"]}
+                                    self.stationdata[s["name"]] = {
+                                        "type": s["type"]}
                                     if self.humandetailed:
-                                        self.add_poi("Human", "$Station:"+s["name"], None)
+                                        self.add_poi(
+                                            "Human", "$Station:"+s["name"], None)
                                     else:
                                         self.add_poi("Human", "Station", None)
-            
+
             # if self.temp_edsmdata:
             if not self.bodies:
                 self.bodies = {}
@@ -974,11 +1017,13 @@ class CodexTypes():
 
                     for k in bodies.keys():
                         if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
-                            CodexTypes.parentRadius = self.light_seconds("solarRadius", bodies.get(k).get("solarRadius"))
+                            CodexTypes.parentRadius = self.light_seconds(
+                                "solarRadius", bodies.get(k).get("solarRadius"))
 
                         # lets normalise radius between planets and stars
                         if bodies.get(k).get("solarRadius") is not None:
-                            bodies[k]["radius"] = bodies.get(k).get("solarRadius")
+                            bodies[k]["radius"] = bodies.get(
+                                k).get("solarRadius")
 
                     for k in bodies.keys():
                         b = bodies.get(k)
@@ -995,62 +1040,80 @@ class CodexTypes():
                         self.rings(b, body_code)
                         self.green_system(bodies)
                         if moon_moon_moon(b):
-                            self.add_poi("Tourist", "Moon Moon Moon", body_code)
+                            self.add_poi(
+                                "Tourist", "Moon Moon Moon", body_code)
 
                         # Terraforming
                         if b.get('terraformingState') == 'Candidate for terraforming':
                             if b.get('isLandable'):
                                 if not b.get("rings"):
-                                    self.add_poi("Planets", "Landable Terraformable", body_code)
+                                    self.add_poi(
+                                        "Planets", "Landable Terraformable", body_code)
                                 else:
-                                    self.add_poi("Planets", "Landable Ringed Terraformable", body_code)
+                                    self.add_poi(
+                                        "Planets", "Landable Ringed Terraformable", body_code)
                             else:
-                                self.add_poi("Planets", "Terraformable", body_code)
+                                self.add_poi(
+                                    "Planets", "Terraformable", body_code)
                         elif b.get('terraformingState') == 'Terraforming':
                             if b.get('isLandable'):
                                 if not b.get("rings"):
-                                    self.add_poi("Planets", "Landable Terraforming", body_code)
+                                    self.add_poi(
+                                        "Planets", "Landable Terraforming", body_code)
                                 else:
-                                    self.add_poi("Planets", "Landable Ringed Terraforming", body_code)
+                                    self.add_poi(
+                                        "Planets", "Landable Ringed Terraforming", body_code)
                             else:
-                                self.add_poi("Planets", "Terraforming", body_code)
+                                self.add_poi(
+                                    "Planets", "Terraforming", body_code)
                         else:
                             if b.get("rings") and b.get('isLandable'):
-                                self.add_poi("Tourist", "Landable Ringed Body", body_code)
+                                self.add_poi(
+                                    "Tourist", "Landable Ringed Body", body_code)
 
                         # Landable Volcanism
                         if b.get('type') == 'Planet' and b.get('volcanismType') and b.get('volcanismType') != 'No volcanism' and b.get('isLandable'):
                             self.add_poi("Geology", "$Volcanism:"+b.get('volcanismType').replace(" Volcanism", ""), body_code)
                             #check SAA signals
                             if body_code not in self.ppoidata:
-                                self.add_poi("Geology", "$Sites:NoSAA", body_code)
-                                self.add_poi("MissingData", "$Geology:NoSAA", body_code)
+                                self.add_poi(
+                                    "Geology", "$Sites:NoSAA", body_code)
+                                self.add_poi(
+                                    "MissingData", "$Geology:NoSAA", body_code)
                             else:
                                 if "Geology" not in self.ppoidata[body_code]:
-                                    self.add_poi("Geology", "$Sites:NoSAA", body_code)
-                                    self.add_poi("MissingData", "$Geology:NoSAA", body_code)
-                        
+                                    self.add_poi(
+                                        "Geology", "$Sites:NoSAA", body_code)
+                                    self.add_poi(
+                                        "MissingData", "$Geology:NoSAA", body_code)
+
                         # Thin Atmosphere
                         if b.get('type') == 'Planet' and 'Thin ' in b.get('atmosphereType'):
-                            self.add_poi("MissingData", "$ThinAtmosphere:NoSAA", body_code)
-                        
+                            self.add_poi(
+                                "MissingData", "$ThinAtmosphere:NoSAA", body_code)
+
                         # water ammonia etc
                         if b.get('subType') in CodexTypes.body_types.keys():
-                            self.add_poi("Planets", CodexTypes.body_types.get(b.get('subType')), body_code)
+                            self.add_poi("Planets", CodexTypes.body_types.get(
+                                b.get('subType')), body_code)
 
                         # fast orbits
                         if b.get('orbitalPeriod'):
                             if abs(float(b.get('orbitalPeriod'))) <= 0.042:
-                                self.add_poi("Tourist", 'Fast Orbital Period', body_code)
+                                self.add_poi(
+                                    "Tourist", 'Fast Orbital Period', body_code)
 
                         # Ringed ELW etc
                         if b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
-                                self.add_poi("Tourist",'Ringed {}'.format(CodexTypes.body_types.get(b.get('subType'))), body_code)
+                                self.add_poi("Tourist", 'Ringed {}'.format(
+                                    CodexTypes.body_types.get(b.get('subType'))), body_code)
                             if b.get("parents") and b.get("parents")[0] and b.get("parents")[0].get("Planet"):
-                                self.add_poi("Tourist",'{} Moon'.format(CodexTypes.body_types.get(b.get('subType'))), body_code)
+                                self.add_poi("Tourist", '{} Moon'.format(
+                                    CodexTypes.body_types.get(b.get('subType'))), body_code)
                         if b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
-                            self.add_poi("Tourist", 'Tidal Locked Earthlike Word', body_code)
+                            self.add_poi(
+                                "Tourist", 'Tidal Locked Earthlike Word', body_code)
 
                         #    Landable high-g (>3g)
                         if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
@@ -1058,30 +1121,36 @@ class CodexTypes():
 
                         #    Landable large (>18000km radius)
                         if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
-                            self.add_poi("Tourist", 'Large Radius Landable', body_code)
+                            self.add_poi(
+                                "Tourist", 'Large Radius Landable', body_code)
 
                         #    Moons of moons
 
                         #    Tiny objects (<300km radius)
                         if b.get('type') == 'Planet' and b.get('radius') < 300 and b.get('isLandable'):
-                            self.add_poi("Tourist", 'Tiny Radius Landable', body_code)
+                            self.add_poi(
+                                "Tourist", 'Tiny Radius Landable', body_code)
 
                         #    Fast and non-locked rotation
                         if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get("rotationalPeriodTidallyLocked"):
-                            self.add_poi("Tourist", 'Fast unlocked rotation', body_code)
+                            self.add_poi(
+                                "Tourist", 'Fast unlocked rotation', body_code)
 
                         #    High eccentricity
                         if float(b.get("orbitalEccentricity") or 0) > CodexTypes.eccentricity:
-                            self.add_poi("Tourist", 'Highly Eccentric Orbit', body_code)
+                            self.add_poi(
+                                "Tourist", 'Highly Eccentric Orbit', body_code)
 
             else:
                 CodexTypes.bodycount = 0
-            
+
             self.logqueue = False
             while not self.logq.empty():
-                (tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry, tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient) = self.logq.get()
-                self.journal_entry(tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry, tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient)
-            
+                (tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry, tmpstate, tmpx,
+                 tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient) = self.logq.get()
+                self.journal_entry(tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry,
+                                   tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient)
+
         except Exception as e:
             #line = sys.exc_info()[-1].tb_lineno
             self.add_poi("Other", 'Plugin Error', None)
@@ -1089,117 +1158,117 @@ class CodexTypes():
             Debug.logger.exception("Message")
 
         Debug.logger.debug(f"refreshPOIData end {self.event}")
-        
+
         self.visualisePOIData()
         self.visualisePlanetData()
-    
+
     # def refreshPlanetData(self, event):
-        
+
         # Debug.logger.debug(f"refreshPlanetData {self.event} {self.waitingPlanet}")
-        
+
         # if self.waitingPlanet:
-            # return
-        
+        # return
+
         # try:
-            # while not self.planetq.empty():
-                # r = self.planetq.get()
-                
-                # if (r.get("latitude") is None) or (r.get("longitude") is None):
-                    # latlon = None
-                    # continue
-                # else:
-                    # latlon = "("+str(r.get("latitude"))+","+str(r.get("longitude"))+")"
-                
-                # if (r.get("index_id") is None):
-                    # index = None
-                # else:
-                    # index = "#"+str(r.get("index_id"))
-                    
-                # if r.get("hud_category") not in self.ppoidata:
-                    # self.ppoidata[r.get("hud_category")] = {}
-                # if r.get("english_name") not in self.ppoidata[r.get("hud_category")]:
-                    # self.ppoidata[r.get("hud_category")][r.get("english_name")] = []
-                
-                # # if (index is None) and (latlon is None):
-                    # # value = None
-                # # elif (index is None):
-                    # # value = latlon
-                # # elif (latlon is None):
-                    # # value = index
-                # # else:
-                    # # value = index+" "+latlon
-                
-                # self.ppoidata[r.get("hud_category")][r.get("english_name")].append([index, latlon])
-            
-            # self.update_unknown_ppoi()
-            
-            # while not self.canonnq.empty():
-                # temp_canonndata = self.canonnq.get()
-                # temp_canonndata = temp_canonndata[0]
-                # for sites in self.canonndata:
-                    # category = self.canonndata[sites][0]
-                    # name = self.canonndata[sites][1]
-                    # for site in temp_canonndata[sites]:
-                        # if site["verified"]:
-                            # if site["frontierID"] is not None:
-                                # index = "#"+str(site["frontierID"])
-                            # else:
-                                # index = None
-                            # latlon = "("+str(round(site["latitude"],2))+","+str(round(site["longitude"],2))+")"
-                            # if category not in self.ppoidata:
-                                # self.ppoidata[category] = {}
-                            # if name not in self.ppoidata[category]:
-                                # self.ppoidata[category][name] = []
-                            # self.ppoidata[category][name].append([index, latlon])
-                # #need to add the parser for canonn data
-            
-            # for c in self.stationPlanetData:
-                # if c == self.body:
-                    # for station in self.stationPlanetData[c]:
-                        # latlon = "("+str(round(station["latitude"],2))+","+str(round(station["longitude"],2))+")"
-                        # if "Human" not in self.ppoidata:
-                            # self.ppoidata["Human"] = {}
-                        # if station["name"] not in self.ppoidata["Human"]:
-                            # self.ppoidata["Human"][station["name"]] = [[None, latlon]]
-                        # #self.ppoidata["Human"][station["name"]].append([None, latlon])
-            
-            # for c in self.cmdrData:
-                # if c == self.body:
-                    # for cmdrdata in self.cmdrData[c]:
-                        # if cmdrdata["comment"] is None:
-                            # name = cmdrdata["category"]
-                            # index = cmdrdata["index_id"]
-                        # else:
-                            # name = cmdrdata["comment"]
-                            # index = None
-                        # latlon = "("+str(round(float(cmdrdata["latitude"]),2))+","+str(round(float(cmdrdata["longitude"]),2))+")"
-                        # if "Personal" not in self.ppoidata:
-                            # self.ppoidata["Personal"] = {}
-                        # if name not in self.ppoidata["Personal"]:
-                            # self.ppoidata["Personal"][name] = []
-                        # if [index, latlon] not in self.ppoidata["Personal"][name]:
-                            # self.ppoidata["Personal"][name].append([index, latlon])
-            
+        # while not self.planetq.empty():
+        # r = self.planetq.get()
+
+        # if (r.get("latitude") is None) or (r.get("longitude") is None):
+        # latlon = None
+        # continue
+        # else:
+        # latlon = "("+str(r.get("latitude"))+","+str(r.get("longitude"))+")"
+
+        # if (r.get("index_id") is None):
+        # index = None
+        # else:
+        # index = "#"+str(r.get("index_id"))
+
+        # if r.get("hud_category") not in self.ppoidata:
+        # self.ppoidata[r.get("hud_category")] = {}
+        # if r.get("english_name") not in self.ppoidata[r.get("hud_category")]:
+        # self.ppoidata[r.get("hud_category")][r.get("english_name")] = []
+
+        # # if (index is None) and (latlon is None):
+        # # value = None
+        # # elif (index is None):
+        # # value = latlon
+        # # elif (latlon is None):
+        # # value = index
+        # # else:
+        # # value = index+" "+latlon
+
+        # self.ppoidata[r.get("hud_category")][r.get("english_name")].append([index, latlon])
+
+        # self.update_unknown_ppoi()
+
+        # while not self.canonnq.empty():
+        # temp_canonndata = self.canonnq.get()
+        # temp_canonndata = temp_canonndata[0]
+        # for sites in self.canonndata:
+        # category = self.canonndata[sites][0]
+        # name = self.canonndata[sites][1]
+        # for site in temp_canonndata[sites]:
+        # if site["verified"]:
+        # if site["frontierID"] is not None:
+        # index = "#"+str(site["frontierID"])
+        # else:
+        # index = None
+        # latlon = "("+str(round(site["latitude"],2))+","+str(round(site["longitude"],2))+")"
+        # if category not in self.ppoidata:
+        # self.ppoidata[category] = {}
+        # if name not in self.ppoidata[category]:
+        # self.ppoidata[category][name] = []
+        # self.ppoidata[category][name].append([index, latlon])
+        # #need to add the parser for canonn data
+
+        # for c in self.stationPlanetData:
+        # if c == self.body:
+        # for station in self.stationPlanetData[c]:
+        # latlon = "("+str(round(station["latitude"],2))+","+str(round(station["longitude"],2))+")"
+        # if "Human" not in self.ppoidata:
+        # self.ppoidata["Human"] = {}
+        # if station["name"] not in self.ppoidata["Human"]:
+        # self.ppoidata["Human"][station["name"]] = [[None, latlon]]
+        # #self.ppoidata["Human"][station["name"]].append([None, latlon])
+
+        # for c in self.cmdrData:
+        # if c == self.body:
+        # for cmdrdata in self.cmdrData[c]:
+        # if cmdrdata["comment"] is None:
+        # name = cmdrdata["category"]
+        # index = cmdrdata["index_id"]
+        # else:
+        # name = cmdrdata["comment"]
+        # index = None
+        # latlon = "("+str(round(float(cmdrdata["latitude"]),2))+","+str(round(float(cmdrdata["longitude"]),2))+")"
+        # if "Personal" not in self.ppoidata:
+        # self.ppoidata["Personal"] = {}
+        # if name not in self.ppoidata["Personal"]:
+        # self.ppoidata["Personal"][name] = []
+        # if [index, latlon] not in self.ppoidata["Personal"][name]:
+        # self.ppoidata["Personal"][name].append([index, latlon])
+
         # except Exception as e:
-            # #line = sys.exc_info()[-1].tb_lineno
-            # self.ppoidata["Other"]['Plugin Error'] = [""]
-            # Debug.logger.error("Plugin Error")
-        
+        # #line = sys.exc_info()[-1].tb_lineno
+        # self.ppoidata["Other"]['Plugin Error'] = [""]
+        # Debug.logger.error("Plugin Error")
+
         # Debug.logger.debug(f"refreshPlanetData end {self.event}")
-        
+
         # self.visualisePlanetData()
-    
+
     def update_unknown_ppoi(self, body):
         """
         get the maximum index in Geology and Biology category
         and generate unknown for missing index
         """
-        
+
         Debug.logger.debug(f"update_unknown_ppoi")
-        
+
         if body not in self.ppoidata:
             return
-        
+
         max_category = {}
         for category in self.ppoidata[body]:
             if (category == "Geology") or (category == "Biology"):
@@ -1209,7 +1278,7 @@ class CodexTypes():
                         if poi[0] is not None:
                             if int(poi[0][1:]) > max_category[category]:
                                 max_category[category] = int(poi[0][1:])
-        
+
         if body in self.saadata:
             if "Geology" in self.saadata[body]:
                 max_category["Geology"] = self.saadata[body]["Geology"]
@@ -1219,13 +1288,13 @@ class CodexTypes():
                 max_category["Biology"] = self.saadata[body]["Biology"]
                 if "Biology" not in self.ppoidata[body]:
                     self.ppoidata[body]["Biology"] = {}
-        
+
         for category in max_category:
-            for i in range(1,max_category[category]+1):
+            for i in range(1, max_category[category]+1):
                 find_i = False
                 for type in self.ppoidata[body][category]:
                     for poi in self.ppoidata[body][category][type]:
-                        if poi[0]=="#"+str(i):
+                        if poi[0] == "#"+str(i):
                             find_i = True
                             break
                     if find_i:
@@ -1233,19 +1302,20 @@ class CodexTypes():
                 if not find_i:
                     if "Unknown" not in self.ppoidata[body][category]:
                         self.ppoidata[body][category]["Unknown"] = []
-                    self.ppoidata[body][category]["Unknown"].append(["#"+str(i), None])
-    
+                    self.ppoidata[body][category]["Unknown"].append(
+                        ["#"+str(i), None])
+
     def remove_ppoi(self, body, hud_category, index):
         """
         remove the index in the hud_category
         and add it in the unknown list for this hud_category
         """
-        
+
         Debug.logger.debug(f"remove_ppoi {hud_category} {index}")
-        
+
         if body not in self.ppoidata:
             return
-        
+
         find_i = False
         for type in self.ppoidata[body][hud_category]:
             if type != "Unknown":
@@ -1259,16 +1329,18 @@ class CodexTypes():
             if find_i:
                 break
         if find_i:
-            self.ppoidata[body][hud_category]["Unknown"].append(["#"+str(index), None])
-    
+            self.ppoidata[body][hud_category]["Unknown"].append(
+                ["#"+str(index), None])
+
     def add_ppoi(self, body, hud_category, type, index, lat, lon):
         """
         add new index
         check if it exist in the unknown list and remove it
         """
-        
-        Debug.logger.debug(f"add_ppoi {body} {hud_category} {type} {index} {lat} {lon}")
-        
+
+        Debug.logger.debug(
+            f"add_ppoi {body} {hud_category} {type} {index} {lat} {lon}")
+
         if body not in self.ppoidata:
             self.ppoidata[body] = {}
         if hud_category not in self.ppoidata[body]:
@@ -1277,13 +1349,14 @@ class CodexTypes():
             self.ppoidata[body][hud_category]["Unknown"] = []
         if type not in self.ppoidata[body][hud_category]:
             self.ppoidata[body][hud_category][type] = []
-        
+
         total_index = 0
         for t in self.ppoidata[body][hud_category]:
             total_index += len(self.ppoidata[body][hud_category][t])
-        
+
         if index > total_index:
-            self.ppoidata[body][hud_category][type].append(["#"+str(index), "("+str(lat)+","+str(lon)+")"])
+            self.ppoidata[body][hud_category][type].append(
+                ["#"+str(index), "("+str(lat)+","+str(lon)+")"])
             self.update_unknown_ppoi(body)
         else:
             find_i = False
@@ -1295,16 +1368,18 @@ class CodexTypes():
                 if find_i:
                     break
             if find_i:
-                self.ppoidata[body][hud_category][type].append(["#"+str(index), "("+str(lat)+","+str(lon)+")"])
-    
+                self.ppoidata[body][hud_category][type].append(
+                    ["#"+str(index), "("+str(lat)+","+str(lon)+")"])
+
     def getPOIdata(self, system, cmdr):
-        
+
         if not config.shutting_down:
-        
-            Debug.logger.debug(f"Getting POI data in thread {self.event} - system = {system}")
+
+            Debug.logger.debug(
+                f"Getting POI data in thread {self.event} - system = {system}")
             self.waitingPOI = True
             # debug("CodexTypes.waiting = True")
-            
+
             # first we will clear the queues
             self.logq.clear()
             self.edsm_bodyq.clear()
@@ -1312,7 +1387,7 @@ class CodexTypes():
             self.poiq.clear()
             self.saaq.clear()
             self.cmdrq.clear()
-            
+
             try:
                 url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
                     quote_plus(system.encode('utf8')))
@@ -1333,7 +1408,7 @@ class CodexTypes():
                     Debug.logger.error("EDSM Failed")
             except:
                 Debug.logger.debug("Error getting EDSM data")
-            
+
             try:
                 url = "https://www.edsm.net/api-system-v1/stations?systemName={}".format(
                     quote_plus(system.encode('utf8')))
@@ -1354,7 +1429,7 @@ class CodexTypes():
                     Debug.logger.error("EDSM Failed")
             except:
                 Debug.logger.debug("Error getting EDSM data")
-            
+
             try:
                 url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getSystemPoi?system={}".format(
                     quote_plus(system.encode('utf8')))
@@ -1377,26 +1452,27 @@ class CodexTypes():
                     self.saaq.put(v)
             except:
                 debug("Error getting POI data")
-            
+
             try:
-                url = "https://api.canonn.tech/systems?systemName={}".format(quote_plus(system.encode('utf8')))
+                url = "https://api.canonn.tech/systems?systemName={}".format(
+                    quote_plus(system.encode('utf8')))
 
                 r = requests.get(url, timeout=30)
                 # debug("request complete")
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
                     # push canonn data only a queue
-                    #self.canonnq.put(r.json())
+                    # self.canonnq.put(r.json())
                     pass
                 else:
                     Debug.logger.debug("Canonn Failed")
                     Debug.logger.error("Canonn Failed")
             except:
                 Debug.logger.debug("Error getting Canonn data")
-            
+
             # try:
                 # url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
-                    # quote_plus(system.encode('utf8')))
+                # quote_plus(system.encode('utf8')))
 
                 # # debug(url)
                 # # debug("request {}:  Active Threads {}".format(
@@ -1405,17 +1481,18 @@ class CodexTypes():
                 # # debug("request complete")
                 # r.encoding = 'utf-8'
                 # if r.status_code == requests.codes.ok:
-                    # # debug("got POI Data")
-                    # temp_poidata = r.json()
+                # # debug("got POI Data")
+                # temp_poidata = r.json()
 
                 # # push the data ont a queue
                 # for v in temp_poidata:
-                    # self.poiq.put(v)
+                # self.poiq.put(v)
             # except:
                 # debug("Error getting POI data")
-            
+
             try:
-                url = "https://us-central1-canonn-api-236217.cloudfunctions.net/get_cmdr_status?cmdr={}".format(quote_plus(cmdr.encode('utf8')))
+                url = "https://us-central1-canonn-api-236217.cloudfunctions.net/get_cmdr_status?cmdr={}".format(
+                    quote_plus(cmdr.encode('utf8')))
                 # debug(url)
                 # debug("request {}:  Active Threads {}".format(
                 #    url, threading.activeCount()))
@@ -1432,86 +1509,86 @@ class CodexTypes():
                         self.cmdrq.put(v)
             except:
                 debug("Error getting cmdr data")
-            
+
             self.waitingPOI = False
             Debug.logger.debug("Triggering Event")
-        
+
             debug("getPOIdata frame.event_generate <<refreshPOIData>>")
             self.frame.event_generate('<<refreshPOIData>>', when='head')
             #self.frame.event_generate('<<refreshPlanetData>>', when='head')
-        
+
             Debug.logger.debug("Finished getting POI data in thread")
-        
+
         else:
-            
+
             Debug.logger.debug("get POI data in shut sown")
-        
+
     # def getPlanetData(self, system, body, cmdr):
-        
+
         # if not config.shutting_down:
-        
+
             # Debug.logger.debug(f"Getting planet data in thread {self.event} - system = {system} - body = {body} - cmdr = {cmdr}")
             # self.waitingPlanet = True
-            
+
             # # first we will clear the queues
             # self.planetq.clear()
             # self.canonnq.clear()
-            
-            # try:
-                # #url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}&cmdr={}".format(
-                # #    quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')), "test")
-                # #url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}&cmdr={}".format(
-                # #    quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')), quote_plus(cmdr.encode('utf8')))
-                # url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}".format(
-                    # quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')))
-                # # debug(url)
-                # # debug("request {}:  Active Threads {}".format(
-                # #    url, threading.activeCount()))
-                # r = requests.get(url, timeout=30)
-                # # debug("request complete")
-                # r.encoding = 'utf-8'
-                # if r.status_code == requests.codes.ok:
-                    # # debug("got planet Data")
-                    # temp_planetdata = r.json()
 
-                # # push the data ont a queue
-                # for v in temp_planetdata:
-                    # if (v["hud_category"] == "Geology") or (v["hud_category"] == "Biology"):
-                        # if v["index_id"] is not None:
-                            # self.planetq.put(v)
-                    # else:
-                        # self.planetq.put(v)
-            # except:
-                # debug("Error getting planet data")
-            
             # try:
-                # url = "https://api.canonn.tech/bodies?bodyName={}".format(quote_plus(body.encode('utf8')))
+            # #url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}&cmdr={}".format(
+            # #    quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')), "test")
+            # #url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}&cmdr={}".format(
+            # #    quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')), quote_plus(cmdr.encode('utf8')))
+            # url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getBodyPoi?system={}&body={}".format(
+            # quote_plus(system.encode('utf8')), quote_plus(body.encode('utf8')))
+            # # debug(url)
+            # # debug("request {}:  Active Threads {}".format(
+            # #    url, threading.activeCount()))
+            # r = requests.get(url, timeout=30)
+            # # debug("request complete")
+            # r.encoding = 'utf-8'
+            # if r.status_code == requests.codes.ok:
+            # # debug("got planet Data")
+            # temp_planetdata = r.json()
 
-                # r = requests.get(url, timeout=30)
-                # # debug("request complete")
-                # r.encoding = 'utf-8'
-                # if r.status_code == requests.codes.ok:
-                    # # push canonn data only a queue
-                    # #self.canonnq.put(r.json())
-                    # pass
-                # else:
-                    # Debug.logger.debug("Canonn Failed")
-                    # Debug.logger.error("Canonn Failed")
+            # # push the data ont a queue
+            # for v in temp_planetdata:
+            # if (v["hud_category"] == "Geology") or (v["hud_category"] == "Biology"):
+            # if v["index_id"] is not None:
+            # self.planetq.put(v)
+            # else:
+            # self.planetq.put(v)
             # except:
-                # Debug.logger.debug("Error getting Canonn data")
-            
+            # debug("Error getting planet data")
+
+            # try:
+            # url = "https://api.canonn.tech/bodies?bodyName={}".format(quote_plus(body.encode('utf8')))
+
+            # r = requests.get(url, timeout=30)
+            # # debug("request complete")
+            # r.encoding = 'utf-8'
+            # if r.status_code == requests.codes.ok:
+            # # push canonn data only a queue
+            # #self.canonnq.put(r.json())
+            # pass
+            # else:
+            # Debug.logger.debug("Canonn Failed")
+            # Debug.logger.error("Canonn Failed")
+            # except:
+            # Debug.logger.debug("Error getting Canonn data")
+
             # self.waitingPlanet = False
             # Debug.logger.debug("Triggering Event")
-        
+
             # debug("getPlanetData frame.event_generate <<refreshPlanetData>>")
             # self.frame.event_generate('<<refreshPlanetData>>', when='head')
-        
+
             # Debug.logger.debug("Finished getting planet data in thread")
-            
+
         # else:
-            
+
             # Debug.logger.debug("get planet data in shut sown")
-    
+
     def cleanPOIPanel(self):
         for col in self.systemcol1:
             try:
@@ -1525,28 +1602,28 @@ class CodexTypes():
                 error("Col2 grid_remove error")
         self.systemcol1 = []
         self.systemcol2 = []
-    
+
     def visualisePOIData(self):
         # clear it if it exists
         self.cleanPOIPanel()
         self.systempanel.grid_remove()
-        
+
         Debug.logger.debug(f"visualise POI Data event={self.event}")
-        
+
         #unscanned = nvl(self.fsscount, 0) > nvl(self.bodycount, 0)
 
         # we have set an event type that can override waiting
         # if self.event:
-            # Debug.logger.debug(f"Allowed event {self.event}")
-            # self.waitingPOI = False
-            # self.allowed = True
-            # self.event = None
+        # Debug.logger.debug(f"Allowed event {self.event}")
+        # self.waitingPOI = False
+        # self.allowed = True
+        # self.event = None
         # else:
-            # Debug.logger.debug(f"Not allowed event")
+        # Debug.logger.debug(f"Not allowed event")
 
         # we may want to try again if the data hasn't been fetched yet
         # if self.waitingPOI or not self.allowed:
-            # Debug.logger.debug(f"Still waiting for POI data")
+        # Debug.logger.debug(f"Still waiting for POI data")
         # else:
         self.set_image("Geology", False)
         self.set_image("Cloud", False)
@@ -1563,116 +1640,131 @@ class CodexTypes():
         self.set_image("Tourist", False)
         self.set_image("Jumponium", False)
         self.set_image("GreenSystem", False)
-        
-        #if len(self.ppoidata)>0:
-        #    self.icon_body.grid()
-        #else:
-        #    self.icon_body.grid_remove()
-        
-        #if self.poidata or unscanned:
 
-        #self.frame.grid()
-        #self.cleanup_poidata()
-        
+        # if len(self.ppoidata)>0:
+        #    self.icon_body.grid()
+        # else:
+        #    self.icon_body.grid_remove()
+
+        # if self.poidata or unscanned:
+
+        # self.frame.grid()
+        # self.cleanup_poidata()
+
         print(self.poidata)
         nothing = True
         for category in self.poidata:
             self.set_image(category, True)
             nothing = False
-        #else:
+        # else:
         #    self.frame.grid()
         #    self.frame.grid_remove()
 
         # need to initialise if not exists
         self.systemtitle_name["text"] = self.system
-        
+
         openlist = False
         for category in self.types:
             self.systemlist[category].grid_remove()
-            
+
             if category in self.poidata:
-                
-                self.systemcol1.append(tk.Label(self.systemlist[category], text=category+":"))
-                self.systemcol2.append(tk.Label(self.systemlist[category], text=""))
-                self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
-                self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
-                
-                self.poidata[category] = dict(sorted(self.poidata[category].items()))
-                
+
+                self.systemcol1.append(
+                    tk.Label(self.systemlist[category], text=category+":"))
+                self.systemcol2.append(
+                    tk.Label(self.systemlist[category], text=""))
+                self.systemcol1[-1].grid(row=len(self.systemcol1),
+                                         column=0, columnspan=1, sticky="NW")
+                self.systemcol2[-1].grid(row=len(self.systemcol1),
+                                         column=1, sticky="NW")
+
+                self.poidata[category] = dict(
+                    sorted(self.poidata[category].items()))
+
                 prev_subcategory = "Others"
-                isSubcategory=""
+                isSubcategory = ""
                 for type in self.poidata[category]:
-                    
-                    if len(self.poidata[category][type])==0:
+
+                    if len(self.poidata[category][type]) == 0:
                         continue
-                    
-                    self.poidata[category][type] = sorted(self.poidata[category][type])
-                    
+
+                    self.poidata[category][type] = sorted(
+                        self.poidata[category][type])
+
                     if "$" in type:
                         subcategory = type.split(":")[0][1:]
                         name = type.split(":")[1]
                     else:
                         subcategory = "Others"
                         name = type
-                        
+
                     if subcategory != prev_subcategory:
-                        isSubcategory="   "
+                        isSubcategory = "   "
                         prev_subcategory = subcategory
                         n_fss = ""
                         if subcategory == "Others":
                             if self.nfss != 0:
                                 n_fss = "WarZone ["+str(self.nfss)+"]"
-                        self.systemcol1.append(tk.Label(self.systemlist[category], text="   "+subcategory+":"))
-                        self.systemcol2.append(tk.Label(self.systemlist[category], text=n_fss))
-                        self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
-                        self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
-                        
-                    self.systemcol1.append(tk.Label(self.systemlist[category], text="   "+isSubcategory+name))
+                        self.systemcol1.append(
+                            tk.Label(self.systemlist[category], text="   "+subcategory+":"))
+                        self.systemcol2.append(
+                            tk.Label(self.systemlist[category], text=n_fss))
+                        self.systemcol1[-1].grid(row=len(self.systemcol1),
+                                                 column=0, columnspan=1, sticky="NW")
+                        self.systemcol2[-1].grid(row=len(self.systemcol1),
+                                                 column=1, sticky="NW")
+
+                    self.systemcol1.append(
+                        tk.Label(self.systemlist[category], text="   "+isSubcategory+name))
                     self.systemcol2.append(tk.Frame(self.systemlist[category]))
-                    
-                    i=0
-                    col=0
+
+                    i = 0
+                    col = 0
                     for poibody in self.poidata[category][type]:
                         col = ((i % 5)+1)*3
                         row = int(i/5)
                         #row = 0
                         label = tk.Label(self.systemcol2[-1], text=poibody)
                         label.grid(row=row, column=col, sticky="NSEW")
-                        i+=1
+                        i += 1
                         col += 1
                         if poibody in self.ppoidata:
                             label['fg'] = "blue"
                             label['cursor'] = "hand2"
-                            label.bind('<ButtonPress>', lambda event, body=poibody : self.bodyFocus(body))
+                            label.bind('<ButtonPress>', lambda event,
+                                       body=poibody: self.bodyFocus(body))
                         if name == "Unknown":
-                            nunk = len(self.ppoidata[poibody][category]["Unknown"])
+                            nunk = len(
+                                self.ppoidata[poibody][category]["Unknown"])
                             nsites = len(self.ppoidata[poibody][category])
                             if poibody in self.saadata:
                                 if category in self.saadata[poibody]:
                                     nsites = self.saadata[poibody][category]
-                            label = tk.Label(self.systemcol2[-1], text="["+str(nsites-nunk)+"/"+str(nsites)+"]")
+                            label = tk.Label(
+                                self.systemcol2[-1], text="["+str(nsites-nunk)+"/"+str(nsites)+"]")
                             label.grid(row=row, column=col, sticky="NSEW")
                             col += 1
                         if i < len(self.poidata[category][type]):
                             label = tk.Label(self.systemcol2[-1], text=",")
                             label.grid(row=row, column=col, sticky="NSEW")
                             col += 1
-                            
-                    self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
-                    self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
-                
+
+                    self.systemcol1[-1].grid(row=len(self.systemcol1),
+                                             column=0, columnspan=1, sticky="NW")
+                    self.systemcol2[-1].grid(row=len(self.systemcol1),
+                                             column=1, sticky="NW")
+
                 if category in self.lock:
                     openlist = True
                     self.systemlist[category].grid()
-        
+
         if not nothing:
             self.visible()
             self.systemtitle.grid()
             if openlist:
                 self.systempanel.grid()
         # self.tooltip["text"]=CodexTypes.tooltips.get(event.widget["text"])
-    
-    
+
     def cleanPlanetPanel(self):
         for col in self.planetcol1:
             col.destroy()
@@ -1680,23 +1772,23 @@ class CodexTypes():
             col.destroy()
         self.planetcol1 = []
         self.planetcol2 = []
-    
-    
+
     def visualisePlanetData(self):
-        
+
         self.cleanPlanetPanel()
         self.planettitle.grid_remove()
         self.planetpanel.grid_remove()
-        
-        Debug.logger.debug(f"visualise Planet Data event={self.event} body={self.planetlist_body}")
-        
+
+        Debug.logger.debug(
+            f"visualise Planet Data event={self.event} body={self.planetlist_body}")
+
         if self.planetlist_body not in self.ppoidata:
             self.planetlist_body = None
             self.planetlist_show = False
-        
+
         if not self.planetlist_show:
             return
-        
+
         self.set_image("Geology_planet", False)
         self.set_image("Thargoid_planet", False)
         self.set_image("Biology_planet", False)
@@ -1705,77 +1797,89 @@ class CodexTypes():
         self.set_image("Other_planet", False)
         self.set_image("Personal_planet", False)
         self.set_image("Tourist_planet", False)
-                
-        #refresh ppoi for unknown list
+
+        # refresh ppoi for unknown list
         self.update_unknown_ppoi(self.planetlist_body)
-        
+
         for category in self.ppoidata[self.planetlist_body]:
             self.set_image(category+"_planet", True)
-        
+
         self.planettitle_name["text"] = self.planetlist_body
-        
+
         for category in self.typesPlanet:
             self.planetlist[category].grid_remove()
-            
+
             if category in self.ppoidata[self.planetlist_body]:
-            
-                self.planetcol1.append(tk.Label(self.planetlist[category], text=category+":"))
-                self.planetcol2.append(tk.Label(self.planetlist[category], text=""))
-                self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
-                self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
-                
+
+                self.planetcol1.append(
+                    tk.Label(self.planetlist[category], text=category+":"))
+                self.planetcol2.append(
+                    tk.Label(self.planetlist[category], text=""))
+                self.planetcol1[-1].grid(row=len(self.planetcol1),
+                                         column=0, columnspan=1, sticky="NW")
+                self.planetcol2[-1].grid(row=len(self.planetcol1),
+                                         column=1, sticky="NW")
+
                 label = []
                 for type in self.ppoidata[self.planetlist_body][category]:
-                    
-                    if len(self.ppoidata[self.planetlist_body][category][type])==0:
+
+                    if len(self.ppoidata[self.planetlist_body][category][type]) == 0:
                         continue
-                    self.planetcol1.append(tk.Label(self.planetlist[category], text="   "+type))
+                    self.planetcol1.append(
+                        tk.Label(self.planetlist[category], text="   "+type))
                     self.planetcol2.append(tk.Frame(self.planetlist[category]))
-                    
-                    self.ppoidata[self.planetlist_body][category][type] = sorted(self.ppoidata[self.planetlist_body][category][type], key=lambda poi: int(nvl(poi[0], "#0")[1:]))
-                    
-                    i=0
+
+                    self.ppoidata[self.planetlist_body][category][type] = sorted(
+                        self.ppoidata[self.planetlist_body][category][type], key=lambda poi: int(nvl(poi[0], "#0")[1:]))
+
+                    i = 0
                     for poi in self.ppoidata[self.planetlist_body][category][type]:
                         col = (i % 10)+1
                         row = int(i/10)
                         if poi[0] is not None:
-                            label.append(tk.Label(self.planetcol2[-1], text=poi[0]))
+                            label.append(
+                                tk.Label(self.planetcol2[-1], text=poi[0]))
                             label[-1].grid(row=row, column=col, sticky="NSEW")
                             if poi[1] is not None:
                                 label[-1]['fg'] = "blue"
                                 label[-1]['cursor'] = "hand2"
-                                label[-1].bind('<ButtonPress>', lambda event, latlon=poi[1] : self.activateDestination(latlon))
+                                label[-1].bind('<ButtonPress>', lambda event,
+                                               latlon=poi[1]: self.activateDestination(latlon))
                         if poi[1] is not None:
                             if poi[0] is None:
-                                label.append(tk.Label(self.planetcol2[-1], text=poi[1]))
-                                label[-1].grid(row=row, column=col, sticky="NSEW")
+                                label.append(
+                                    tk.Label(self.planetcol2[-1], text=poi[1]))
+                                label[-1].grid(row=row,
+                                               column=col, sticky="NSEW")
                                 label[-1]['fg'] = "blue"
                                 label[-1]['cursor'] = "hand2"
-                                label[-1].bind('<ButtonPress>', lambda event, latlon=poi[1] : self.activateDestination(latlon))
-                            #else:
+                                label[-1].bind('<ButtonPress>', lambda event,
+                                               latlon=poi[1]: self.activateDestination(latlon))
+                            # else:
                             #    ttp = CreateToolTip(label[-1], poi[1])
-                        i+=1
-                    self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
-                    self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
-                    
+                        i += 1
+                    self.planetcol1[-1].grid(row=len(self.planetcol1),
+                                             column=0, columnspan=1, sticky="NW")
+                    self.planetcol2[-1].grid(row=len(self.planetcol1),
+                                             column=1, sticky="NW")
+
                 if category in self.lockPlanet:
                     self.planetlist[category].grid()
-        
+
         if self.planetlist_show:
             self.planettitle.grid()
-            
+
             remove_panel = True
             for category in self.ppoidata[self.planetlist_body]:
                 if category in self.lockPlanet:
                     remove_panel = False
             if not remove_panel:
                 self.planetpanel.grid()
-        
-    
+
     def add_poi(self, hud_category, english_name, body):
-        
+
         Debug.logger.debug(f"add_poi - {hud_category} {english_name} {body}")
-        
+
         if hud_category not in self.poidata:
             self.poidata[hud_category] = {}
         if english_name not in self.poidata[hud_category]:
@@ -1791,9 +1895,10 @@ class CodexTypes():
             Debug.logger.debug(f"add_poi - body already in poidata")
 
     def remove_poi(self, hud_category, english_name, body):
-        
-        Debug.logger.debug(f"remove_poi - {hud_category} {english_name} {body}")
-        
+
+        Debug.logger.debug(
+            f"remove_poi - {hud_category} {english_name} {body}")
+
         if hud_category in self.poidata:
             if english_name in self.poidata[hud_category]:
                 poinotexist = True
@@ -1803,11 +1908,11 @@ class CodexTypes():
                         break
                 if not poinotexist:
                     self.poidata[hud_category][english_name].remove(body)
-                if len(self.poidata[hud_category][english_name])==0:
+                if len(self.poidata[hud_category][english_name]) == 0:
                     del self.poidata[hud_category][english_name]
-            if len(self.poidata[hud_category])==0:
-                    del self.poidata[hud_category]
-    
+            if len(self.poidata[hud_category]) == 0:
+                del self.poidata[hud_category]
+
     # def cleanup_poidata(self):
         # # if we have bio or geo then remove Bio Bio and Geo Geo
         # # if we have Jumponium+ and Jumponium then use the best value
@@ -1825,11 +1930,11 @@ class CodexTypes():
 
             # if poi.get("hud_category") == "Jumponium":
                 # if not bodies[poi.get("body")].get("Jumplevel"):
-                    # bodies[poi.get("body")]["Jumplevel"] = poi.get(
-                        # "english_name")
+                # bodies[poi.get("body")]["Jumplevel"] = poi.get(
+                # "english_name")
                 # else:
-                    # bodies[poi.get("body")]["Jumplevel"] = self.compare_jumponioum(
-                        # poi.get("english_name"), bodies[poi.get("body")]["Jumplevel"]) """
+                # bodies[poi.get("body")]["Jumplevel"] = self.compare_jumponioum(
+                # poi.get("english_name"), bodies[poi.get("body")]["Jumplevel"]) """
 
         # for k in bodies.keys():
             # body = bodies.get(k)
@@ -1838,18 +1943,18 @@ class CodexTypes():
             # for cat in ("Biology", "Geology", "Thargoid", "Guardian"):
 
                 # if body.get(cat) and body.get(cat) > 1:
-                    # Debug.logging.debug(f"removing {cat}")
-                    # self.remove_poi(cat, cat, body.get("name"))
+                # Debug.logging.debug(f"removing {cat}")
+                # self.remove_poi(cat, cat, body.get("name"))
 
             # """ for jumplevel in ("Basic", "Standard", "Premium"):
                 # for mod in ("+v", "+b", "+v+b", "+b+v"):
-                    # if body.get("Jumplevel") and not body.get("Jumplevel") == f"{jumplevel}{mod}":
-                        # Debug.logging.debug(f"removing {jumplevel}{mod}")
-                        # self.remove_poi(
-                            # Jumponium, f"{jumplevel}{mod}", body.get("name")) """
+                # if body.get("Jumplevel") and not body.get("Jumplevel") == f"{jumplevel}{mod}":
+                # Debug.logging.debug(f"removing {jumplevel}{mod}")
+                # self.remove_poi(
+                # Jumponium, f"{jumplevel}{mod}", body.get("name")) """
 
     # this is used to trigger display of merged data
-    
+
     def sheperd_moon(self, body, bodies):
 
         def get_density(mass, inner, outer):
@@ -1872,12 +1977,14 @@ class CodexTypes():
                 # If the parent body has a ring
                 for ring in bodies.get(parent.get("Planet")).get("rings"):
                     if 'Belt' not in ring.get("name"):
-                        density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
+                        density = get_density(ring.get("mass"), ring.get(
+                            "innerRadius"), ring.get("outerRadius"))
 
                         r1 = float(ring.get("outerRadius")) * 1000  # m
                         # convert au to km
                         r2 = float(body.get("semiMajorAxis")) * 149597870691
-                        r3 = float(body.get("radius") or body.get("solarRadius")) * 1000
+                        r3 = float(body.get("radius")
+                                   or body.get("solarRadius")) * 1000
                         # and the orbit of the body is close to the outer radius
 
                         if r2 - r3 < r1 + 15000000:
@@ -1889,16 +1996,19 @@ class CodexTypes():
                 # If the parent body has a ring
                 for ring in bodies.get(parent.get("Star")).get("rings"):
                     if 'Belt' not in ring.get("name"):
-                        density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
+                        density = get_density(ring.get("mass"), ring.get(
+                            "innerRadius"), ring.get("outerRadius"))
 
                         r1 = float(ring.get("outerRadius")) * 1000  # m
                         # convert au to km
                         r2 = float(body.get("semiMajorAxis")) * 149597870691
-                        r3 = float(body.get("radius") or body.get("solarRadius")) * 1000
+                        r3 = float(body.get("radius")
+                                   or body.get("solarRadius")) * 1000
                         # and the orbit of the body is close to the outer radius
 
                         if r2 - r3 < r1 + 15000000:
-                            self.add_poi("Tourist", 'Shepherd Planet', body_code)
+                            self.add_poi(
+                                "Tourist", 'Shepherd Planet', body_code)
 
     def radius_ly(self, body):
         if body.get("type") == 'Star' and body.get("solarRadius"):
@@ -1916,20 +2026,28 @@ class CodexTypes():
             valid_body = (p2 and valid_body)
             valid_body = (p1 and valid_body)
             valid_body = (body.get("semiMajorAxis") is not None and valid_body)
-            valid_body = (sibling.get("semiMajorAxis") is not None and valid_body)
-            valid_body = (body.get("orbitalEccentricity") is not None and valid_body)
-            valid_body = (sibling.get("orbitalEccentricity") is not None and valid_body)
+            valid_body = (sibling.get("semiMajorAxis")
+                          is not None and valid_body)
+            valid_body = (body.get("orbitalEccentricity")
+                          is not None and valid_body)
+            valid_body = (sibling.get("orbitalEccentricity")
+                          is not None and valid_body)
             valid_body = (body.get("orbitalPeriod") is not None and valid_body)
-            valid_body = (sibling.get("orbitalPeriod") is not None and valid_body)
+            valid_body = (sibling.get("orbitalPeriod")
+                          is not None and valid_body)
             not_self = (body.get("bodyId") != sibling.get("bodyId"))
             valid_body = (not_self and valid_body)
 
             # if we share teh same parent and not the same body
             if valid_body and str(p1[0]) == str(p2[0]):
-                a1 = self.apoapsis("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
-                a2 = self.apoapsis("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
-                p1 = self.periapsis("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
-                p2 = self.periapsis("semiMajorAxis", sibling.get("semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                a1 = self.apoapsis("semiMajorAxis", body.get(
+                    "semiMajorAxis"), body.get("orbitalEccentricity"))
+                a2 = self.apoapsis("semiMajorAxis", sibling.get(
+                    "semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                p1 = self.periapsis("semiMajorAxis", body.get(
+                    "semiMajorAxis"), body.get("orbitalEccentricity"))
+                p2 = self.periapsis("semiMajorAxis", sibling.get(
+                    "semiMajorAxis"), sibling.get("orbitalEccentricity"))
                 r1 = sibling.get("radius")
                 r2 = body.get("radius")
 
@@ -1968,15 +2086,18 @@ class CodexTypes():
                 if body and body.get("semiMajorAxis") is not None:
                     # light seconds
 
-                    d1 = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"), candidate.get("orbitalEccentricity"))
-                    d2 = self.apoapsis("semiMajorAxis", body.get("semiMajorAxis"), body.get("orbitalEccentricity"))
+                    d1 = self.apoapsis("semiMajorAxis", candidate.get(
+                        "semiMajorAxis"), candidate.get("orbitalEccentricity"))
+                    d2 = self.apoapsis("semiMajorAxis", body.get(
+                        "semiMajorAxis"), body.get("orbitalEccentricity"))
                     # distance = (candidate.get("semiMajorAxis") + body.get("semiMajorAxis")) * 499.005
                     distance = d1 + d2
 
             if not isBinary(candidate):
 
                 body = bodies.get(get_parent(candidate))
-                distance = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"), candidate.get("orbitalEccentricity"))
+                distance = self.apoapsis("semiMajorAxis", candidate.get(
+                    "semiMajorAxis"), candidate.get("orbitalEccentricity"))
 
             if candidate and body:
                 r1 = self.radius_ly(body)
@@ -1988,7 +2109,8 @@ class CodexTypes():
                 if distance is not None and distance < comparitor:
 
                     if candidate.get("isLandable"):
-                        self.add_poi("Tourist", 'Close Orbit Landable', body_code)
+                        self.add_poi(
+                            "Tourist", 'Close Orbit Landable', body_code)
                     else:
                         self.add_poi("Tourist", 'Close Orbit', body_code)
 
@@ -2006,23 +2128,30 @@ class CodexTypes():
 
             if candidate.get("semiMajorAxis"):
 
-                apehelion = self.apoapsis("semiMajorAxis", candidate.get("semiMajorAxis"), candidate.get("orbitalEccentricity") or 0)
-                ring_span = get_outer_radius(candidate) + get_outer_radius(parent)
+                apehelion = self.apoapsis("semiMajorAxis", candidate.get(
+                    "semiMajorAxis"), candidate.get("orbitalEccentricity") or 0)
+                ring_span = get_outer_radius(
+                    candidate) + get_outer_radius(parent)
 
                 if binary:
-                    distance = ((candidate.get("semiMajorAxis") + parent.get("semiMajorAxis")) * 499.005) - ring_span
+                    distance = ((candidate.get("semiMajorAxis") +
+                                 parent.get("semiMajorAxis")) * 499.005) - ring_span
                 else:
                     distance = apehelion - ring_span
 
                 if distance < 2 and binary:
-                    parent_code = parent.get("name").replace(self.system+" ", '')
+                    parent_code = parent.get(
+                        "name").replace(self.system+" ", '')
                     self.add_poi("Tourist", "Close Ring Proximity", body_code)
-                    self.add_poi("Tourist", "Close Ring Proximity", parent_code)
+                    self.add_poi(
+                        "Tourist", "Close Ring Proximity", parent_code)
 
                 if distance < 2 and not binary:
-                    parent_code = parent.get("name").replace(self.system+" ", '')
+                    parent_code = parent.get(
+                        "name").replace(self.system+" ", '')
                     self.add_poi("Tourist", "Close Ring Proximity", body_code)
-                    self.add_poi("Tourist", "Close Ring Proximity", parent_code)
+                    self.add_poi(
+                        "Tourist", "Close Ring Proximity", parent_code)
 
     def trojan(self, candidate, bodies):
         # https://forums.frontier.co.uk/threads/hunt-for-trojans.369380/page-7
@@ -2034,12 +2163,18 @@ class CodexTypes():
                 if body.get("argOfPeriapsis") and candidate.get("argOfPeriapsis"):
                     not_self = (body.get("bodyId") != candidate.get("bodyId"))
                     sibling = (get_parent(body) == get_parent(candidate))
-                    axis_match = (body.get("semiMajorAxis") == candidate.get("semiMajorAxis"))
-                    eccentricity_match = (body.get("orbitalEccentricity") == candidate.get("orbitalEccentricity"))
-                    inclination_match = (body.get("orbitalInclination") == candidate.get("orbitalInclination"))
-                    period_match = (body.get("orbitalPeriod") == candidate.get("orbitalPeriod"))
-                    non_binary = (180 != abs(float(body.get("argOfPeriapsis")) - float(candidate.get("argOfPeriapsis"))))
-                    attribute_match = (axis_match and eccentricity_match and inclination_match and period_match)
+                    axis_match = (body.get("semiMajorAxis") ==
+                                  candidate.get("semiMajorAxis"))
+                    eccentricity_match = (
+                        body.get("orbitalEccentricity") == candidate.get("orbitalEccentricity"))
+                    inclination_match = (
+                        body.get("orbitalInclination") == candidate.get("orbitalInclination"))
+                    period_match = (body.get("orbitalPeriod") ==
+                                    candidate.get("orbitalPeriod"))
+                    non_binary = (180 != abs(
+                        float(body.get("argOfPeriapsis")) - float(candidate.get("argOfPeriapsis"))))
+                    attribute_match = (
+                        axis_match and eccentricity_match and inclination_match and period_match)
 
                     if candidate.get("rings"):
                         ringo = "Ringed "
@@ -2048,9 +2183,11 @@ class CodexTypes():
 
                     if not_self and sibling and attribute_match and non_binary:
                         if candidate.get('subType') in CodexTypes.body_types.keys():
-                            self.add_poi("Tourist", "{}Trojan {}".format(ringo, CodexTypes.body_types.get(candidate.get('subType'))), body_code)
+                            self.add_poi("Tourist", "{}Trojan {}".format(
+                                ringo, CodexTypes.body_types.get(candidate.get('subType'))), body_code)
                         else:
-                            self.add_poi("Tourist", "{}Trojan {}".format(ringo, candidate.get("type")), body_code)
+                            self.add_poi("Tourist", "{}Trojan {}".format(
+                                ringo, candidate.get("type")), body_code)
 
     def ringed_star(self, candidate):
         hasRings = False
@@ -2118,7 +2255,8 @@ class CodexTypes():
         standard = False
         premium = False
 
-        volcanism = (body.get('volcanismType') and body.get('volcanismType') != 'No volcanism')
+        volcanism = (body.get('volcanismType') and body.get(
+            'volcanismType') != 'No volcanism')
 
         biology = self.has_bio(body)
 
@@ -2148,8 +2286,10 @@ class CodexTypes():
                 if materials.get(target) and int(quantity) < 150:
                     self.add_poi(jclass, f"{target}{modifier}", body_code)
 
-            basic = (materials.get("Carbon") and materials.get("Vanadium") and materials.get("Germanium"))
-            standard = (basic and materials.get("Cadmium") and materials.get("Niobium"))
+            basic = (materials.get("Carbon") and materials.get(
+                "Vanadium") and materials.get("Germanium"))
+            standard = (basic and materials.get("Cadmium")
+                        and materials.get("Niobium"))
             premium = (materials.get("Carbon") and materials.get("Germanium") and materials.get(
                 "Arsenic") and materials.get("Niobium") and materials.get("Yttrium") and materials.get("Polonium"))
         if premium:
@@ -2167,25 +2307,32 @@ class CodexTypes():
             for ring in candidate.get("rings"):
                 if ring.get("name")[-4:] == "Ring":
                     if candidate.get("reserveLevel") and candidate.get("reserveLevel") in ("Pristine", "PristineResources"):
-                        self.add_poi("Ring", "$Rings:"+"Pristine {} Rings".format(ring.get("type")), body_code)
+                        self.add_poi(
+                            "Ring", "$Rings:"+"Pristine {} Rings".format(ring.get("type")), body_code)
                     else:
-                        self.add_poi("Ring", "$Rings:"+"{} Rings".format(ring.get("type")), body_code)
-                area = get_area(ring.get("innerRadius"), ring.get("outerRadius"))
-                density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
+                        self.add_poi(
+                            "Ring", "$Rings:"+"{} Rings".format(ring.get("type")), body_code)
+                area = get_area(ring.get("innerRadius"),
+                                ring.get("outerRadius"))
+                density = get_density(ring.get("mass"), ring.get(
+                    "innerRadius"), ring.get("outerRadius"))
 
                 if "Ring" in ring.get("name").replace(self.system+" ", ''):
                     if ring.get("outerRadius") > 1000000:
-                        self.add_poi("Tourist", "Large Radius Rings", body_code)
+                        self.add_poi(
+                            "Tourist", "Large Radius Rings", body_code)
                     elif ring.get("innerRadius") < (45935299.69736346 - (1 * 190463268.57872835)):
-                        self.add_poi("Tourist", "Small Radius Rings", body_code)
+                        self.add_poi(
+                            "Tourist", "Small Radius Rings", body_code)
                     # elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
                     #    self.add_poi(
                     #        "Tourist", "Thin Rings", body_code)
                     elif density < 0.005:
                         self.add_poi("Tourist", "Low Density Rings", body_code)
                     elif density > 1000:
-                        self.add_poi("Tourist", "High Density Rings", body_code)
-    
+                        self.add_poi(
+                            "Tourist", "High Density Rings", body_code)
+
     def light_seconds(self, tag, value):
 
         if tag in ("distanceToArrival", "DistanceFromArrivalLS"):
@@ -2208,13 +2355,13 @@ class CodexTypes():
         # Things measured in solar radii
         if tag == "solarRadius":
             return value * 2.32061
-    
+
     def semi_minor_axis(self, tag, major, eccentricity):
         a = float(self.light_seconds(tag, major))
         e = float(eccentricity or 0)
         minor = sqrt(pow(a, 2) * (1 - pow(e, 2)))
         return minor
-    
+
     # The focus is the closest point of the orbit
     # return value is in light seconds
     def perihelion(self, tag, major, eccentricity):
@@ -2222,7 +2369,7 @@ class CodexTypes():
         e = float(eccentricity or 0)
         focus = a * (1 - e)
         return focus
-    
+
     def apoapsis(self, tag, major, eccentricity):
         a = float(self.light_seconds(tag, major))
         e = float(eccentricity or 0)
@@ -2250,8 +2397,6 @@ class CodexTypes():
             Debug.logging.debug(f"{v1} vs {v2} = {v2}")
             return v2
 
-    
-
     def fake_biology(self, cmdr, system, x, y, z, planet, count, client):
         bodyname = f"{system} {planet}"
 
@@ -2265,8 +2410,9 @@ class CodexTypes():
                  "Count": count}]
         }
 
-        self.journal_entry(cmdr, None, system, None, signal, None, x, y, z, bodyname, None, None, client)
-    
+        self.journal_entry(cmdr, None, system, None, signal,
+                           None, x, y, z, bodyname, None, None, client)
+
     def updatePlanetData(self, cmdr, is_beta, body, lat, lon):
         if body is None:
             self.body = None
@@ -2294,31 +2440,32 @@ class CodexTypes():
                     self.planetlist_body = body.replace(self.system+" ", '')
                     self.visualisePlanetData()
 #                planetTypes(self.system, body, cmdr, self.getPlanetData).start()
-        
-        
+
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if not self.hidecodex:
-            self.journal_entry_wrap(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+            self.journal_entry_wrap(
+                cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
 
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
-        
+
         if entry.get("event") in ("Location", "StartUp", "StartJump", "JumpType"):
             self.logqueue = False
             self.logq.clear()
-        
+
         if self.logqueue:
-            self.logq.put((cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client))
+            self.logq.put((cmdr, is_beta, system, station, entry,
+                           state, x, y, z, body, lat, lon, client))
             return
-        
+
         if state.get("Raw"):
             CodexTypes.raw_mats = state.get("Raw")
-        
+
         try:
             bodycode = body.replace(system+" ", '')
         except:
             bodycode = ""
         self.event = entry.get("event")
-        
+
         if entry.get("event") == "SendText" and entry.get("Message"):
             ma = entry.get("Message").split(' ')
             if len(ma) == 4 and ma[0] == "fake" and ma[1] == "bio":
@@ -2345,8 +2492,8 @@ class CodexTypes():
             Debug.logger.debug("Calling PoiTypes")
             poiTypes(entry.get("StarSystem"), cmdr, self.getPOIdata).start()
 
-            #self.frame.grid()
-            #self.frame.grid_remove()
+            # self.frame.grid()
+            # self.frame.grid_remove()
             self.planettitle.grid_remove()
             self.planetpanel.grid_remove()
             self.allowed = False
@@ -2362,8 +2509,8 @@ class CodexTypes():
                 if hud_category is not None and hud_category != 'None':
                     if english_name is None and english_name == 'None':
                         english_name = entry.get("Name_Localised")
-                    
-                    #refresh system panel
+
+                    # refresh system panel
                     if body:
                         if hud_category == "Geology":
                             subcat = "$Sites:"+english_name
@@ -2372,38 +2519,48 @@ class CodexTypes():
                         self.add_poi(hud_category, subcat, bodycode)
                     else:
                         self.add_poi(hud_category, english_name, "")
-                    
-                    #refresh planet panel
+
+                    # refresh planet panel
                     if body:
                         if (hud_category == "Geology") or (hud_category == "Biology"):
-                            near_dest = entry.get("NearestDestination").split(":")
+                            near_dest = entry.get(
+                                "NearestDestination").split(":")
                             if (near_dest[2].split("=")[0] == "#index"):
                                 idx = int(near_dest[2].split("=")[1][:-1])
-                                self.add_ppoi(bodycode, hud_category, english_name, idx, round(self.latitude,2), round(self.longitude,2))
-                                
+                                self.add_ppoi(bodycode, hud_category, english_name, idx, round(
+                                    self.latitude, 2), round(self.longitude, 2))
+
                                 if hud_category == "Geology":
                                     if "Unknown" in self.ppoidata[bodycode]["Geology"]:
                                         if len(self.ppoidata[bodycode]["Geology"]["Unknown"]) == 0:
-                                            self.remove_poi("Geology", "$Sites:Unknown", bodycode)
-                                            self.remove_poi("MissingData", "$Geology:Unknown", bodycode)
+                                            self.remove_poi(
+                                                "Geology", "$Sites:Unknown", bodycode)
+                                            self.remove_poi(
+                                                "MissingData", "$Geology:Unknown", bodycode)
                                         elif len(self.ppoidata[bodycode]["Geology"]["Unknown"]) > 0:
-                                            self.add_poi("Geology", "$Sites:Unknown", bodycode)
-                                            self.add_poi("MissingData", "$Geology:Unknown", bodycode)
+                                            self.add_poi(
+                                                "Geology", "$Sites:Unknown", bodycode)
+                                            self.add_poi(
+                                                "MissingData", "$Geology:Unknown", bodycode)
                                 elif hud_category == "Biology":
                                     if "Unknown" in self.ppoidata[bodycode]["Biology"]:
                                         if len(self.ppoidata[bodycode]["Biology"]["Unknown"]) == 0:
-                                            self.remove_poi("Biology", "Unknown", bodycode)
-                                            self.remove_poi("MissingData", "$Biology:Unknown", bodycode)
+                                            self.remove_poi(
+                                                "Biology", "Unknown", bodycode)
+                                            self.remove_poi(
+                                                "MissingData", "$Biology:Unknown", bodycode)
                                         elif len(self.ppoidata[bodycode]["Biology"]["Unknown"]) > 0:
-                                            self.add_poi("Biology", "Unknown", bodycode)
-                                            self.add_poi("MissingData", "$Biology:Unknown", bodycode)
-                                
+                                            self.add_poi(
+                                                "Biology", "Unknown", bodycode)
+                                            self.add_poi(
+                                                "MissingData", "$Biology:Unknown", bodycode)
+
                                 self.refreshPOIData(None)
-                            #$SAA_Unknown_Signal:#type=$SAA_SignalType_Geological;:#index=16;
+                            # $SAA_Unknown_Signal:#type=$SAA_SignalType_Geological;:#index=16;
             else:
                 self.add_poi('Other', entry.get("Name_Localised"), bodycode)
-            
-            #if self.body is not None:
+
+            # if self.body is not None:
             #    self.planetlist_show = False
             #    self.ppoidata = {}
             #    self.planetcol1 = []
@@ -2413,7 +2570,7 @@ class CodexTypes():
 
         if entry.get("event") in ("Location", "StartUp"):
             self.system = system
-            #if entry.get("event") == "StartUp":
+            # if entry.get("event") == "StartUp":
             #    system = entry.get("StarSystem")
             self.bodies = None
             self.allowed = True
@@ -2437,7 +2594,8 @@ class CodexTypes():
             # if entry.get("event") in ("FSDJump", "CarrierJump"):
             self.system = system
             if entry.get("SystemAllegiance") in ("Thargoid", "Guardian"):
-                self.add_poi(entry.get("SystemAllegiance"), "{} Controlled".format(entry.get("SystemAllegiance")), "")
+                self.add_poi(entry.get("SystemAllegiance"), "{} Controlled".format(
+                    entry.get("SystemAllegiance")), "")
             self.allowed = True
             self.refreshPOIData(None)
 
@@ -2469,23 +2627,23 @@ class CodexTypes():
             self.system = system
             dovis = False
             # if "NumberStation" in entry.get("SignalName"):
-                # self.add_poi("Human", "Unregistered Comms Beacon", None)
-                # dovis = True
+            # self.add_poi("Human", "Unregistered Comms Beacon", None)
+            # dovis = True
             # elif "Megaship" in entry.get("SignalName"):
-                # self.add_poi("Human", entry.get("SignalName"), None)
-                # dovis = True
+            # self.add_poi("Human", entry.get("SignalName"), None)
+            # dovis = True
             # elif ("Class" in entry.get("SignalName")) and ("Vessel" in entry.get("SignalName")):
-                # self.add_poi("Human", entry.get("SignalName"), None)
-                # dovis = True
+            # self.add_poi("Human", entry.get("SignalName"), None)
+            # dovis = True
             # elif "ListeningPost" in entry.get("SignalName"):
-                # self.add_poi("Human", "Listening Post", None)
-                # dovis = True
+            # self.add_poi("Human", "Listening Post", None)
+            # dovis = True
             # elif "CAPSHIP" in entry.get("SignalName"):
-                # self.add_poi("Human", "Capital Ship", None)
-                # dovis = True
+            # self.add_poi("Human", "Capital Ship", None)
+            # dovis = True
             # elif "Generation Ship" in entry.get("SignalName"):
-                # self.add_poi("Human", entry.get("SignalName"), None)
-                # dovis = True
+            # self.add_poi("Human", entry.get("SignalName"), None)
+            # dovis = True
             if entry.get("SignalName") in self.stationdata:
                 dovis = False
             elif "MULTIPLAYER_SCENARIO" in entry.get("SignalName"):
@@ -2493,15 +2651,20 @@ class CodexTypes():
                 if "MULTIPLAYER_SCENARIO42_TITLE" in entry.get("SignalName"):
                     self.add_poi("Human", "Nav Beacon", None)
                 elif "MULTIPLAYER_SCENARIO14_TITLE" in entry.get("SignalName"):
-                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site", None)
+                    self.add_poi(
+                        "Ring", "$ConflictZone:Resource Extraction Site", None)
                 elif "MULTIPLAYER_SCENARIO77_TITLE" in entry.get("SignalName"):
-                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [Low]", None)
+                    self.add_poi(
+                        "Ring", "$ConflictZone:Resource Extraction Site [Low]", None)
                 elif "MULTIPLAYER_SCENARIO78_TITLE" in entry.get("SignalName"):
-                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [High]", None)
+                    self.add_poi(
+                        "Ring", "$ConflictZone:Resource Extraction Site [High]", None)
                 elif "MULTIPLAYER_SCENARIO79_TITLE" in entry.get("SignalName"):
-                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [Danger]", None)
+                    self.add_poi(
+                        "Ring", "$ConflictZone:Resource Extraction Site [Danger]", None)
                 else:
-                    self.add_poi("Human", "$ConflictZone:"+entry.get("SignalName"), None)
+                    self.add_poi("Human", "$ConflictZone:" +
+                                 entry.get("SignalName"), None)
                     dovis = False
             elif "Warzone_PointRace" in entry.get("SignalName"):
                 self.nfss += 1
@@ -2523,26 +2686,32 @@ class CodexTypes():
                 else:
                     dovis = False
             elif entry.get("IsStation"):
-                if len(entry.get("SignalName"))>8:
-                    FleetCarrier = (entry.get("SignalName") and entry.get("SignalName")[-4] == '-' and entry.get("SignalName")[-8] == ' ')
-                elif len(entry.get("SignalName"))==7:
-                    FleetCarrier = (entry.get("SignalName") and entry.get("SignalName")[-4] == '-')
+                if len(entry.get("SignalName")) > 8:
+                    FleetCarrier = (entry.get("SignalName") and entry.get(
+                        "SignalName")[-4] == '-' and entry.get("SignalName")[-8] == ' ')
+                elif len(entry.get("SignalName")) == 7:
+                    FleetCarrier = (entry.get("SignalName")
+                                    and entry.get("SignalName")[-4] == '-')
                 else:
                     FleetCarrier = False
                 if FleetCarrier:
-                    self.remove_poi("Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
+                    self.remove_poi(
+                        "Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
                     self.fccount += 1
                     #self.add_poi("Human", "$FleetCarrier:"+entry.get("SignalName"), None)
-                    self.add_poi("Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
+                    self.add_poi(
+                        "Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
                 else:
                     if self.humandetailed:
-                        self.add_poi("Human", "$Station:"+entry.get("SignalName"), None)
+                        self.add_poi("Human", "$Station:" +
+                                     entry.get("SignalName"), None)
                     else:
                         self.add_poi("Human", "Station", None)
                 dovis = True
             else:
-                #^HIP 454-4( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$
-                prog = re.compile("^"+self.system+"( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$")
+                # ^HIP 454-4( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$
+                prog = re.compile(
+                    "^"+self.system+"( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$")
                 result = prog.match(entry.get("SignalName"))
                 if result:
                     Megaship = True
@@ -2550,12 +2719,14 @@ class CodexTypes():
                     Megaship = False
                 if Megaship:
                     if self.humandetailed:
-                        self.add_poi("Human", "$Megaship:"+entry.get("SignalName"), None)
+                        self.add_poi("Human", "$Megaship:" +
+                                     entry.get("SignalName"), None)
                     else:
                         self.add_poi("Human", "Megaship", None)
                 else:
                     if self.humandetailed:
-                        self.add_poi("Human", "$Installation:"+entry.get("SignalName"), None)
+                        self.add_poi("Human", "$Installation:" +
+                                     entry.get("SignalName"), None)
                     else:
                         self.add_poi("Human", "Installation", None)
                 dovis = True
@@ -2589,7 +2760,8 @@ class CodexTypes():
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
             self.system = system
-            CodexTypes.parentRadius = self.light_seconds("Radius", entry.get("Radius"))
+            CodexTypes.parentRadius = self.light_seconds(
+                "Radius", entry.get("Radius"))
             self.allowed = True
 
         if entry.get("event") == "SAASignalsFound":
@@ -2597,18 +2769,18 @@ class CodexTypes():
             # if we arent waiting for new data
             bodyName = entry.get("BodyName")
             bodyVal = bodyName.replace(self.system+" ", '')
-            
-            
+
             signals = entry.get("Signals")
             for i, v in enumerate(signals):
                 found = False
                 type = v.get("Type")
-                english_name = type.replace("$SAA_SignalType_", "").replace("ical;", "y").replace(";", '')
+                english_name = type.replace("$SAA_SignalType_", "").replace(
+                    "ical;", "y").replace(";", '')
                 if " Ring" in bodyName:
                     cat = "Ring"
                 if "$SAA_SignalType_" in type:
                     cat = english_name
-                
+
                 saa_signal = {}
                 saa_signal["body"] = entry.get("BodyName")
                 saa_signal["hud_category"] = cat
@@ -2617,7 +2789,7 @@ class CodexTypes():
                 self.saaq.put(saa_signal)
 
             self.refreshPOIData(None)
-            #self.refreshPlanetData(None)
+            # self.refreshPlanetData(None)
             self.allowed = True
 
     @classmethod
@@ -2655,7 +2827,7 @@ class CodexTypes():
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
 
-        self.hidecodexbtn = tk.IntVar(value=config.getint("CanonnHideCodex"))
+        self.hidecodexbtn = tk.IntVar(value=config.get_int("CanonnHideCodex"))
 
         self.hidecodex = self.hidecodexbtn.get()
 
@@ -2669,7 +2841,7 @@ class CodexTypes():
             row=1, column=0, sticky="NW")
         nb.Checkbutton(frame, text="Human Detailed", variable=self.humandetailedbtn).grid(
             row=1, column=1, sticky="NW")
-        
+
         return frame
 
     def prefs_changed(self, cmdr, is_beta):
@@ -2679,7 +2851,6 @@ class CodexTypes():
 
         self.hidecodex = self.hidecodexbtn.get()
         self.humandetailed = self.humandetailedbtn.get()
-        
 
         # dont check the retval
         self.visualisePOIData()
@@ -3017,7 +3188,8 @@ class codexEmitter(Emitter):
         stellar_bodies = (self.entry.get("Category") ==
                           '$Codex_Category_StellarBodies;')
         green_giant = (stellar_bodies and "Green" in self.entry.get("Name"))
-        excluded = (codexEmitter.excludecodices.get(self.entry.get("Name").lower()) or stellar_bodies)
+        excluded = (codexEmitter.excludecodices.get(
+            self.entry.get("Name").lower()) or stellar_bodies)
 
         included = (not excluded or green_giant)
 
@@ -3040,7 +3212,7 @@ class codexEmitter(Emitter):
                                     "eventType": self.entry.get("event"),
                                     "cmdrName": self.cmdr
                                 }
-                               )
+                                )
 
             # CAPI doesnt want any stellar bodies so we will exclude them
             if not stellar_bodies:
@@ -3182,20 +3354,25 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     codex_entry = (entry.get("event") == "CodexEntry")
     approach_settlement = (entry.get("event") == "ApproachSettlement")
-    guardian_codices = (entry.get("EntryID") in [3200200, 3200300, 3200400, 3200500, 3200600])
+    guardian_codices = (entry.get("EntryID") in [
+                        3200200, 3200300, 3200400, 3200500, 3200600])
     guardian_event = (codex_entry and guardian_codices)
 
     if codex_entry:
-        codexEmitter(cmdr, is_beta, entry.get("System"), x, y, z, entry, body, lat, lon, client).start()
+        codexEmitter(cmdr, is_beta, entry.get("System"), x, y,
+                     z, entry, body, lat, lon, client).start()
 
     if approach_settlement or guardian_event:
-        guardianSites(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
+        guardianSites(cmdr, is_beta, system, x, y, z,
+                      entry, body, lat, lon, client).start()
 
     if entry.get("event") == "SendText" and entry.get("Message") == "codextest":
         test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
 
-    gnosis_station = entry.get("StationName") and entry.get("StationName") == "The Gnosis"
-    gnosis_fss = entry.get("FSSSignalDiscovered") and entry.get("SignalName") == "The Gnosis"
+    gnosis_station = entry.get("StationName") and entry.get(
+        "StationName") == "The Gnosis"
+    gnosis_fss = entry.get("FSSSignalDiscovered") and entry.get(
+        "SignalName") == "The Gnosis"
 
     if gnosis_station or gnosis_fss:
         debug("Hey it's The Gnosis!")
