@@ -93,7 +93,7 @@ class CanonnNews(Frame):
             parent
         )
 
-        self.hidden = tk.IntVar(value=config.getint("HideNews"))
+        self.hidden = tk.IntVar(value=config.get_int("HideNews"))
 
         self.news_data = []
         self.columnconfigure(1, weight=1)
@@ -173,7 +173,7 @@ class CanonnNews(Frame):
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
 
-        self.hidden = tk.IntVar(value=config.getint("HideNews"))
+        self.hidden = tk.IntVar(value=config.get_int("HideNews"))
 
         #frame = nb.Frame(parent)
         #frame.columnconfigure(1, weight=1)

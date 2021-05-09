@@ -225,26 +225,34 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
 
 # Detect journal events
-def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, 
+def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState,
                           SysFactionAllegiance, DistFromStarLS, station, entry,
                           state, x, y, z, body, lat, lon, client):
-    canonn.debug.inject(cmdr, is_beta, system, station,entry, client, journal_entry_wrapper, this.frame)
+    canonn.debug.inject(cmdr, is_beta, system, station, entry,
+                        client, journal_entry_wrapper, this.frame)
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
     hdreport.submit(cmdr, is_beta, system, station, entry, client)
     codex.submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
-    fssreports.submit(cmdr, is_beta, system, x, y, z,entry, body, lat, lon, client)
-    journaldata.submit(cmdr, is_beta, system, station,entry, client, body, lat, lon)
+    fssreports.submit(cmdr, is_beta, system, x, y, z,
+                      entry, body, lat, lon, client)
+    journaldata.submit(cmdr, is_beta, system, station,
+                       entry, client, body, lat, lon)
     clientreport.submit(cmdr, is_beta, client, entry)
-    this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    whiteList.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, 
-                          x, y, z, body, lat,lon, client)
-    codex.saaScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    codex.organicScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    this.patrol.journal_entry(
+        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    this.codexcontrol.journal_entry(
+        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    whiteList.journal_entry(cmdr, is_beta, system, station,
+                            entry, state, x, y, z, body, lat, lon, client)
+    materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
+                          x, y, z, body, lat, lon, client)
+    codex.saaScan.journal_entry(
+        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    codex.organicScan.journal_entry(
+        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
     capture.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
-                          state, x, y, z, body,lat, lon, client)
+                          state, x, y, z, body, lat, lon, client)
     extool.journal_entry(cmdr, is_beta, system, entry, client)
     guestBook.journal_entry(entry)
 
@@ -318,7 +326,7 @@ class capture():
                 site_index = None
 
             # fetch status.json
-            journal_dir = config.get(
+            journal_dir = config.get_str(
                 'journaldir') or config.default_journal_dir
             with open(os.path.join(os.path.expanduser(journal_dir), 'status.json')) as json_file:
                 status = json.load(json_file)

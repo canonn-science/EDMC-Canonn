@@ -248,18 +248,21 @@ class CanonnPatrol(Frame):
         )
         self.ships = []
         self.bind('<<PatrolDone>>', self.update_ui)
-        self.IMG_PREV = tk.PhotoImage(file=os.path.join(CanonnPatrol.plugin_dir, "icons", "left_arrow.gif"))
-        self.IMG_NEXT = tk.PhotoImage(file=os.path.join(CanonnPatrol.plugin_dir, "icons", "right_arrow.gif"))
+        self.IMG_PREV = tk.PhotoImage(file=os.path.join(
+            CanonnPatrol.plugin_dir, "icons", "left_arrow.gif"))
+        self.IMG_NEXT = tk.PhotoImage(file=os.path.join(
+            CanonnPatrol.plugin_dir, "icons", "right_arrow.gif"))
 
-        self.patrol_config = os.path.join(Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
+        self.patrol_config = os.path.join(
+            Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
 
-        self.canonnbtn = tk.IntVar(value=config.getint("HideCanonn"))
-        self.factionbtn = tk.IntVar(value=config.getint("HideFaction"))
+        self.canonnbtn = tk.IntVar(value=config.get_int("HideCanonn"))
+        self.factionbtn = tk.IntVar(value=config.get_int("HideFaction"))
         # self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
-        self.edsmbtn = tk.IntVar(value=config.getint("HideEDSM"))
-        self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
-        self.thargoidbtn = tk.IntVar(value=config.getint("HideThargoids"))
-        self.guardianbtn = tk.IntVar(value=config.getint("HideGuardians"))
+        self.edsmbtn = tk.IntVar(value=config.get_int("HideEDSM"))
+        self.copypatrolbtn = tk.IntVar(value=config.get_int("CopyPatrol"))
+        self.thargoidbtn = tk.IntVar(value=config.get_int("HideThargoids"))
+        self.guardianbtn = tk.IntVar(value=config.get_int("HideGuardians"))
         # self.fleetbtn = tk.IntVar(value=config.getint("HideFleet"))
 
         self.canonn = self.canonnbtn.get()
@@ -291,9 +294,11 @@ class CanonnPatrol(Frame):
         self.infolink.grid_remove()
 
         # buttons for the patrol
-        self.prev = tk.Button(self, text="Prev", image=self.IMG_PREV, width=14, height=14, borderwidth=0)
+        self.prev = tk.Button(
+            self, text="Prev", image=self.IMG_PREV, width=14, height=14, borderwidth=0)
         # self.submit=tk.Button(self, text="Open")
-        self.next = tk.Button(self, text="Next", image=self.IMG_NEXT, width=14, height=14, borderwidth=0)
+        self.next = tk.Button(
+            self, text="Next", image=self.IMG_NEXT, width=14, height=14, borderwidth=0)
 
         # self.submit.grid(row = 2, column = 1,sticky="NSW")
         self.prev.grid(row=0, column=1, sticky="W")
@@ -862,13 +867,13 @@ class CanonnPatrol(Frame):
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         """Called to get a tk Frame for the settings dialog."""
 
-        self.canonnbtn = tk.IntVar(value=config.getint("HideCanonn"))
-        self.factionbtn = tk.IntVar(value=config.getint("HideFaction"))
+        self.canonnbtn = tk.IntVar(value=config.get_int("HideCanonn"))
+        self.factionbtn = tk.IntVar(value=config.get_int("HideFaction"))
         # self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
-        self.edsmbtn = tk.IntVar(value=config.getint("HideEDSM"))
-        self.thargoidbtn = tk.IntVar(value=config.getint("HideThargoids"))
-        self.guardianbtn = tk.IntVar(value=config.getint("HideGuardians"))
-        self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
+        self.edsmbtn = tk.IntVar(value=config.get_int("HideEDSM"))
+        self.thargoidbtn = tk.IntVar(value=config.get_int("HideThargoids"))
+        self.guardianbtn = tk.IntVar(value=config.get_int("HideGuardians"))
+        self.copypatrolbtn = tk.IntVar(value=config.get_int("CopyPatrol"))
         # self.fleetbtn = tk.IntVar(value=config.getint("HideFleet"))
 
         self.canonn = self.canonnbtn.get()
