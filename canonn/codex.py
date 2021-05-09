@@ -205,7 +205,7 @@ def journal2edsm(j):
             e["atmosphereComposition"] = convertAtmosphere(
                 j.get("AtmosphereComposition"))
         if j.get("Atmosphere") != "":
-            e["atmosphereType"] = j.get("Atmosphere")
+            e["atmosphereType"] = j.get("Atmosphere").title()
         else:
             e["atmosphereType"] = "No atmosphere"
         if j.get("TerraformState") == "Terraformable":
@@ -217,7 +217,7 @@ def journal2edsm(j):
         if j.get("Volcanism") == "":
             e["volcanismType"] = "No volcanism"
         else:
-            e["volcanismType"] = j.get("Volcanism")
+            e["volcanismType"] = j.get("Volcanism").title()
 
         e["rotationalPeriod"] = j.get("RotationalPeriod")
         e["solidComposition"] = j.get("SolidComposition")
@@ -472,11 +472,11 @@ class CodexTypes():
         self.images_prev = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "left_arrow.gif"))
         self.planettitle_prev = tk.Label(self.planettitle, image=self.images_prev, cursor="hand2")
         self.planettitle_prev.grid(row=0, column=0, sticky="NSEW")
-        self.planettitle_prev.bind('<ButtonPress>', self.prevPlanetShow)
+        self.planettitle_prev.bind('<ButtonPress>', lambda event, x=-1: self.changeBodyFocus(event, x))
         self.images_next = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "right_arrow.gif"))
         self.planettitle_next = tk.Label(self.planettitle, image=self.images_next, cursor="hand2")
         self.planettitle_next.grid(row=0, column=1, sticky="NSEW")
-        self.planettitle_next.bind('<ButtonPress>', self.nextPlanetShow)
+        self.planettitle_next.bind('<ButtonPress>', lambda event, x=1: self.changeBodyFocus(event, x))
         self.planettitle_name = tk.Label(self.planettitle, text="?")
         self.planettitle_name.grid(row=0, column=2, sticky="NSEW")
         self.planetprogress = tk.Label(self.planettitle, text="?")
@@ -557,7 +557,10 @@ class CodexTypes():
         elif self.icon_body["text"] == "Body_auto":
             self.switchBodyMode("Body_grey")
         elif self.icon_body["text"] == "Body_grey":
-            self.switchBodyMode("Body")
+            if len(self.ppoidata) != 0:
+                self.switchBodyMode("Body")
+            else:
+                self.switchBodyMode("Body_auto")
         
     def switchBodyMode(self, mode):
         Debug.logger.debug(f"switchBodyMode {mode}")
@@ -584,7 +587,7 @@ class CodexTypes():
     def setDestinationWidget(self, widget):
         self.dest_widget = widget
     
-    def prevPlanetShow(self, event):
+    def changeBodyFocus(self, event, inext):
         
         body_list = []
         for body in self.ppoidata:
@@ -597,31 +600,16 @@ class CodexTypes():
                 k_selected = k
             k+=1
         
-        if k_selected-1 < 0:
-            self.planetlist_body = body_list[len(body_list)-1]
-        else:
-            self.planetlist_body = body_list[k_selected-1]
-        
-        self.switchBodyMode("Body")
-        self.visualisePlanetData()
-    
-    def nextPlanetShow(self, event):
-        
-        body_list = []
-        for body in self.ppoidata:
-            body_list.append(body)
-        
-        body_list = sorted(body_list)
-        k=0
-        for body in body_list:
-            if self.planetlist_body == body:
-                k_selected = k
-            k+=1
-        
-        if k_selected+1 > len(body_list)-1:
-            self.planetlist_body = body_list[0]
-        else:
-            self.planetlist_body = body_list[k_selected+1]
+        if inext == -1:
+            if k_selected-1 < 0:
+                self.planetlist_body = body_list[len(body_list)-1]
+            else:
+                self.planetlist_body = body_list[k_selected-1]
+        elif inext == 1:
+            if k_selected+1 > len(body_list)-1:
+                self.planetlist_body = body_list[0]
+            else:
+                self.planetlist_body = body_list[k_selected+1]
         
         self.switchBodyMode("Body")
         self.visualisePlanetData()
@@ -843,10 +831,6 @@ class CodexTypes():
                 else:
                     index = "#"+str(r.get("index_id"))
                 
-                #if (r.get("hud_category") == "Geology") or (r.get("hud_category") == "Biology"):
-                #    if index is None:
-                #        continue
-                
                 if body_code not in self.ppoidata:
                     self.ppoidata[body_code] = {}
                 if r.get("hud_category") not in self.ppoidata[body_code]:
@@ -1047,7 +1031,7 @@ class CodexTypes():
                                     self.add_poi("MissingData", "$Geology:NoSAA", body_code)
                         
                         # Thin Atmosphere
-                        if b.get('type') == 'Planet' and 'thin ' in b.get('atmosphereType'):
+                        if b.get('type') == 'Planet' and 'Thin ' in b.get('atmosphereType'):
                             self.add_poi("MissingData", "$ThinAtmosphere:NoSAA", body_code)
                         
                         # water ammonia etc
@@ -1286,8 +1270,7 @@ class CodexTypes():
         Debug.logger.debug(f"add_ppoi {body} {hud_category} {type} {index} {lat} {lon}")
         
         if body not in self.ppoidata:
-            return
-        
+            self.ppoidata[body] = {}
         if hud_category not in self.ppoidata[body]:
             self.ppoidata[body][hud_category] = {}
         if "Unknown" not in self.ppoidata[body][hud_category]:
@@ -2470,20 +2453,17 @@ class CodexTypes():
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('$Fixed_Event_Life_Ring;', '$Fixed_Event_Life_Cloud;'):
             self.system = system
-
             if entry.get("SignalName") == '$Fixed_Event_Life_Cloud;':
                 self.add_poi("Cloud", "Life Cloud", "")
             else:
                 self.add_poi("Cloud", "Life Ring", "")
             self.allowed = True
-
             self.refreshPOIData(None)
 
         if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
             self.system = system
             self.add_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
-
             self.refreshPOIData(None)
 
         if entry.get("event") == "FSSSignalDiscovered":
@@ -2634,15 +2614,8 @@ class CodexTypes():
                 saa_signal["body"] = entry.get("BodyName")
                 saa_signal["hud_category"] = cat
                 saa_signal["english_name"] = english_name
-                saa_signal["count"] = int(v.get("Type"))
+                saa_signal["count"] = int(v.get("Count"))
                 self.saaq.put(saa_signal)
-                
-                #self.add_poi(cat, english_name, bodyVal)
-                
-                #if bodyVal not in self.saadata:
-                #    self.saadata[bodyVal] = {}
-                #if cat not in self.saadata[bodyVal]:
-                #    self.saadata[bodyVal][cat] = int(v.get("Count"))
 
             self.refreshPOIData(None)
             #self.refreshPlanetData(None)
@@ -3045,8 +3018,7 @@ class codexEmitter(Emitter):
         stellar_bodies = (self.entry.get("Category") ==
                           '$Codex_Category_StellarBodies;')
         green_giant = (stellar_bodies and "Green" in self.entry.get("Name"))
-        excluded = (codexEmitter.excludecodices.get(
-            self.entry.get("Name").lower()) or stellar_bodies)
+        excluded = (codexEmitter.excludecodices.get(self.entry.get("Name").lower()) or stellar_bodies)
 
         included = (not excluded or green_giant)
 
@@ -3069,7 +3041,7 @@ class codexEmitter(Emitter):
                                     "eventType": self.entry.get("event"),
                                     "cmdrName": self.cmdr
                                 }
-                                )
+                               )
 
             # CAPI doesnt want any stellar bodies so we will exclude them
             if not stellar_bodies:
