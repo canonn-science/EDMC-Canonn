@@ -256,14 +256,14 @@ class CanonnPatrol(Frame):
         self.patrol_config = os.path.join(
             Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
 
-        self.canonnbtn = tk.IntVar(value=config.getint("HideCanonn"))
-        self.factionbtn = tk.IntVar(value=config.getint("HideFaction"))
-        # self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
-        self.edsmbtn = tk.IntVar(value=config.getint("HideEDSM"))
-        self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
-        self.thargoidbtn = tk.IntVar(value=config.getint("HideThargoids"))
-        self.guardianbtn = tk.IntVar(value=config.getint("HideGuardians"))
-        # self.fleetbtn = tk.IntVar(value=config.getint("HideFleet"))
+        self.canonnbtn = tk.IntVar(value=config.get_int("HideCanonn"))
+        self.factionbtn = tk.IntVar(value=config.get_int("HideFaction"))
+        # self.hideshipsbtn = tk.IntVar(value=config.get_int("HideShips"))
+        self.edsmbtn = tk.IntVar(value=config.get_int("HideEDSM"))
+        self.copypatrolbtn = tk.IntVar(value=config.get_int("CopyPatrol"))
+        self.thargoidbtn = tk.IntVar(value=config.get_int("HideThargoids"))
+        self.guardianbtn = tk.IntVar(value=config.get_int("HideGuardians"))
+        # self.fleetbtn = tk.IntVar(value=config.get_int("HideFleet"))
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
@@ -867,14 +867,14 @@ class CanonnPatrol(Frame):
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         """Called to get a tk Frame for the settings dialog."""
 
-        self.canonnbtn = tk.IntVar(value=config.getint("HideCanonn"))
-        self.factionbtn = tk.IntVar(value=config.getint("HideFaction"))
-        # self.hideshipsbtn = tk.IntVar(value=config.getint("HideShips"))
-        self.edsmbtn = tk.IntVar(value=config.getint("HideEDSM"))
-        self.thargoidbtn = tk.IntVar(value=config.getint("HideThargoids"))
-        self.guardianbtn = tk.IntVar(value=config.getint("HideGuardians"))
-        self.copypatrolbtn = tk.IntVar(value=config.getint("CopyPatrol"))
-        # self.fleetbtn = tk.IntVar(value=config.getint("HideFleet"))
+        self.canonnbtn = tk.IntVar(value=config.get_int("HideCanonn"))
+        self.factionbtn = tk.IntVar(value=config.get_int("HideFaction"))
+        # self.hideshipsbtn = tk.IntVar(value=config.get_int("HideShips"))
+        self.edsmbtn = tk.IntVar(value=config.get_int("HideEDSM"))
+        self.thargoidbtn = tk.IntVar(value=config.get_int("HideThargoids"))
+        self.guardianbtn = tk.IntVar(value=config.get_int("HideGuardians"))
+        self.copypatrolbtn = tk.IntVar(value=config.get_int("CopyPatrol"))
+        # self.fleetbtn = tk.IntVar(value=config.get_int("HideFleet"))
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()

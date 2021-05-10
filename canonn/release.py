@@ -94,9 +94,9 @@ class Release(Frame):
 
         self.installed = False
 
-        self.auto = tk.IntVar(value=config.getint("AutoUpdate"))
-        self.novoices = tk.IntVar(value=config.getint("NoVoices"))
-        self.rmbackup = tk.IntVar(value=config.getint("RemoveBackup"))
+        self.auto = tk.IntVar(value=config.get_int("AutoUpdate"))
+        self.novoices = tk.IntVar(value=config.get_int("NoVoices"))
+        self.rmbackup = tk.IntVar(value=config.get_int("RemoveBackup"))
 
         self.columnconfigure(1, weight=1)
         self.grid(row=gridrow, column=0, sticky="NSEW", columnspan=2)
@@ -121,12 +121,12 @@ class Release(Frame):
         # self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
         self.bind('<<ReleaseUpdate>>', self.release_update)
 
-        debug(config.get('Canonn:RemoveBackup'))
+        debug(config.get_str('Canonn:RemoveBackup'))
 
         self.update(None)
 
-        if self.rmbackup.get() == 1 and config.get('Canonn:RemoveBackup') != "None":
-            delete_dir = config.get('Canonn:RemoveBackup')
+        if self.rmbackup.get() == 1 and config.get_str('Canonn:RemoveBackup') and config.get_str('Canonn:RemoveBackup') != "None":
+            delete_dir = config.get_str('Canonn:RemoveBackup')
             debug('Canonn:RemoveBackup {}'.format(delete_dir))
             try:
                 shutil.rmtree(delete_dir)
@@ -218,9 +218,9 @@ class Release(Frame):
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
 
-        self.auto = tk.IntVar(value=config.getint("AutoUpdate"))
-        self.rmbackup = tk.IntVar(value=config.getint("RemoveBackup"))
-        self.novoices = tk.IntVar(value=config.getint("NoVoices"))
+        self.auto = tk.IntVar(value=config.get_int("AutoUpdate"))
+        self.rmbackup = tk.IntVar(value=config.get_int("RemoveBackup"))
+        self.novoices = tk.IntVar(value=config.get_int("NoVoices"))
 
         frame = nb.Frame(parent)
         frame.columnconfigure(2, weight=1)
@@ -309,7 +309,7 @@ class Release(Frame):
 
     @classmethod
     def get_auto(cls):
-        return tk.IntVar(value=config.getint("AutoUpdate")).get()
+        return tk.IntVar(value=config.get_int("AutoUpdate")).get()
 
     @classmethod
     def plugin_start(cls, plugin_dir):
