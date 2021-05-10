@@ -1,3 +1,4 @@
 *.pyo
 data/EDMC-Canonn.patrol
 *.pyc
+.vscode/settings.json
