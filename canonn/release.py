@@ -74,7 +74,7 @@ class ReleaseThread(threading.Thread):
         self.release = release
 
     def run(self):
-        debug("Release: UpdateThread")
+        Debug.logger.debug("Release: UpdateThread")
         self.release.release_pull()
 
 
@@ -121,18 +121,18 @@ class Release(Frame):
         # self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
         self.bind('<<ReleaseUpdate>>', self.release_update)
 
-        debug(config.get_str('Canonn:RemoveBackup'))
+        Debug.logger.debug(config.get_str('Canonn:RemoveBackup'))
 
         self.update(None)
 
         if self.rmbackup.get() == 1 and config.get_str('Canonn:RemoveBackup') and config.get_str('Canonn:RemoveBackup') != "None":
             delete_dir = config.get_str('Canonn:RemoveBackup')
-            debug('Canonn:RemoveBackup {}'.format(delete_dir))
+            Debug.logger.debug('Canonn:RemoveBackup {}'.format(delete_dir))
             try:
                 shutil.rmtree(delete_dir)
 
             except:
-                error("Cant delete {}".format(delete_dir))
+                Debug.logger.error("Cant delete {}".format(delete_dir))
 
             # lets not keep trying
             config.set('Canonn:RemoveBackup', "None")
@@ -155,16 +155,16 @@ class Release(Frame):
         r = requests.get(
             "https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest")
         latest = r.json()
-        # debug(latest)
+        # Debug.logger.debug(latest)
         if not r.status_code == requests.codes.ok:
 
-            error("Error fetching release from github")
-            error(r.status_code)
-            error(r.json())
+            Debug.logger.error("Error fetching release from github")
+            Debug.logger.error(r.status_code)
+            Debug.logger.error(r.json())
 
         else:
             self.latest = latest
-            debug("latest release downloaded")
+            Debug.logger.debug("latest release downloaded")
             if not config.shutting_down:
                 self.event_generate('<<ReleaseUpdate>>', when='tail')
 
@@ -174,7 +174,7 @@ class Release(Frame):
         if not self.installed:
 
             if self.latest:
-                debug("Latest is not null")
+                Debug.logger.debug("Latest is not null")
 
                 # self.latest=requests.get("https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest").json()
 
@@ -213,7 +213,7 @@ class Release(Frame):
                                    "sounds\\prefix.wav", "sounds\\nag1.wav"]).start()
                     self.grid()
             else:
-                debug("Latest is null")
+                Debug.logger.debug("Latest is null")
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
@@ -254,19 +254,20 @@ class Release(Frame):
         # need to add some defensive code around this
         tag_name = self.latest.get("tag_name")
 
-        debug("Installing {}".format(tag_name))
+        Debug.logger.debug("Installing {}".format(tag_name))
 
         new_plugin_dir = os.path.join(os.path.dirname(
             Release.plugin_dir), "EDMC-Canonn-{}".format(tag_name))
 
-        debug("Checking for pre-existence")
+        Debug.logger.debug("Checking for pre-existence")
         if os.path.isdir(new_plugin_dir):
-            error("Download already exists: {}".format(new_plugin_dir))
+            Debug.logger.error(
+                "Download already exists: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")
             return False
 
         try:
-            debug("Downloading new version")
+            Debug.logger.debug("Downloading new version")
             download = requests.get(
                 "https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name), stream=True)
 
@@ -277,21 +278,22 @@ class Release(Frame):
                 z = zipfile.ZipFile(StringIO.StringIO(download.content))
                 z.extractall(os.path.dirname(Release.plugin_dir))
         except:
-            error("Download failed: {}".format(new_plugin_dir))
+            Debug.logger.error("Download failed: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")
 
             return False
 
         # If we got this far then we have a new plugin so any failures and we will need to delete it
 
-        debug("disable the current plugin")
+        Debug.logger.debug("disable the current plugin")
         try:
             os.rename(Release.plugin_dir,
                       "{}.disabled".format(Release.plugin_dir))
-            debug("Renamed {} to {}".format(Release.plugin_dir,
-                                            "{}.disabled".format(Release.plugin_dir)))
+            Debug.logger.debug("Renamed {} to {}".format(Release.plugin_dir,
+                                                         "{}.disabled".format(Release.plugin_dir)))
         except:
-            error("Upgrade failed reverting: {}".format(new_plugin_dir))
+            Debug.logger.error(
+                "Upgrade failed reverting: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")
             shutil.rmtree(new_plugin_dir)
             return False
@@ -300,7 +302,7 @@ class Release(Frame):
             config.set('Canonn:RemoveBackup',
                        "{}.disabled".format(Release.plugin_dir))
 
-        debug("Upgrade complete")
+        Debug.logger.debug("Upgrade complete")
 
         Release.plugin_dir = new_plugin_dir
         self.installed = True

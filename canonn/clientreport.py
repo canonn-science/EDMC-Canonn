@@ -1,4 +1,4 @@
-#assume python 3 before trying python 2.7
+# assume python 3 before trying python 2.7
 try:
     from urllib.parse import quote_plus
 except:
@@ -15,13 +15,15 @@ from canonn.release import Release
 
 import canonn.emitter
 
+
 class clientReport(Emitter):
     done = False
 
     def __init__(self, cmdr, is_beta, client):
 
         self.modelreport = "clientreports"
-        Emitter.__init__(self, cmdr, is_beta, None, None, None, None, None, None, None, None, client)
+        Emitter.__init__(self, cmdr, is_beta, None, None, None,
+                         None, None, None, None, None, client)
 
     def setPayload(self):
         payload = {}
@@ -38,19 +40,19 @@ class clientReport(Emitter):
     def run(self):
         if not clientReport.done:
             clientReport.done = True
-            debug("sending client report")
+            Debug.logger.debug("sending client report")
             # configure the payload
             payload = self.setPayload()
             url = self.getUrl()
             self.send(payload, url)
-            debug("Google Client Report")
+            Debug.logger.debug("Google Client Report")
             canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/submitCient",
-                         {
-                             "cmdr": payload.get("cmdrName"),
-                             "beta": payload.get("isBeta"),
-                             "client": payload.get("clientVersion"),
-                             "autoupdate": payload.get("AutoUpdateDisabled")
-                         })
+                                {
+                                    "cmdr": payload.get("cmdrName"),
+                                    "beta": payload.get("isBeta"),
+                                    "client": payload.get("clientVersion"),
+                                    "autoupdate": payload.get("AutoUpdateDisabled")
+                                })
 
 
 def submit(cmdr, is_beta, client, entry):
@@ -58,4 +60,5 @@ def submit(cmdr, is_beta, client, entry):
         clientReport(cmdr, is_beta, client).start()
 
     if entry.get("event") in ("Fileheader"):
-        canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postGameVersion",event)
+        canonn.emitter.post(
+            "https://us-central1-canonn-api-236217.cloudfunctions.net/postGameVersion", event)

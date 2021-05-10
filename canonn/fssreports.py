@@ -36,7 +36,7 @@ class FSS():
     def put(cls, cmdr, system, x, y, z, entry, client):
         data = {"cmdr": cmdr, "system": system,
                 "coords": [x, y, z], "entry": entry, "client": client}
-        debug("Putting FSS Signal on queue")
+        Debug.logger.debug("Putting FSS Signal on queue")
         cls.events.put(data)
 
     @classmethod
@@ -69,7 +69,7 @@ class FSS():
                     "eventType": entry.get("event"),
                     "cmdrName": data.get("cmdr")
                 })
-                debug(payload)
+                Debug.logger.debug(payload)
 
         if len(payload) > 0:
             FSS.postFSS(payload)
@@ -78,18 +78,18 @@ class FSS():
     def postFSS(cls, payload):
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent"
 
-        debug("posting FSS")
-        debug(payload)
+        Debug.logger.debug("posting FSS")
+        Debug.logger.debug(payload)
         r = requests.post(url, data=json.dumps(
             payload, ensure_ascii=False).encode('utf8'))
         if not r.status_code == requests.codes.ok:
             headers = r.headers
             contentType = str(headers['content-type'])
             if 'json' in contentType:
-                error(json.dumps(r.json()))
+                Debug.logger.error(json.dumps(r.json()))
             else:
-                error(r.content)
-            error(r.status_code)
+                Debug.logger.error(r.content)
+            Debug.logger.error(r.status_code)
 
 
 class fssEmitter(Emitter):
@@ -127,7 +127,7 @@ class fssEmitter(Emitter):
         payload["signalName"] = self.entry.get("SignalName")
         payload["signalNameLocalised"] = self.entry.get("SignalName_Localised")
 
-        debug(payload)
+        Debug.logger.debug(payload)
 
         payload["rawJson"] = self.entry
 
@@ -157,16 +157,16 @@ class fssEmitter(Emitter):
             "rawJson"), ensure_ascii=False).encode('utf8')
 
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/submitAXCZ"
-        debug("gSubmitAXCZ {}".format(p.get("systemName")))
+        Debug.logger.debug("gSubmitAXCZ {}".format(p.get("systemName")))
 
         getstr = "{}?{}".format(url, urlencode(p))
 
-        debug("gsubmit {}".format(getstr))
+        Debug.logger.debug("gsubmit {}".format(getstr))
         r = requests.get(getstr)
 
         if not r.status_code == requests.codes.ok:
-            error(getstr)
-            error(r.status_code)
+            Debug.logger.error(getstr)
+            Debug.logger.error(r.status_code)
 
     def getExcluded(self):
 
@@ -176,16 +176,17 @@ class fssEmitter(Emitter):
 
         if not fssEmitter.fssFlag:
             fssEmitter.fssFlag = True
-            debug("Getting FSS exclusions")
+            Debug.logger.debug("Getting FSS exclusions")
             r = requests.get(
                 "{}/excludefsses?_limit=1000".format(self.getUrl()))
-            debug("{}/excludefsses?_limit=1000".format(self.getUrl()))
+            Debug.logger.debug(
+                "{}/excludefsses?_limit=1000".format(self.getUrl()))
             if r.status_code == requests.codes.ok:
                 for exc in r.json():
                     fssEmitter.excludefss[exc.get("fssName")] = True
             else:
-                debug("FFS exclusion failed")
-                debug("status: {}".format(r.status_code))
+                Debug.logger.debug("FFS exclusion failed")
+                Debug.logger.debug("status: {}".format(r.status_code))
 
     def run(self):
 
@@ -211,7 +212,7 @@ class fssEmitter(Emitter):
                 self.gSubmitAXCZ(payload)
                 self.modelreport = "axczfssreports"
             elif life_event:
-                debug(self.entry.get("SignalName"))
+                Debug.logger.debug(self.entry.get("SignalName"))
 
                 payload = self.getLcPayload()
                 self.modelreport = "lcfssreports"
@@ -231,5 +232,5 @@ def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
         FSS.put(cmdr, system, x, y, z, entry, client)
 
     if entry.get("event") in ("StartJump", "Location", "Docked", "Shutdown", "ShutDown", "SupercruiseExit", "SupercruiseEntry ") and not is_beta:
-        debug("FSS Process")
+        Debug.logger.debug("FSS Process")
         fssProcess(None).start()

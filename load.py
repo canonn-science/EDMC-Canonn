@@ -68,7 +68,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "5.26.0"
+this.version = "5.26.1"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -126,7 +126,7 @@ def plugin_stop():
     """
     EDMC is closing
     """
-    debug("Stopping the plugin")
+    Debug.logger.debug("Stopping the plugin")
     this.patrol.plugin_stop()
 
 
@@ -167,22 +167,23 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if "SystemFaction" in entry:
 
         SystemFaction = entry.get("SystemFaction")
-        debug(SystemFaction)
+        Debug.logger.debug(SystemFaction)
         try:
             this.SysFactionState = SystemFaction["FactionState"]
         except:
             this.SysFactionState = None
-        debug("SysFaction's state is" + str(this.SysFactionState))
+        Debug.logger.debug("SysFaction's state is" + str(this.SysFactionState))
 
     if "SystemAllegiance" in entry:
 
         SystemAllegiance = entry.get("SystemAllegiance")
-        debug(SystemAllegiance)
+        Debug.logger.debug(SystemAllegiance)
         try:
             this.SysFactionAllegiance = SystemAllegiance
         except:
             this.SysFactionAllegiance = None
-        debug("SysFaction's allegiance is" + str(this.SysFactionAllegiance))
+        Debug.logger.debug("SysFaction's allegiance is" +
+                           str(this.SysFactionAllegiance))
 
     if "DistFromStarLS" in entry:
         '''"DistFromStarLS":144.821411'''
@@ -190,7 +191,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             this.DistFromStarLS = entry.get("DistFromStarLS")
         except:
             this.DistFromStarLS = None
-        debug("DistFromStarLS=" + str(this.DistFromStarLS))
+        Debug.logger.debug("DistFromStarLS=" + str(this.DistFromStarLS))
 
     if entry.get("event") == "FSDJump":
         Systems.storeSystem(system, entry.get("StarPos"))
@@ -273,7 +274,7 @@ def cmdr_data(data, is_beta):
     """
     We have new data on our commander
     """
-    # debug(json.dumps(data,indent=4))
+    # Debug.logger.debug(json.dumps(data,indent=4))
     this.patrol.cmdr_data(data, is_beta)
 
 
@@ -314,7 +315,7 @@ class capture():
             else:
                 comment = " ".join(message_part[2:])
 
-            debug(status)
+            Debug.logger.debug(status)
 
             canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postStatus",
                                 {

@@ -165,7 +165,7 @@ def convert_materials(mats):
 
 
 def journal2edsm(j):
-    # debug(json.dumps(j, indent=4))
+    # Debug.logger.debug(json.dumps(j, indent=4))
 
     def convertAtmosphere(a):
         r = {}
@@ -267,33 +267,33 @@ def get_synodic_period(b1, b2):
 
 class codexName(threading.Thread):
     def __init__(self,  callback):
-        debug("initialise codexName Thread")
+        Debug.logger.debug("initialise codexName Thread")
         threading.Thread.__init__(self)
         self.callback = callback
 
     def run(self):
-        debug("running codexName")
+        Debug.logger.debug("running codexName")
         self.callback()
-        debug("codexName Callback Complete")
+        Debug.logger.debug("codexName Callback Complete")
 
 
 class poiTypes(threading.Thread):
     def __init__(self, system, callback):
-        # debug("initialise POITYpes Thread")
+        # Debug.logger.debug("initialise POITYpes Thread")
         threading.Thread.__init__(self)
         self.system = system
         self.callback = callback
 
     def run(self):
-        # debug("running poitypes")
+        # Debug.logger.debug("running poitypes")
         self.callback(self.system)
-        # debug("poitypes Callback Complete")
+        # Debug.logger.debug("poitypes Callback Complete")
 
 
 class saaScan():
 
     def __init__(self):
-        debug("We only use class methods here")
+        Debug.logger.debug("We only use class methods here")
 
     @classmethod
     def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
@@ -425,7 +425,7 @@ class CodexTypes():
     # wrap visualise so we can call from time
     def tvisualise(self):
         if not config.shutting_down:
-            debug("frame.event_generate")
+            Debug.logger.debug("frame.event_generate")
             # self.frame.event_generate('<<POIData>>', when='head')
             self.frame.event_generate('<<POIData>>')
 
@@ -875,7 +875,7 @@ class CodexTypes():
 
                     for k in bodies.keys():
                         b = bodies.get(k)
-                        # debug(json.dumps(b,indent=4))
+                        # Debug.logger.debug(json.dumps(b,indent=4))
                         body_code = b.get("name").replace(self.system, '')
                         body_name = b.get("name")
 
@@ -999,7 +999,7 @@ class CodexTypes():
         Debug.logger.debug(
             f"Getting POI data in thread {self.event} - system = {system}")
         CodexTypes.waiting = True
-        # debug("CodexTypes.waiting = True")
+        # Debug.logger.debug("CodexTypes.waiting = True")
 
         # first we will clear the queues
         self.edsmq.clear()
@@ -1008,34 +1008,34 @@ class CodexTypes():
             url = "https://us-central1-canonn-api-236217.cloudfunctions.net/poiListSignals?system={}".format(
                 quote_plus(system.encode('utf8')))
 
-            # debug(url)
-            # debug("request {}:  Active Threads {}".format(
+            # Debug.logger.debug(url)
+            # Debug.logger.debug("request {}:  Active Threads {}".format(
             #    url, threading.activeCount()))
             r = requests.get(url, timeout=30)
-            # debug("request complete")
+            # Debug.logger.debug("request complete")
             r.encoding = 'utf-8'
             if r.status_code == requests.codes.ok:
-                # debug("got POI Data")
+                # Debug.logger.debug("got POI Data")
                 temp_poidata = r.json()
 
             # push the data ont a queue
             for v in temp_poidata:
                 self.poiq.put(v)
         except:
-            debug("Error getting POI data")
+            Debug.logger.debug("Error getting POI data")
 
         try:
             url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
                 quote_plus(system.encode('utf8')))
 
-            # debug("request {}:  Active Threads {}".format(
+            # Debug.logger.debug("request {}:  Active Threads {}".format(
             #    url, threading.activeCount()))
 
             r = requests.get(url, timeout=30)
-            # debug("request complete")
+            # Debug.logger.debug("request complete")
             r.encoding = 'utf-8'
             if r.status_code == requests.codes.ok:
-                # debug("got EDSM Data")
+                # Debug.logger.debug("got EDSM Data")
                 temp_edsmdata = r.json()
                 # push edsm data only a queue
                 self.edsmq.put(temp_edsmdata)
@@ -1060,14 +1060,14 @@ class CodexTypes():
                 col.grid()
                 col.grid_remove()
             except:
-                error("Col1 grid_remove error")
+                Debug.logger.error("Col1 grid_remove error")
         for col in self.tooltipcol2:
             col["text"] = ""
             try:
                 col.grid()
                 col.grid_remove()
             except:
-                error("Col2 grid_remove error")
+                Debug.logger.error("Col2 grid_remove error")
 
         poicount = 0
 
@@ -1137,10 +1137,10 @@ class CodexTypes():
 
     def set_image(self, name, enabled):
         if name == None:
-            error("set_image: name is None")
+            Debug.logger.error("set_image: name is None")
             return
         if name not in self.imagetypes:
-            error("set_image: name {} is not allowed")
+            Debug.logger.error("set_image: name {} is not allowed")
 
         grey = "{}_grey".format(name)
 
@@ -1317,9 +1317,9 @@ class CodexTypes():
         unscanned = nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0)
 
         """ if not (threading.current_thread() is threading.main_thread()):
-            debug("We are not in the main thread")
+            Debug.logger.debug("We are not in the main thread")
         else:
-            debug("We are in the main thread") """
+            Debug.logger.debug("We are in the main thread") """
 
         # we have set an event type that can override waiting
         if self.event:
@@ -1527,7 +1527,7 @@ class CodexTypes():
 
                 bd = journal2edsm(entry)
                 self.bodies[bd.get("bodyId")] = bd
-                # debug(json.dumps(self.bodies, indent=4))
+                # Debug.logger.debug(json.dumps(self.bodies, indent=4))
 
             self.allowed = True
 
@@ -1573,7 +1573,7 @@ class CodexTypes():
                 name_ref[entry.get("entryid")] = entry
             cls.name_ref = name_ref
         else:
-            error("error in get_codex_names")
+            Debug.logger.error("error in get_codex_names")
 
     @classmethod
     def plugin_start(cls, plugin_dir):
@@ -1591,7 +1591,7 @@ class CodexTypes():
 
         codexName(cls.get_codex_names).start()
         # except:
-        #    debug("no config file {}".format(file))
+        #    Debug.logger.debug("no config file {}".format(file))
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
@@ -1642,7 +1642,7 @@ class gSubmitCodex(threading.Thread):
     def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
 
         threading.Thread.__init__(self)
-        # debug("gSubmitCodex({},{},{},{},{},{},{},{},{},{},{})".format((self,cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client)))
+        # Debug.logger.debug("gSubmitCodex({},{},{},{},{},{},{},{},{},{},{})".format((self,cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client)))
         self.cmdr = quote_plus(cmdr.encode('utf8'))
         self.system = quote_plus(system.encode('utf8'))
         self.x = x
@@ -1666,7 +1666,7 @@ class gSubmitCodex(threading.Thread):
 
     def run(self):
 
-        debug("sending gSubmitCodex")
+        Debug.logger.debug("sending gSubmitCodex")
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/submitCodex?cmdrName={}".format(
             self.cmdr)
         url = url + "&system={}".format(self.system)
@@ -1698,14 +1698,14 @@ class gSubmitCodex(threading.Thread):
                 self.entry.get("Region_Localised").encode('utf8'))
         url = url + "&is_beta={}".format(self.is_beta)
 
-        debug(url)
+        Debug.logger.debug(url)
 
         r = requests.get(url)
 
         if not r.status_code == requests.codes.ok:
-            error("gSubmitCodex {} ".format(url))
-            error(r.status_code)
-            error(r.json())
+            Debug.logger.error("gSubmitCodex {} ".format(url))
+            Debug.logger.error(r.status_code)
+            Debug.logger.error(r.json())
 
 
 class guardianSites(Emitter):
@@ -1806,9 +1806,9 @@ class guardianSites(Emitter):
             payload["frontierID"] = self.index
 
             url = self.getUrl()
-            debug(payload)
+            Debug.logger.debug(payload)
 
-            debug(url)
+            Debug.logger.debug(url)
             self.send(payload, url)
 
     def get_index(self, value):
@@ -1998,7 +1998,7 @@ class codexEmitter(Emitter):
 
 
 def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
-    debug("detected test request")
+    Debug.logger.debug("detected test request")
     # testentry = {
     #     "timestamp": "2019-09-12T09:01:35Z", "event": "CodexEntry", "EntryID": 2100101,
     #     "Name": "$Codex_Ent_Thargoid_Barnacle_01_Name;", "Name_Localised": "Common Thargoid Barnacle",
@@ -2139,7 +2139,7 @@ def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
         "SignalName") == "The Gnosis"
 
     if gnosis_station or gnosis_fss:
-        debug("Hey it's The Gnosis!")
+        Debug.logger.debug("Hey it's The Gnosis!")
         canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postGnosis",
                             {
                                 "cmdr": cmdr,
