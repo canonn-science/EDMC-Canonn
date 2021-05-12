@@ -33,9 +33,9 @@ class FSS():
     events = Queue()
 
     @classmethod
-    def put(cls, cmdr, system, x, y, z, entry, client):
+    def put(cls, cmdr, system, x, y, z, entry, client, state):
         data = {"cmdr": cmdr, "system": system,
-                "coords": [x, y, z], "entry": entry, "client": client}
+                "coords": [x, y, z], "entry": entry, "client": client, "odyssey": state.get("Odyssey")}
         Debug.logger.debug("Putting FSS Signal on queue")
         cls.events.put(data)
 
@@ -62,7 +62,9 @@ class FSS():
                         "systemName": data.get("system"),
                         "systemCoordinates": data.get("coords"),
                         "clientVersion": data.get("client"),
-                        "isBeta": False
+                        "isBeta": False,
+                        "platform": "PC",
+                        "odyssey": data.get("odyssey")
                     },
                     "rawEvents":
                     [entry],
@@ -223,13 +225,13 @@ class fssEmitter(Emitter):
             self.send(payload, url)
 
 
-def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
+def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state):
     if entry.get("event") == "FSSSignalDiscovered":
         fssEmitter(cmdr, is_beta, system, x, y, z,
                    entry, body, lat, lon, client).start()
 
     if entry.get("event") == "FSSSignalDiscovered" and not is_beta:
-        FSS.put(cmdr, system, x, y, z, entry, client)
+        FSS.put(cmdr, system, x, y, z, entry, client, state)
 
     if entry.get("event") in ("StartJump", "Location", "Docked", "Shutdown", "ShutDown", "SupercruiseExit", "SupercruiseEntry ") and not is_beta:
         Debug.logger.debug("FSS Process")

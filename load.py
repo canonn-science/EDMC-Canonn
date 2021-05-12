@@ -228,9 +228,10 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
     hdreport.submit(cmdr, is_beta, system, station, entry, client)
-    codex.submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
+    codex.submit(cmdr, is_beta, system, x, y, z,
+                 entry, body, lat, lon, client, state)
     fssreports.submit(cmdr, is_beta, system, x, y, z,
-                      entry, body, lat, lon, client)
+                      entry, body, lat, lon, client, state)
     journaldata.submit(cmdr, is_beta, system, station,
                        entry, client, body, lat, lon)
     clientreport.submit(cmdr, is_beta, client, entry)

@@ -305,7 +305,9 @@ class saaScan():
                     "systemCoordinates": [x, y, z],
                     "bodyName": body,
                     "clientVersion": client,
-                    "isBeta": is_beta
+                    "isBeta": is_beta,
+                    "platform": "PC",
+                    "odyssey": state.get("Odyssey")
                 },
                 "rawEvent": entry,
                 "eventType": entry.get("event"),
@@ -1832,11 +1834,12 @@ class codexEmitter(Emitter):
         else:
             return None
 
-    def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
+    def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state):
         Emitter.__init__(self, cmdr, is_beta, system, x, y,
                          z, entry, body, lat, lon, client)
         self.modelreport = "xxreports"
         self.modeltype = "xxtypes"
+        self.odyssey = state.get("Odyssey")
 
     def getSystemPayload(self, name):
         payload = self.setPayload()
@@ -1970,7 +1973,9 @@ class codexEmitter(Emitter):
                                         "latitude": self.lat,
                                         "longitude": self.lon,
                                         "clientVersion": self.client,
-                                        "isBeta": self.is_beta
+                                        "isBeta": self.is_beta,
+                                        "platform": "PC",
+                                        "odyssey": self.odyssey
                                     },
                                     "rawEvent": self.entry,
                                     "eventType": self.entry.get("event"),
@@ -2115,7 +2120,7 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
            "Synuefe CE-R c21-6 C 1", 42, 73, client)
 
 
-def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
+def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state):
     codex_entry = (entry.get("event") == "CodexEntry")
     approach_settlement = (entry.get("event") == "ApproachSettlement")
     guardian_codices = (entry.get("EntryID") in [
@@ -2124,7 +2129,7 @@ def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
 
     if codex_entry:
         codexEmitter(cmdr, is_beta, entry.get("System"), x, y,
-                     z, entry, body, lat, lon, client).start()
+                     z, entry, body, lat, lon, client, state).start()
 
     if approach_settlement or guardian_event:
         guardianSites(cmdr, is_beta, system, x, y, z,
