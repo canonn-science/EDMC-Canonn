@@ -68,7 +68,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "5.26.1"
+this.version = "6.0.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -223,6 +223,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                           state, x, y, z, body,
                           lat, lon, client):
+    canonn.debug.inject(cmdr, is_beta, system, station, entry,
+                        client, journal_entry_wrapper, this.frame)
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
     hdreport.submit(cmdr, is_beta, system, station, entry, client)
