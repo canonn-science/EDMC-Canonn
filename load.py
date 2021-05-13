@@ -21,6 +21,7 @@ from canonn import news
 from canonn import nhss
 from canonn import patrol
 from canonn import release
+from canonn import extool
 from canonn.debug import Debug
 from canonn.debug import debug
 from canonn.systems import Systems
@@ -87,6 +88,7 @@ def plugin_prefs(parent, cmdr, is_beta):
     this.codexcontrol.plugin_prefs(frame, cmdr, is_beta, 3)
     hdreport.HDInspector(frame, cmdr, is_beta, this.client_version, 4)
     Debug.plugin_prefs(frame, this.client_version, 5)
+    this.extool.plugin_prefs(frame, cmdr, is_beta, 7)
     return frame
 
 
@@ -118,6 +120,7 @@ def plugin_start(plugin_dir):
     codex.CodexTypes.plugin_start(plugin_dir)
     journaldata.plugin_start(plugin_dir)
     capture.plugin_start(plugin_dir)
+    extool.BearingDestination.plugin_start(plugin_dir)
 
     return 'Canonn'
 
@@ -147,9 +150,10 @@ def plugin_app(parent):
     this.news = news.CanonnNews(table, 0)
     this.release = release.Release(table, this.version, 1)
     this.codexcontrol = codex.CodexTypes(table, 2)
-    this.patrol = patrol.CanonnPatrol(table, 3)
-    this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 4)
-    this.guestbook = guestBook.setup(table, 5)
+    this.extool = extool.BearingDestination(table, 3)
+    this.patrol = patrol.CanonnPatrol(table, 4)
+    this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 5)
+    this.guestbook = guestBook.setup(table, 6)
 
     whitelist = whiteList(parent)
     whitelist.fetchData()
@@ -251,6 +255,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     capture.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                           state, x, y, z, body,
                           lat, lon, client)
+    extool.journal_entry(cmdr, is_beta, system, entry, client)
     guestBook.journal_entry(entry)
 
 
@@ -273,6 +278,14 @@ def dashboard_entry(cmdr, is_beta, entry):
         this.body_name = entry.get("BodyName")
     else:
         this.body_name = None
+
+    return dashboard_entry_wrapper(cmdr, is_beta, this.body_name, this.planet_radius, this.nearloc['Latitude'], this.nearloc['Longitude'], entry)
+
+
+def dashboard_entry_wrapper(cmdr, is_beta, body, radius, lat, lon, entry, ):
+
+    #this.codexcontrol.updatePlanetData(cmdr, is_beta, body, lat, lon)
+    extool.updatePosition(body, radius, lat, lon, entry.get("Heading"))
 
 
 def cmdr_data(data, is_beta):
