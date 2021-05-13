@@ -315,6 +315,31 @@ class saaScan():
             })
 
 
+class organicScan():
+
+    def __init__(self):
+        debug("We only use class methods here")
+
+    @classmethod
+    def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
+        if entry.get("event") == "ScanOrganic":
+
+            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent", {
+                "gameState": {
+                    "systemName": system,
+                    "systemCoordinates": [x, y, z],
+                    "bodyName": body,
+                    "clientVersion": client,
+                    "isBeta": is_beta,
+                    "platform": "PC",
+                    "odyssey": state.get("Odyssey")
+                },
+                "rawEvent": entry,
+                "eventType": entry.get("event"),
+                "cmdrName": cmdr
+            })
+
+
 class CodexTypes():
     tooltips = {
         "Geology": "Geology: Vents and fumeroles",

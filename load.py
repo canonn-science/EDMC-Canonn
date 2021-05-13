@@ -246,6 +246,8 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
                           lon, client)
     codex.saaScan.journal_entry(
         cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    codex.organicScan.journal_entry(
+        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
     capture.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                           state, x, y, z, body,
                           lat, lon, client)
