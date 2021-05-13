@@ -279,6 +279,11 @@ def dashboard_entry(cmdr, is_beta, entry):
     else:
         this.body_name = None
 
+    if entry.get("PlanetRadius"):
+        this.planet_radius = entry.get("PlanetRadius")
+    else:
+        this.planet_radius = None
+
     return dashboard_entry_wrapper(cmdr, is_beta, this.body_name, this.planet_radius, this.nearloc['Latitude'], this.nearloc['Longitude'], entry)
 
 
