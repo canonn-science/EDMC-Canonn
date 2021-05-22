@@ -332,7 +332,9 @@ class organicScan():
                     "clientVersion": client,
                     "isBeta": is_beta,
                     "platform": "PC",
-                    "odyssey": state.get("Odyssey")
+                    "odyssey": state.get("Odyssey"),
+                    "latitude": lat,
+                    "longitude": lon,
                 },
                 "rawEvent": entry,
                 "eventType": entry.get("event"),
