@@ -69,7 +69,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.0.0"
+this.version = "6.0.1"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -204,9 +204,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     if entry.get("event") == "CarrierJump":
         system = entry.get("StarSystem")
         Systems.storeSystem(system, entry.get("StarPos"))
-
-    if ('Body' in entry):
-        this.body_name = entry['Body']
 
     if system:
         x, y, z = Systems.edsmGetSystem(system)
