@@ -1018,7 +1018,7 @@ class CodexTypes():
         except Exception as e:
             #line = sys.exc_info()[-1].tb_lineno
             self.merge_poi("Other", 'Plugin Error', None)
-            Debug.logger.error("Plugin Error")
+            Debug.logger.error("Plugin Error {}".format(str(e)))
 
         #Debug.logger.debug(f"evisualise end {self.event}")
         self.visualise()
@@ -1050,8 +1050,8 @@ class CodexTypes():
             # push the data ont a queue
             for v in temp_poidata:
                 self.poiq.put(v)
-        except:
-            Debug.logger.debug("Error getting POI data")
+        except Exception as e:
+            Debug.logger.debug("Error getting POI data".format(str(e)))
 
         try:
             url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
@@ -1071,8 +1071,8 @@ class CodexTypes():
             else:
                 Debug.logger.debug("EDSM Failed")
                 Debug.logger.error("EDSM Failed")
-        except:
-            Debug.logger.debug("Error getting EDSM data")
+        except Exception as e:
+            Debug.logger.debug("Error getting EDSM data: {}".format(str(e)))
 
         CodexTypes.waiting = False
         Debug.logger.debug("Triggering Event")
