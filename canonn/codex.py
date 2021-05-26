@@ -322,7 +322,7 @@ class organicScan():
 
     @classmethod
     def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
-        if entry.get("event") == "ScanOrganic":
+        if entry.get("event") in ("ScanOrganic", "SellOrganicData"):
 
             canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent", {
                 "gameState": {
