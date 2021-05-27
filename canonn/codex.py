@@ -1501,8 +1501,10 @@ class CodexTypes():
                 Debug.logger.debug("Error getting EDSM data")
 
             try:
-                url = "https://us-central1-canonn-api-236217.cloudfunctions.net/getSystemPoi?system={}".format(
-                    quote_plus(system.encode('utf8')))
+                EDversion = "N"
+                if self.odyssey:
+                    EDversion = "Y"
+                url = "https://us-central1-canonn-api-236217.cloudfunctions.net/query/getSystemPoi?system={}&odyssey={}".format(quote_plus(system.encode('utf8')), EDversion)
 
                 # debug(url)
                 # debug("request {}:  Active Threads {}".format(
