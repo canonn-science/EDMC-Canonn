@@ -631,7 +631,7 @@ class CodexTypes():
         self.dest_widget = widget
 
     def changeBodyFocus(self, event, inext):
-
+        # next or prev body to ffocus when using green arrow
         body_list = []
         for body in self.ppoidata:
             body_list.append(body)
@@ -660,6 +660,11 @@ class CodexTypes():
     def bodyFocus(self, body):
         self.planetlist_body = body
         self.switchBodyMode("Body")
+        tmplock = self.lock.copy()
+        for category in tmplock:
+            self.switchPOI(category)
+            self.switchPlanet(category)
+        self.visualisePlanetData()
 
     def activateDestination(self, latlon):
         lat = float(latlon.split(",")[0][1:])
@@ -690,8 +695,7 @@ class CodexTypes():
             if category in self.lockPlanet:
                 self.lockPlanet.remove(category)
                 self.planetlist[category].grid_remove()
-                self.labels[category +
-                            "_planet"]["image"] = self.images["{}_grey_planet".format(category)]
+                self.labels[category + "_planet"]["image"] = self.images["{}_grey_planet".format(category)]
                 remove_panel = True
                 for c in self.ppoidata[self.planetlist_body]:
                     if c in self.lockPlanet:
@@ -701,8 +705,7 @@ class CodexTypes():
             else:
                 self.lockPlanet.append(category)
                 self.planetlist[category].grid()
-                self.labels[category +
-                            "_planet"]["image"] = self.images[category+"_planet"]
+                self.labels[category + "_planet"]["image"] = self.images[category+"_planet"]
         else:
             if category in self.lockPlanet:
                 self.lockPlanet.remove(category)
