@@ -840,6 +840,8 @@ class CodexTypes():
             while not self.poiq.empty():
                 r = self.poiq.get()
                 body = r.get("body")
+                if body is None:
+                    continue
                 body_code = body.replace(self.system+" ", '')
 
                 if r.get("hud_category") == "Geology":
@@ -956,18 +958,19 @@ class CodexTypes():
                     for s in edsm_stations:
                         if "body" in s:
                             if s["type"] != "Fleet Carrier":
-                                bodycode = s["body"].get(
-                                    "name").replace(self.system+" ", '')
-                                latlon = "("+str(round(s["body"].get("latitude"), 2))+","+str(
-                                    round(s["body"].get("longitude"), 2))+")"
-                                if bodycode not in self.ppoidata:
-                                    self.ppoidata[bodycode] = {}
-                                if "Human" not in self.ppoidata[bodycode]:
-                                    self.ppoidata[bodycode]["Human"] = {}
-                                if s["name"] not in self.ppoidata[bodycode]["Human"]:
-                                    self.ppoidata[bodycode]["Human"][s["name"]] = [
-                                        [None, latlon]]
-                                #self.ppoidata["Human"][station["name"]].append([None, latlon])
+                                if ("latitude" in s["body"]) and ("longitude" in s["body"]):
+                                    bodycode = s["body"].get(
+                                        "name").replace(self.system+" ", '')
+                                    latlon = "("+str(round(s["body"].get("latitude"), 2))+","+str(
+                                        round(s["body"].get("longitude"), 2))+")"
+                                    if bodycode not in self.ppoidata:
+                                        self.ppoidata[bodycode] = {}
+                                    if "Human" not in self.ppoidata[bodycode]:
+                                        self.ppoidata[bodycode]["Human"] = {}
+                                    if s["name"] not in self.ppoidata[bodycode]["Human"]:
+                                        self.ppoidata[bodycode]["Human"][s["name"]] = [
+                                            [None, latlon]]
+                                    #self.ppoidata["Human"][station["name"]].append([None, latlon])
                         else:
                             if s["name"] not in self.stationdata:
                                 if s["type"] != "Fleet Carrier":
