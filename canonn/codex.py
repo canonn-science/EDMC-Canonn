@@ -167,7 +167,7 @@ def convert_materials(mats):
 
 
 def journal2edsm(j):
-    # debug(json.dumps(j, indent=4))
+    # Debug.logger.debug(json.dumps(j, indent=4))
 
     def convertAtmosphere(a):
         r = {}
@@ -269,14 +269,14 @@ def get_synodic_period(b1, b2):
 
 class codexName(threading.Thread):
     def __init__(self,  callback):
-        debug("initialise codexName Thread")
+        Debug.logger.debug("initialise codexName Thread")
         threading.Thread.__init__(self)
         self.callback = callback
 
     def run(self):
-        debug("running codexName")
+        Debug.logger.debug("running codexName")
         self.callback()
-        debug("codexName Callback Complete")
+        Debug.logger.debug("codexName Callback Complete")
 
 
 class poiTypes(threading.Thread):
@@ -310,7 +310,7 @@ class poiTypes(threading.Thread):
 class saaScan():
 
     def __init__(self):
-        debug("We only use class methods here")
+        Debug.logger.debug("We only use class methods here")
 
     @classmethod
     def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
@@ -322,7 +322,36 @@ class saaScan():
                     "systemCoordinates": [x, y, z],
                     "bodyName": body,
                     "clientVersion": client,
-                    "isBeta": is_beta
+                    "isBeta": is_beta,
+                    "platform": "PC",
+                    "odyssey": state.get("Odyssey")
+                },
+                "rawEvent": entry,
+                "eventType": entry.get("event"),
+                "cmdrName": cmdr
+            })
+
+
+class organicScan():
+
+    def __init__(self):
+        debug("We only use class methods here")
+
+    @classmethod
+    def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
+        if entry.get("event") in ("ScanOrganic", "SellOrganicData"):
+
+            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent", {
+                "gameState": {
+                    "systemName": system,
+                    "systemCoordinates": [x, y, z],
+                    "bodyName": body,
+                    "clientVersion": client,
+                    "isBeta": is_beta,
+                    "platform": "PC",
+                    "odyssey": state.get("Odyssey"),
+                    "latitude": lat,
+                    "longitude": lon,
                 },
                 "rawEvent": entry,
                 "eventType": entry.get("event"),
@@ -512,16 +541,13 @@ class CodexTypes():
 
         self.temp_poidata = None
         self.temp_edsmdata = None
+        
         #self.cmdrData = {}
 
-        self.images_body = tk.PhotoImage(file=os.path.join(
-            CodexTypes.plugin_dir, "icons", "Body.gif"))
-        self.images_body_auto = tk.PhotoImage(file=os.path.join(
-            CodexTypes.plugin_dir, "icons", "Body_auto.gif"))
-        self.images_body_grey = tk.PhotoImage(file=os.path.join(
-            CodexTypes.plugin_dir, "icons", "Body_grey.gif"))
-        self.icon_body = tk.Label(
-            self.systemtitle, image=self.images_body_auto, text="Body_auto")
+        self.images_body = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body.gif"))
+        self.images_body_auto = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body_auto.gif"))
+        self.images_body_grey = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body_grey.gif"))
+        self.icon_body = tk.Label(self.systemtitle, image=self.images_body_auto, text="Body_auto")
         self.icon_body.grid(row=0, column=1)
         self.icon_body.bind("<ButtonPress>", self.nextBodyMode)
         # self.icon_body.grid_remove()
@@ -2097,7 +2123,6 @@ class CodexTypes():
                     distance = d1 + d2
 
             if not isBinary(candidate):
-
                 body = bodies.get(get_parent(candidate))
                 distance = self.apoapsis("semiMajorAxis", candidate.get(
                     "semiMajorAxis"), candidate.get("orbitalEccentricity"))
@@ -2755,7 +2780,7 @@ class CodexTypes():
 
                 bd = journal2edsm(entry)
                 self.bodies[bd.get("bodyId")] = bd
-                # debug(json.dumps(self.bodies, indent=4))
+                # Debug.logger.debug(json.dumps(self.bodies, indent=4))
 
             self.allowed = True
 
@@ -2807,7 +2832,7 @@ class CodexTypes():
                 name_ref[entry.get("entryid")] = entry
             cls.name_ref = name_ref
         else:
-            error("error in get_codex_names")
+            Debug.logger.error("error in get_codex_names")
 
     @classmethod
     def plugin_start(cls, plugin_dir):
@@ -2825,7 +2850,7 @@ class CodexTypes():
 
         codexName(cls.get_codex_names).start()
         # except:
-        #    debug("no config file {}".format(file))
+        #    Debug.logger.debug("no config file {}".format(file))
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
@@ -2874,77 +2899,6 @@ class CodexTypes():
             return True
 
         # experimental
-
-
-# submitting to a google cloud function
-class gSubmitCodex(threading.Thread):
-    def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
-
-        threading.Thread.__init__(self)
-        # debug("gSubmitCodex({},{},{},{},{},{},{},{},{},{},{})".format((self,cmdr, is_beta, system, x,y,z,entry, body,lat,lon,client)))
-        self.cmdr = quote_plus(cmdr.encode('utf8'))
-        self.system = quote_plus(system.encode('utf8'))
-        self.x = x
-        self.y = y
-        self.z = z
-        self.body = ""
-        self.lat = ""
-        self.lon = ""
-        if body:
-            self.body = quote_plus(body.encode('utf8'))
-        if lat:
-            self.lat = lat
-            self.lon = lon
-
-        if is_beta:
-            self.is_beta = 'Y'
-        else:
-            self.is_beta = 'N'
-
-        self.entry = entry
-
-    def run(self):
-
-        debug("sending gSubmitCodex")
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/submitCodex?cmdrName={}".format(
-            self.cmdr)
-        url = url + "&system={}".format(self.system)
-        url = url + "&body={}".format(self.body)
-        url = url + "&x={}".format(self.x)
-        url = url + "&y={}".format(self.y)
-        url = url + "&z={}".format(self.z)
-        url = url + "&latitude={}".format(self.lat)
-        url = url + "&longitude={}".format(self.lon)
-        url = url + "&entryid={}".format(self.entry.get("EntryID"))
-        url = url + "&name={}".format(self.entry.get("Name").encode('utf8'))
-        url = url + \
-            "&name_localised={}".format(
-                self.entry.get("Name_Localised").encode('utf8'))
-        url = url + \
-            "&category={}".format(self.entry.get("Category").encode('utf8'))
-        url = url + \
-            "&category_localised={}".format(
-                self.entry.get("Category_Localised").encode('utf8'))
-        url = url + \
-            "&sub_category={}".format(
-                self.entry.get("SubCategory").encode('utf8'))
-        url = url + "&sub_category_localised={}".format(
-            self.entry.get("SubCategory_Localised").encode('utf8'))
-        url = url + \
-            "&region_name={}".format(self.entry.get("Region").encode('utf8'))
-        url = url + \
-            "&region_name_localised={}".format(
-                self.entry.get("Region_Localised").encode('utf8'))
-        url = url + "&is_beta={}".format(self.is_beta)
-
-        debug(url)
-
-        r = requests.get(url)
-
-        if not r.status_code == requests.codes.ok:
-            error("gSubmitCodex {} ".format(url))
-            error(r.status_code)
-            error(r.json())
 
 
 class guardianSites(Emitter):
@@ -3045,9 +2999,9 @@ class guardianSites(Emitter):
             payload["frontierID"] = self.index
 
             url = self.getUrl()
-            debug(payload)
+            Debug.logger.debug(payload)
 
-            debug(url)
+            Debug.logger.debug(url)
             self.send(payload, url)
 
     def get_index(self, value):
@@ -3071,11 +3025,12 @@ class codexEmitter(Emitter):
         else:
             return None
 
-    def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
+    def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state):
         Emitter.__init__(self, cmdr, is_beta, system, x, y,
                          z, entry, body, lat, lon, client)
         self.modelreport = "xxreports"
         self.modeltype = "xxtypes"
+        self.odyssey = state.get("Odyssey")
 
     def getSystemPayload(self, name):
         payload = self.setPayload()
@@ -3209,7 +3164,9 @@ class codexEmitter(Emitter):
                                         "latitude": self.lat,
                                         "longitude": self.lon,
                                         "clientVersion": self.client,
-                                        "isBeta": self.is_beta
+                                        "isBeta": self.is_beta,
+                                        "platform": "PC",
+                                        "odyssey": self.odyssey
                                     },
                                     "rawEvent": self.entry,
                                     "eventType": self.entry.get("event"),
@@ -3237,7 +3194,7 @@ class codexEmitter(Emitter):
 
 
 def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
-    debug("detected test request")
+    Debug.logger.debug("detected test request")
     # testentry = {
     #     "timestamp": "2019-09-12T09:01:35Z", "event": "CodexEntry", "EntryID": 2100101,
     #     "Name": "$Codex_Ent_Thargoid_Barnacle_01_Name;", "Name_Localised": "Common Thargoid Barnacle",
@@ -3354,7 +3311,7 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
            "Synuefe CE-R c21-6 C 1", 42, 73, client)
 
 
-def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
+def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state):
     codex_entry = (entry.get("event") == "CodexEntry")
     approach_settlement = (entry.get("event") == "ApproachSettlement")
     guardian_codices = (entry.get("EntryID") in [
@@ -3363,7 +3320,7 @@ def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
 
     if codex_entry:
         codexEmitter(cmdr, is_beta, entry.get("System"), x, y,
-                     z, entry, body, lat, lon, client).start()
+                     z, entry, body, lat, lon, client, state).start()
 
     if approach_settlement or guardian_event:
         guardianSites(cmdr, is_beta, system, x, y, z,
@@ -3378,7 +3335,7 @@ def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
         "SignalName") == "The Gnosis"
 
     if gnosis_station or gnosis_fss:
-        debug("Hey it's The Gnosis!")
+        Debug.logger.debug("Hey it's The Gnosis!")
         canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postGnosis",
                             {
                                 "cmdr": cmdr,

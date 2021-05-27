@@ -83,31 +83,32 @@ class Systems():
     def edsmGetSystem(cls, system):
 
         if not system:
-            error("system is null")
+            Debug.logger.error("system is null")
             return
 
         if not system in cls.systemCache and not cls.scanned:
-            #journalGetSystem()
-            cls.scanned=True
-
+            # journalGetSystem()
+            cls.scanned = True
 
         if system in cls.systemCache:
 
             return cls.systemCache[system]
 
         else:
-            url = 'https://www.edsm.net/api-v1/system?systemName=' + quote_plus(system) + '&showCoordinates=1'
+            url = 'https://www.edsm.net/api-v1/system?systemName=' + \
+                quote_plus(system) + '&showCoordinates=1'
             r = requests.get(url)
             s = r.json()
 
-            cls.systemCache[system] = (s["coords"]["x"], s["coords"]["y"], s["coords"]["z"])
+            cls.systemCache[system] = (
+                s["coords"]["x"], s["coords"]["y"], s["coords"]["z"])
             return s["coords"]["x"], s["coords"]["y"], s["coords"]["z"]
 
     @classmethod
     def dump(cls):
         for x in cls.systemCache.keys():
-            debug('"{}":[{},{},{}],'.format(x, cls.systemCache.get(x)[0], cls.systemCache.get(x)[1],
-                                            cls.systemCache.get(x)[2]))
+            Debug.logger.debug('"{}":[{},{},{}],'.format(x, cls.systemCache.get(x)[0], cls.systemCache.get(x)[1],
+                                                         cls.systemCache.get(x)[2]))
 
 
 def edsmGetSystem(system):
@@ -129,7 +130,8 @@ def journalGetSystem():
 
 
 def recent_journal():
-    list_of_files = glob.glob(os.path.join(config.default_journal_dir, 'journal*.log'))
+    list_of_files = glob.glob(os.path.join(
+        config.default_journal_dir, 'journal*.log'))
     latest_file = max(list_of_files, key=os.path.getctime)
-    debug("latest journal: {}".format(latest_file))
+    Debug.logger.debug("latest journal: {}".format(latest_file))
     return latest_file

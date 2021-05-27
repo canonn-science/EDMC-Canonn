@@ -122,18 +122,18 @@ class Release(Frame):
         # self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
         self.bind('<<ReleaseUpdate>>', self.release_update)
 
+
+        Debug.logger.debug(config.get_str('Canonn:RemoveBackup'))
+
         self.update(None)
 
-        if not config.get_str('Canonn_RemoveBackup'):
-            config.set('Canonn_RemoveBackup', "None")
-
-        if self.rmbackup.get() == 1 and config.get_str('Canonn_RemoveBackup') != "None":
-            delete_dir = config.get_str('Canonn_RemoveBackup')
-            Debug.logger.debug('Canonn_RemoveBackup {}'.format(delete_dir))
+        if self.rmbackup.get() == 1 and config.get_str('Canonn:RemoveBackup') and config.get_str('Canonn:RemoveBackup') != "None":
+            delete_dir = config.get_str('Canonn:RemoveBackup')
+            Debug.logger.debug('Canonn:RemoveBackup {}'.format(delete_dir))
             try:
                 shutil.rmtree(delete_dir)
             except:
-                error("Cant delete {}".format(delete_dir))
+                Debug.logger.error("Cant delete {}".format(delete_dir))
 
             # lets not keep trying
             config.set('Canonn_RemoveBackup', "None")
@@ -159,9 +159,9 @@ class Release(Frame):
         # Debug.logger.debug(latest)
         if not r.status_code == requests.codes.ok:
 
-            error("Error fetching release from github")
-            error(r.status_code)
-            error(r.json())
+            Debug.logger.error("Error fetching release from github")
+            Debug.logger.error(r.status_code)
+            Debug.logger.error(r.json())
 
         else:
             self.latest = latest
@@ -262,7 +262,8 @@ class Release(Frame):
 
         Debug.logger.debug("Checking for pre-existence")
         if os.path.isdir(new_plugin_dir):
-            error("Download already exists: {}".format(new_plugin_dir))
+            Debug.logger.error(
+                "Download already exists: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")
             return False
 
@@ -278,7 +279,7 @@ class Release(Frame):
                 z = zipfile.ZipFile(StringIO.StringIO(download.content))
                 z.extractall(os.path.dirname(Release.plugin_dir))
         except:
-            error("Download failed: {}".format(new_plugin_dir))
+            Debug.logger.error("Download failed: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")
 
             return False
@@ -292,7 +293,8 @@ class Release(Frame):
             Debug.logger.debug("Renamed {} to {}".format(Release.plugin_dir,
                                                          "{}.disabled".format(Release.plugin_dir)))
         except:
-            error("Upgrade failed reverting: {}".format(new_plugin_dir))
+            Debug.logger.error(
+                "Upgrade failed reverting: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")
             shutil.rmtree(new_plugin_dir)
             return False

@@ -21,14 +21,14 @@ class whiteListGetter(threading.Thread):
         self.callback = callback
 
     def run(self):
-        debug("getting whiteList")
+        Debug.logger.debug("getting whiteList")
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/whitelist"
         r = requests.get(url)
 
         if not r.status_code == requests.codes.ok:
-            error("whiteListGetter {} ".format(url))
-            error(r.status_code)
-            error(r.json())
+            Debug.logger.error("whiteListGetter {} ".format(url))
+            Debug.logger.error(r.status_code)
+            Debug.logger.error(r.json())
             results = []
         else:
             results = r.json()
@@ -75,9 +75,9 @@ class whiteListSetter(threading.Thread):
         r = requests.get(url)
 
         if not r.status_code == requests.codes.ok:
-            error("whiteListSetter {} ".format(url))
-            error(r.status_code)
-            error(r.json())
+            Debug.logger.error("whiteListSetter {} ".format(url))
+            Debug.logger.error(r.status_code)
+            Debug.logger.error(r.json())
             results = []
         else:
             results = r.json()
@@ -117,7 +117,7 @@ class whiteList(Frame):
         for event in whiteList.whitelist:
 
             if cls.matchkeys(event.get("definition"), entry):
-                debug("Match {}".format(entry.get("event")))
+                Debug.logger.debug("Match {}".format(entry.get("event")))
                 whiteListSetter(cmdr, is_beta, system, station, entry,
                                 state, x, y, z, body, lat, lon, client).start()
 

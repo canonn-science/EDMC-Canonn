@@ -5,16 +5,15 @@ except:
     import Tkinter as tk
     from Tkinter import Frame
 
-import datetime
 
-import plug
-import json
 import myNotebook as nb
 import sys
 from config import config
 from ttkHyperlinkLabel import HyperlinkLabel
-from datetime import datetime
+
 import requests
+from datetime import datetime
+import plug
 
 
 class Debug:

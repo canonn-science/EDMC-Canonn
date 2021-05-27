@@ -22,7 +22,8 @@ class CanonnJournal(Emitter):
     exclusions = {}
 
     def __init__(self, cmdr, is_beta, system, station, entry, client, body, lat, lon):
-        Emitter.__init__(self, cmdr, is_beta, system, None, None, None, entry, None, None, None, client)
+        Emitter.__init__(self, cmdr, is_beta, system, None,
+                         None, None, entry, None, None, None, client)
         self.system = system
         self.cmdr = cmdr
         self.station = station
@@ -73,9 +74,9 @@ class CanonnJournal(Emitter):
             for exc in r.json():
                 tempexcludes[exc["eventName"]] = True
             CanonnJournal.exclusions = tempexcludes
-            debug("Jouurnal excludes got")
+            #Debug.logger.debug("Jouurnal excludes got")
         else:
-            error("{}/excludeevents".format(url))
+            Debug.logger.error("{}/excludeevents".format(url))
 
     def run(self):
         url = self.getUrl()
@@ -94,12 +95,12 @@ class CanonnJournal(Emitter):
 
         payload["isBeta"] = self.is_beta
 
-        included_event = not CanonnJournal.exclusions.get(self.entry.get("event"))
+        included_event = not CanonnJournal.exclusions.get(
+            self.entry.get("event"))
 
         if included_event:
             payload = self.setPayload()
             self.send(payload, url)
-
 
 
 '''
@@ -110,14 +111,14 @@ class CanonnJournal(Emitter):
 
 class Exclude(threading.Thread):
     def __init__(self, callback):
-        # debug("initialise POITYpes Thread")
+        # Debug.logger.debug("initialise POITYpes Thread")
         threading.Thread.__init__(self)
         self.callback = callback
 
     def run(self):
-        debug("getting excludes from strapi")
+        Debug.logger.debug("getting excludes from strapi")
         self.callback()
-        # debug("poitypes Callback Complete")
+        # Debug.logger.debug("poitypes Callback Complete")
 
 
 def plugin_start(plugin_dir):
@@ -129,7 +130,8 @@ def plugin_start(plugin_dir):
 
     CanonnJournal.exclusions = tempexcludes
 
-    debug("Journal excludes got now firing off thread to update them")
+    Debug.logger.debug(
+        "Journal excludes got now firing off thread to update them")
     Exclude(CanonnJournal.get_excludes).start()
 
 
@@ -138,4 +140,5 @@ def submit(cmdr, is_beta, system, station, entry, client, body, lat, lon):
         included_event = not CanonnJournal.exclusions.get(entry.get("event"))
 
     if included_event:
-        CanonnJournal(cmdr, is_beta, system, station, entry, client, body, lat, lon).start()
+        CanonnJournal(cmdr, is_beta, system, station,
+                      entry, client, body, lat, lon).start()

@@ -147,7 +147,7 @@ class BearingDestination():
                 #UpdateRadius(self, self.system, my_body).start()
 
     def updateBearing(self, bearing=None, distance=None, heading=None):
-        debug({"heading": heading, "bearing": bearing})
+        #debug({"heading": heading, "bearing": bearing})
         fg = "grey"
 
         if (bearing and heading):
@@ -165,7 +165,7 @@ class BearingDestination():
             self.show()
         else:
             self.hide()
-        debug("updateBearing = {} / {}".format(bearing, distance))
+        #debug("updateBearing = {} / {}".format(bearing, distance))
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
@@ -180,8 +180,8 @@ class BearingDestination():
 
 def calc_distance(phi_a, lambda_a, phi_b, lambda_b, radius):
 
-    debug("calc_distance = {} {} {} {} {}".format(
-        phi_a, lambda_a, phi_b, lambda_b, radius))
+    # debug("calc_distance = {} {} {} {} {}".format(
+    #    phi_a, lambda_a, phi_b, lambda_b, radius))
 
     if radius is None:
         return 0.0
@@ -202,8 +202,8 @@ def calc_distance(phi_a, lambda_a, phi_b, lambda_b, radius):
 
 def calc_bearing(phi_a, lambda_a, phi_b, lambda_b, radius):
 
-    debug("calc_bearing = {} {} {} {} {}".format(
-        phi_a, lambda_a, phi_b, lambda_b, radius))
+    # debug("calc_bearing = {} {} {} {} {}".format(
+    #    phi_a, lambda_a, phi_b, lambda_b, radius))
 
     if radius is None:
         return 0.0
