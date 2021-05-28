@@ -2448,7 +2448,17 @@ class CodexTypes():
         
         self.odyssey = state.get("Odyssey")
         
-        if entry.get("event") in ("Location", "StartUp", "StartJump", "FSDJump", "FSDTarget"):
+        if entry.get("event") == "Embark":
+            if entry.get("Taxi"):
+                self.intaxi = True
+        
+        if entry.get("event") == "Disembark":
+            self.intaxi = False
+        
+        if self.intaxi:
+            return
+        
+        if entry.get("event") in ("Location", "StartUp", "StartJump"):
             self.logqueue = False
             self.logq.clear()
 
@@ -2471,8 +2481,31 @@ class CodexTypes():
             if len(ma) == 4 and ma[0] == "fake" and ma[1] == "bio":
 
                 self.fake_biology(cmdr, system, x, y, z, ma[2], ma[3], client)
-
-        if (entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace") or (entry.get("event") == "FSDTarget" and self.intaxi):
+                
+        if entry.get("event") in ("Location", "StartUp"):
+            self.system = system
+            # if entry.get("event") == "StartUp":
+            #    system = entry.get("StarSystem")
+            self.bodies = None
+            self.allowed = True
+            CodexTypes.fsscount = None
+            CodexTypes.bodycount = None
+            self.stationdata = {}
+            self.settlementdata = {}
+            self.poidata = {}
+            self.ppoidata = {}
+            self.saadata = {}
+            self.fssdata = {}
+            self.nfss = 0
+            self.fccount = 0
+            #self.stationPlanetData = {}
+            #self.cmdrData = {}
+            self.logqueue = True
+            self.planetlist_show = False
+            Debug.logger.debug(f"setting allowed event {self.event}")
+            poiTypes(system, cmdr, self.getPOIdata).start()
+            
+        if (entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace") or (entry.get("event") == "Disembark" and entry.get("Taxi")):
             # go fetch some data.It will
 
             CodexTypes.fsscount = None
@@ -2567,28 +2600,7 @@ class CodexTypes():
             #    #self.frame.after(5000, self.updatePlanetData(cmdr, is_beta, self.body))
             #    self.updatePlanetData(cmdr, is_beta, self.body)
 
-        if entry.get("event") in ("Location", "StartUp"):
-            self.system = system
-            # if entry.get("event") == "StartUp":
-            #    system = entry.get("StarSystem")
-            self.bodies = None
-            self.allowed = True
-            CodexTypes.fsscount = None
-            CodexTypes.bodycount = None
-            self.stationdata = {}
-            self.settlementdata = {}
-            self.poidata = {}
-            self.ppoidata = {}
-            self.saadata = {}
-            self.fssdata = {}
-            self.nfss = 0
-            self.fccount = 0
-            #self.stationPlanetData = {}
-            #self.cmdrData = {}
-            self.logqueue = True
-            self.planetlist_show = False
-            Debug.logger.debug(f"setting allowed event {self.event}")
-            poiTypes(system, cmdr, self.getPOIdata).start()
+
 
         if entry.get("event") in ("Location", "StartUp", "FSDJump", "CarrierJump"):
             # if entry.get("event") in ("FSDJump", "CarrierJump"):
@@ -2597,13 +2609,6 @@ class CodexTypes():
                 self.add_poi(entry.get("SystemAllegiance"), "{} Controlled".format(entry.get("SystemAllegiance")), "")
             self.allowed = True
             self.refreshPOIData(None)
-        
-        if entry.get("event") == "Embark":
-            if entry.get("Taxi"):
-                self.intaxi = True
-        
-        if entry.get("event") == "Disembark":
-            self.intaxi = False
         
         if entry.get("event") == "Docked":
             
