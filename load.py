@@ -24,7 +24,7 @@ from canonn import release
 from canonn import extool
 from canonn.debug import Debug
 from canonn.debug import debug
-from canonn.systems import Systems
+from canonn.systems import Systems, journalGetSystem
 from canonn.whitelist import whiteList
 from config import config
 from ttkHyperlinkLabel import HyperlinkLabel
@@ -69,7 +69,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.1.1"
+this.version = "6.1.2"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -162,8 +162,22 @@ def plugin_app(parent):
 
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
-    # capture some stats when we launch not read for that yet
-    # startup_stats(cmdr)
+
+    # we will cache some date from the latest journal because we will probably need it.
+    if entry.get("event" == "LoadGame"):
+        journalGetSystem()
+    # navroute has some info that we can use in the event that system is null
+    Systems.storeNavroute(state)
+
+    # we need to fix system if its not set.
+    if system is None and entry.get("SystemAddress") is None:
+        d = Systems.systemFromId64(entry.get("SystemAddress"))
+        if d:
+            Debug.logger.debug(f"setting unknown system to {d}")
+            system = d.get("StarSystem")
+            x, y, z = d.get("StarPos")
+        else:
+            Debug.logger.debug("Can't locate system leaving it blank")
 
     if entry.get("StarSystem") and entry.get("StarPos"):
         Systems.storeSystem(entry.get("StarSystem"), entry.get("StarPos"))
