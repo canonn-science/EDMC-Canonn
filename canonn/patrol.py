@@ -299,12 +299,12 @@ class CanonnPatrol(Frame):
         # self.submit=tk.Button(self, text="Open")
         self.next = tk.Button(
             self, text="Next", image=self.IMG_NEXT, width=14, height=14, borderwidth=0)
-        self.prev.grid(row=0, column=1, sticky="W")
 
         # self.submit.grid(row = 2, column = 1,sticky="NSW")
+        self.prev.grid(row=0, column=1, sticky="W")
         self.next.grid(row=0, column=4, sticky="E")
-        self.next.bind('<Button-1>', self.patrol_next)
         self.prev.bind('<Button-1>', self.patrol_prev)
+        self.next.bind('<Button-1>', self.patrol_next)
 
         self.prev.grid_remove()
         self.next.grid_remove()

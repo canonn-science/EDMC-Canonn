@@ -38,7 +38,6 @@ this = sys.modules[__name__]
 plugin_name = os.path.basename(os.path.dirname(__file__))
 this.logger = logging.getLogger(f'{appname}.{plugin_name}')
 logger = this.logger
-Debug.setLogger(logger)
 
 # If the Logger has handlers then it was already set up by the core code, else
 # it needs setting up here.
@@ -54,6 +53,7 @@ if not logger.hasHandlers():
     logger_channel.setFormatter(logger_formatter)
     logger.addHandler(logger_channel)
 
+Debug.setLogger(logger)
 
 this.nearloc = {
     'Latitude': None,
@@ -69,7 +69,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.1.2"
+this.version = "6.2.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -88,6 +88,7 @@ def plugin_prefs(parent, cmdr, is_beta):
     this.codexcontrol.plugin_prefs(frame, cmdr, is_beta, 3)
     hdreport.HDInspector(frame, cmdr, is_beta, this.client_version, 4)
     Debug.plugin_prefs(frame, this.client_version, 5)
+    capture.plugin_prefs(frame, cmdr, is_beta, 6)
     this.extool.plugin_prefs(frame, cmdr, is_beta, 7)
     return frame
 
@@ -151,6 +152,7 @@ def plugin_app(parent):
     this.release = release.Release(table, this.version, 1)
     this.codexcontrol = codex.CodexTypes(table, 2)
     this.extool = extool.BearingDestination(table, 3)
+    this.codexcontrol.setDestinationWidget(this.extool)
     this.patrol = patrol.CanonnPatrol(table, 4)
     this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 5)
     this.guestbook = guestBook.setup(table, 6)
@@ -238,34 +240,21 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                           state, x, y, z, body,
                           lat, lon, client):
-    canonn.debug.inject(cmdr, is_beta, system, station, entry,
-                        client, journal_entry_wrapper, this.frame)
+    canonn.debug.inject(cmdr, is_beta, system, station, entry, client, journal_entry_wrapper, this.frame)
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
     hdreport.submit(cmdr, is_beta, system, station, entry, client)
-    codex.submit(cmdr, is_beta, system, x, y, z,
-                 entry, body, lat, lon, client, state)
-    fssreports.submit(cmdr, is_beta, system, x, y, z,
-                      entry, body, lat, lon, client, state)
-    journaldata.submit(cmdr, is_beta, system, station,
-                       entry, client, body, lat, lon)
+    codex.submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state)
+    fssreports.submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state)
+    journaldata.submit(cmdr, is_beta, system, station, entry, client, body, lat, lon)
     clientreport.submit(cmdr, is_beta, client, entry)
-    this.patrol.journal_entry(
-        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    this.codexcontrol.journal_entry(
-        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    whiteList.journal_entry(cmdr, is_beta, system, station,
-                            entry, state, x, y, z, body, lat, lon, client)
-    materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
-                          x, y, z, body, lat,
-                          lon, client)
-    codex.saaScan.journal_entry(
-        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    codex.organicScan.journal_entry(
-        cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    capture.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
-                          state, x, y, z, body,
-                          lat, lon, client)
+    this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    whiteList.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, x, y, z, body, lat, lon, client)
+    codex.saaScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    codex.organicScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+    capture.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, state, x, y, z, body, lat, lon, client)
     extool.journal_entry(cmdr, is_beta, system, entry, client)
     guestBook.journal_entry(entry)
 
@@ -300,7 +289,7 @@ def dashboard_entry(cmdr, is_beta, entry):
 
 def dashboard_entry_wrapper(cmdr, is_beta, body, radius, lat, lon, entry, ):
 
-    #this.codexcontrol.updatePlanetData(cmdr, is_beta, body, lat, lon)
+    this.codexcontrol.updatePlanetData(cmdr, is_beta, body, lat, lon)
     extool.updatePosition(body, radius, lat, lon, entry.get("Heading"))
 
 
@@ -368,6 +357,18 @@ class capture():
                                     "site_type": site_type,
                                     "site_index": site_index
                                 })
+
+    @classmethod
+    def plugin_prefs(cls, parent, cmdr, is_beta, gridrow):
+        "Called to get a tk Frame for the settings dialog."
+
+        cls.frame = nb.Frame(parent)
+        cls.frame.columnconfigure(1, weight=1)
+        cls.frame.grid(row=gridrow, column=0, sticky="NSEW")
+        nb.Label(cls.frame, text=f"These followed in-game text command are used to save personnal POI :\ncanonn capture <type> <number> <comment>\ncanonn capture <comment>\n\t<type> = guardian, thargoid, human, biology, geology, other, nsp\n\t<number> = integer\n\t<comment> = string",
+                 justify=tk.LEFT, anchor="w").grid(row=0, column=0, sticky="NW")
+
+        return cls.frame
 
 
 class guestBook():

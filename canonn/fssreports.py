@@ -50,8 +50,10 @@ class FSS():
             entry = data.get("entry")
 
             isStation = (entry.get("IsStation"))
-            FleetCarrier = (entry.get("SignalName") and entry.get(
-                "SignalName")[-4] == '-' and entry.get("SignalName")[-8] == ' ' and isStation)
+            if len(entry.get("SignalName"))>8:
+                FleetCarrier = (entry.get("SignalName") and entry.get("SignalName")[-4] == '-' and entry.get("SignalName")[-8] == ' ' and isStation)
+            else:
+                FleetCarrier = False
             FSSSignalDiscovered = (entry.get("event") == "FSSSignalDiscovered")
             USS = ("$USS" in entry.get("SignalName"))
 
@@ -227,8 +229,7 @@ class fssEmitter(Emitter):
 
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state):
     if entry.get("event") == "FSSSignalDiscovered":
-        fssEmitter(cmdr, is_beta, system, x, y, z,
-                   entry, body, lat, lon, client).start()
+        fssEmitter(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client).start()
 
     if entry.get("event") == "FSSSignalDiscovered" and not is_beta:
         FSS.put(cmdr, system, x, y, z, entry, client, state)

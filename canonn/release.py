@@ -32,6 +32,7 @@ from config import config
 
 from ttkHyperlinkLabel import HyperlinkLabel
 
+
 RELEASE_CYCLE = 60 * 1000 * 60  # 1 Hour
 DEFAULT_URL = 'https://github.com/canonn-science/EDMC-Canonn/releases'
 WRAP_LENGTH = 200
@@ -121,6 +122,7 @@ class Release(Frame):
         # self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
         self.bind('<<ReleaseUpdate>>', self.release_update)
 
+
         Debug.logger.debug(config.get_str('Canonn:RemoveBackup'))
 
         self.update(None)
@@ -130,17 +132,16 @@ class Release(Frame):
             Debug.logger.debug('Canonn:RemoveBackup {}'.format(delete_dir))
             try:
                 shutil.rmtree(delete_dir)
-
             except:
                 Debug.logger.error("Cant delete {}".format(delete_dir))
 
             # lets not keep trying
-            config.set('Canonn:RemoveBackup', "None")
+            config.set('Canonn_RemoveBackup', "None")
 
     def update(self, event):
         self.release_thread()
         # check again in an hour
-        #debug("checking for the next release in one hour")
+        #Debug.logger.debug("checking for the next release in one hour")
         #self.after(RELEASE_CYCLE, self.update)
 
     def version2number(self, version):
@@ -299,7 +300,7 @@ class Release(Frame):
             return False
 
         if self.rmbackup.get() == 1:
-            config.set('Canonn:RemoveBackup',
+            config.set('Canonn_RemoveBackup',
                        "{}.disabled".format(Release.plugin_dir))
 
         Debug.logger.debug("Upgrade complete")
