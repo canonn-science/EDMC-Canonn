@@ -359,29 +359,6 @@ class organicScan():
             })
 
 
-class organicScan():
-
-    def __init__(self):
-        debug("We only use class methods here")
-
-    @classmethod
-    def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
-        if entry.get("event") == "ScanOrganic":
-
-            canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent", {
-                "gameState": {
-                    "systemName": system,
-                    "systemCoordinates": [x, y, z],
-                    "bodyName": body,
-                    "clientVersion": client,
-                    "isBeta": is_beta
-                },
-                "rawEvent": entry,
-                "eventType": entry.get("event"),
-                "cmdrName": cmdr
-            })
-
-
 class CodexTypes():
     tooltips = {
         "Geology": "Geology: Vents and fumeroles",
@@ -763,8 +740,7 @@ class CodexTypes():
         if name[len(name)-7:] == "_planet":
             name = name[:len(name)-7]
             if name not in self.lockPlanet:
-                self.labels[name +
-                            "_planet"]["image"] = self.images[name+"_planet"]
+                self.labels[name +"_planet"]["image"] = self.images[name+"_planet"]
                 self.planetlist[name].grid()
                 self.planetpanel.grid()
                 self.systempanel.grid_remove()
@@ -808,28 +784,21 @@ class CodexTypes():
 
     def addimage(self, name, col):
         grey = "{}_grey".format(name)
-        self.images[name] = tk.PhotoImage(file=os.path.join(
-            CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
-        self.images[grey] = tk.PhotoImage(file=os.path.join(
-            CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
-        self.labels[name] = tk.Label(
-            self.systemtitle, image=self.images.get(grey), text=name)
+        self.images[name] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
+        self.images[grey] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
+        self.labels[name] = tk.Label(self.systemtitle, image=self.images.get(grey), text=name)
         self.labels[name].grid(row=0, column=col)
         self.labels[name].grid_remove()
         self.labels[name].bind("<Enter>", self.enter)
         self.labels[name].bind("<Leave>", self.leave)
-        self.labels[name].bind(
-            "<ButtonPress>", lambda event, x=name: self.lockPOIData(x))
+        self.labels[name].bind("<ButtonPress>", lambda event, x=name: self.lockPOIData(x))
         self.labels[name]["image"] = self.images[name]
 
     def addimage_planet(self, name, col):
         grey = "{}_grey".format(name)
-        self.images[name+"_planet"] = tk.PhotoImage(file=os.path.join(
-            CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
-        self.images[grey+"_planet"] = tk.PhotoImage(file=os.path.join(
-            CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
-        self.labels[name+"_planet"] = tk.Label(
-            self.planettitle, image=self.images.get(grey+"_planet"), text=name+"_planet")
+        self.images[name+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(name)))
+        self.images[grey+"_planet"] = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "{}.gif".format(grey)))
+        self.labels[name+"_planet"] = tk.Label(self.planettitle, image=self.images.get(grey+"_planet"), text=name+"_planet")
         self.labels[name+"_planet"].grid(row=0, column=col)
         self.labels[name+"_planet"].grid_remove()
         self.labels[name+"_planet"].bind("<Enter>", self.enter)
@@ -1019,11 +988,11 @@ class CodexTypes():
                                 latlon = None
                         
                             if (s["type"] == "Planetary Outpost"):
-                                stype = "Planetary Station"
+                                stype = "Planetary Outpost"
                             elif (s["type"] == None or s["type"] == "Odyssey Settlement"):
                                 stype = "Settlement"
                             else:
-                                stype = "Station"
+                                stype = "Space Station"
                             
                             self.stationdata[s["name"]] = { "type": stype, "economy" : s["economy"] }
                             if bodyname is not None:
@@ -1032,10 +1001,6 @@ class CodexTypes():
             for station in self.stationdata:
                 stype = self.stationdata[station]["type"]
                 ecotype = " ["+ self.stationdata[station]["economy"] +"]"
-                if self.humandetailed:
-                    self.add_poi("Human", "$"+stype+":"+station+ecotype, None)
-                else:
-                    self.add_poi("Human", "Station", None)
                     
                 if station in self.settlementdata:
                     bodycode = self.settlementdata[station]["body"].replace(self.system+" ", "")
@@ -1043,7 +1008,9 @@ class CodexTypes():
                     if self.settlementdata[station]["coords"] is not None:
                         latlon = "("+str(round(float(self.settlementdata[station]["coords"][0]),2)) + "," + str(round(float(self.settlementdata[station]["coords"][1]),2)) + ")"
                     if self.humandetailed:
-                        self.add_poi("Human", "$"+stype+":"+station+ecotype, bodycode)
+                        self.add_poi("Human", "$"+stype+":"+self.stationdata[station]["economy"], bodycode)
+                    else:
+                        self.add_poi("Human", stype, bodycode)
                     if bodycode is not None:
                         if bodycode not in self.ppoidata:
                             self.ppoidata[bodycode] = {}
@@ -1051,7 +1018,12 @@ class CodexTypes():
                             self.ppoidata[bodycode]["Human"] = {}
                         if station+ecotype not in self.ppoidata[bodycode]["Human"]:
                             self.ppoidata[bodycode]["Human"][station+ecotype] = [[None, latlon]]
-            
+                else:
+                    if self.humandetailed:
+                        self.add_poi("Human", "$"+stype+":"+self.stationdata[station]["economy"], None)
+                    else:
+                        self.add_poi("Human", stype, None)
+                    
             # if self.temp_edsmdata:
             if not self.bodies:
                 self.bodies = {}
@@ -1589,8 +1561,7 @@ class CodexTypes():
                 self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
                 self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
 
-                self.poidata[category] = dict(
-                    sorted(self.poidata[category].items()))
+                self.poidata[category] = dict(sorted(self.poidata[category].items()))
 
                 prev_subcategory = "Others"
                 isSubcategory = ""
@@ -1718,13 +1689,14 @@ class CodexTypes():
                 self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
                 
                 if self.odyssey:
-                    if "Unknown" in self.ppoidata[self.planetlist_body][category]:
-                        nunk = len(self.ppoidata[self.planetlist_body][category]["Unknown"])
-                        nsites = len(self.ppoidata[self.planetlist_body][category])
-                        if self.planetlist_body in self.saadata:
-                            if category in self.saadata[self.planetlist_body]:
-                                nsites = self.saadata[self.planetlist_body][category]
-                        self.planetcol2[-1]['text'] = str(round((nsites-nunk)/nsites*100,2))+"% [" + str(nsites-nunk) + "/" + str(nsites) + "]"
+                    if category == "Biology" or category == "Geology":
+                        if "Unknown" in self.ppoidata[self.planetlist_body][category]:
+                            nunk = len(self.ppoidata[self.planetlist_body][category]["Unknown"])
+                            nsites = len(self.ppoidata[self.planetlist_body][category])
+                            if self.planetlist_body in self.saadata:
+                                if category in self.saadata[self.planetlist_body]:
+                                    nsites = self.saadata[self.planetlist_body][category]
+                            self.planetcol2[-1]['text'] = str(round((nsites-nunk)/nsites*100,2))+"% [" + str(nsites-nunk) + "/" + str(nsites) + "]"
                 
                 label = []
                 for type in self.ppoidata[self.planetlist_body][category]:
@@ -2477,48 +2449,23 @@ class CodexTypes():
             else:
                 self.add_poi('Other', entry.get("Name_Localised"), bodycode)
         
+        
+        
         if entry.get("event") == "Docked":
-            
             if entry.get("StationType") != "FleetCarrier":
-                self.stationdata[entry.get("StationName")] = { "type": stype, "economy" : self.economies[entry.get("StationEconomy")] }
-                self.refreshPOIData(None)
-                
-                # add_station_poi = True
-                # if (entry.get("StationType") == "OnFootSettlement"):
-                    # stype = "Settlement"
-                    # ecotype = " ["+self.economies[entry.get("StationEconomy")]+"]"
-                    # if not self.odyssey:
-                        # add_station_poi = False
-                # else:
-                    # stype = "Station"
-                    # ecotype = ""
-                # if add_station_poi:
-                    # self.stationdata[entry.get("StationName")] = { "type": stype, "economy" : self.economies[entry.get("StationEconomy")] }
-                    # if self.humandetailed:
-                        # stationbody = None
-                        # if entry.get("StationName") in self.settlementdata:
-                            # if "body" in self.settlementdata[entry.get("StationName")]:
-                                # stationbody = self.settlementdata[entry.get("StationName")]["body"].replace(self.system + " ", "")
-                            # if "coords" in self.settlementdata[entry.get("StationName")]:
-                                # self.add_ppoi(stationbody, "Human", entry.get("StationName")+ecotype, 0, round(self.settlementdata[entry.get("StationName")]["coords"][0], 2), round(self.settlementdata[entry.get("StationName")]["coords"][1], 2))
-                        # self.add_poi("Human", "$"+stype+":"+entry.get("StationName")+ecotype, stationbody)
-                    # else:
-                        # self.add_poi("Human", "Station", None)
-                        
+                if entry.get("StationType") in ("CraterOutpost", "CraterPort"):
+                    stype = "Planetary Outpost"
+                elif entry.get("StationType") in ("Orbis", "Coriolis", "Ocellus", "Outpost", "AsteroidBase"):
+                    stype = "Space Station"
+                else:
+                    stype = None
+                if stype is not None:
+                    self.stationdata[entry.get("StationName")] = { "type": stype, "economy" : self.economies[entry.get("StationEconomy")] }
+                    self.refreshPOIData(None)
         
         if entry.get("event") == "ApproachSettlement":
             self.settlementdata[entry.get("Name")] = {"body" : entry.get("BodyName"), "coords" : [entry.get("Latitude"), entry.get("Longitude")]}
             self.refreshPOIData(None)
-            # if self.humandetailed:
-                # if entry.get("Name") in self.stationdata:
-                    # stationbody = entry.get("BodyName").replace(self.system + " ", "")
-                    # stype = self.stationdata[entry.get("Name")]["type"]
-                    # ecotype = " ["+self.stationdata[entry.get("Name")]["economy"]+"]"
-                    # self.add_ppoi(stationbody, "Human", entry.get("Name")+ecotype, None, round(entry.get("Latitude"), 2), round(entry.get("Longitude"), 2))
-                    # self.add_poi("Human", "$"+stype+":"+entry.get("Name")+ecotype, stationbody)
-            # else:
-                # if entry.get("Name") in self.stationdata:
-                    # self.add_poi("Human", "Station", None)
         
         if entry.get("event") == "FSSDiscoveryScan":
             self.system = system
@@ -2706,8 +2653,7 @@ class CodexTypes():
     def get_codex_names(cls):
         name_ref = {}
 
-        r = requests.get(
-            "https://us-central1-canonn-api-236217.cloudfunctions.net/codexNameRef")
+        r = requests.get("https://us-central1-canonn-api-236217.cloudfunctions.net/codexNameRef")
 
         if r.status_code == requests.codes.ok:
             for entry in r.json():
