@@ -907,7 +907,9 @@ class CodexTypes():
                     self.saadata[body_code] = {}
                 self.saadata[body_code][r.get("hud_category")] = r.get("count")
                 self.remove_poi("Geology", "$Sites:NoSAA", body_code)
+                self.remove_poi("Biology", "$Sites:NoSAA", body_code)
                 self.remove_poi("MissingData", "$Geology:NoSAA", body_code)
+                self.remove_poi("MissingData", "$Biology:NoSAA", body_code)
 
                 if r.get("hud_category") == "Ring":
                     self.add_poi(r.get("hud_category"), "$Hotspots:"+r.get("english_name"), body_code)
@@ -1579,11 +1581,12 @@ class CodexTypes():
                         subcategory = "Others"
                         name = type
 
+                        
                     if subcategory != prev_subcategory:
                         isSubcategory = "   "
                         prev_subcategory = subcategory
                         n_fss = ""
-                        if subcategory == "Others":
+                        if category == "Human" and subcategory == "Others":
                             if self.nfss != 0:
                                 n_fss = "WarZone ["+str(self.nfss)+"]"
                         self.systemcol1.append(tk.Label(self.systemlist[category], text="   "+subcategory+":"))
@@ -1741,12 +1744,13 @@ class CodexTypes():
                     self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
                 
                 if self.odyssey:
-                    if "Unknown" in self.ppoidata[self.planetlist_body][category]:
-                        for iunk in range(nunk):
-                            self.planetcol1.append(tk.Label(self.planetlist[category], text="   Unknown"))
-                            self.planetcol2.append(tk.Frame(self.planetlist[category]))
-                            self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
-                            self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
+                    if category == "Biology" or category == "Geology":
+                        if "Unknown" in self.ppoidata[self.planetlist_body][category]:
+                            for iunk in range(nunk):
+                                self.planetcol1.append(tk.Label(self.planetlist[category], text="   Unknown"))
+                                self.planetcol2.append(tk.Frame(self.planetlist[category]))
+                                self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
+                                self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
                 
                 if category in self.lockPlanet:
                     self.planetlist[category].grid()
