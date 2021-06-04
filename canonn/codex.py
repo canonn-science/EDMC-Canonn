@@ -907,7 +907,7 @@ class CodexTypes():
                     self.saadata[body_code] = {}
                 self.saadata[body_code][r.get("hud_category")] = r.get("count")
                 self.remove_poi("Geology", "$Sites:NoSAA", body_code)
-                self.remove_poi("Biology", "$Sites:NoSAA", body_code)
+                self.remove_poi("Biology", "$Species:NoSAA", body_code)
                 self.remove_poi("MissingData", "$Geology:NoSAA", body_code)
                 self.remove_poi("MissingData", "$Biology:NoSAA", body_code)
 
@@ -1692,14 +1692,13 @@ class CodexTypes():
                 self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
                 
                 if self.odyssey:
-                    if category == "Biology" or category == "Geology":
-                        if "Unknown" in self.ppoidata[self.planetlist_body][category]:
-                            nunk = len(self.ppoidata[self.planetlist_body][category]["Unknown"])
-                            nsites = len(self.ppoidata[self.planetlist_body][category])
-                            if self.planetlist_body in self.saadata:
-                                if category in self.saadata[self.planetlist_body]:
-                                    nsites = self.saadata[self.planetlist_body][category]
-                            self.planetcol2[-1]['text'] = str(round((nsites-nunk)/nsites*100,2))+"% [" + str(nsites-nunk) + "/" + str(nsites) + "]"
+                    if "Unknown" in self.ppoidata[self.planetlist_body][category]:
+                        nunk = len(self.ppoidata[self.planetlist_body][category]["Unknown"])
+                        nsites = len(self.ppoidata[self.planetlist_body][category])
+                        if self.planetlist_body in self.saadata:
+                            if category in self.saadata[self.planetlist_body]:
+                                nsites = self.saadata[self.planetlist_body][category]
+                        self.planetcol2[-1]['text'] = str(round((nsites-nunk)/nsites*100,2))+"% [" + str(nsites-nunk) + "/" + str(nsites) + "]"
                 
                 label = []
                 for type in self.ppoidata[self.planetlist_body][category]:
@@ -1744,13 +1743,12 @@ class CodexTypes():
                     self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
                 
                 if self.odyssey:
-                    if category == "Biology" or category == "Geology":
-                        if "Unknown" in self.ppoidata[self.planetlist_body][category]:
-                            for iunk in range(nunk):
-                                self.planetcol1.append(tk.Label(self.planetlist[category], text="   Unknown"))
-                                self.planetcol2.append(tk.Frame(self.planetlist[category]))
-                                self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
-                                self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
+                    if "Unknown" in self.ppoidata[self.planetlist_body][category]:
+                        for iunk in range(nunk):
+                            self.planetcol1.append(tk.Label(self.planetlist[category], text="   Unknown"))
+                            self.planetcol2.append(tk.Frame(self.planetlist[category]))
+                            self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
+                            self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
                 
                 if category in self.lockPlanet:
                     self.planetlist[category].grid()
@@ -2327,8 +2325,7 @@ class CodexTypes():
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         if not self.hidecodex:
-            self.journal_entry_wrap(
-                cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
+            self.journal_entry_wrap(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
 
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         
@@ -2518,22 +2515,19 @@ class CodexTypes():
             elif "MULTIPLAYER_SCENARIO" in entry.get("SignalName"):
                 dovis = True
                 if "MULTIPLAYER_SCENARIO42_TITLE" in entry.get("SignalName"):
-                    self.add_poi("Human", "Nav Beacon", None)
+                    self.add_poi("Human", "Navigation Beacon", None)
                 elif "MULTIPLAYER_SCENARIO14_TITLE" in entry.get("SignalName"):
-                    self.add_poi(
-                        "Ring", "$ConflictZone:Resource Extraction Site", None)
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site", None)
                 elif "MULTIPLAYER_SCENARIO77_TITLE" in entry.get("SignalName"):
-                    self.add_poi(
-                        "Ring", "$ConflictZone:Resource Extraction Site [Low]", None)
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [Low]", None)
                 elif "MULTIPLAYER_SCENARIO78_TITLE" in entry.get("SignalName"):
-                    self.add_poi(
-                        "Ring", "$ConflictZone:Resource Extraction Site [High]", None)
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [High]", None)
                 elif "MULTIPLAYER_SCENARIO79_TITLE" in entry.get("SignalName"):
-                    self.add_poi(
-                        "Ring", "$ConflictZone:Resource Extraction Site [Danger]", None)
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [Danger]", None)
+                elif "MULTIPLAYER_SCENARIO80_TITLE" in entry.get("SignalName"):
+                    self.add_poi("Ring", "Compromised Navigation Beacon", None)
                 else:
-                    self.add_poi("Human", "$ConflictZone:" +
-                                 entry.get("SignalName"), None)
+                    self.add_poi("Human", "$ConflictZone:" + entry.get("SignalName"), None)
                     dovis = False
             elif "Warzone_PointRace" in entry.get("SignalName"):
                 self.nfss += 1
@@ -2576,6 +2570,8 @@ class CodexTypes():
                 # ^HIP 454-4( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$
                 prog = re.compile("^"+self.system+"( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$")
                 result = prog.match(entry.get("SignalName"))
+                prog = re.compile("^.* [A-Za-z]+-class (Cropper|Hauler|Reformatory|Researcher|Surveyor|Tanker|Traveller)$")
+                result = result or prog.match(entry.get("SignalName"))
                 if result:
                     Megaship = True
                 else:
@@ -2633,8 +2629,7 @@ class CodexTypes():
             for i, v in enumerate(signals):
                 found = False
                 type = v.get("Type")
-                english_name = type.replace("$SAA_SignalType_", "").replace(
-                    "ical;", "y").replace(";", '')
+                english_name = type.replace("$SAA_SignalType_", "").replace("ical;", "y").replace(";", "")
                 if " Ring" in bodyName:
                     cat = "Ring"
                 if "$SAA_SignalType_" in type:
