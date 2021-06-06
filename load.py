@@ -328,8 +328,7 @@ class capture():
                 site_index = None
 
             # fetch status.json
-            journal_dir = config.get_str(
-                'journaldir') or config.default_journal_dir
+            journal_dir = config.get_str('journaldir') or config.default_journal_dir
             with open(os.path.join(os.path.expanduser(journal_dir), 'status.json')) as json_file:
                 status = json.load(json_file)
 

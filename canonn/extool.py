@@ -39,9 +39,9 @@ class BearingDestination():
     target_lon = None
 
     def __init__(self, parent, gridrow):
-        self.frame = tk.Frame(parent)
+        self.frame = Frame(parent)
         self.frame.grid(row=gridrow)
-        self.container = tk.Frame(self.frame)
+        self.container = Frame(self.frame)
         self.container.columnconfigure(1, weight=1)
         self.container.grid(row=1)
         self.bearing_cancel = tk.Label(self.container)
@@ -94,8 +94,7 @@ class BearingDestination():
                 self.state = 0
                 self.hide()
             self.setTargetLatLon(lat, lon)
-            self.calculateBearing(self.body, self.radius,
-                                  self.latitude, self.longitude)
+            self.calculateBearing(self.body, self.radius, self.latitude, self.longitude)
 
     def eventDeactivate(self, event):
         lat = None
@@ -107,8 +106,7 @@ class BearingDestination():
     def ActivateTarget(self, lat, lon):
         self.setTargetLatLon(lat, lon)
         self.state = 1
-        self.calculateBearing(self.body, self.radius,
-                              self.latitude, self.longitude)
+        self.calculateBearing(self.body, self.radius, self.latitude, self.longitude)
 
     def setTargetLatLon(self, lat, lon):
         if (lat is not None) or (lon is not None):

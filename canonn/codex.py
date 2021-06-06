@@ -19,11 +19,13 @@ import re
 import requests
 import threading
 import webbrowser
+from theme import theme
 from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.emitter import Emitter
 from config import config
 from canonn.tooltip import CreateToolTip
+from ttkHyperlinkLabel import HyperlinkLabel
 
 import plug
 from math import sqrt, pow
@@ -458,18 +460,17 @@ class CodexTypes():
         self.parent = parent
         self.hidecodexbtn = tk.IntVar(value=config.get_int("CanonnHideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
-        self.humandetailedbtn = tk.IntVar(
-            value=config.get_int("CanonnHumanDetailed"))
+        self.humandetailedbtn = tk.IntVar(value=config.get_int("CanonnHumanDetailed"))
         self.humandetailed = self.humandetailedbtn.get()
 
         self.frame = Frame(parent)
+        theme.update(self.frame)
         self.frame.columnconfigure(0, weight=1)
         self.frame.grid(row=gridrow, column=0, sticky="NSEW", columnspan=2)
         self.frame.bind('<<refreshPOIData>>', self.refreshPOIData)
         #self.frame.bind('<<refreshPlanetData>>', self.refreshPlanetData)
 
-        self.container = Frame(
-            self.frame, bg="Gray94", highlightthickness=1, highlightbackground="Gray70")
+        self.container = Frame(self.frame, highlightthickness=1)
         self.container.grid(row=0, column=0, sticky="NSEW")
         self.container.grid_remove()
 
@@ -497,26 +498,21 @@ class CodexTypes():
         self.planettitle.grid(row=1, column=0, sticky="NSEW")
         self.planettitle.grid_remove()
 
-        self.images_prev = tk.PhotoImage(file=os.path.join(
-            CodexTypes.plugin_dir, "icons", "left_arrow.gif"))
-        self.planettitle_prev = tk.Label(
-            self.planettitle, image=self.images_prev, cursor="hand2")
+        self.images_prev = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "left_arrow.gif"))
+        self.planettitle_prev = tk.Label(self.planettitle, image=self.images_prev, cursor="hand2")
         self.planettitle_prev.grid(row=0, column=0, sticky="NSEW")
-        self.planettitle_prev.bind(
-            '<ButtonPress>', lambda event, x=-1: self.changeBodyFocus(event, x))
-        self.images_next = tk.PhotoImage(file=os.path.join(
-            CodexTypes.plugin_dir, "icons", "right_arrow.gif"))
-        self.planettitle_next = tk.Label(
-            self.planettitle, image=self.images_next, cursor="hand2")
+        self.planettitle_prev.bind('<Button-1>', lambda event, x=-1: self.changeBodyFocus(event, x))
+        self.images_next = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "right_arrow.gif"))
+        self.planettitle_next = tk.Label(self.planettitle, image=self.images_next, cursor="hand2")
         self.planettitle_next.grid(row=0, column=1, sticky="NSEW")
-        self.planettitle_next.bind(
-            '<ButtonPress>', lambda event, x=1: self.changeBodyFocus(event, x))
+        self.planettitle_next.bind('<Button-1>', lambda event, x=1: self.changeBodyFocus(event, x))
         self.planettitle_name = tk.Label(self.planettitle, text="?")
         self.planettitle_name.grid(row=0, column=2, sticky="NSEW")
         self.planetprogress = tk.Label(self.planettitle, text="?")
         self.planetprogress.grid(row=0, column=3, sticky="NSEW")
         self.planetprogress.grid_remove()
-
+        
+        self.system64 = 0
         self.images = {}
         self.labels = {}
         self.systemlist = {}
@@ -547,7 +543,7 @@ class CodexTypes():
         self.images_body_grey = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body_grey.gif"))
         self.icon_body = tk.Label(self.systemtitle, image=self.images_body_auto, text="Body_auto")
         self.icon_body.grid(row=0, column=1)
-        self.icon_body.bind("<ButtonPress>", self.nextBodyMode)
+        self.icon_body.bind("<Button-1>", self.nextBodyMode)
         # self.icon_body.grid_remove()
 
         self.types = ("Geology", "Cloud", "Anomaly", "Thargoid",
@@ -561,7 +557,7 @@ class CodexTypes():
             self.systemlist[category].grid(row=k+1, column=0, sticky="W")
             self.systemlist[category].grid_remove()
             k += 1
-
+        
         self.typesPlanet = ("Geology", "Thargoid", "Biology", "Guardian",
                             "Human", "Other", "Personal", "Tourist",
                             "Jumponium", "GreenSystem")
@@ -791,7 +787,7 @@ class CodexTypes():
         self.labels[name].grid_remove()
         self.labels[name].bind("<Enter>", self.enter)
         self.labels[name].bind("<Leave>", self.leave)
-        self.labels[name].bind("<ButtonPress>", lambda event, x=name: self.lockPOIData(x))
+        self.labels[name].bind("<Button-1>", lambda event, x=name: self.lockPOIData(x))
         self.labels[name]["image"] = self.images[name]
 
     def addimage_planet(self, name, col):
@@ -803,7 +799,7 @@ class CodexTypes():
         self.labels[name+"_planet"].grid_remove()
         self.labels[name+"_planet"].bind("<Enter>", self.enter)
         self.labels[name+"_planet"].bind("<Leave>", self.leave)
-        self.labels[name+"_planet"].bind("<ButtonPress>",
+        self.labels[name+"_planet"].bind("<Button-1>",
                                          lambda event, x=name: self.lockPlanetData(x))
         self.labels[name+"_planet"]["image"] = self.images[name+"_planet"]
 
@@ -1551,15 +1547,20 @@ class CodexTypes():
 
         # need to initialise if not exists
         self.systemtitle_name["text"] = self.system
-
+        
+        #print(theme.current)
+        #print("THEME", config.get_int('theme'))
+        
         openlist = False
         for category in self.types:
             self.systemlist[category].grid_remove()
 
             if category in self.poidata:
-
+                
                 self.systemcol1.append(tk.Label(self.systemlist[category], text=category+":"))
                 self.systemcol2.append(tk.Label(self.systemlist[category], text=""))
+                theme.update(self.systemcol1[-1])
+                theme.update(self.systemcol2[-1])
                 self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
                 self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
 
@@ -1591,11 +1592,15 @@ class CodexTypes():
                                 n_fss = "WarZone ["+str(self.nfss)+"]"
                         self.systemcol1.append(tk.Label(self.systemlist[category], text="   "+subcategory+":"))
                         self.systemcol2.append(tk.Label(self.systemlist[category], text=n_fss))
+                        theme.update(self.systemcol1[-1])
+                        theme.update(self.systemcol2[-1])
                         self.systemcol1[-1].grid(row=len(self.systemcol1), column=0, columnspan=1, sticky="NW")
                         self.systemcol2[-1].grid(row=len(self.systemcol1), column=1, sticky="NW")
 
                     self.systemcol1.append(tk.Label(self.systemlist[category], text="   "+isSubcategory+name))
                     self.systemcol2.append(tk.Frame(self.systemlist[category]))
+                    theme.update(self.systemcol1[-1])
+                    theme.update(self.systemcol2[-1])
 
                     i = 0
                     col = 0
@@ -1603,14 +1608,15 @@ class CodexTypes():
                         col = ((i % 5)+1)*3
                         row = int(i/5)
                         #row = 0
-                        label = tk.Label(self.systemcol2[-1], text=poibody)
+                        if poibody in self.ppoidata:
+                            label = HyperlinkLabel(self.systemcol2[-1], text=poibody, url="#")
+                            label.bind('<Button-1>', lambda event, body=poibody: self.bodyFocus(body))
+                        else:
+                            label = HyperlinkLabel(self.systemcol2[-1], text=poibody)
+                        theme.update(label)
                         label.grid(row=row, column=col, sticky="NSEW")
                         i += 1
                         col += 1
-                        if poibody in self.ppoidata:
-                            label['fg'] = "blue"
-                            label['cursor'] = "hand2"
-                            label.bind('<ButtonPress>', lambda event, body=poibody: self.bodyFocus(body))
                         if name == "Unknown":
                             nunk = len(self.ppoidata[poibody][category]["Unknown"])
                             nsites = len(self.ppoidata[poibody][category])
@@ -1618,10 +1624,12 @@ class CodexTypes():
                                 if category in self.saadata[poibody]:
                                     nsites = self.saadata[poibody][category]
                             label = tk.Label(self.systemcol2[-1], text="["+str(nsites-nunk)+"/"+str(nsites)+"]")
+                            theme.update(label)
                             label.grid(row=row, column=col, sticky="NSEW")
                             col += 1
                         if i < len(self.poidata[category][type]):
                             label = tk.Label(self.systemcol2[-1], text=",")
+                            theme.update(label)
                             label.grid(row=row, column=col, sticky="NSEW")
                             col += 1
 
@@ -1688,6 +1696,8 @@ class CodexTypes():
 
                 self.planetcol1.append(tk.Label(self.planetlist[category], text=category+":"))
                 self.planetcol2.append(tk.Label(self.planetlist[category], text=""))
+                theme.update(self.planetcol1[-1])
+                theme.update(self.planetcol2[-1])
                 self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
                 self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
                 
@@ -1709,35 +1719,29 @@ class CodexTypes():
                         continue
                     self.planetcol1.append(tk.Label(self.planetlist[category], text="   "+type))
                     self.planetcol2.append(tk.Frame(self.planetlist[category]))
+                    theme.update(self.planetcol1[-1])
+                    theme.update(self.planetcol2[-1])
 
-                    self.ppoidata[self.planetlist_body][category][type] = sorted(
-                        self.ppoidata[self.planetlist_body][category][type], key=lambda poi: int(nvl(poi[0], "#0")[1:]))
+                    self.ppoidata[self.planetlist_body][category][type] = sorted(self.ppoidata[self.planetlist_body][category][type], key=lambda poi: int(nvl(poi[0], "#0")[1:]))
 
                     i = 0
                     for poi in self.ppoidata[self.planetlist_body][category][type]:
                         col = (i % 10)+1
                         row = int(i/10)
                         if poi[0] is not None:
-                            label.append(
-                                tk.Label(self.planetcol2[-1], text=poi[0]))
-                            label[-1].grid(row=row, column=col, sticky="NSEW")
                             if poi[1] is not None:
-                                label[-1]['fg'] = "blue"
-                                label[-1]['cursor'] = "hand2"
-                                label[-1].bind('<ButtonPress>', lambda event,
-                                               latlon=poi[1]: self.activateDestination(latlon))
+                                label.append(HyperlinkLabel(self.planetcol2[-1], text=poi[0], url='#'))
+                                label[-1].bind('<Button-1>', lambda event, latlon=poi[1]: self.activateDestination(latlon))
+                            else:
+                                label.append(HyperlinkLabel(self.planetcol2[-1], text=poi[0]))
+                            theme.update(label[-1])
+                            label[-1].grid(row=row, column=col, sticky="NSEW")
                         if poi[1] is not None:
                             if poi[0] is None:
-                                label.append(
-                                    tk.Label(self.planetcol2[-1], text=poi[1]))
-                                label[-1].grid(row=row,
-                                               column=col, sticky="NSEW")
-                                label[-1]['fg'] = "blue"
-                                label[-1]['cursor'] = "hand2"
-                                label[-1].bind('<ButtonPress>', lambda event,
-                                               latlon=poi[1]: self.activateDestination(latlon))
-                            # else:
-                            #    ttp = CreateToolTip(label[-1], poi[1])
+                                label.append(HyperlinkLabel(self.planetcol2[-1], text=poi[1], url='#'))
+                                theme.update(label[-1])
+                                label[-1].grid(row=row, column=col, sticky="NSEW")
+                                label[-1].bind('<Button-1>', lambda event, latlon=poi[1]: self.activateDestination(latlon))
                         i += 1
                     self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
                     self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
@@ -1747,6 +1751,8 @@ class CodexTypes():
                         for iunk in range(nunk):
                             self.planetcol1.append(tk.Label(self.planetlist[category], text="   Unknown"))
                             self.planetcol2.append(tk.Frame(self.planetlist[category]))
+                            theme.update(self.planetcol1[-1])
+                            theme.update(self.planetcol2[-1])
                             self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
                             self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
                 
