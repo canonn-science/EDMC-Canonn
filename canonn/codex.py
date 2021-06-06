@@ -538,9 +538,9 @@ class CodexTypes():
         
         #self.cmdrData = {}
 
-        self.images_body = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body.gif"))
-        self.images_body_auto = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body_auto.gif"))
-        self.images_body_grey = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "Body_grey.gif"))
+        self.images_body = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "planet.gif"))
+        self.images_body_auto = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "system_planet.gif"))
+        self.images_body_grey = tk.PhotoImage(file=os.path.join(CodexTypes.plugin_dir, "icons", "system.gif"))
         self.icon_body = tk.Label(self.systemtitle, image=self.images_body_auto, text="Body_auto")
         self.icon_body.grid(row=0, column=1)
         self.icon_body.bind("<Button-1>", self.nextBodyMode)
