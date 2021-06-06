@@ -2451,6 +2451,8 @@ class CodexTypes():
                                         self.add_poi("Biology", "Unknown", bodycode)
                                         self.add_poi("MissingData", "$Biology:Unknown", bodycode)
                                 
+                            if planetlist_auto and hud_category not in self.lockPlanet:
+                                self.lockPlanet.append(hud_category)
                             self.refreshPOIData(None)
                             # $SAA_Unknown_Signal:#type=$SAA_SignalType_Geological;:#index=16;
             else:
