@@ -889,7 +889,10 @@ class CodexTypes():
                         self.scandata[body_code] = {}
                     if r.get("hud_category") not in self.scandata[body_code]:
                         self.scandata[body_code][r.get("hud_category")] = {}
-                    self.scandata[body_code][r.get("hud_category")][r.get("english_name")] = (r.get("scanned") == "true")
+                    if r.get("english_name") not in self.scandata[body_code][r.get("hud_category")]:
+                        self.scandata[body_code][r.get("hud_category")][r.get("english_name")] = False
+                    if (r.get("scanned") == "true"):
+                        self.scandata[body_code][r.get("hud_category")][r.get("english_name")] = True
                 
                 if self.odyssey:
                     if r.get("hud_category") == "Geology" or r.get("hud_category") == "Biology":
@@ -913,6 +916,7 @@ class CodexTypes():
                 self.remove_poi("Biology", "$Species:NoSAA", body_code)
                 self.remove_poi("MissingData", "$Geology:NoSAA", body_code)
                 self.remove_poi("MissingData", "$Biology:NoSAA", body_code)
+                self.remove_poi("MissingData", "$Rings:NoSAA", body_code)
 
                 if r.get("hud_category") == "Ring":
                     self.add_poi(r.get("hud_category"), "$Hotspots:"+r.get("english_name"), body_code)
@@ -1331,7 +1335,9 @@ class CodexTypes():
         if hud_category not in self.scandata[body]:
             self.scandata[body][hud_category] = {}
         if type not in self.scandata[body][hud_category]:
-            self.scandata[body][hud_category][type] = scanned
+            self.scandata[body][hud_category][type] = False
+        if scanned:
+            self.scandata[body][hud_category][type] = True
         
         total_index = 0
         for t in self.ppoidata[body][hud_category]:
@@ -2227,10 +2233,9 @@ class CodexTypes():
                         self.add_poi("Ring", "$Rings:"+"Pristine {} Rings".format(ring.get("type")), body_code)
                     else:
                         self.add_poi("Ring", "$Rings:"+"{} Rings".format(ring.get("type")), body_code)
-                area = get_area(ring.get("innerRadius"),
-                                ring.get("outerRadius"))
-                density = get_density(ring.get("mass"), ring.get(
-                    "innerRadius"), ring.get("outerRadius"))
+                    self.add_poi("MissingData", "$Rings:NoSAA", body_code)
+                area = get_area(ring.get("innerRadius"), ring.get("outerRadius"))
+                density = get_density(ring.get("mass"), ring.get("innerRadius"), ring.get("outerRadius"))
 
                 if "Ring" in ring.get("name").replace(self.system+" ", ''):
                     if ring.get("outerRadius") > 1000000:
