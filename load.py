@@ -232,30 +232,29 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
     return journal_entry_wrapper(cmdr, is_beta, system, this.SysFactionState, this.SysFactionAllegiance,
                                  this.DistFromStarLS, station, entry,
-                                 state, x, y, z, this.body_name, this.nearloc['Latitude'], this.nearloc['Longitude'],
+                                 state, x, y, z, this.body_name, this.nearloc,
                                  this.client_version)
     # Now Journal_entry_wrapper take additional variable this.SysFactionState, this.SysFactionAllegiance, and this.DistFromStarLS
 
 
 # Detect journal events
 def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
-                          state, x, y, z, body,
-                          lat, lon, client):
+                          state, x, y, z, body, nearloc, client):
     canonn.debug.inject(cmdr, is_beta, system, station, entry, client, journal_entry_wrapper, this.frame)
+    clientreport.submit(cmdr, is_beta, client, entry)
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
     hdreport.submit(cmdr, is_beta, system, station, entry, client)
-    codex.submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state)
-    fssreports.submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state)
-    journaldata.submit(cmdr, is_beta, system, station, entry, client, body, lat, lon)
-    clientreport.submit(cmdr, is_beta, client, entry)
-    this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    whiteList.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, x, y, z, body, lat, lon, client)
-    codex.saaScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    codex.organicScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
-    capture.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, state, x, y, z, body, lat, lon, client)
+    codex.submit(cmdr, is_beta, system, x, y, z, entry, body, nearloc['Latitude'], nearloc['Longitude'], client, state)
+    fssreports.submit(cmdr, is_beta, system, x, y, z, entry, body, nearloc['Latitude'], nearloc['Longitude'], client, state)
+    journaldata.submit(cmdr, is_beta, system, station, entry, client, body, nearloc['Latitude'], nearloc['Longitude'])
+    this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
+    this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
+    whiteList.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
+    materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
+    codex.saaScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
+    codex.organicScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], nearloc['Temperature'], nearloc['Gravity'], client)
+    capture.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     extool.journal_entry(cmdr, is_beta, system, entry, client)
     guestBook.journal_entry(entry)
 
@@ -268,10 +267,9 @@ def dashboard_entry(cmdr, is_beta, entry):
     this.landed = this.landed or this.SRVmode or this.FOOTmode
     # print "LatLon = {}".format(entry['Flags'] & 1<<21 and True or False)
     # print entry
-    if (entry['Flags'] & 1 << 21 and True or False):
-        if ('Latitude' in entry and 'Longitude' in entry):
-            this.nearloc['Latitude'] = entry.get("Latitude")
-            this.nearloc['Longitude'] = entry.get("Longitude")
+    if ('Latitude' in entry and 'Longitude' in entry):
+        this.nearloc['Latitude'] = entry.get("Latitude")
+        this.nearloc['Longitude'] = entry.get("Longitude")
     else:
         this.nearloc['Latitude'] = None
         this.nearloc['Longitude'] = None
@@ -300,11 +298,10 @@ def dashboard_entry(cmdr, is_beta, entry):
         this.body_name = entry.get("BodyName")
     else:
         this.body_name = None
+        this.planet_radius = None
 
     if entry.get("PlanetRadius"):
         this.planet_radius = entry.get("PlanetRadius")
-    else:
-        this.planet_radius = None
 
     return dashboard_entry_wrapper(cmdr, is_beta, entry)
 

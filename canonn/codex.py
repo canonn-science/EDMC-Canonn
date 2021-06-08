@@ -340,7 +340,7 @@ class organicScan():
         debug("We only use class methods here")
 
     @classmethod
-    def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
+    def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, latitude, longitude, temperature, gravity, client):
         if entry.get("event") in ("ScanOrganic", "SellOrganicData"):
 
             canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent", {
@@ -352,8 +352,10 @@ class organicScan():
                     "isBeta": is_beta,
                     "platform": "PC",
                     "odyssey": state.get("Odyssey"),
-                    "latitude": lat,
-                    "longitude": lon,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "temperature": temperature,
+                    "gravity": gravity,
                 },
                 "rawEvent": entry,
                 "eventType": entry.get("event"),
@@ -1715,7 +1717,6 @@ class CodexTypes():
 
         self.planettitle_name["text"] = self.planetlist_body
         
-        print("self.scandata", self.scandata)
         for category in self.typesPlanet:
             self.planetlist[category].grid_remove()
 
