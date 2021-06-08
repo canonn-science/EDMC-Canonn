@@ -577,6 +577,8 @@ class CodexTypes():
         self.body = None
         self.latitude = None
         self.longitude = None
+        self.temperature = None
+        self.gravity = None
         self.allowed = False
         self.lock = []
         self.lockPlanet = []
@@ -2330,12 +2332,14 @@ class CodexTypes():
         self.journal_entry(cmdr, None, system, None, signal,
                            None, x, y, z, bodyname, None, None, client)
 
-    def updatePlanetData(self, cmdr, is_beta, body, lat, lon):
+    def updatePlanetData(self, body, latitude, longitude, temperature, gravity):
         self.event = "DashBoard"
-        if ((body is None) or (lat is None) or (lon is None)):
+        if ((body is None) or (latitude is None) or (longitude is None)):
             self.body = None
             self.latitude = None
             self.longitude = None
+            self.temperature = None
+            self.gravity = None
             if self.planetlist_auto:
                 if self.planetlist_show:
                     tmplock = self.lockPlanet.copy()
@@ -2346,8 +2350,10 @@ class CodexTypes():
                     self.visualisePlanetData()
         else:
             self.body = body
-            self.latitude = lat
-            self.longitude = lon
+            self.latitude = latitude
+            self.longitude = longitude
+            self.temperature = temperature
+            self.gravity = gravity
             if self.planetlist_auto:
                 if (not self.planetlist_show) or (self.planetlist_body != body.replace(self.system+" ", '')):
                     tmplock = self.lock.copy()
@@ -3009,11 +3015,9 @@ class codexEmitter(Emitter):
 
         # We don't want stellar bodies unless they are Green Giants
 
-        stellar_bodies = (self.entry.get("Category") ==
-                          '$Codex_Category_StellarBodies;')
+        stellar_bodies = (self.entry.get("Category") == '$Codex_Category_StellarBodies;')
         green_giant = (stellar_bodies and "Green" in self.entry.get("Name"))
-        excluded = (codexEmitter.excludecodices.get(
-            self.entry.get("Name").lower()) or stellar_bodies)
+        excluded = (codexEmitter.excludecodices.get(self.entry.get("Name").lower()) or stellar_bodies)
 
         included = (not excluded or green_giant)
 
@@ -3180,13 +3184,11 @@ def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
 def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state):
     codex_entry = (entry.get("event") == "CodexEntry")
     approach_settlement = (entry.get("event") == "ApproachSettlement")
-    guardian_codices = (entry.get("EntryID") in [
-                        3200200, 3200300, 3200400, 3200500, 3200600])
+    guardian_codices = (entry.get("EntryID") in [3200200, 3200300, 3200400, 3200500, 3200600])
     guardian_event = (codex_entry and guardian_codices)
 
     if codex_entry:
-        codexEmitter(cmdr, is_beta, entry.get("System"), x, y,
-                     z, entry, body, lat, lon, client, state).start()
+        codexEmitter(cmdr, is_beta, entry.get("System"), x, y, z, entry, body, lat, lon, client, state).start()
 
     if approach_settlement or guardian_event:
         guardianSites(cmdr, is_beta, system, x, y, z,

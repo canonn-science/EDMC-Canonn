@@ -306,13 +306,13 @@ def dashboard_entry(cmdr, is_beta, entry):
     else:
         this.planet_radius = None
 
-    return dashboard_entry_wrapper(cmdr, is_beta, this.body_name, this.planet_radius, this.nearloc['Latitude'], this.nearloc['Longitude'], entry)
+    return dashboard_entry_wrapper(cmdr, is_beta, entry)
 
 
-def dashboard_entry_wrapper(cmdr, is_beta, body, radius, lat, lon, entry, ):
+def dashboard_entry_wrapper(cmdr, is_beta, entry, ):
 
-    this.codexcontrol.updatePlanetData(cmdr, is_beta, body, lat, lon)
-    extool.updatePosition(body, radius, lat, lon, entry.get("Heading"))
+    this.codexcontrol.updatePlanetData(this.body_name, this.nearloc['Latitude'], this.nearloc['Longitude'], this.nearloc['Temperature'], this.nearloc['Gravity'])
+    extool.updatePosition(this.body_name, this.planet_radius, this.nearloc['Latitude'], this.nearloc['Longitude'], this.nearloc['Heading'])
 
 
 def cmdr_data(data, is_beta):
