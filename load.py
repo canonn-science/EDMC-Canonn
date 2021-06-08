@@ -60,6 +60,8 @@ this.nearloc = {
     'Longitude': None,
     'Altitude': None,
     'Heading': None,
+    'Temperature': None,
+    'Gravity': None,
     'Time': None
 }
 
@@ -230,8 +232,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
     return journal_entry_wrapper(cmdr, is_beta, system, this.SysFactionState, this.SysFactionAllegiance,
                                  this.DistFromStarLS, station, entry,
-                                 state, x, y, z, this.body_name, this.nearloc[
-                                     'Latitude'], this.nearloc['Longitude'],
+                                 state, x, y, z, this.body_name, this.nearloc['Latitude'], this.nearloc['Longitude'],
                                  this.client_version)
     # Now Journal_entry_wrapper take additional variable this.SysFactionState, this.SysFactionAllegiance, and this.DistFromStarLS
 
@@ -263,16 +264,37 @@ def dashboard_entry(cmdr, is_beta, entry):
     this.landed = entry['Flags'] & 1 << 1 and True or False
     this.SCmode = entry['Flags'] & 1 << 4 and True or False
     this.SRVmode = entry['Flags'] & 1 << 26 and True or False
-    this.landed = this.landed or this.SRVmode
+    this.FOOTmode = entry['Flags2'] & 1 << 4 and True or False
+    this.landed = this.landed or this.SRVmode or this.FOOTmode
     # print "LatLon = {}".format(entry['Flags'] & 1<<21 and True or False)
     # print entry
     if (entry['Flags'] & 1 << 21 and True or False):
-        if ('Latitude' in entry):
-            this.nearloc['Latitude'] = entry['Latitude']
-            this.nearloc['Longitude'] = entry['Longitude']
+        if ('Latitude' in entry and 'Longitude' in entry):
+            this.nearloc['Latitude'] = entry.get("Latitude")
+            this.nearloc['Longitude'] = entry.get("Longitude")
     else:
         this.nearloc['Latitude'] = None
         this.nearloc['Longitude'] = None
+    
+    if ('Altitude' in entry):
+        this.nearloc['Altitude'] = entry.get("Altitude")
+    else:
+        this.nearloc['Altitude'] = None
+    
+    if ('Heading' in entry):
+        this.nearloc['Heading'] = entry.get("Heading")
+    else:
+        this.nearloc['Heading'] = None
+    
+    if ('Temperature' in entry):
+        this.nearloc['Temperature'] = entry.get("Temperature")
+    else:
+        this.nearloc['Temperature'] = None
+    
+    if ('Gravity' in entry):
+        this.nearloc['Gravity'] = entry.get("Gravity")
+    else:
+        this.nearloc['Gravity'] = None
 
     if entry.get("BodyName"):
         this.body_name = entry.get("BodyName")
