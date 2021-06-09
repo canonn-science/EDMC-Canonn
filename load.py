@@ -75,7 +75,7 @@ this.version = "6.2.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
-
+this.planet_radius = None
 
 def plugin_prefs(parent, cmdr, is_beta):
     """
