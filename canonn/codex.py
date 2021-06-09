@@ -2899,8 +2899,7 @@ class codexEmitter(Emitter):
             return None
 
     def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state):
-        Emitter.__init__(self, cmdr, is_beta, system, x, y,
-                         z, entry, body, lat, lon, client)
+        Emitter.__init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)
         self.modelreport = "xxreports"
         self.modeltype = "xxtypes"
         self.odyssey = state.get("Odyssey")
@@ -3043,8 +3042,27 @@ class codexEmitter(Emitter):
                                     "eventType": self.entry.get("event"),
                                     "cmdrName": self.cmdr
                                 }
-                                )
-
+                               )
+            
+            canonn.emitter.post("https://elite.laulhere.com/ExTool/send_data_from_canonn",
+                                {
+                                    "gameState": {
+                                        "systemName": self.system,
+                                        "systemCoordinates": [self.x, self.y, self.z],
+                                        "bodyName": self.body,
+                                        "latitude": self.lat,
+                                        "longitude": self.lon,
+                                        "clientVersion": self.client,
+                                        "isBeta": self.is_beta,
+                                        "platform": "PC",
+                                        "odyssey": self.odyssey
+                                    },
+                                    "rawEvent": self.entry,
+                                    "eventType": self.entry.get("event"),
+                                    "cmdrName": self.cmdr
+                                }
+                               )
+            
             # CAPI doesnt want any stellar bodies so we will exclude them
             if not stellar_bodies:
                 jid = self.entry.get("EntryID")
