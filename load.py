@@ -260,13 +260,18 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
 
 
 def dashboard_entry(cmdr, is_beta, entry):
-    this.landed = entry['Flags'] & 1 << 1 and True or False
-    this.SCmode = entry['Flags'] & 1 << 4 and True or False
-    this.SRVmode = entry['Flags'] & 1 << 26 and True or False
-    this.FOOTmode = entry['Flags2'] & 1 << 4 and True or False
+    this.landed = False
+    this.SCmode = False
+    this.SRVmode = False
+    this.FOOTmode = False
+    if 'Flags' in entry:
+        this.landed = entry['Flags'] & 1 << 1 and True or False
+        this.SCmode = entry['Flags'] & 1 << 4 and True or False
+        this.SRVmode = entry['Flags'] & 1 << 26 and True or False
+    if 'Flags2' in entry:
+        this.FOOTmode = entry['Flags2'] & 1 << 4 and True or False
     this.landed = this.landed or this.SRVmode or this.FOOTmode
-    # print "LatLon = {}".format(entry['Flags'] & 1<<21 and True or False)
-    # print entry
+    
     if ('Latitude' in entry and 'Longitude' in entry):
         this.nearloc['Latitude'] = entry.get("Latitude")
         this.nearloc['Longitude'] = entry.get("Longitude")

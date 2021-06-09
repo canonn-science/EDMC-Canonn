@@ -756,29 +756,29 @@ class CodexTypes():
         if name[len(name)-7:] == "_planet":
             name = name[:len(name)-7]
             if name not in self.lockPlanet:
-                self.labels[name +
-                            "_planet"]["image"] = self.images["{}_grey_planet".format(name)]
+                self.labels[name + "_planet"]["image"] = self.images["{}_grey_planet".format(name)]
                 self.planetlist[name].grid_remove()
                 remove_panel = True
-                for category in self.ppoidata[self.planetlist_body]:
-                    if category in self.lockPlanet:
-                        remove_panel = False
+                if self.planetlist_body in self.ppoidata:
+                    for category in self.ppoidata[self.planetlist_body]:
+                        if category in self.lockPlanet:
+                            remove_panel = False
                 if remove_panel:
                     self.planetpanel.grid_remove()
                 if len(self.lock) != 0:
                     self.systempanel.grid()
         else:
             if name not in self.lock:
-                self.labels[name]["image"] = self.images["{}_grey".format(
-                    name)]
+                self.labels[name]["image"] = self.images["{}_grey".format(name)]
                 self.systemlist[name].grid_remove()
                 if len(self.lock) == 0:
                     self.systempanel.grid_remove()
                 if len(self.lockPlanet) != 0:
                     remove_panel = True
-                    for category in self.ppoidata[self.planetlist_body]:
-                        if category in self.lockPlanet:
-                            remove_panel = False
+                    if self.planetlist_body in self.ppoidata:
+                        for category in self.ppoidata[self.planetlist_body]:
+                            if category in self.lockPlanet:
+                                remove_panel = False
                     if not remove_panel:
                         self.planetpanel.grid()
 
