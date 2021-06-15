@@ -78,26 +78,30 @@ class extoolTypes():
 
                 retrying = 0
                 while retrying < 3:
-                    #try:
-                    print("SEND EXTOOL", mode, data)
-                    r = self.session.post(url, json=data, timeout=20)
-                    print("TEXT EXTOOL", r.text)
-                    r.raise_for_status()
-                    reply = r.json()
-                    (code, msg) = reply['Status'], reply['StatusMsg']
-                    print("REPLY EXTOOL", reply)
-                    
-                    if (code // 100 != 1) and (code // 200 != 1):	# 1xx = OK, 2xx = WARNING, 3xx 4xx 5xx = fatal error
-                        plug.show_error(_('Error: ExTool {MSG}').format(MSG=msg))
-                    else:
-                        plug.show_error(_('ExTool {MSG}').format(MSG=msg))
-                    
-                    if callback:
-                        callback(reply)
-                    break
+                    try:
+                        reply = None
+                        #print("SEND EXTOOL", mode, data)
+                        r = self.session.post(url, json=data, timeout=20)
+                        #print("TEXT EXTOOL", r.text)
+                        r.raise_for_status()
+                        reply = r.json()
+                        (code, msg) = reply['Status'], reply['StatusMsg']
+                        #print("REPLY EXTOOL", reply)
+                        
+                        if (code // 100 != 1) and (code // 200 != 1):	# 1xx = OK, 2xx = WARNING, 3xx 4xx 5xx = fatal error
+                            plug.show_error(_('Error: ExTool {MSG}').format(MSG=msg))
+                        else:
+                            plug.show_error(_('ExTool {MSG}').format(MSG=msg))
+                        
+                        if callback:
+                            callback(reply)
+                        break
                    
-                    #except:
-                    #    retrying += 1
+                    except:
+                        print("SEND EXTOOL", mode, data)
+                        print("TEXT EXTOOL", r.text)
+                        print("REPLY EXTOOL", reply)
+                        retrying += 1
                 else:
                     plug.show_error(_("Error: Can't connect to ExTool Server"))
 
