@@ -9,6 +9,7 @@ import myNotebook as nb
 import requests
 import sys
 import os
+import time
 import canonn
 from canonn import clientreport
 from canonn import codex
@@ -124,6 +125,7 @@ def plugin_start(plugin_dir):
     journaldata.plugin_start(plugin_dir)
     capture.plugin_start(plugin_dir)
     extool.BearingDestination.plugin_start(plugin_dir)
+    extool.extoolTypes.plugin_start(plugin_dir)
 
     return 'Canonn'
 
@@ -153,6 +155,7 @@ def plugin_app(parent):
     this.news = news.CanonnNews(table, 0)
     this.release = release.Release(table, this.version, 1)
     this.codexcontrol = codex.CodexTypes(table, 2)
+    this.extoolcontrol = extool.extoolTypes()
     this.extool = extool.BearingDestination(table, 3)
     this.codexcontrol.setDestinationWidget(this.extool)
     this.patrol = patrol.CanonnPatrol(table, 4)
@@ -250,12 +253,13 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     journaldata.submit(cmdr, is_beta, system, station, entry, client, body, nearloc['Latitude'], nearloc['Longitude'])
     this.patrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
+    this.extoolcontrol.journal_entry(cmdr, is_beta, system, station, entry, state, client)
     whiteList.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     codex.saaScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     codex.organicScan.journal_entry(cmdr, is_beta, system, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], nearloc['Temperature'], nearloc['Gravity'], client)
     capture.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
-    extool.journal_entry(cmdr, is_beta, system, entry, client)
+    this.extool.journal_entry(cmdr, is_beta, system, entry, client)
     guestBook.journal_entry(entry)
 
 
@@ -282,7 +286,10 @@ def dashboard_entry(cmdr, is_beta, entry):
     if ('Altitude' in entry):
         this.nearloc['Altitude'] = entry.get("Altitude")
     else:
-        this.nearloc['Altitude'] = None
+        if this.landed:
+            this.nearloc['Altitude'] = 0
+        else:
+            this.nearloc['Altitude'] = None
     
     if ('Heading' in entry):
         this.nearloc['Heading'] = entry.get("Heading")
@@ -307,14 +314,18 @@ def dashboard_entry(cmdr, is_beta, entry):
 
     if entry.get("PlanetRadius"):
         this.planet_radius = entry.get("PlanetRadius")
-
+    
+    timestamp = time.mktime(time.strptime(entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ'))
+    this.nearloc['Time'] = timestamp
+    
     return dashboard_entry_wrapper(cmdr, is_beta, entry)
 
 
 def dashboard_entry_wrapper(cmdr, is_beta, entry, ):
 
     this.codexcontrol.updatePlanetData(this.body_name, this.nearloc['Latitude'], this.nearloc['Longitude'], this.nearloc['Temperature'], this.nearloc['Gravity'])
-    extool.updatePosition(this.body_name, this.planet_radius, this.nearloc['Latitude'], this.nearloc['Longitude'], this.nearloc['Heading'])
+    this.extoolcontrol.updateStatus(this.body_name, this.planet_radius, this.nearloc)
+    this.extool.updatePosition(this.body_name, this.planet_radius, this.nearloc['Latitude'], this.nearloc['Longitude'], this.nearloc['Heading'])
 
 
 def cmdr_data(data, is_beta):
