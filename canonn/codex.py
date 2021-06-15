@@ -933,13 +933,33 @@ class CodexTypes():
                         index = "#" + \
                             str(len(self.ppoidata[body_code][r.get(
                                 "hud_category")][r.get("english_name")])+1)
-
+                
                 if [None, latlon] in self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")]:
                     self.ppoidata[body_code][r.get("hud_category")][r.get(
                         "english_name")].remove([None, latlon])
-
+                
+                if r.get("hud_category") != "Geology" and r.get("hud_category") != "Biology":
+                    addpoi = True
+                    replacepoi = False
+                    for poi in self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")]:
+                        if poi[0] == index:
+                            addpoi = False
+                            if latlon != None and poi[1] == None:
+                                replacepoi = True
+                    if not addpoi:
+                        if replacepoi:
+                            self.ppoidata[body_code][r.get("hud_category")][r.get(
+                                "english_name")].remove([index, None])
+                            self.ppoidata[body_code][r.get("hud_category")][r.get(
+                                "english_name")].append([index, latlon])
+                        continue
+                
+                if r.get("hud_category") == "Thargoid" or r.get("hud_category") == "Guardian":
+                    if index == None:
+                        continue
+                
                 self.ppoidata[body_code][r.get("hud_category")][r.get(
-                    "english_name")].append([index, latlon])
+                        "english_name")].append([index, latlon])
 
             while not self.saaq.empty():
                 r = self.saaq.get()
@@ -1682,6 +1702,7 @@ class CodexTypes():
 
                 prev_subcategory = "Others"
                 isSubcategory = ""
+                label = []
                 for type in self.poidata[category]:
                     if len(self.poidata[category][type]) == 0:
                         continue
@@ -1726,16 +1747,18 @@ class CodexTypes():
                         col = ((i % 5)+1)*3
                         row = int(i/5)
                         #row = 0
+                        label.append(tk.Label(
+                            self.systemcol2[-1], text=poibody))
                         if poibody in self.ppoidata:
-                            label = HyperlinkLabel(
-                                self.systemcol2[-1], text=poibody, url="#")
-                            label.bind('<Button-1>', lambda event,
+                            if config.get_int('theme')==0:
+                                label[-1]["fg"] = "blue"
+                            if config.get_int('theme')==1:
+                                label[-1]["fg"] = "white"
+                            label[-1]["cursor"] = "hand2"
+                            label[-1].bind('<Button-1>', lambda event,
                                        body=poibody: self.bodyFocus(body))
-                        else:
-                            label = HyperlinkLabel(
-                                self.systemcol2[-1], text=poibody)
-                        theme.update(label)
-                        label.grid(row=row, column=col, sticky="NSEW")
+                        theme.update(label[-1])
+                        label[-1].grid(row=row, column=col, sticky="NSEW")
                         i += 1
                         col += 1
                         if name == "Unknown":
@@ -1745,15 +1768,15 @@ class CodexTypes():
                             if poibody in self.saadata:
                                 if category in self.saadata[poibody]:
                                     nsites = self.saadata[poibody][category]
-                            label = tk.Label(
-                                self.systemcol2[-1], text="["+str(nsites-nunk)+"/"+str(nsites)+"]")
-                            theme.update(label)
-                            label.grid(row=row, column=col, sticky="NSEW")
+                            label.append(tk.Label(
+                                self.systemcol2[-1], text="["+str(nsites-nunk)+"/"+str(nsites)+"]"))
+                            theme.update(label[-1])
+                            label[-1].grid(row=row, column=col, sticky="NSEW")
                             col += 1
                         if i < len(self.poidata[category][type]):
-                            label = tk.Label(self.systemcol2[-1], text=",")
-                            theme.update(label)
-                            label.grid(row=row, column=col, sticky="NSEW")
+                            label.append(tk.Label(self.systemcol2[-1], text=","))
+                            theme.update(label[-1])
+                            label[-1].grid(row=row, column=col, sticky="NSEW")
                             col += 1
 
                     self.systemcol1[-1].grid(row=len(self.systemcol1),
@@ -1870,23 +1893,30 @@ class CodexTypes():
                         col = (i % 10)+1
                         row = int(i/10)
                         if poi[0] is not None:
+                            label.append(tk.Label(
+                                self.planetcol2[-1], text=poi[0]))
                             if poi[1] is not None:
-                                label.append(HyperlinkLabel(
-                                    self.planetcol2[-1], text=poi[0], url='#'))
+                                if config.get_int('theme')==0:
+                                    label[-1]["fg"] = "blue"
+                                if config.get_int('theme')==1:
+                                    label[-1]["fg"] = "white"
+                                label[-1]["cursor"] = "hand2"
                                 label[-1].bind('<Button-1>', lambda event,
                                                latlon=poi[1]: self.activateDestination(latlon))
-                            else:
-                                label.append(HyperlinkLabel(
-                                    self.planetcol2[-1], text=poi[0]))
                             theme.update(label[-1])
                             label[-1].grid(row=row, column=col, sticky="NSEW")
                         if poi[1] is not None:
                             if poi[0] is None:
-                                label.append(HyperlinkLabel(
-                                    self.planetcol2[-1], text=poi[1], url='#'))
+                                label.append(tk.Label(
+                                    self.planetcol2[-1], text=poi[1]))
                                 theme.update(label[-1])
                                 label[-1].grid(row=row,
                                                column=col, sticky="NSEW")
+                                if config.get_int('theme')==0:
+                                    label[-1]["fg"] = "blue"
+                                if config.get_int('theme')==1:
+                                    label[-1]["fg"] = "white"
+                                label[-1]["cursor"] = "hand2"
                                 label[-1].bind('<Button-1>', lambda event,
                                                latlon=poi[1]: self.activateDestination(latlon))
                         i += 1
@@ -1924,7 +1954,7 @@ class CodexTypes():
 
     def add_poi(self, hud_category, english_name, body):
 
-        Debug.logger.debug(f"add_poi - {hud_category} {english_name} {body}")
+        #Debug.logger.debug(f"add_poi - {hud_category} {english_name} {body}")
 
         if hud_category not in self.poidata:
             self.poidata[hud_category] = {}
@@ -1943,8 +1973,8 @@ class CodexTypes():
                 break
         if poinotexist:
             self.poidata[hud_category][english_name].append(body)
-        else:
-            Debug.logger.debug(f"add_poi - body already in poidata")
+        #else:
+        #    Debug.logger.debug(f"add_poi - body already in poidata")
 
     def remove_poi(self, hud_category, english_name, body):
 
@@ -2677,7 +2707,7 @@ class CodexTypes():
             self.allowed = True
             self.refreshPOIData(None)
 
-        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") in ('Guardian Beacon'):
+        if entry.get("event") == "FSSSignalDiscovered" and entry.get("SignalName") == 'Guardian Beacon':
             self.add_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
             self.refreshPOIData(None)
@@ -3191,25 +3221,6 @@ class codexEmitter(Emitter):
             url = self.getUrl()
 
             canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent",
-                                {
-                                    "gameState": {
-                                        "systemName": self.system,
-                                        "systemCoordinates": [self.x, self.y, self.z],
-                                        "bodyName": self.body,
-                                        "latitude": self.lat,
-                                        "longitude": self.lon,
-                                        "clientVersion": self.client,
-                                        "isBeta": self.is_beta,
-                                        "platform": "PC",
-                                        "odyssey": self.odyssey
-                                    },
-                                    "rawEvent": self.entry,
-                                    "eventType": self.entry.get("event"),
-                                    "cmdrName": self.cmdr
-                                }
-                                )
-
-            canonn.emitter.post("https://elite.laulhere.com/ExTool/send_data_from_canonn",
                                 {
                                     "gameState": {
                                         "systemName": self.system,
