@@ -41,8 +41,8 @@ class whiteListSetter(threading.Thread):
 
     def __init__(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         threading.Thread.__init__(self)
-        self.cmdr = quote_plus(cmdr.encode('utf8'))
-        self.system = quote_plus(system.encode('utf8'))
+        self.cmdr = cmdr
+        self.system = system
         self.odyssey = state.get("Odyssey")
         self.is_beta = is_beta
         self.station = station
