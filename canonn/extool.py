@@ -88,10 +88,13 @@ class extoolTypes():
                         (code, msg) = reply['Status'], reply['StatusMsg']
                         #print("REPLY EXTOOL", reply)
                         
-                        if (code // 100 != 1) and (code // 200 != 1):	# 1xx = OK, 2xx = WARNING, 3xx 4xx 5xx = fatal error
-                            plug.show_error(_('Error: ExTool {MSG}').format(MSG=msg))
-                        else:
-                            plug.show_error(_('ExTool {MSG}').format(MSG=msg))
+                        if (code // 100 != 1):	# 1xx = OK, 2xx = WARNING, 3xx 4xx 5xx = fatal error
+                            if (code // 100 == 2):
+                                Debug.logger.debug(('Warning: ExTool {MSG}').format(MSG=msg))
+                            else:
+                                Debug.logger.error(('Error: ExTool {MSG}').format(MSG=msg))
+                        #else:
+                        #    Debug.logger.debug(('ExTool {MSG}').format(MSG=msg))
                         
                         if callback:
                             callback(reply)
@@ -103,7 +106,7 @@ class extoolTypes():
                         print("REPLY EXTOOL", reply)
                         retrying += 1
                 else:
-                    plug.show_error(_("Error: Can't connect to ExTool Server"))
+                    Debug.logger.error(("Error: Can't connect to ExTool Server"))
 
           
             #elif(mode=='playsound'):
@@ -118,7 +121,6 @@ class extoolTypes():
         args['mode'] = sendmode
         args['version'] = self.version
         args['apikey'] = ""
-        print("CALL EXTOOL", cmdr, sendmode, args)
         self.queue.put(('senddata', args, callback))
         
     def send_data(self, cmdr, event, timestamp, rawentry):
@@ -186,6 +188,9 @@ class extoolTypes():
             # missing body : CodexEntry
             # missing body, lat & lon : Docked
             # missing system, body, lat & lon : DatalinkScan, DatalinkVoucher, DataScanned, MaterialCollected, CollectCargo
+            if entry.get("EntryID") is not None:
+                if entry.get("EntryID")==2330403 and entry.get("Name")=="$Codex_Ent_Cactoid_03_A_Name;":
+                    entry["Name"]="$Codex_Ent_Cactoid_04_A_Name;"
             self.send_data(cmdr, entry.get("event"), timestamp, entry)
             
         if entry.get("event") in ("FSSSignalDiscovered"):

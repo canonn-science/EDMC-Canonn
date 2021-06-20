@@ -426,6 +426,24 @@ class CodexTypes():
         '$economy_Damaged;': 'Damaged',
         '$economy_Repair;': 'Repair'
     }
+    
+    odyssey_bio = [
+        "Aleoida", 
+        "Bacterium", 
+        "Cactoida", 
+        "Clypeus", 
+        "Concha", 
+        "Electricae", 
+        "Fonticulua", 
+        "Frutexa", 
+        "Fumerola", 
+        "Fungoida", 
+        "Osseus", 
+        "Recepta", 
+        "Stratum", 
+        "Tubus", 
+        "Tussock"
+    ]
 
     bodycount = 0
 
@@ -885,16 +903,34 @@ class CodexTypes():
 
             while not self.poiq.empty():
                 r = self.poiq.get()
+                codex_name_ref = CodexTypes.name_ref[str(r.get("entryid"))]
+                hud_category = codex_name_ref.get("hud_category")
+                english_name = codex_name_ref.get("english_name")
+                
                 body = r.get("body")
                 if body is None:
                     continue
                 body_code = body.replace(self.system+" ", '')
-
-                if r.get("hud_category") == "Geology":
-                    subcat = "$Sites:"+r.get("english_name")
+                
+                if hud_category == "Geology":
+                    subcat = "$Sites:"+english_name
                 else:
-                    subcat = r.get("english_name")
-                self.add_poi(r.get("hud_category"), subcat, body_code)
+                    subcat = english_name
+                    if self.odyssey:
+                        if hud_category == "Biology":
+                            if english_name.split(" ")[0] in self.odyssey_bio:
+                                subcat = " ".join(english_name.split(" ")[0:2])
+                        if codex_name_ref.get("reward") is not None:
+                            if codex_name_ref.get("reward") > 700000:
+                                subcat = "($$$) " + subcat
+                                english_name = "($$$) " + english_name
+                            elif codex_name_ref.get("reward") > 400000:
+                                subcat = "($$) " + subcat
+                                english_name = "($$) " + english_name
+                            elif codex_name_ref.get("reward") > 200000:
+                                subcat = "($) " + subcat
+                                english_name = "($) " + english_name
+                self.add_poi(hud_category, subcat, body_code)
 
                 if (r.get("latitude") is None) or (r.get("longitude") is None):
                     latlon = None
@@ -909,57 +945,49 @@ class CodexTypes():
 
                 if body_code not in self.ppoidata:
                     self.ppoidata[body_code] = {}
-                if r.get("hud_category") not in self.ppoidata[body_code]:
-                    self.ppoidata[body_code][r.get("hud_category")] = {}
-                if r.get("english_name") not in self.ppoidata[body_code][r.get("hud_category")]:
-                    self.ppoidata[body_code][r.get(
-                        "hud_category")][r.get("english_name")] = []
+                if hud_category not in self.ppoidata[body_code]:
+                    self.ppoidata[body_code][hud_category] = {}
+                if english_name not in self.ppoidata[body_code][hud_category]:
+                    self.ppoidata[body_code][hud_category][english_name] = []
 
-                if r.get("hud_category") in ("Geology", "Biology"):
+                if hud_category in ("Geology", "Biology"):
                     if body_code not in self.scandata:
                         self.scandata[body_code] = {}
-                    if r.get("hud_category") not in self.scandata[body_code]:
-                        self.scandata[body_code][r.get("hud_category")] = {}
-                    if r.get("english_name") not in self.scandata[body_code][r.get("hud_category")]:
-                        self.scandata[body_code][r.get(
-                            "hud_category")][r.get("english_name")] = False
+                    if hud_category not in self.scandata[body_code]:
+                        self.scandata[body_code][hud_category] = {}
+                    if english_name not in self.scandata[body_code][hud_category]:
+                        self.scandata[body_code][hud_category][english_name] = False
                     if (r.get("scanned") == "true"):
-                        self.scandata[body_code][r.get(
-                            "hud_category")][r.get("english_name")] = True
+                        self.scandata[body_code][hud_category][english_name] = True
 
                 if self.odyssey:
-                    if r.get("hud_category") == "Geology" or r.get("hud_category") == "Biology":
+                    if hud_category == "Geology" or hud_category == "Biology":
                         # if index == None:
                         index = "#" + \
-                            str(len(self.ppoidata[body_code][r.get(
-                                "hud_category")][r.get("english_name")])+1)
+                            str(len(self.ppoidata[body_code][hud_category][english_name])+1)
                 
-                if [None, latlon] in self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")]:
-                    self.ppoidata[body_code][r.get("hud_category")][r.get(
-                        "english_name")].remove([None, latlon])
+                if [None, latlon] in self.ppoidata[body_code][hud_category][english_name]:
+                    self.ppoidata[body_code][hud_category][english_name].remove([None, latlon])
                 
-                if r.get("hud_category") != "Geology" and r.get("hud_category") != "Biology":
+                if hud_category != "Geology" and hud_category != "Biology":
                     addpoi = True
                     replacepoi = False
-                    for poi in self.ppoidata[body_code][r.get("hud_category")][r.get("english_name")]:
+                    for poi in self.ppoidata[body_code][hud_category][english_name]:
                         if poi[0] == index:
                             addpoi = False
                             if latlon != None and poi[1] == None:
                                 replacepoi = True
                     if not addpoi:
                         if replacepoi:
-                            self.ppoidata[body_code][r.get("hud_category")][r.get(
-                                "english_name")].remove([index, None])
-                            self.ppoidata[body_code][r.get("hud_category")][r.get(
-                                "english_name")].append([index, latlon])
+                            self.ppoidata[body_code][hud_category][english_name].remove([index, None])
+                            self.ppoidata[body_code][hud_category][english_name].append([index, latlon])
                         continue
                 
-                if r.get("hud_category") == "Thargoid" or r.get("hud_category") == "Guardian":
+                if hud_category == "Thargoid" or hud_category == "Guardian":
                     if index == None:
                         continue
                 
-                self.ppoidata[body_code][r.get("hud_category")][r.get(
-                        "english_name")].append([index, latlon])
+                self.ppoidata[body_code][hud_category][english_name].append([index, latlon])
 
             while not self.saaq.empty():
                 r = self.saaq.get()
@@ -969,11 +997,11 @@ class CodexTypes():
                 if body_code not in self.saadata:
                     self.saadata[body_code] = {}
                 self.saadata[body_code][r.get("hud_category")] = r.get("count")
-                self.remove_poi("Geology", "$Sites:NoSAA", body_code)
-                self.remove_poi("Biology", "$Species:NoSAA", body_code)
-                self.remove_poi("MissingData", "$Geology:NoSAA", body_code)
-                self.remove_poi("MissingData", "$Biology:NoSAA", body_code)
-                self.remove_poi("MissingData", "$Rings:NoSAA", body_code)
+                self.remove_poi("Geology", "$Sites:Need SAA", body_code)
+                self.remove_poi("Biology", "$Species:Need SAA", body_code)
+                self.remove_poi("MissingData", "$Geology:Need SAA", body_code)
+                self.remove_poi("MissingData", "$Biology:Need SAA", body_code)
+                self.remove_poi("MissingData", "$Rings:Need SAA", body_code)
 
                 if r.get("hud_category") == "Ring":
                     self.add_poi(r.get("hud_category"),
@@ -1210,31 +1238,31 @@ class CodexTypes():
                             # check SAA signals
                             if body_code not in self.ppoidata:
                                 self.add_poi(
-                                    "Geology", "$Sites:NoSAA", body_code)
+                                    "Geology", "$Sites:Need SAA", body_code)
                                 self.add_poi(
-                                    "MissingData", "$Geology:NoSAA", body_code)
+                                    "MissingData", "$Geology:Need SAA", body_code)
                                 self.ppoidata[body_code] = {}
                             else:
                                 if "Geology" not in self.ppoidata[body_code]:
                                     self.add_poi(
-                                        "Geology", "$Sites:NoSAA", body_code)
+                                        "Geology", "$Sites:Need SAA", body_code)
                                     self.add_poi(
-                                        "MissingData", "$Geology:NoSAA", body_code)
+                                        "MissingData", "$Geology:Need SAA", body_code)
 
                         # Landable Atmosphere
-                        if b.get('type') == 'Planet' and b.get('atmosphereType') != "No atmosphere" and b.get('isLandable'):
-                            if body_code not in self.ppoidata:
-                                self.add_poi(
-                                    "Biology", "$Species:NoSAA", body_code)
-                                self.add_poi(
-                                    "MissingData", "$Biology:NoSAA", body_code)
-                                self.ppoidata[body_code] = {}
-                            else:
-                                if "Biology" not in self.ppoidata[body_code]:
-                                    self.add_poi(
-                                        "Biology", "$Species:NoSAA", body_code)
-                                    self.add_poi(
-                                        "MissingData", "$Biology:NoSAA", body_code)
+                        # if b.get('type') == 'Planet' and b.get('atmosphereType') != "No atmosphere" and b.get('isLandable'):
+                            # if body_code not in self.ppoidata:
+                                # self.add_poi(
+                                    # "Biology", "$Species:Need SAA", body_code)
+                                # self.add_poi(
+                                    # "MissingData", "$Biology:Need SAA", body_code)
+                                # self.ppoidata[body_code] = {}
+                            # else:
+                                # if "Biology" not in self.ppoidata[body_code]:
+                                    # self.add_poi(
+                                        # "Biology", "$Species:Need SAA", body_code)
+                                    # self.add_poi(
+                                        # "MissingData", "$Biology:Need SAA", body_code)
 
                         # water ammonia etc
                         if b.get('subType') in CodexTypes.body_types.keys():
@@ -1710,7 +1738,7 @@ class CodexTypes():
                     self.poidata[category][type] = sorted(
                         self.poidata[category][type])
 
-                    if "$" in type:
+                    if type[0] == "$":
                         subcategory = type.split(":")[0][1:]
                         name = type.split(":")[1]
                     else:
@@ -1758,7 +1786,7 @@ class CodexTypes():
                             label[-1].bind('<Button-1>', lambda event,
                                        body=poibody: self.bodyFocus(body))
                         theme.update(label[-1])
-                        label[-1].grid(row=row, column=col, sticky="NSEW")
+                        label[-1].grid(row=row, column=col, sticky="NW")
                         i += 1
                         col += 1
                         if name == "Unknown":
@@ -1771,12 +1799,12 @@ class CodexTypes():
                             label.append(tk.Label(
                                 self.systemcol2[-1], text="["+str(nsites-nunk)+"/"+str(nsites)+"]"))
                             theme.update(label[-1])
-                            label[-1].grid(row=row, column=col, sticky="NSEW")
+                            label[-1].grid(row=row, column=col, sticky="NW")
                             col += 1
                         if i < len(self.poidata[category][type]):
                             label.append(tk.Label(self.systemcol2[-1], text=","))
                             theme.update(label[-1])
-                            label[-1].grid(row=row, column=col, sticky="NSEW")
+                            label[-1].grid(row=row, column=col, sticky="NW")
                             col += 1
 
                     self.systemcol1[-1].grid(row=len(self.systemcol1),
@@ -1842,6 +1870,9 @@ class CodexTypes():
 
             if category in self.ppoidata[self.planetlist_body]:
 
+                self.ppoidata[self.planetlist_body][category] = dict(
+                    sorted(self.ppoidata[self.planetlist_body][category].items()))
+                    
                 self.planetcol1.append(
                     tk.Label(self.planetlist[category], text=category+":"))
                 self.planetcol2.append(
@@ -1882,8 +1913,9 @@ class CodexTypes():
                             if category in self.scandata[self.planetlist_body]:
                                 if type in self.scandata[self.planetlist_body][category]:
                                     if not self.scandata[self.planetlist_body][category][type]:
-                                        self.planetcol1[-1]['text'] = "   (*) " + \
-                                            type
+                                        #self.planetcol1[-1]['fg'] = "red"
+                                        #self.planetcol1[-1]['text'] = "   (*) " + type
+                                        self.planetcol1[-1]['text'] = type + " (*)"
 
                     self.ppoidata[self.planetlist_body][category][type] = sorted(
                         self.ppoidata[self.planetlist_body][category][type], key=lambda poi: int(nvl(poi[0], "#0")[1:]))
@@ -1904,14 +1936,14 @@ class CodexTypes():
                                 label[-1].bind('<Button-1>', lambda event,
                                                latlon=poi[1]: self.activateDestination(latlon))
                             theme.update(label[-1])
-                            label[-1].grid(row=row, column=col, sticky="NSEW")
+                            label[-1].grid(row=row, column=col, sticky="NW")
                         if poi[1] is not None:
                             if poi[0] is None:
                                 label.append(tk.Label(
                                     self.planetcol2[-1], text=poi[1]))
                                 theme.update(label[-1])
                                 label[-1].grid(row=row,
-                                               column=col, sticky="NSEW")
+                                               column=col, sticky="NW")
                                 if config.get_int('theme')==0:
                                     label[-1]["fg"] = "blue"
                                 if config.get_int('theme')==1:
@@ -2393,7 +2425,7 @@ class CodexTypes():
                     else:
                         self.add_poi(
                             "Ring", "$Rings:"+"{} Rings".format(ring.get("type")), body_code)
-                    self.add_poi("MissingData", "$Rings:NoSAA", body_code)
+                    self.add_poi("MissingData", "$Rings:Need SAA", body_code)
                 area = get_area(ring.get("innerRadius"),
                                 ring.get("outerRadius"))
                 density = get_density(ring.get("mass"), ring.get(
@@ -2606,20 +2638,35 @@ class CodexTypes():
             # really we need to identify the codex types
             self.system = system
             entry_id = entry.get("EntryID")
-            codex_name_ref = CodexTypes.name_ref.get(entry_id)
+            codex_name_ref = CodexTypes.name_ref[str(entry_id)]
             if codex_name_ref:
                 hud_category = codex_name_ref.get("hud_category")
                 english_name = codex_name_ref.get("english_name")
                 if hud_category is not None and hud_category != 'None':
-                    if english_name is None and english_name == 'None':
+                    if english_name is None or english_name == 'None':
                         english_name = entry.get("Name_Localised")
 
                     # refresh system panel
                     if body:
                         if hud_category == "Geology":
-                            subcat = "$Sites:"+english_name
+                            subcat = "$Sites:" + english_name
                         else:
                             subcat = english_name
+                            if self.odyssey:
+                                if hud_category == "Biology":
+                                    if english_name.split(" ")[0] in self.odyssey_bio:
+                                        subcat = " ".join(english_name.split(" ")[0:2])
+                                if codex_name_ref.get("reward") is not None:
+                                    if codex_name_ref.get("reward") > 700000:
+                                        subcat = "($$$) " + subcat
+                                        english_name = "($$$) " + english_name
+                                    elif codex_name_ref.get("reward") > 400000:
+                                        subcat = "($$) " + subcat
+                                        english_name = "($$) " + english_name
+                                    elif codex_name_ref.get("reward") > 200000:
+                                        subcat = "($) " + subcat
+                                        english_name = "($) " + english_name
+                            
                         self.add_poi(hud_category, subcat, bodycode)
                     else:
                         self.add_poi(hud_category, english_name, "")
@@ -2770,10 +2817,10 @@ class CodexTypes():
                 dovis = True
             elif "$" in entry.get("SignalName"):
                 if self.humandetailed:
-                    self.add_poi("Other", "$Warning:" +
-                                 entry.get("SignalName"), None)
+                    #self.add_poi("Other", "$Warning:" +
+                    #             entry.get("SignalName"), None)
                     print("WARNING : ", entry)
-                    dovis = True
+                    dovis = False
                 else:
                     dovis = False
             elif entry.get("IsStation"):
@@ -2890,12 +2937,12 @@ class CodexTypes():
         name_ref = {}
 
         r = requests.get(
-            "https://us-central1-canonn-api-236217.cloudfunctions.net/codexNameRef")
+            "https://us-central1-canonn-api-236217.cloudfunctions.net/query/codex/ref")
 
         if r.status_code == requests.codes.ok:
-            for entry in r.json():
-                name_ref[entry.get("entryid")] = entry
-            cls.name_ref = name_ref
+            #for entry in r.json():
+            #    name_ref[entry.get("entryid")] = entry
+            cls.name_ref = r.json()
         else:
             Debug.logger.error("error in get_codex_names")
 
@@ -2907,11 +2954,11 @@ class CodexTypes():
         file = os.path.join(cls.plugin_dir, 'data', 'codex_name_ref.json')
         # try:
         with open(file) as json_file:
-            name_ref_array = json.load(json_file)
+            cls.name_ref = json.load(json_file)
 
         # make this a dict
-        for entry in name_ref_array:
-            cls.name_ref[entry.get("entryid")] = entry
+        #for entry in name_ref_array:
+        #    cls.name_ref[entry.get("entryid")] = entry
 
         codexName(cls.get_codex_names).start()
         # except:
