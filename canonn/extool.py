@@ -173,12 +173,16 @@ class extoolTypes():
         
         if entry.get("event") in ("SellOrganicData", "MissionAccepted"):
             # no need system or body
-            self.send_data(cmdr, entry.get("event"), entry.get("timestamp"), entry)
+            self.send_data(cmdr, entry.get("event"), timestamp, entry)
             
         if entry.get("event") in ("Touchdown", "Liftoff"):
             # everything is in the entry (system and body)
             self.send_data(cmdr, entry.get("event"), timestamp, entry)
         
+        if entry.get("event") in ("Disembark", "Embark"):
+            if entry.get("Taxi") == True and entry.get("OnPlanet") == True:
+                self.send_data(cmdr, entry.get("event"), timestamp, entry)
+            
         if entry.get("event") in ("Docked"):
             if entry.get("StationType") != "FleetCarrier":
                 self.send_data(cmdr, entry.get("event"), timestamp, entry)

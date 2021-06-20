@@ -726,9 +726,10 @@ class CodexTypes():
                 self.labels[category +
                             "_planet"]["image"] = self.images["{}_grey_planet".format(category)]
                 remove_panel = True
-                for c in self.ppoidata[self.planetlist_body]:
-                    if c in self.lockPlanet:
-                        remove_panel = False
+                if self.planetlist_body in self.ppoidata:
+                    for c in self.ppoidata[self.planetlist_body]:
+                        if c in self.lockPlanet:
+                            remove_panel = False
                 if remove_panel:
                     self.planetpanel.grid_remove()
             else:
