@@ -2834,10 +2834,10 @@ class CodexTypes():
                 if FleetCarrier:
                     if self.fccount == 0:
                         dovis = True
-                    #self.remove_poi("Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
+                    self.remove_poi("Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
                     self.fccount += 1
                     #self.add_poi("Human", "$FleetCarrier:"+entry.get("SignalName"), None)
-                    self.add_poi("Human", "Fleet Carrier", None)
+                    self.add_poi("Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
                 else:
                     if self.humandetailed:
                         self.add_poi("Human", "$Station:" + entry.get("SignalName"), None)
