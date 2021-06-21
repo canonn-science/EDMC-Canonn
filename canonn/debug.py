@@ -96,7 +96,7 @@ class fakeSystem():
         }
         cls.wrapper(cls.cmdr, True, cls.system, None, None, None, None, event,
                     {"dummy": "dummy"}, cls.coords["x"], cls.coords["y"], cls.coords["z"], None,
-                    {"Latitude": None, "Longitude": None}, cls.client)
+                    {"Latitude": None, "Longitude": None, "Temperature": None, "Gravity": None}, cls.client)
         cls.parent.after(10000, cls.FSDJump)
 
     @ classmethod
