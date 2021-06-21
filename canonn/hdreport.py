@@ -49,12 +49,12 @@ class gSubmitHD(threading.Thread):
             "TG_ENCOUNTER_TOTAL_LAST_TIMESTAMP")
         year = int(ts[0:4]) - 1286
         self.eddatetime = "{}-{}:00".format(year, ts[4:])
-        debug(self.eddatetime)
+        Debug.logger.debug(self.eddatetime)
 
         self.entry = entry
 
     def run(self):
-        debug("sending gSubmitCodex")
+        Debug.logger.debug("sending gSubmitCodex")
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/submitHD?cmdrName={}".format(
             self.cmdr)
         url = url + "&systemName={}".format(self.system)
@@ -66,9 +66,9 @@ class gSubmitHD(threading.Thread):
         r = requests.get(url)
 
         if not r.status_code == requests.codes.ok:
-            error("gSubmitHD {} ".format(url))
-            error(r.status_code)
-            error(r.json())
+            Debug.logger.error("gSubmitHD {} ".format(url))
+            Debug.logger.error(r.status_code)
+            Debug.logger.error(r.json())
 
 
 class HDReport(Emitter):
@@ -100,11 +100,12 @@ class HDReport(Emitter):
     def excludesystems(self):
         url = self.getUrl()
         if not HDReport.hdsystems:
-            debug("getting old hdsystems")
+            Debug.logger.debug("getting old hdsystems")
             r = requests.get(
                 "{}/{}?cmdrName={}&_sort=created_at:DESC&_limit=100".format(url, self.modelreport, self.cmdr))
             for hd in r.json():
-                debug("excluding: {}".format(hd.get("fromSystemName")))
+                Debug.logger.debug("excluding: {}".format(
+                    hd.get("fromSystemName")))
                 HDReport.hdsystems[hd.get("fromSystemName")] = hd.get(
                     "fromSystemName")
 
@@ -114,17 +115,18 @@ class HDReport(Emitter):
 
         self.excludesystems()
         # if not HDReport.hdsystems:
-        # debug("getting old hdsystems")
+        # Debug.logger.debug("getting old hdsystems")
         # r = requests.get("{}/{}?cmdrName={}&_sort=created_at:DESC&_limit=2000".format(url,self.modelreport,self.cmdr))
         # for hd in r.json():
-        # debug("excluding: {}".format(hd.get("fromSystemName")))
+        # Debug.logger.debug("excluding: {}".format(hd.get("fromSystemName")))
         # HDReport.hdsystems[hd.get("fromSystemName")]=hd.get("fromSystemName")
 
         lasthd = self.entry.get("TG_ENCOUNTERS").get(
             "TG_ENCOUNTER_TOTAL_LAST_SYSTEM")
         if lasthd:
             if HDReport.hdsystems.get(lasthd):
-                debug("Hyperdiction already recorded here - server")
+                Debug.logger.debug(
+                    "Hyperdiction already recorded here - server")
             else:
                 HDReport.hdsystems[lasthd] = lasthd
                 payload = self.setPayload()
@@ -169,11 +171,12 @@ class HDInspector(Frame):
     def excludesystems(self):
         url = self.getUrl()
         if not HDReport.hdsystems:
-            debug("getting old hdsystems")
+            Debug.logger.debug("getting old hdsystems")
             r = requests.get(
                 "{}/{}?cmdrName={}&_sort=created_at:DESC&_limit=100".format(url, "hdreports", self.commander))
             for hd in r.json():
-                debug("excluding: {}".format(hd.get("fromSystemName")))
+                Debug.logger.debug("excluding: {}".format(
+                    hd.get("fromSystemName")))
                 HDReport.hdsystems[hd.get("fromSystemName")] = hd.get(
                     "fromSystemName")
 
@@ -194,12 +197,12 @@ class HDInspector(Frame):
 
     def detect_hyperdiction(self, entry):
         if entry.get("event") == "Statistics":
-            debug("detected")
+            Debug.logger.debug("detected")
             submit(self.commander, self.is_beta,
                    None, None, entry, self.client)
             time.sleep(0.1)
         # else:
-        # debug(entry.get("event"))
+        # Debug.logger.debug(entry.get("event"))
 
     def scan_file(self, filename):
         with open(filename) as f:
@@ -248,7 +251,8 @@ class hyperdictionDetector():
 
     @classmethod
     def startJump(cls, target_system):
-        debug("startJump setting state 1 {}".format(target_system))
+        Debug.logger.debug(
+            "startJump setting state 1 {}".format(target_system))
         cls.hide()
         cls.state = 1
         cls.target_system = target_system
@@ -256,18 +260,18 @@ class hyperdictionDetector():
     @classmethod
     def FSDJump(cls, system):
         if cls.state == 1 and not system == cls.target_system:
-            debug("FSDJump setting state 2 {} {}".format(
+            Debug.logger.debug("FSDJump setting state 2 {} {}".format(
                 system, cls.target_system))
             cls.state = 2
         else:
-            debug("FSDJUMP resetting state back {} {}".format(
+            Debug.logger.debug("FSDJUMP resetting state back {} {}".format(
                 system, cls.target_system))
             cls.state = 0
 
     @classmethod
     def Music(cls, system, cmdr, timestamp, client):
         if cls.state == 2:
-            debug("Hyperdiction Detected")
+            Debug.logger.debug("Hyperdiction Detected")
             cls.show()
             x, y, z = Systems.edsmGetSystem(system)
             dx, dy, dz = Systems.edsmGetSystem(cls.target_system)
@@ -283,7 +287,7 @@ class hyperdictionDetector():
                                  })
             plug.show_error("Hyperdiction: Exit to main menu")
         else:
-            debug("FSDJUMP resetting state back")
+            Debug.logger.debug("FSDJUMP resetting state back")
             cls.hide()
             cls.state == 0
 
@@ -308,13 +312,13 @@ class hyperdictionDetector():
 
 
 def post_traffic(system, entry):
-    debug("posting traffic {} ".format(system))
+    Debug.logger.debug("posting traffic {} ".format(system))
     try:
         canonn.emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postTraffic",
                             {"system": system, "timestamp": entry.get("timestamp")})
     except:
         plug.show_error("Failed to post traffic")
-        debug("Failed to post traffic for {}".format(system))
+        Debug.logger.debug("Failed to post traffic for {}".format(system))
 
 
 def get_distance(a, b):
@@ -325,7 +329,7 @@ def get_distance(a, b):
 
 def post_distance(system, centre, entry):
     d = int(get_distance(system, centre) / 10) * 10
-    debug("distance {}".format(d))
+    Debug.logger.debug("distance {}".format(d))
     if d <= 250:
         tag = "{} ({})".format(centre, int(d))
         post_traffic(tag, entry)
@@ -360,7 +364,8 @@ def submit(cmdr, is_beta, system, station, entry, client):
             if lastsystem == "Pleiades Sector IR-W d1-55":
                 lastsystem = "Delphi"
 
-            debug({"cmdr": cmdr, "system": lastsystem, "timestamp": tgtime})
+            Debug.logger.debug(
+                {"cmdr": cmdr, "system": lastsystem, "timestamp": tgtime})
             x, y, z = Systems.edsmGetSystem(lastsystem)
             # we are going to submit the hyperdiction here.
             canonn.emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHD",
@@ -368,7 +373,8 @@ def submit(cmdr, is_beta, system, station, entry, client):
 
             if lastsystem:
                 if HDReport.hdsystems.get(lastsystem) == lastsystem:
-                    debug("Hyperdiction already recorded here - session ")
+                    Debug.logger.debug(
+                        "Hyperdiction already recorded here - session ")
                 else:
                     HDReport(cmdr, is_beta, lastsystem, entry, client).start()
                     gSubmitHD(cmdr, x, y, z, entry).start()

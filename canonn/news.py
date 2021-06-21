@@ -20,6 +20,7 @@ import threading
 from canonn.debug import Debug
 from canonn.debug import debug, error
 import html
+import datetime
 
 
 REFRESH_CYCLES = 60  # how many cycles before we refresh
@@ -42,7 +43,7 @@ class UpdateThread(threading.Thread):
         self.widget = widget
 
     def run(self):
-        debug("News: UpdateThread")
+        Debug.logger.debug("News: UpdateThread")
         # download cannot contain any tkinter changes
         self.widget.download()
 
@@ -64,19 +65,24 @@ class NewsLink(HyperlinkLabel):
             anchor=tk.NW
         )
         self.resized = False
+        self.lasttime=datetime.datetime.now()
         self.bind('<Configure>', self.__configure_event)
 
-    def __reset(self):
-        self.resized = False
 
     def __configure_event(self, event):
         "Handle resizing."
 
+        difference=datetime.datetime.now() - self.lasttime
+        Debug.logger.debug("diff {}".format(difference.total_seconds()))   
+        if difference.total_seconds() > 0.5:
+            self.resized = False
+
         if not self.resized:
-            debug("News widget resize")
+            Debug.logger.debug("News widget resize")
             self.resized = True
-            self.configure(wraplength=event.width)
-            self.after(500, self.__reset)
+            self.configure(wraplength=event.width-2)
+            self.lasttime=datetime.datetime.now()
+
 
 
 class CanonnNews(Frame):
@@ -93,7 +99,7 @@ class CanonnNews(Frame):
             parent
         )
 
-        self.hidden = tk.IntVar(value=config.getint("HideNews"))
+        self.hidden = tk.IntVar(value=config.get_int("HideNews"))
 
         self.news_data = []
         self.columnconfigure(1, weight=1)
@@ -130,7 +136,7 @@ class CanonnNews(Frame):
 
         self.update()
         # refesh every 60 seconds
-        debug("Refreshing News")
+        Debug.logger.debug("Refreshing News")
         self.after(NEWS_CYCLE, self.news_update)
 
     def eupdate(self, event):
@@ -144,7 +150,7 @@ class CanonnNews(Frame):
                 self.hyperlink['text'] = html.unescape(
                     news['title']['rendered'])
             else:
-                debug("News download not complete")
+                Debug.logger.debug("News download not complete")
 
     def click_news(self, event):
         if self.news_count == self.news_pos:
@@ -159,7 +165,7 @@ class CanonnNews(Frame):
 
         if self.isvisible:
 
-            debug("Fetching News")
+            Debug.logger.debug("Fetching News")
             r = requests.get("https://canonn.science/wp-json/wp/v2/posts")
             r.encoding = 'utf-8'
             self.news_data = r.json()
@@ -173,7 +179,7 @@ class CanonnNews(Frame):
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
 
-        self.hidden = tk.IntVar(value=config.getint("HideNews"))
+        self.hidden = tk.IntVar(value=config.get_int("HideNews"))
 
         #frame = nb.Frame(parent)
         #frame.columnconfigure(1, weight=1)

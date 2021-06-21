@@ -14,7 +14,7 @@ from canonn.debug import debug, error
 
 class Systems():
     '''
-        Caching all the Canonn Systems because we don't want to hit them up every time 
+        Caching all the Canonn Systems because we don't want to hit them up every time
         we start the plugin
     '''
     systemCache = {
@@ -71,6 +71,8 @@ class Systems():
         "Lumaragro": [-162.28125, 33.0625, -92],
     }
 
+    id_cache = {}
+
     # start with scanned = false
     scanned = False
 
@@ -80,34 +82,48 @@ class Systems():
             cls.systemCache[system] = pos
 
     @classmethod
+    def storeNavroute(cls, state):
+        navroute = state.get("NavRoute")
+        if navroute:
+            for route in navroute.get("Route"):
+                cls.storeSystem(route.get("StarSystem"), route.get("StarPos"))
+                cls.id_cache[route.get("SystemAddress")] = route
+
+    @classmethod
+    def systemFromId64(cls, id64):
+        return cls.id_cache.get(id64)
+        # we could try and lookup up from somewhere
+
+    @classmethod
     def edsmGetSystem(cls, system):
 
         if not system:
-            error("system is null")
+            Debug.logger.error("system is null")
             return
 
         if not system in cls.systemCache and not cls.scanned:
-            #journalGetSystem()
-            cls.scanned=True
-
+            # journalGetSystem()
+            cls.scanned = True
 
         if system in cls.systemCache:
 
             return cls.systemCache[system]
 
         else:
-            url = 'https://www.edsm.net/api-v1/system?systemName=' + quote_plus(system) + '&showCoordinates=1'
+            url = 'https://www.edsm.net/api-v1/system?systemName=' + \
+                quote_plus(system) + '&showCoordinates=1'
             r = requests.get(url)
             s = r.json()
 
-            cls.systemCache[system] = (s["coords"]["x"], s["coords"]["y"], s["coords"]["z"])
+            cls.systemCache[system] = (
+                s["coords"]["x"], s["coords"]["y"], s["coords"]["z"])
             return s["coords"]["x"], s["coords"]["y"], s["coords"]["z"]
 
     @classmethod
     def dump(cls):
         for x in cls.systemCache.keys():
-            debug('"{}":[{},{},{}],'.format(x, cls.systemCache.get(x)[0], cls.systemCache.get(x)[1],
-                                            cls.systemCache.get(x)[2]))
+            Debug.logger.debug('"{}":[{},{},{}],'.format(x, cls.systemCache.get(x)[0], cls.systemCache.get(x)[1],
+                                                         cls.systemCache.get(x)[2]))
 
 
 def edsmGetSystem(system):
@@ -125,11 +141,18 @@ def journalGetSystem():
             if entry.get("event") in ("FSDJump", "Location"):
                 system = entry.get("StarSystem")
                 starpos = entry.get("StarPos")
+                address = entry.get("SystemAddress")
+                Systems.storeNavroute(
+                    {"NavRoute": {"Route":
+                                  [{"StarSystem": system, "StarPos": starpos,
+                                    "SystemAddress": address}]
+                                  }})
                 Systems.storeSystem(system, starpos)
 
 
 def recent_journal():
-    list_of_files = glob.glob(os.path.join(config.default_journal_dir, 'journal*.log'))
+    list_of_files = glob.glob(os.path.join(
+        config.default_journal_dir, 'journal*.log'))
     latest_file = max(list_of_files, key=os.path.getctime)
-    debug("latest journal: {}".format(latest_file))
+    Debug.logger.debug("latest journal: {}".format(latest_file))
     return latest_file

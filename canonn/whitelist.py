@@ -9,6 +9,7 @@ except:
 
 from canonn.debug import Debug
 from canonn.debug import debug, error
+import canonn.emitter
 import threading
 import requests
 import sys
@@ -21,14 +22,14 @@ class whiteListGetter(threading.Thread):
         self.callback = callback
 
     def run(self):
-        debug("getting whiteList")
+        Debug.logger.debug("getting whiteList")
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/whitelist"
         r = requests.get(url)
 
         if not r.status_code == requests.codes.ok:
-            error("whiteListGetter {} ".format(url))
-            error(r.status_code)
-            error(r.json())
+            Debug.logger.error("whiteListGetter {} ".format(url))
+            Debug.logger.error(r.status_code)
+            Debug.logger.error(r.json())
             results = []
         else:
             results = r.json()
@@ -40,10 +41,12 @@ class whiteListSetter(threading.Thread):
 
     def __init__(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         threading.Thread.__init__(self)
-        self.cmdr = quote_plus(cmdr.encode('utf8'))
-        self.system = quote_plus(system.encode('utf8'))
+        self.cmdr = cmdr
+        self.system = system
+        self.odyssey = state.get("Odyssey")
         self.is_beta = is_beta
         self.station = station
+        self.odyssey = station
         self.body = body
         self.entry = entry
         self.state = state
@@ -56,31 +59,26 @@ class whiteListSetter(threading.Thread):
 
     def run(self):
 
-        url = "https://us-central1-canonn-api-236217.cloudfunctions.net/submitRaw?"
-        url = url+"&cmdrName={}".format(self.cmdr)
-        url = url+"&systemName={}".format(self.system)
-        url = url+"&bodyName={}".format(self.body)
-        url = url+"&station={}".format(self.station)
-        url = url+"&event={}".format(self.entry.get("event"))
-        url = url+"&x={}".format(self.x)
-        url = url+"&y={}".format(self.y)
-        url = url+"&z={}".format(self.z)
-        url = url+"&lat={}".format(self.lat)
-        url = url+"&lon={}".format(self.lon)
-        url = url+"&is_beta={}".format(self.is_beta)
-        url = url+"&raw_event={}".format(quote_plus(
-            json.dumps(self.entry, ensure_ascii=False).encode('utf8')))
-        url = url+"&clientVersion={}".format(self.client)
-
-        r = requests.get(url)
-
-        if not r.status_code == requests.codes.ok:
-            error("whiteListSetter {} ".format(url))
-            error(r.status_code)
-            error(r.json())
-            results = []
-        else:
-            results = r.json()
+        canonn.emitter.post("https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent",
+            {
+                "gameState": {
+                    "systemName": self.system,
+                    "systemCoordinates": [self.x, self.y, self.z],
+                    "bodyName": self.body,
+                    "station": self.station,
+                    "latitude": self.lat,
+                    "longitude": self.lon,
+                    "clientVersion": self.client,
+                    "isBeta": self.is_beta,
+                    "platform": "PC",
+                    "odyssey": self.odyssey
+                },
+                "rawEvent": self.entry,
+                "eventType": self.entry.get("event"),
+                "cmdrName": self.cmdr
+            }
+        )
+        
 
 
 '''
@@ -117,7 +115,7 @@ class whiteList(Frame):
         for event in whiteList.whitelist:
 
             if cls.matchkeys(event.get("definition"), entry):
-                debug("Match {}".format(entry.get("event")))
+                Debug.logger.debug("Match {}".format(entry.get("event")))
                 whiteListSetter(cmdr, is_beta, system, station, entry,
                                 state, x, y, z, body, lat, lon, client).start()
 
