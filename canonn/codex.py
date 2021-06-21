@@ -962,11 +962,15 @@ class CodexTypes():
                         self.scandata[body_code][hud_category][english_name] = True
                 
                     if hud_category == "Biology":
-                        if english_name.split(" ")[0] in self.odyssey_bio:
-                            subcat = " ".join(english_name.split(" ")[0:2])
-                            self.scandata[body_code][hud_category][subcat] = False
-                        if (r.get("scanned") == "true"):
-                            self.scandata[body_code][hud_category][subcat] = True
+                        k=0
+                        if english_name.split(" ")[0] in ("($$$)", "($$)", "($)"):
+                            k=1
+                        if english_name.split(" ")[k] in self.odyssey_bio:
+                            subcat = " ".join(english_name.split(" ")[0:k+2])
+                            if subcat not in self.scandata[body_code][hud_category]:
+                                self.scandata[body_code][hud_category][subcat] = False
+                            if (r.get("scanned") == "true"):
+                                self.scandata[body_code][hud_category][subcat] = True
                 
                 if self.odyssey:
                     if hud_category == "Geology" or hud_category == "Biology":
@@ -1471,7 +1475,18 @@ class CodexTypes():
             self.scandata[body][hud_category][type] = False
         if scanned:
             self.scandata[body][hud_category][type] = True
-
+        
+        if hud_category == "Biology":
+            k=0
+            if type.split(" ")[0] in ("($$$)", "($$)", "($)"):
+                k=1
+            if type.split(" ")[k] in self.odyssey_bio:
+                subcat = " ".join(type.split(" ")[0:k+2])
+                if subcat not in self.scandata[body][hud_category]:
+                    self.scandata[body][hud_category][subcat] = False
+                if scanned:
+                    self.scandata[body][hud_category][subcat] = True
+        
         total_index = 0
         for t in self.ppoidata[body][hud_category]:
             total_index += len(self.ppoidata[body][hud_category][t])
@@ -1926,6 +1941,7 @@ class CodexTypes():
                     self.planetcol2.append(tk.Frame(self.planetlist[category]))
                     theme.update(self.planetcol1[-1])
                     theme.update(self.planetcol2[-1])
+                    print(self.scandata)
                     if category in ("Geology", "Biology"):
                         if self.planetlist_body in self.scandata:
                             if category in self.scandata[self.planetlist_body]:
