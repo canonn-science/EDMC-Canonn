@@ -2592,10 +2592,10 @@ class CodexTypes():
         #
         #        self.fake_biology(cmdr, system, x, y, z, ma[2], ma[3], client)
 
-        if (entry.get("event") in ("Location", "StartUp")) or (entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace") or (entry.get("event") == "FSDTarget" and self.intaxi):
+        if (entry.get("event") in ("Location", "StartUp", "CarrierJump")) or (entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace") or (entry.get("event") == "FSDTarget" and self.intaxi):
             self.system = system
             self.system64 = entry.get("SystemAddress")
-            if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
+            if (entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace") or (entry.get("event") == "CarrierJump"):
                 self.system = entry.get("StarSystem")
             elif entry.get("event") == "FSDTarget" and self.intaxi:
                 self.system = entry.get("Name")
@@ -2787,22 +2787,17 @@ class CodexTypes():
                 if "MULTIPLAYER_SCENARIO42_TITLE" in entry.get("SignalName"):
                     self.add_poi("Human", "Navigation Beacon", None)
                 elif "MULTIPLAYER_SCENARIO14_TITLE" in entry.get("SignalName"):
-                    self.add_poi(
-                        "Ring", "$ConflictZone:Resource Extraction Site", None)
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site", None)
                 elif "MULTIPLAYER_SCENARIO77_TITLE" in entry.get("SignalName"):
-                    self.add_poi(
-                        "Ring", "$ConflictZone:Resource Extraction Site [Low]", None)
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [Low]", None)
                 elif "MULTIPLAYER_SCENARIO78_TITLE" in entry.get("SignalName"):
-                    self.add_poi(
-                        "Ring", "$ConflictZone:Resource Extraction Site [High]", None)
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [High]", None)
                 elif "MULTIPLAYER_SCENARIO79_TITLE" in entry.get("SignalName"):
-                    self.add_poi(
-                        "Ring", "$ConflictZone:Resource Extraction Site [Danger]", None)
+                    self.add_poi("Ring", "$ConflictZone:Resource Extraction Site [Danger]", None)
                 elif "MULTIPLAYER_SCENARIO80_TITLE" in entry.get("SignalName"):
                     self.add_poi("Ring", "Compromised Navigation Beacon", None)
                 else:
-                    self.add_poi("Human", "$ConflictZone:" +
-                                 entry.get("SignalName"), None)
+                    self.add_poi("Human", "$ConflictZone:" + entry.get("SignalName"), None)
                     dovis = False
             elif "Warzone_PointRace" in entry.get("SignalName"):
                 self.nfss += 1
@@ -2834,19 +2829,18 @@ class CodexTypes():
                 else:
                     FleetCarrier = False
                 if FleetCarrier:
-                    self.remove_poi(
-                        "Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
+                    if self.fccount == 0:
+                        dovis = True
+                    #self.remove_poi("Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
                     self.fccount += 1
                     #self.add_poi("Human", "$FleetCarrier:"+entry.get("SignalName"), None)
-                    self.add_poi(
-                        "Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
+                    self.add_poi("Human", "Fleet Carrier", None)
                 else:
                     if self.humandetailed:
-                        self.add_poi("Human", "$Station:" +
-                                     entry.get("SignalName"), None)
+                        self.add_poi("Human", "$Station:" + entry.get("SignalName"), None)
                     else:
                         self.add_poi("Human", "Station", None)
-                dovis = True
+                    dovis = True
             else:
                 # ^HIP 454-4( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$
                 prog = re.compile(
@@ -2873,6 +2867,7 @@ class CodexTypes():
                         self.add_poi("Human", "Installation", None)
                 dovis = True
             self.allowed = True
+            dovis = False
             # self.refreshPOIData(None)
             if dovis:
                 self.refreshPOIData(None)
