@@ -802,18 +802,23 @@ class CodexTypes():
                 if remove_panel:
                     self.planetpanel.grid_remove()
                 if len(self.lock) != 0:
-                    self.systempanel.grid()
+                    remove_panel = True
+                    for category in self.poidata:
+                        if category in self.lock:
+                            remove_panel = False
+                    if not remove_panel:
+                        self.systempanel.grid()
                     
         else:
             if name not in self.lock:
                 self.labels[name]["image"] = self.images["{}_grey".format(
                     name)]
                 self.systemlist[name].grid_remove()
-                nothing = True
+                remove_panel = True
                 for category in self.poidata:
                     if category in self.lock:
-                        nothing = False
-                if nothing:
+                        remove_panel = False
+                if remove_panel:
                     self.systempanel.grid_remove()
                 if len(self.lockPlanet) != 0:
                     remove_panel = True
@@ -1726,6 +1731,7 @@ class CodexTypes():
         for category in self.poidata:
             self.set_image(category, True)
             nothing = False
+        nothing = False
         # else:
         #    self.frame.grid()
         #    self.frame.grid_remove()
