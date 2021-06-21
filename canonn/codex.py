@@ -2372,12 +2372,15 @@ class CodexTypes():
         volcanism = (body.get('volcanismType') and body.get(
             'volcanismType') != 'No volcanism')
 
+        hasAtmos=(body.get("atmosphereType") and body.get("atmosphereType") != "No atmosphere")
+        noAtmos=(not hasAtmos)
+
         biology = self.has_bio(body)
 
         modifier = ""
         if volcanism:
             modifier = "+v"
-        if biology:
+        if biology and noAtmos:
             modifier = f"{modifier}+b"
 
         mats = [
