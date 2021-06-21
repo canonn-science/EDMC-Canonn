@@ -960,7 +960,14 @@ class CodexTypes():
                         self.scandata[body_code][hud_category][english_name] = False
                     if (r.get("scanned") == "true"):
                         self.scandata[body_code][hud_category][english_name] = True
-
+                
+                    if hud_category == "Biology":
+                        if english_name.split(" ")[0] in self.odyssey_bio:
+                            subcat = " ".join(english_name.split(" ")[0:2])
+                            self.scandata[body_code][hud_category][subcat] = False
+                        if (r.get("scanned") == "true"):
+                            self.scandata[body_code][hud_category][subcat] = True
+                
                 if self.odyssey:
                     if hud_category == "Geology" or hud_category == "Biology":
                         # if index == None:
@@ -1773,7 +1780,7 @@ class CodexTypes():
                     i = 0
                     col = 0
                     for poibody in self.poidata[category][type]:
-                        col = ((i % 5)+1)*3
+                        col = ((i % 5)+1)*4
                         row = int(i/5)
                         #row = 0
                         label.append(tk.Label(
@@ -1790,6 +1797,16 @@ class CodexTypes():
                         label[-1].grid(row=row, column=col, sticky="NW")
                         i += 1
                         col += 1
+                        if category in ("Geology", "Biology"):
+                            if poibody in self.scandata:
+                                if category in self.scandata[poibody]:
+                                    if type in self.scandata[poibody][category]:
+                                        if not self.scandata[poibody][category][type]:
+                                            label[-1]["text"] = "*" + label[-1]["text"]
+                                            #label.append(tk.Label(self.systemcol2[-1], text="(*)"))
+                                            #theme.update(label[-1])
+                                            #label[-1].grid(row=row, column=col, sticky="NW")
+                                            #col += 1
                         if name == "Unknown":
                             nunk = len(
                                 self.ppoidata[poibody][category]["Unknown"])
@@ -1805,7 +1822,7 @@ class CodexTypes():
                         if i < len(self.poidata[category][type]):
                             label.append(tk.Label(self.systemcol2[-1], text=","))
                             theme.update(label[-1])
-                            label[-1].grid(row=row, column=col, sticky="NW")
+                            label[-1].grid(row=row, column=col, sticky="N")
                             col += 1
 
                     self.systemcol1[-1].grid(row=len(self.systemcol1),
@@ -1916,7 +1933,7 @@ class CodexTypes():
                                     if not self.scandata[self.planetlist_body][category][type]:
                                         #self.planetcol1[-1]['fg'] = "red"
                                         #self.planetcol1[-1]['text'] = "   (*) " + type
-                                        self.planetcol1[-1]['text'] = type + " (*)"
+                                        self.planetcol1[-1]['text'] = "   *" + type
 
                     self.ppoidata[self.planetlist_body][category][type] = sorted(
                         self.ppoidata[self.planetlist_body][category][type], key=lambda poi: int(nvl(poi[0], "#0")[1:]))
