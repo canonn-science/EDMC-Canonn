@@ -803,12 +803,17 @@ class CodexTypes():
                     self.planetpanel.grid_remove()
                 if len(self.lock) != 0:
                     self.systempanel.grid()
+                    
         else:
             if name not in self.lock:
                 self.labels[name]["image"] = self.images["{}_grey".format(
                     name)]
                 self.systemlist[name].grid_remove()
-                if len(self.lock) == 0:
+                nothing = True
+                for category in self.poidata:
+                    if category in self.lock:
+                        nothing = False
+                if nothing:
                     self.systempanel.grid_remove()
                 if len(self.lockPlanet) != 0:
                     remove_panel = True
@@ -1941,7 +1946,6 @@ class CodexTypes():
                     self.planetcol2.append(tk.Frame(self.planetlist[category]))
                     theme.update(self.planetcol1[-1])
                     theme.update(self.planetcol2[-1])
-                    print(self.scandata)
                     if category in ("Geology", "Biology"):
                         if self.planetlist_body in self.scandata:
                             if category in self.scandata[self.planetlist_body]:
