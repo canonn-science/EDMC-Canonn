@@ -218,19 +218,23 @@ class InfoLink(HyperlinkLabel):
             anchor=tk.NW
         )
         self.resized = False
+        self.lasttime=datetime.datetime.now()
         self.bind('<Configure>', self.__configure_event)
 
-    def __reset(self):
-        self.resized = False
 
     def __configure_event(self, event):
         """Handle resizing."""
 
+        difference=datetime.datetime.now() - self.lasttime
+        Debug.logger.debug("diff {}".format(difference.total_seconds()))   
+        if difference.total_seconds() > 0.5:
+            self.resized = False
+
         if not self.resized:
-            Debug.logger.debug("Patrol: Info widget resize")
+            Debug.logger.debug("Patrol widget resize")
             self.resized = True
-            self.configure(wraplength=event.width)
-            self.after(1000, self.__reset)
+            self.configure(wraplength=event.width-2)
+            self.lasttime=datetime.datetime.now()
 
 
 class CanonnPatrol(Frame):

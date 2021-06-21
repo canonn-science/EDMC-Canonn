@@ -20,6 +20,7 @@ import threading
 from canonn.debug import Debug
 from canonn.debug import debug, error
 import html
+import datetime
 
 
 REFRESH_CYCLES = 60  # how many cycles before we refresh
@@ -64,19 +65,24 @@ class NewsLink(HyperlinkLabel):
             anchor=tk.NW
         )
         self.resized = False
+        self.lasttime=datetime.datetime.now()
         self.bind('<Configure>', self.__configure_event)
 
-    def __reset(self):
-        self.resized = False
 
     def __configure_event(self, event):
         "Handle resizing."
 
+        difference=datetime.datetime.now() - self.lasttime
+        Debug.logger.debug("diff {}".format(difference.total_seconds()))   
+        if difference.total_seconds() > 0.5:
+            self.resized = False
+
         if not self.resized:
             Debug.logger.debug("News widget resize")
             self.resized = True
-            self.configure(wraplength=event.width)
-            self.after(500, self.__reset)
+            self.configure(wraplength=event.width-2)
+            self.lasttime=datetime.datetime.now()
+
 
 
 class CanonnNews(Frame):
