@@ -28,6 +28,7 @@ from canonn.debug import Debug
 from canonn.debug import debug, error
 from canonn.player import Player
 from config import config
+import datetime
 
 
 from ttkHyperlinkLabel import HyperlinkLabel
@@ -61,12 +62,22 @@ class ReleaseLink(HyperlinkLabel):
             wraplength=50,  # updated in __configure_event below
             anchor=tk.NW
         )
+        self.resized = False
+        self.lasttime=datetime.datetime.now()
         self.bind('<Configure>', self.__configure_event)
 
     def __configure_event(self, event):
         "Handle resizing."
 
-        self.configure(wraplength=event.width)
+        difference=datetime.datetime.now() - self.lasttime
+        
+        if difference.total_seconds() > 0.5:
+            self.resized = False
+
+        if not self.resized:
+            Debug.logger.debug("Release widget resize")
+            self.resized = True
+            self.configure(wraplength=event.width-2)
 
 
 class ReleaseThread(threading.Thread):
