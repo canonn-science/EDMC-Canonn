@@ -96,7 +96,7 @@ class fakeSystem():
         }
         cls.wrapper(cls.cmdr, True, cls.system, None, None, None, None, event,
                     {"dummy": "dummy"}, cls.coords["x"], cls.coords["y"], cls.coords["z"], None,
-                    None, None, cls.client)
+                    {"Latitude": None, "Longitude": None}, cls.client)
         cls.parent.after(10000, cls.FSDJump)
 
     @ classmethod
@@ -128,11 +128,11 @@ class fakeSystem():
         }
         cls.wrapper(cls.cmdr, True, cls.system, None, None, None, None, event,
                     {"dummy": "dummy"}, cls.coords["x"], cls.coords["y"], cls.coords["z"], None,
-                    None, None, cls.client)
+                    {"Latitude": None, "Longitude": None, "Temperature": None, "Gravity": None}, cls.client)
 
 
-def inject(cmdr, is_beta, system, station,
-           entry, client, journal_entry_wrapper, frame):
+def inject(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
+           state, x, y, z, body, nearloc, client, journal_entry_wrapper, frame):
     sendText = entry.get("event") == "SendText" and entry.get("Message")
     bFakeJump = (
         sendText and "canonn fakejump" in entry.get("Message").lower())

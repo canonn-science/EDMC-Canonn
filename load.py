@@ -245,8 +245,8 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 # Detect journal events
 def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                           state, x, y, z, body, nearloc, client):
-    canonn.debug.inject(cmdr, is_beta, system, station, entry,
-                        client, journal_entry_wrapper, this.frame)
+    canonn.debug.inject(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
+                        state, x, y, z, body, nearloc, client, journal_entry_wrapper, this.frame)
     clientreport.submit(cmdr, is_beta, client, entry)
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
