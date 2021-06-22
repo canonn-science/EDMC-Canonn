@@ -319,19 +319,21 @@ def dashboard_entry(cmdr, is_beta, entry):
         this.nearloc['Gravity'] = entry.get("Gravity")
     else:
         this.nearloc['Gravity'] = None
-
-    if entry.get("BodyName"):
+    
+    if 'BodyName' in entry:
         this.body_name = entry.get("BodyName")
     else:
         this.body_name = None
         this.planet_radius = None
 
-    if entry.get("PlanetRadius"):
+    if 'PlanetRadius' in entry:
         this.planet_radius = entry.get("PlanetRadius")
-
-    timestamp = time.mktime(time.strptime(
-        entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ'))
-    this.nearloc['Time'] = timestamp
+    
+    if 'timestamp' in entry:
+        this.nearloc['Time'] = time.mktime(time.strptime(
+            entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ'))
+    else:
+        this.nearloc['Time'] = None
 
     return dashboard_entry_wrapper(cmdr, is_beta, entry)
 

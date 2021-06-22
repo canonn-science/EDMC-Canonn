@@ -204,6 +204,8 @@ class extoolTypes():
                 FleetCarrier = prog.match(entry.get("SignalName"))
                 prog = re.compile("^.*[a-z].*$")
                 FleetCarrier = FleetCarrier and not prog.match(entry.get("SignalName"))
+                prog = re.compile("^[A-Z0-9][A-Z0-9][A-Z0-9]-[A-Z0-9][A-Z0-9][A-Z0-9]$")
+                FleetCarrier = FleetCarrier or prog.match(entry.get("SignalName"))
             if not FleetCarrier:
                 # space only
                 self.send_data(cmdr, entry.get("event"), timestamp, entry)
