@@ -341,27 +341,30 @@ class BearingDestination():
                 self.updateBearing(closest_target, round(brng, 2), round(dist, 3), heading)
             else:
                 self.state = 0
+                self.target = []
                 #self.updateBearing("-", "-", "-")
-                self.updateBearing(None, None, None)
+                self.updateBearing()
                 #UpdateRadius(self, self.system, my_body).start()
 
-    def updateBearing(self, itarget, bearing=None, distance=None, heading=None):
+    def updateBearing(self, itarget=None, bearing=None, distance=None, heading=None):
         #debug({"heading": heading, "bearing": bearing})
-        fg = "grey"
+        
+        if itarget is not None:
+            fg = "grey"
+            if (bearing and heading):
+                if int(heading) == round(bearing, 0):
+                    fg = "green"
+                bupper = (round(bearing, 0)+1) % 360
+                blower = (round(bearing, 0)-1) % 360
+                if int(heading) in (bupper, blower):
+                    fg = "orange"
 
-        if (bearing and heading):
-            if int(heading) == round(bearing, 0):
-                fg = "green"
-            bupper = (round(bearing, 0)+1) % 360
-            blower = (round(bearing, 0)-1) % 360
-            if int(heading) in (bupper, blower):
-                fg = "orange"
-
-        self.bearing_status["foreground"] = fg
-        if self.target[itarget]["name"] == "Custom":
-            self.bearing_status["text"] = "   DEST ({},{}) : BEARING {} / DIST {} km".format(self.target[itarget]["latitude"], self.target[itarget]["longitude"], bearing, distance)
-        else:
-            self.bearing_status["text"] = "   {} : BEARING {} / DIST {} km".format(self.target[itarget]["name"], bearing, distance)
+            self.bearing_status["foreground"] = fg
+            if self.target[itarget]["name"] == "Custom":
+                self.bearing_status["text"] = "   DEST ({},{}) : BEARING {} / DIST {} km".format(self.target[itarget]["latitude"], self.target[itarget]["longitude"], bearing, distance)
+            else:
+                self.bearing_status["text"] = "   {} : BEARING {} / DIST {} km".format(self.target[itarget]["name"], bearing, distance)
+        
         if self.state == 1:
             self.show()
         else:
