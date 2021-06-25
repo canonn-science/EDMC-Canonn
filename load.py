@@ -160,7 +160,7 @@ def plugin_app(parent):
     this.extoolcontrol = extool.extoolTypes()
     this.extool = extool.BearingDestination(table, 3)
     this.codexcontrol.setDestinationWidget(this.extool)
-    this.patrol = patrol.CanonnPatrol(table, 4)
+    this.patrol = patrol.CanonnPatrol(this.parent, table, 4)
     this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 5)
     this.guestbook = guestBook.setup(table, 6)
 
@@ -319,7 +319,7 @@ def dashboard_entry(cmdr, is_beta, entry):
         this.nearloc['Gravity'] = entry.get("Gravity")
     else:
         this.nearloc['Gravity'] = None
-    
+
     if 'BodyName' in entry:
         this.body_name = entry.get("BodyName")
     else:
@@ -328,7 +328,7 @@ def dashboard_entry(cmdr, is_beta, entry):
 
     if 'PlanetRadius' in entry:
         this.planet_radius = entry.get("PlanetRadius")
-    
+
     if 'timestamp' in entry:
         this.nearloc['Time'] = time.mktime(time.strptime(
             entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ'))
