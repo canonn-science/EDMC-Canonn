@@ -283,10 +283,8 @@ class BearingDestination():
             self.calculateBearing(self.body, self.radius, self.latitude, self.longitude)
 
     def eventDeactivate(self, event):
-        lat = None
-        lon = None
-        self.setTargetLatLon("Custom", lat, lon)
         self.state = 0
+        self.target = {}
         self.hide()
 
     def ActivateTarget(self, lat, lon):
