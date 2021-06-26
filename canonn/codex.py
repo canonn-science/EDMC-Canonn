@@ -365,6 +365,7 @@ class organicScan():
 
 class CodexTypes():
     tooltips = {
+        "MissingData": "Missing data in DB",
         "Geology": "Geology: Vents and fumeroles",
         "Cloud": "Lagrange Clouds",
         "Anomaly": "Anomalous stellar phenomena",
@@ -480,9 +481,10 @@ class CodexTypes():
         self.parent = parent
         self.hidecodexbtn = tk.IntVar(value=config.get_int("CanonnHideCodex"))
         self.hidecodex = self.hidecodexbtn.get()
-        self.humandetailedbtn = tk.IntVar(
-            value=config.get_int("CanonnHumanDetailed"))
-        self.humandetailed = self.humandetailedbtn.get()
+        self.hidehumandetailedbtn = tk.IntVar(value=config.get_int("CanonnHideHumanDetailed"))
+        self.hidehumandetailed = self.hidehumandetailedbtn.get()
+        self.hidemissingdatabtn = tk.IntVar(value=config.get_int("CanonnHideMissingData"))
+        self.hidemissingdata = self.hidemissingdatabtn.get()
 
         self.frame = Frame(parent)
         theme.update(self.frame)
@@ -579,7 +581,7 @@ class CodexTypes():
         self.icon_body.bind("<Button-1>", self.nextBodyMode)
         # self.icon_body.grid_remove()
 
-        self.types = ("Geology", "Cloud", "Anomaly", "Thargoid",
+        self.types = ("MissingData", "Geology", "Cloud", "Anomaly", "Thargoid",
                       "Biology", "Guardian", "Human", "Ring",
                       "None", "Other", "Personal", "Planets",
                       "Tourist", "Jumponium", "GreenSystem")
@@ -1009,7 +1011,11 @@ class CodexTypes():
                     if index == None:
                         continue
                 
-                self.ppoidata[body_code][hud_category][english_name].append([index, latlon])
+                if self.odyssey:
+                    if latlon is not None:
+                        self.ppoidata[body_code][hud_category][english_name].append([index, latlon])
+                else:
+                    self.ppoidata[body_code][hud_category][english_name].append([index, latlon])
 
             while not self.saaq.empty():
                 r = self.saaq.get()
@@ -1019,30 +1025,27 @@ class CodexTypes():
                 if body_code not in self.saadata:
                     self.saadata[body_code] = {}
                 self.saadata[body_code][r.get("hud_category")] = r.get("count")
-                self.remove_poi("Geology", "$Sites:Need SAA", body_code)
-                self.remove_poi("Biology", "$Species:Need SAA", body_code)
+                #self.remove_poi("Geology", "$Sites:Need SAA", body_code)
+                #self.remove_poi("Biology", "$Species:Need SAA", body_code)
                 self.remove_poi("MissingData", "$Geology:Need SAA", body_code)
                 self.remove_poi("MissingData", "$Biology:Need SAA", body_code)
                 self.remove_poi("MissingData", "$Rings:Need SAA", body_code)
+                self.remove_poi("MissingData", "$Planets:Need FSS", body_code)
 
                 if r.get("hud_category") == "Ring":
-                    self.add_poi(r.get("hud_category"),
-                                 "$Hotspots:"+r.get("english_name"), body_code)
+                    self.add_poi(r.get("hud_category"), "$Hotspots:"+r.get("english_name"), body_code)
                 elif r.get("hud_category") == "Geology":
                     nsites = 0
                     if body_code in self.ppoidata:
                         if "Geology" in self.ppoidata[body_code]:
                             for type in self.ppoidata[body_code]["Geology"]:
                                 if self.odyssey:
-                                    nsites += len(self.ppoidata[body_code]
-                                                  ["Geology"])
+                                    nsites += len(self.ppoidata[body_code]["Geology"])
                                 else:
-                                    nsites += len(self.ppoidata[body_code]
-                                                  ["Geology"][type])
+                                    nsites += len(self.ppoidata[body_code]["Geology"][type])
                     if nsites < r.get("count"):
                         self.add_poi("Geology", "$Sites:Unknown", body_code)
-                        self.add_poi(
-                            "MissingData", "$Geology:Unknown", body_code)
+                        self.add_poi("MissingData", "$Geology:Unknown", body_code)
                         if body_code not in self.ppoidata:
                             self.ppoidata[body_code] = {}
                 elif r.get("hud_category") == "Biology":
@@ -1058,8 +1061,7 @@ class CodexTypes():
                                                   ["Biology"][type])
                     if nsites < r.get("count"):
                         self.add_poi("Biology", "Unknown", body_code)
-                        self.add_poi(
-                            "MissingData", "$Biology:Unknown", body_code)
+                        self.add_poi("MissingData", "$Biology:Unknown", body_code)
                         if body_code not in self.ppoidata:
                             self.ppoidata[body_code] = {}
                 self.update_unknown_ppoi(body_code)
@@ -1141,11 +1143,12 @@ class CodexTypes():
                     if self.settlementdata[station]["coords"] is not None:
                         latlon = "("+str(round(float(self.settlementdata[station]["coords"][0]), 2)) + "," + str(
                             round(float(self.settlementdata[station]["coords"][1]), 2)) + ")"
-                    if self.humandetailed:
+                    if self.hidehumandetailed:
+                        self.add_poi("Human", stype, bodycode)
+                    else:
                         self.add_poi(
                             "Human", "$"+stype+":"+self.stationdata[station]["economy"], bodycode)
-                    else:
-                        self.add_poi("Human", stype, bodycode)
+                        
                     if bodycode is not None:
                         if bodycode not in self.ppoidata:
                             self.ppoidata[bodycode] = {}
@@ -1155,11 +1158,12 @@ class CodexTypes():
                             self.ppoidata[bodycode]["Human"][station +
                                                              ecotype] = [[None, latlon]]
                 else:
-                    if self.humandetailed:
+                    if self.hidehumandetailed:
+                        self.add_poi("Human", stype, None)
+                    else:
                         self.add_poi("Human", "$"+stype+":" +
                                      self.stationdata[station]["economy"], None)
-                    else:
-                        self.add_poi("Human", stype, None)
+                        
 
             # if self.temp_edsmdata:
             if not self.bodies:
@@ -1172,7 +1176,8 @@ class CodexTypes():
             if edsm_bodies:
                 for b in edsm_bodies:
                     if not "Belt Cluster" in b.get("name"):
-                        self.bodies[b.get("bodyId")] = b
+                        if b.get("bodyId") not in self.bodies:
+                            self.bodies[b.get("bodyId")] = b
 
             # Debug.logger.debug("self.bodies")
             # Debug.logger.debug(self.bodies)
@@ -1255,37 +1260,38 @@ class CodexTypes():
 
                         # Landable Volcanism
                         if b.get('type') == 'Planet' and b.get('volcanismType') and b.get('volcanismType') != 'No volcanism' and b.get('isLandable'):
-                            self.add_poi(
-                                "Geology", "$Volcanism:"+b.get('volcanismType').replace(" Volcanism", ""), body_code)
+                            self.add_poi("Geology", "$Volcanism:"+b.get('volcanismType').replace(" Volcanism", ""), body_code)
                             # check SAA signals
-                            if body_code not in self.ppoidata:
-                                self.add_poi(
-                                    "Geology", "$Sites:Need SAA", body_code)
-                                self.add_poi(
-                                    "MissingData", "$Geology:Need SAA", body_code)
-                                self.ppoidata[body_code] = {}
-                            else:
-                                if "Geology" not in self.ppoidata[body_code]:
-                                    self.add_poi(
-                                        "Geology", "$Sites:Need SAA", body_code)
-                                    self.add_poi(
-                                        "MissingData", "$Geology:Need SAA", body_code)
+                            if body_code not in self.saadata:
+                                if body_code not in self.ppoidata:
+                                    #self.add_poi("Geology", "$Sites:Need SAA", body_code)
+                                    self.add_poi("MissingData", "$Geology:Need SAA", body_code)
+                                    #self.ppoidata[body_code] = {}
+                                else:
+                                    if "Geology" not in self.ppoidata[body_code]:
+                                        #self.add_poi("Geology", "$Sites:Need SAA", body_code)
+                                        self.add_poi("MissingData", "$Geology:Need SAA", body_code)
 
                         # Landable Atmosphere
-                        # if b.get('type') == 'Planet' and b.get('atmosphereType') != "No atmosphere" and b.get('isLandable'):
-                            # if body_code not in self.ppoidata:
-                                # self.add_poi(
-                                    # "Biology", "$Species:Need SAA", body_code)
-                                # self.add_poi(
-                                    # "MissingData", "$Biology:Need SAA", body_code)
-                                # self.ppoidata[body_code] = {}
-                            # else:
-                                # if "Biology" not in self.ppoidata[body_code]:
-                                    # self.add_poi(
-                                        # "Biology", "$Species:Need SAA", body_code)
-                                    # self.add_poi(
-                                        # "MissingData", "$Biology:Need SAA", body_code)
-
+                        if b.get('type') == 'Planet' and b.get('atmosphereType') != "No atmosphere" and b.get('isLandable'):
+                            self.remove_poi("MissingData", "$Planets:Need FSS", body_code)
+                            if body_code not in self.saadata:
+                                if body_code not in self.ppoidata:
+                                    #self.add_poi("Biology", "$Species:Need SAA", body_code)
+                                    self.add_poi("MissingData", "$Biology:Need SAA", body_code)
+                                    #self.ppoidata[body_code] = {}
+                                else:
+                                    if "Biology" not in self.ppoidata[body_code]:
+                                        #self.add_poi("Biology", "$Species:Need SAA", body_code)
+                                        self.add_poi("MissingData", "$Biology:Need SAA", body_code)
+                        
+                        # Thin Atmosphere
+                        if b.get('type') == 'Planet' and "Thin" in b.get('atmosphereType') and not b.get('isLandable'):
+                            if body_code not in self.saadata:
+                                if body_code not in self.ppoidata:
+                                    self.add_poi("MissingData", "$Planets:Need FSS", body_code)
+                                
+                        
                         # water ammonia etc
                         if b.get('subType') in CodexTypes.body_types.keys():
                             self.add_poi("Planets", CodexTypes.body_types.get(
@@ -1459,23 +1465,32 @@ class CodexTypes():
             self.ppoidata[body][hud_category]["Unknown"].append(
                 ["#"+str(index), None])
 
-    def add_ppoi(self, body, hud_category, type, index, lat, lon, scanned):
+    def add_ppoi(self, body, hud_category, type):
         """
         add new index
         check if it exist in the unknown list and remove it
         """
 
-        Debug.logger.debug(
-            f"add_ppoi {body} {hud_category} {type} {index} {lat} {lon} {scanned}")
+        Debug.logger.debug(f"add_ppoi {body} {hud_category} {type}")
 
         if body not in self.ppoidata:
             self.ppoidata[body] = {}
         if hud_category not in self.ppoidata[body]:
             self.ppoidata[body][hud_category] = {}
-        if "Unknown" not in self.ppoidata[body][hud_category]:
-            self.ppoidata[body][hud_category]["Unknown"] = []
         if type not in self.ppoidata[body][hud_category]:
             self.ppoidata[body][hud_category][type] = []
+
+    def add_ppoi_wsaa(self, body, hud_category, type, index, lat, lon, scanned):
+        """
+        add new index
+        check if it exist in the unknown list and remove it
+        """
+
+        Debug.logger.debug(f"add_ppoi_wsaa {body} {hud_category} {type} {index} {lat} {lon} {scanned}")
+
+        self.add_ppoi(body, hud_category, type)
+        if "Unknown" not in self.ppoidata[body][hud_category]:
+            self.ppoidata[body][hud_category]["Unknown"] = []
 
         if body not in self.scandata:
             self.scandata[body] = {}
@@ -1506,8 +1521,7 @@ class CodexTypes():
             if index == 0:
                 index = len(self.ppoidata[body][hud_category][type])+1
 
-            self.ppoidata[body][hud_category][type].append(
-                ["#"+str(index), "("+str(lat)+","+str(lon)+")"])
+            self.ppoidata[body][hud_category][type].append(["#"+str(index), "("+str(lat)+","+str(lon)+")"])
             self.update_unknown_ppoi(body)
 
         else:
@@ -1606,10 +1620,12 @@ class CodexTypes():
                     temp_poidata = r.json()
 
                 # push the data ont a queue
-                for v in temp_poidata["codex"]:
-                    self.poiq.put(v)
-                for v in temp_poidata["SAAsignals"]:
-                    self.saaq.put(v)
+                if "codex" in temp_poidata:
+                    for v in temp_poidata["codex"]:
+                        self.poiq.put(v)
+                if "SAAsignals" in temp_poidata:
+                    for v in temp_poidata["SAAsignals"]:
+                        self.saaq.put(v)
             except:
                 debug("Error getting POI data")
 
@@ -1701,6 +1717,7 @@ class CodexTypes():
         # if self.waitingPOI or not self.allowed:
         # Debug.logger.debug(f"Still waiting for POI data")
         # else:
+        self.set_image("MissingData", False)
         self.set_image("Geology", False)
         self.set_image("Cloud", False)
         self.set_image("Anomaly", False)
@@ -1726,9 +1743,13 @@ class CodexTypes():
 
         # self.frame.grid()
         # self.cleanup_poidata()
-
+        
+        
         nothing = True
         for category in self.poidata:
+            if self.hidemissingdata:
+                if category == "MissingData":
+                    continue
             self.set_image(category, True)
             nothing = False
         nothing = False
@@ -1833,18 +1854,30 @@ class CodexTypes():
                                             #theme.update(label[-1])
                                             #label[-1].grid(row=row, column=col, sticky="NW")
                                             #col += 1
-                        if name == "Unknown":
-                            nunk = len(
-                                self.ppoidata[poibody][category]["Unknown"])
-                            nsites = len(self.ppoidata[poibody][category])
-                            if poibody in self.saadata:
-                                if category in self.saadata[poibody]:
-                                    nsites = self.saadata[poibody][category]
-                            label.append(tk.Label(
-                                self.systemcol2[-1], text="["+str(nsites-nunk)+"/"+str(nsites)+"]"))
-                            theme.update(label[-1])
-                            label[-1].grid(row=row, column=col, sticky="NW")
-                            col += 1
+                        if category in ("Geology", "Biology", "Human", "Thargoid", "Guardian"):
+                            if name == "Unknown":
+                                nunk = len(self.ppoidata[poibody][category]["Unknown"])
+                                nsites = len(self.ppoidata[poibody][category])
+                                if poibody in self.saadata:
+                                    if category in self.saadata[poibody]:
+                                        nsites = self.saadata[poibody][category]
+                                label.append(tk.Label(
+                                    self.systemcol2[-1], text="["+str(nsites-nunk)+"/"+str(nsites)+"]"))
+                                theme.update(label[-1])
+                                label[-1].grid(row=row, column=col, sticky="NW")
+                                col += 1
+                        if category == "MissingData":
+                            if name == "Unknown":
+                                nunk = len(self.ppoidata[poibody][subcategory]["Unknown"])
+                                nsites = len(self.ppoidata[poibody][subcategory])
+                                if poibody in self.saadata:
+                                    if subcategory in self.saadata[poibody]:
+                                        nsites = self.saadata[poibody][subcategory]
+                                label.append(tk.Label(
+                                    self.systemcol2[-1], text="["+str(nsites-nunk)+"/"+str(nsites)+"]"))
+                                theme.update(label[-1])
+                                label[-1].grid(row=row, column=col, sticky="NW")
+                                col += 1
                         if i < len(self.poidata[category][type]):
                             label.append(tk.Label(self.systemcol2[-1], text=","))
                             theme.update(label[-1])
@@ -1945,8 +1978,6 @@ class CodexTypes():
 
                     if self.odyssey and type == "Unknown":
                         continue
-                    if len(self.ppoidata[self.planetlist_body][category][type]) == 0:
-                        continue
                     self.planetcol1.append(
                         tk.Label(self.planetlist[category], text="   "+type))
                     self.planetcol2.append(tk.Frame(self.planetlist[category]))
@@ -1960,42 +1991,45 @@ class CodexTypes():
                                         #self.planetcol1[-1]['fg'] = "red"
                                         #self.planetcol1[-1]['text'] = "   (*) " + type
                                         self.planetcol1[-1]['text'] = "   *" + type
+                    
+                    if len(self.ppoidata[self.planetlist_body][category][type]) > 0:
 
-                    self.ppoidata[self.planetlist_body][category][type] = sorted(
-                        self.ppoidata[self.planetlist_body][category][type], key=lambda poi: int(nvl(poi[0], "#0")[1:]))
+                        self.ppoidata[self.planetlist_body][category][type] = sorted(
+                            self.ppoidata[self.planetlist_body][category][type], key=lambda poi: int(nvl(poi[0], "#0")[1:]))
 
-                    i = 0
-                    for poi in self.ppoidata[self.planetlist_body][category][type]:
-                        col = (i % 10)+1
-                        row = int(i/10)
-                        if poi[0] is not None:
-                            label.append(tk.Label(
-                                self.planetcol2[-1], text=poi[0]))
-                            if poi[1] is not None:
-                                if config.get_int('theme')==0:
-                                    label[-1]["fg"] = "blue"
-                                if config.get_int('theme')==1:
-                                    label[-1]["fg"] = "white"
-                                label[-1]["cursor"] = "hand2"
-                                label[-1].bind('<Button-1>', lambda event,
-                                               latlon=poi[1]: self.activateDestination(latlon))
-                            theme.update(label[-1])
-                            label[-1].grid(row=row, column=col, sticky="NW")
-                        if poi[1] is not None:
-                            if poi[0] is None:
+                        i = 0
+                        for poi in self.ppoidata[self.planetlist_body][category][type]:
+                            col = (i % 10)+1
+                            row = int(i/10)
+                            if poi[0] is not None:
                                 label.append(tk.Label(
-                                    self.planetcol2[-1], text=poi[1]))
+                                    self.planetcol2[-1], text=poi[0]))
+                                if poi[1] is not None:
+                                    if config.get_int('theme')==0:
+                                        label[-1]["fg"] = "blue"
+                                    if config.get_int('theme')==1:
+                                        label[-1]["fg"] = "white"
+                                    label[-1]["cursor"] = "hand2"
+                                    label[-1].bind('<Button-1>', lambda event,
+                                                   latlon=poi[1]: self.activateDestination(latlon))
                                 theme.update(label[-1])
-                                label[-1].grid(row=row,
-                                               column=col, sticky="NW")
-                                if config.get_int('theme')==0:
-                                    label[-1]["fg"] = "blue"
-                                if config.get_int('theme')==1:
-                                    label[-1]["fg"] = "white"
-                                label[-1]["cursor"] = "hand2"
-                                label[-1].bind('<Button-1>', lambda event,
-                                               latlon=poi[1]: self.activateDestination(latlon))
-                        i += 1
+                                label[-1].grid(row=row, column=col, sticky="NW")
+                            if poi[1] is not None:
+                                if poi[0] is None:
+                                    label.append(tk.Label(
+                                        self.planetcol2[-1], text=poi[1]))
+                                    theme.update(label[-1])
+                                    label[-1].grid(row=row,
+                                                   column=col, sticky="NW")
+                                    if config.get_int('theme')==0:
+                                        label[-1]["fg"] = "blue"
+                                    if config.get_int('theme')==1:
+                                        label[-1]["fg"] = "white"
+                                    label[-1]["cursor"] = "hand2"
+                                    label[-1].bind('<Button-1>', lambda event,
+                                                   latlon=poi[1]: self.activateDestination(latlon))
+                            i += 1
+                        
                     self.planetcol1[-1].grid(row=len(self.planetcol1),
                                              column=0, columnspan=1, sticky="NW")
                     self.planetcol2[-1].grid(row=len(self.planetcol1),
@@ -2054,8 +2088,7 @@ class CodexTypes():
 
     def remove_poi(self, hud_category, english_name, body):
 
-        Debug.logger.debug(
-            f"remove_poi - {hud_category} {english_name} {body}")
+        Debug.logger.debug(f"remove_poi - {hud_category} {english_name} {body}")
 
         if hud_category in self.poidata:
             if english_name in self.poidata[hud_category]:
@@ -2370,6 +2403,8 @@ class CodexTypes():
         for category in self.poidata.copy():
             if category in ('Jumponium', 'GreenSystem'):
                 del self.poidata[category]
+                for body in self.ppoidata:
+                    del self.ppoidata[body][category]
 
     def green_system(self, bodies):
         mats = [
@@ -2445,6 +2480,7 @@ class CodexTypes():
                     quantity = 0
                 if materials.get(target) and int(quantity) < 150:
                     self.add_poi(jclass, f"{target}{modifier}", body_code)
+                    self.add_ppoi(body_code, jclass, f"{target}{modifier}")
 
             basic = (materials.get("Carbon") and materials.get(
                 "Vanadium") and materials.get("Germanium"))
@@ -2584,12 +2620,11 @@ class CodexTypes():
             self.gravity = None
             if self.planetlist_auto:
                 if self.planetlist_show:
-                    tmplock = self.lockPlanet.copy()
-                    for category in tmplock:
+                    for category in self.lockPlanet.copy():
                         self.switchPlanet(category)
                         self.switchPOI(category)
                     self.planetlist_show = False
-                    self.visualisePlanetData()
+                    self.visualisePOIData()
         else:
             self.body = body
             self.latitude = latitude
@@ -2598,8 +2633,9 @@ class CodexTypes():
             self.gravity = gravity
             if self.planetlist_auto:
                 if (not self.planetlist_show) or (self.planetlist_body != body.replace(self.system+" ", '')):
-                    tmplock = self.lock.copy()
-                    for category in tmplock:
+                    for category in self.lock.copy():
+                        if category == "MissingData":
+                            continue
                         self.switchPOI(category)
                         self.switchPlanet(category)
                     self.planetlist_show = True
@@ -2723,7 +2759,7 @@ class CodexTypes():
                         if (hud_category == "Geology") or (hud_category == "Biology"):
 
                             if self.odyssey:
-                                self.add_ppoi(bodycode, hud_category, english_name, 0, round(
+                                self.add_ppoi_wsaa(bodycode, hud_category, english_name, 0, round(
                                     self.latitude, 2), round(self.longitude, 2), True)
 
                             else:
@@ -2731,33 +2767,25 @@ class CodexTypes():
                                     "NearestDestination").split(":")
                                 if (near_dest[2].split("=")[0] == "#index"):
                                     idx = int(near_dest[2].split("=")[1][:-1])
-                                    self.add_ppoi(bodycode, hud_category, english_name, idx, round(
+                                    self.add_ppoi_wsaa(bodycode, hud_category, english_name, idx, round(
                                         self.latitude, 2), round(self.longitude, 2), True)
 
                             if hud_category == "Geology":
                                 if "Unknown" in self.ppoidata[bodycode]["Geology"]:
                                     if len(self.ppoidata[bodycode]["Geology"]["Unknown"]) == 0:
-                                        self.remove_poi(
-                                            "Geology", "$Sites:Unknown", bodycode)
-                                        self.remove_poi(
-                                            "MissingData", "$Geology:Unknown", bodycode)
+                                        self.remove_poi("Geology", "$Sites:Unknown", bodycode)
+                                        self.remove_poi("MissingData", "$Geology:Unknown", bodycode)
                                     elif len(self.ppoidata[bodycode]["Geology"]["Unknown"]) > 0:
-                                        self.add_poi(
-                                            "Geology", "$Sites:Unknown", bodycode)
-                                        self.add_poi(
-                                            "MissingData", "$Geology:Unknown", bodycode)
+                                        self.add_poi("Geology", "$Sites:Unknown", bodycode)
+                                        self.add_poi("MissingData", "$Geology:Unknown", bodycode)
                             elif hud_category == "Biology":
                                 if "Unknown" in self.ppoidata[bodycode]["Biology"]:
                                     if len(self.ppoidata[bodycode]["Biology"]["Unknown"]) == 0:
-                                        self.remove_poi(
-                                            "Biology", "Unknown", bodycode)
-                                        self.remove_poi(
-                                            "MissingData", "$Biology:Unknown", bodycode)
+                                        self.remove_poi("Biology", "Unknown", bodycode)
+                                        self.remove_poi("MissingData", "$Biology:Unknown", bodycode)
                                     elif len(self.ppoidata[bodycode]["Biology"]["Unknown"]) > 0:
-                                        self.add_poi(
-                                            "Biology", "Unknown", bodycode)
-                                        self.add_poi(
-                                            "MissingData", "$Biology:Unknown", bodycode)
+                                        self.add_poi("Biology", "Unknown", bodycode)
+                                        self.add_poi("MissingData", "$Biology:Unknown", bodycode)
 
                             if self.planetlist_auto and hud_category not in self.lockPlanet:
                                 self.lockPlanet.append(hud_category)
@@ -2858,13 +2886,14 @@ class CodexTypes():
                 self.add_poi("Human", "Distress Call", None)
                 dovis = True
             elif "$" in entry.get("SignalName"):
-                if self.humandetailed:
+                if self.hidehumandetailed:
+                    dovis = False
+                else:
                     #self.add_poi("Other", "$Warning:" +
                     #             entry.get("SignalName"), None)
                     print("WARNING : ", entry)
                     dovis = False
-                else:
-                    dovis = False
+                    
             elif entry.get("IsStation"):
                 if len(entry.get("SignalName")) > 8:
                     FleetCarrier = (entry.get("SignalName") and entry.get(
@@ -2882,10 +2911,11 @@ class CodexTypes():
                     #self.add_poi("Human", "$FleetCarrier:"+entry.get("SignalName"), None)
                     self.add_poi("Human", "Fleet Carrier ["+str(self.fccount)+"]", None)
                 else:
-                    if self.humandetailed:
-                        self.add_poi("Human", "$Station:" + entry.get("SignalName"), None)
-                    else:
+                    if self.hidehumandetailed:
                         self.add_poi("Human", "Station", None)
+                    else:
+                        self.add_poi("Human", "$Station:" + entry.get("SignalName"), None)
+                        
                     dovis = True
             else:
                 # ^HIP 454-4( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$
@@ -2900,17 +2930,18 @@ class CodexTypes():
                 else:
                     Megaship = False
                 if Megaship:
-                    if self.humandetailed:
+                    if self.hidehumandetailed:
+                        self.add_poi("Human", "Megaship", None)
+                    else:
                         self.add_poi("Human", "$Megaship:" +
                                      entry.get("SignalName"), None)
-                    else:
-                        self.add_poi("Human", "Megaship", None)
                 else:
-                    if self.humandetailed:
+                    if self.hidehumandetailed:
+                        self.add_poi("Human", "Installation", None)
+                    else:
                         self.add_poi("Human", "$Installation:" +
                                      entry.get("SignalName"), None)
-                    else:
-                        self.add_poi("Human", "Installation", None)
+                        
                 dovis = True
             self.allowed = True
             dovis = False
@@ -3010,29 +3041,37 @@ class CodexTypes():
         "Called to get a tk Frame for the settings dialog."
 
         self.hidecodexbtn = tk.IntVar(value=config.get_int("CanonnHideCodex"))
+        self.hidehumandetailedbtn = tk.IntVar(value=config.get_int("CanonnHideHumanDetailed"))
+        self.hidemissingdatabtn = tk.IntVar(value=config.get_int("CanonnHideMissingData"))
 
         self.hidecodex = self.hidecodexbtn.get()
+        self.hidehumandetailed = self.hidehumandetailedbtn.get()
+        self.hidemissingdata = self.hidemissingdatabtn.get()
 
         frame = nb.Frame(parent)
-        frame.columnconfigure(1, weight=1)
+        frame.columnconfigure(2, weight=1)
         frame.grid(row=gridrow, column=0, sticky="NSEW")
 
         nb.Label(frame, text="Codex Settings").grid(
             row=0, column=0, sticky="NW")
         nb.Checkbutton(frame, text="Hide Codex Icons", variable=self.hidecodexbtn).grid(
             row=1, column=0, sticky="NW")
-        nb.Checkbutton(frame, text="Human Detailed", variable=self.humandetailedbtn).grid(
+        nb.Checkbutton(frame, text="Hide Human Detailed", variable=self.hidehumandetailedbtn).grid(
             row=1, column=1, sticky="NW")
+        nb.Checkbutton(frame, text="Hide Missing Data", variable=self.hidemissingdatabtn).grid(
+            row=1, column=2, sticky="NW")
 
         return frame
 
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
         config.set('CanonnHideCodex', self.hidecodexbtn.get())
-        config.set('CanonnHumanDetailed', self.humandetailedbtn.get())
+        config.set('CanonnHideHumanDetailed', self.hidehumandetailedbtn.get())
+        config.set('CanonnHideMissingData', self.hidemissingdatabtn.get())
 
         self.hidecodex = self.hidecodexbtn.get()
-        self.humandetailed = self.humandetailedbtn.get()
+        self.hidehumandetailed = self.hidehumandetailedbtn.get()
+        self.hidemissingdata = self.hidemissingdatabtn.get()
 
         # dont check the retval
         self.visualisePOIData()
