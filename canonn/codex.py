@@ -1097,110 +1097,122 @@ class CodexTypes():
             
             while not self.poiq.empty():
                 r = self.poiq.get()
-                codex_name_ref = CodexTypes.name_ref[str(r.get("entryid"))]
-                hud_category = codex_name_ref.get("hud_category")
-                english_name = codex_name_ref.get("english_name")
-                
-                body = r.get("body")
-                if body is None:
-                    continue
-                body_code = body.replace(self.system+" ", '')
-                
-                if hud_category == "Geology":
-                    subcat = "$Sites:"+english_name
+                if "PROVIDER" in r:
+                    if "CATEGORY" in r:
+                        body = r.get("PLANET")
+                        body_code = body.replace(self.system+" ", '')
+                        hud_category = r.get("CATEGORY")
+                        if hud_category in ("Biology", "Geology"):
+                            continue
+                        english_name = r.get("NAME")
+                        if r.get("LATITUDE") is not None and r.get("LONGITUDE") is not None:
+                            latlon = "(" + str(round(r.get("LATITUDE"), 2)) + "," + str(round(r.get("LONGITUDE"),2)) + ")"
+                        else:
+                            latlon = None
+                        
+                        self.add_ppoi(body_code, hud_category, english_name)
+                        self.ppoidata[body_code][hud_category][english_name] = [[None, latlon]]
+                        
                 else:
-                    subcat = english_name
-                    if self.odyssey:
+                
+                    codex_name_ref = CodexTypes.name_ref[str(r.get("entryid"))]
+                    hud_category = codex_name_ref.get("hud_category")
+                    english_name = codex_name_ref.get("english_name")
+                    
+                    body = r.get("body")
+                    if body is None:
+                        continue
+                    body_code = body.replace(self.system+" ", '')
+                    
+                    if hud_category == "Geology":
+                        subcat = "$Sites:"+english_name
+                    else:
+                        subcat = english_name
+                        if self.odyssey:
+                            if hud_category == "Biology":
+                                if english_name.split(" ")[0] in self.odyssey_bio:
+                                    subcat = " ".join(english_name.split(" ")[0:2])
+                            if codex_name_ref.get("reward") is not None:
+                                if codex_name_ref.get("reward") > 700000:
+                                    subcat = "($$$) " + subcat
+                                    english_name = "($$$) " + english_name
+                                elif codex_name_ref.get("reward") > 400000:
+                                    subcat = "($$) " + subcat
+                                    english_name = "($$) " + english_name
+                                elif codex_name_ref.get("reward") > 200000:
+                                    subcat = "($) " + subcat
+                                    english_name = "($) " + english_name
+                    self.add_poi(hud_category, subcat, body_code)
+
+                    if (r.get("latitude") is None) or (r.get("longitude") is None):
+                        latlon = None
+                    else:
+                        latlon = "("+str(round(float(r.get("latitude")), 2)) + \
+                            "," + str(round(float(r.get("longitude")), 2)) + ")"
+
+                    if (r.get("index_id") is None):
+                        index = None
+                    else:
+                        index = "#"+str(r.get("index_id"))
+                    
+                    self.add_ppoi(body_code, hud_category, english_name)
+                    
+                    if hud_category in ("Geology", "Biology"):
+                        if body_code not in self.scandata:
+                            self.scandata[body_code] = {}
+                        if hud_category not in self.scandata[body_code]:
+                            self.scandata[body_code][hud_category] = {}
+                        if english_name not in self.scandata[body_code][hud_category]:
+                            self.scandata[body_code][hud_category][english_name] = False
+                        if (r.get("scanned") == "true"):
+                            self.scandata[body_code][hud_category][english_name] = True
+                    
                         if hud_category == "Biology":
-                            if english_name.split(" ")[0] in self.odyssey_bio:
-                                subcat = " ".join(english_name.split(" ")[0:2])
-                        if codex_name_ref.get("reward") is not None:
-                            if codex_name_ref.get("reward") > 700000:
-                                subcat = "($$$) " + subcat
-                                english_name = "($$$) " + english_name
-                            elif codex_name_ref.get("reward") > 400000:
-                                subcat = "($$) " + subcat
-                                english_name = "($$) " + english_name
-                            elif codex_name_ref.get("reward") > 200000:
-                                subcat = "($) " + subcat
-                                english_name = "($) " + english_name
-                self.add_poi(hud_category, subcat, body_code)
-
-                if (r.get("latitude") is None) or (r.get("longitude") is None):
-                    latlon = None
-                else:
-                    latlon = "("+str(round(float(r.get("latitude")), 2)) + \
-                        "," + str(round(float(r.get("longitude")), 2)) + ")"
-
-                if (r.get("index_id") is None):
-                    index = None
-                else:
-                    index = "#"+str(r.get("index_id"))
-
-                if body_code not in self.ppoidata:
-                    self.ppoidata[body_code] = {}
-                if hud_category not in self.ppoidata[body_code]:
-                    self.ppoidata[body_code][hud_category] = {}
-                if english_name not in self.ppoidata[body_code][hud_category]:
-                    self.ppoidata[body_code][hud_category][english_name] = []
-
-                if hud_category in ("Geology", "Biology"):
-                    if body_code not in self.scandata:
-                        self.scandata[body_code] = {}
-                    if hud_category not in self.scandata[body_code]:
-                        self.scandata[body_code][hud_category] = {}
-                    if english_name not in self.scandata[body_code][hud_category]:
-                        self.scandata[body_code][hud_category][english_name] = False
-                    if (r.get("scanned") == "true"):
-                        self.scandata[body_code][hud_category][english_name] = True
-                
-                    if hud_category == "Biology":
-                        k=0
-                        if english_name.split(" ")[0] in ("($$$)", "($$)", "($)"):
-                            k=1
-                        if english_name.split(" ")[k] in self.odyssey_bio:
-                            subcat = " ".join(english_name.split(" ")[0:k+2])
-                            if subcat not in self.scandata[body_code][hud_category]:
-                                self.scandata[body_code][hud_category][subcat] = False
-                            if (r.get("scanned") == "true"):
-                                self.scandata[body_code][hud_category][subcat] = True
-                
-                if self.odyssey:
-                    if hud_category == "Geology" or hud_category == "Biology":
-                        # if index == None:
-                        index = "#" + \
-                            str(len(self.ppoidata[body_code][hud_category][english_name])+1)
-                
-                if [None, latlon] in self.ppoidata[body_code][hud_category][english_name]:
-                    self.ppoidata[body_code][hud_category][english_name].remove([None, latlon])
-                
-                if hud_category != "Geology" and hud_category != "Biology":
-                    addpoi = True
-                    replacepoi = False
-                    for poi in self.ppoidata[body_code][hud_category][english_name]:
-                        if poi[0] == index:
-                            addpoi = False
-                            if latlon != None and poi[1] == None:
-                                replacepoi = True
-                    if not addpoi:
-                        if replacepoi:
-                            self.ppoidata[body_code][hud_category][english_name].remove([index, None])
+                            k=0
+                            if english_name.split(" ")[0] in ("($$$)", "($$)", "($)"):
+                                k=1
+                            if english_name.split(" ")[k] in self.odyssey_bio:
+                                subcat = " ".join(english_name.split(" ")[0:k+2])
+                                if subcat not in self.scandata[body_code][hud_category]:
+                                    self.scandata[body_code][hud_category][subcat] = False
+                                if (r.get("scanned") == "true"):
+                                    self.scandata[body_code][hud_category][subcat] = True
+                    
+                    if self.odyssey:
+                        if hud_category == "Geology" or hud_category == "Biology":
+                            # if index == None:
+                            index = "#" + \
+                                str(len(self.ppoidata[body_code][hud_category][english_name])+1)
+                    
+                    if [None, latlon] in self.ppoidata[body_code][hud_category][english_name]:
+                        self.ppoidata[body_code][hud_category][english_name].remove([None, latlon])
+                    
+                    if hud_category != "Geology" and hud_category != "Biology":
+                        addpoi = True
+                        replacepoi = False
+                        for poi in self.ppoidata[body_code][hud_category][english_name]:
+                            if poi[0] == index:
+                                addpoi = False
+                                if latlon != None and poi[1] == None:
+                                    replacepoi = True
+                        if not addpoi:
+                            if replacepoi:
+                                self.ppoidata[body_code][hud_category][english_name].remove([index, None])
+                                self.ppoidata[body_code][hud_category][english_name].append([index, latlon])
+                            continue
+                    
+                    if hud_category == "Thargoid" or hud_category == "Guardian":
+                        if index == None:
+                            continue
+                    
+                    if self.odyssey:
+                        if latlon is not None:
                             self.ppoidata[body_code][hud_category][english_name].append([index, latlon])
-                        continue
-                
-                if hud_category == "Thargoid" or hud_category == "Guardian":
-                    if index == None:
-                        continue
-                
-                if self.odyssey:
-                    if latlon is not None:
+                    else:
                         self.ppoidata[body_code][hud_category][english_name].append([index, latlon])
-                else:
-                    self.ppoidata[body_code][hud_category][english_name].append([index, latlon])
 
             while not self.saaq.empty():
                 r = self.saaq.get()
-                print("SAA = ", r)
                 if "SAAScanComplete" in r:
                     for bodyID in r.get("SAAScanComplete"):
                         body_code = r.get("SAAScanComplete").get(bodyID).replace(self.system+" ", "")
@@ -1338,13 +1350,17 @@ class CodexTypes():
                             "Human", "$"+stype+":"+self.stationdata[station]["economy"], bodycode)
                         
                     if bodycode is not None:
-                        if bodycode not in self.ppoidata:
-                            self.ppoidata[bodycode] = {}
-                        if "Human" not in self.ppoidata[bodycode]:
-                            self.ppoidata[bodycode]["Human"] = {}
-                        if station+ecotype not in self.ppoidata[bodycode]["Human"]:
-                            self.ppoidata[bodycode]["Human"][station +
-                                                             ecotype] = [[None, latlon]]
+                        keep_latlon = None
+                        if bodycode in self.ppoidata:
+                            if "Human" in self.ppoidata[bodycode]:
+                                if station in self.ppoidata[bodycode]["Human"]:
+                                    keep_latlon = self.ppoidata[bodycode]["Human"][station]
+                                    self.remove_ppoi(bodycode, "Human", station)
+                        self.add_ppoi(bodycode, "Human", station + ecotype)
+                        if keep_latlon is None:
+                            self.ppoidata[bodycode]["Human"][station + ecotype] = [[None, latlon]]
+                        else:
+                            self.ppoidata[bodycode]["Human"][station + ecotype] = keep_latlon
                 else:
                     if self.hidehumandetailed:
                         self.add_poi("Human", stype, None)
@@ -1387,7 +1403,7 @@ class CodexTypes():
             max_category = {}
             min_category = {}
             for category in self.ppoidata[body]:
-                if (category == "Geology") or (category == "Biology"):
+                if category in ("Geology", "Biology"):
                     min_category[category] = 0
                     max_category[category] = 0
                     for type in self.ppoidata[body][category]:
@@ -1447,32 +1463,21 @@ class CodexTypes():
                         self.ppoidata[body][category]["Unknown"].append(
                             ["#"+str(i), None])
 
-    def remove_ppoi(self, body, hud_category, index):
+    def remove_ppoi(self, body, hud_category, english_name):
         """
         remove the index in the hud_category
         and add it in the unknown list for this hud_category
         """
 
-        Debug.logger.debug(f"remove_ppoi {hud_category} {index}")
+        Debug.logger.debug(f"remove_ppoi {hud_category} {english_name}")
 
         if body not in self.ppoidata:
             return
-
-        find_i = False
-        for type in self.ppoidata[body][hud_category]:
-            if type != "Unknown":
-                for i in range(len(self.ppoidata[body][hud_category][type])):
-                    poi = self.ppoidata[body][hud_category][type][i]
-                    if "#"+index == poi[0]:
-                        del self.ppoidata[body][hud_category][type][i]
-                        find_i = True
-                    if find_i:
-                        break
-            if find_i:
-                break
-        if find_i:
-            self.ppoidata[body][hud_category]["Unknown"].append(
-                ["#"+str(index), None])
+        if hud_category not in self.ppoidata[body]:
+            return
+        if english_name not in self.ppoidata[body][hud_category]:
+            return
+        del self.ppoidata[body][hud_category][english_name]
 
     def add_ppoi(self, body, hud_category, type):
         """
@@ -1661,8 +1666,25 @@ class CodexTypes():
             except:
                 debug("Error getting SAA data")
 
+            # try:
+                # url = "https://api.canonn.tech/systems?systemName={}".format(
+                    # quote_plus(system.encode('utf8')))
+
+                # r = requests.get(url, timeout=30)
+                # # debug("request complete")
+                # r.encoding = 'utf-8'
+                # if r.status_code == requests.codes.ok:
+                    # # push canonn data only a queue
+                    # # self.canonnq.put(r.json())
+                    # pass
+                # else:
+                    # Debug.logger.debug("Canonn Failed")
+                    # Debug.logger.error("Canonn Failed")
+            # except:
+                # Debug.logger.debug("Error getting Canonn data")
+            
             try:
-                url = "https://api.canonn.tech/systems?systemName={}".format(
+                url = "http://elite.laulhere.com/ExTool/info.php?mode=publicpoints&system={}".format(
                     quote_plus(system.encode('utf8')))
 
                 r = requests.get(url, timeout=30)
@@ -1670,31 +1692,17 @@ class CodexTypes():
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
                     # push canonn data only a queue
-                    # self.canonnq.put(r.json())
-                    pass
-                else:
-                    Debug.logger.debug("Canonn Failed")
-                    Debug.logger.error("Canonn Failed")
+                    temp_poidata = r.json()
+                    
+                if "POINTS" in temp_poidata:
+                    for v in temp_poidata["POINTS"]:
+                        v["PROVIDER"] = "extool"
+                        self.poiq.put(v)
             except:
-                Debug.logger.debug("Error getting Canonn data")
-
-            # #try:
-            # url = "https://us-central1-canonn-api-236217.cloudfunctions.net/get_cmdr_status?cmdr={}".format(
-                # quote_plus(cmdr.encode('utf8')))
-            # r = requests.get(url, timeout=30)
-            # r.encoding = 'utf-8'
-            # if r.status_code == requests.codes.ok:
-                # temp_cmdrdata = r.json()
-
-            # for v in temp_cmdrdata:
-                # if (v["system"] == self.system):
-                    # self.cmdrq.put(v)
-            # #except:
-            # #    debug("Error getting cmdr data")
-
+                Debug.logger.debug("Error getting ExTool data")
+            
             self.waitingPOI = False
             Debug.logger.debug("Triggering Event")
-
             debug("getPOIdata frame.event_generate <<refreshPOIData>>")
             self.frame.event_generate('<<refreshPOIData>>', when='head')
             #self.frame.event_generate('<<refreshPlanetData>>', when='head')
