@@ -1098,6 +1098,7 @@ class CodexTypes():
             while not self.poiq.empty():
                 r = self.poiq.get()
                 if "EXTOOL" in r:
+                
                     body = r.get("PLANET")
                     body_code = body.replace(self.system+" ", '')
                     hud_category = r.get("TYPE")
@@ -1280,7 +1281,11 @@ class CodexTypes():
                 
                 if temp_cmdrdata["description"] is None:
                     name = temp_cmdrdata["category"]
-                    index = temp_cmdrdata["index_id"]
+                    index = "#1"
+                    if body_code in self.ppoidata:
+                        if "Personal" in self.ppoidata[body_code]:
+                            if name in self.ppoidata[body_code]["Personal"]:
+                                index = "#" + str(len(self.ppoidata[body_code]["Personal"][name]))
                 else:
                     name = temp_cmdrdata["description"]
                     index = None
@@ -1290,8 +1295,7 @@ class CodexTypes():
                 
                 self.add_ppoi(body_code, "Personal", name)
                 if [index, latlon] not in self.ppoidata[body_code]["Personal"][name]:
-                    self.ppoidata[body_code]["Personal"][name].append(
-                        [index, latlon])
+                    self.ppoidata[body_code]["Personal"][name].append([index, latlon])
 
             while not self.edsm_stationq.empty():
                 # only expecting to go around once
@@ -1400,12 +1404,13 @@ class CodexTypes():
         if body not in self.ppoidata:
             return
 
+        unk_category = ['Geology', 'Biology']
         if self.odyssey:
-
+        
             max_category = {}
             min_category = {}
             for category in self.ppoidata[body]:
-                if category in ("Geology", "Biology"):
+                if category in unk_category:
                     min_category[category] = 0
                     max_category[category] = 0
                     for type in self.ppoidata[body][category]:
@@ -1415,18 +1420,21 @@ class CodexTypes():
 
             if body in self.saadata:
                 for category in self.saadata[body]:
-                    if category not in min_category:
-                        min_category[category] = 0
-                    max_category[category] = self.saadata[body][category]
-                    if category not in self.ppoidata[body]:
-                        self.ppoidata[body][category] = {}
+                    if category in unk_category:
+                        if category not in min_category:
+                            min_category[category] = 0
+                        max_category[category] = self.saadata[body][category]
+                        if category not in self.ppoidata[body]:
+                            self.ppoidata[body][category] = {}
 
             for category in max_category:
-                if category in self.ppoidata[body]:
-                    self.ppoidata[body][category]["Unknown"] = []
-                    for i in range(min_category[category]+1, max_category[category]+1):
-                        self.ppoidata[body][category]["Unknown"].append(
-                            ["#"+str(i), None])
+                if category in unk_category:
+                    if category in self.ppoidata[body]:
+                        self.ppoidata[body][category]["Unknown"] = []
+                        for i in range(min_category[category]+1, max_category[category]+1):
+                            self.ppoidata[body][category]["Unknown"].append(
+                                ["#"+str(i), None])
+            
         else:
 
             max_category = {}
@@ -2000,10 +2008,8 @@ class CodexTypes():
 
                 if self.odyssey:
                     if "Unknown" in self.ppoidata[self.planetlist_body][category]:
-                        nunk = len(
-                            self.ppoidata[self.planetlist_body][category]["Unknown"])
-                        nsites = len(
-                            self.ppoidata[self.planetlist_body][category])
+                        nunk = len(self.ppoidata[self.planetlist_body][category]["Unknown"])
+                        nsites = len(self.ppoidata[self.planetlist_body][category])
                         if self.planetlist_body in self.saadata:
                             if category in self.saadata[self.planetlist_body]:
                                 nsites = self.saadata[self.planetlist_body][category]
@@ -2075,16 +2081,12 @@ class CodexTypes():
                 if self.odyssey:
                     if "Unknown" in self.ppoidata[self.planetlist_body][category]:
                         for iunk in range(nunk):
-                            self.planetcol1.append(
-                                tk.Label(self.planetlist[category], text="   Unknown"))
-                            self.planetcol2.append(
-                                tk.Frame(self.planetlist[category]))
+                            self.planetcol1.append(tk.Label(self.planetlist[category], text="   Unknown"))
+                            self.planetcol2.append(tk.Frame(self.planetlist[category]))
                             theme.update(self.planetcol1[-1])
                             theme.update(self.planetcol2[-1])
-                            self.planetcol1[-1].grid(row=len(self.planetcol1),
-                                                     column=0, columnspan=1, sticky="NW")
-                            self.planetcol2[-1].grid(row=len(self.planetcol1),
-                                                     column=1, sticky="NW")
+                            self.planetcol1[-1].grid(row=len(self.planetcol1), column=0, columnspan=1, sticky="NW")
+                            self.planetcol2[-1].grid(row=len(self.planetcol1), column=1, sticky="NW")
 
                 if category in self.lockPlanet:
                     self.planetlist[category].grid()
@@ -2695,6 +2697,7 @@ class CodexTypes():
                             self.switchPOI(category)
                     self.planetlist_show = False
                     self.visualisePOIData()
+                    self.visualisePlanetData()
         else:
             self.body = body
             self.latitude = latitude
@@ -2833,8 +2836,7 @@ class CodexTypes():
                                     self.latitude, 2), round(self.longitude, 2), True)
 
                             else:
-                                near_dest = entry.get(
-                                    "NearestDestination").split(":")
+                                near_dest = entry.get("NearestDestination").split(":")
                                 if (near_dest[2].split("=")[0] == "#index"):
                                     idx = int(near_dest[2].split("=")[1][:-1])
                                     self.add_ppoi_wsaa(bodycode, hud_category, english_name, idx, round(
