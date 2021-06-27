@@ -1685,7 +1685,7 @@ class CodexTypes():
                 # Debug.logger.debug("Error getting Canonn data")
             
             try:
-                url = "http://elite.laulhere.com/ExTool/info.php?mode=publicpoints&system={}".format(
+                url = "http://elite.laulhere.com/ExTool/info.php?mode=canonn&system={}".format(
                     quote_plus(system.encode('utf8')))
 
                 r = requests.get(url, timeout=30)
