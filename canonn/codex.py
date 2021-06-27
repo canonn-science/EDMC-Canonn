@@ -1110,6 +1110,8 @@ class CodexTypes():
                         else:
                             latlon = None
                         
+                        if r.get("TYPE") != "Surface Station":
+                            self.add_poi(hud_category, r.get("TYPE"), body_code)
                         self.add_ppoi(body_code, hud_category, english_name)
                         self.ppoidata[body_code][hud_category][english_name] = [[None, latlon]]
                         
@@ -1276,7 +1278,7 @@ class CodexTypes():
                 temp_cmdrdata = self.cmdrq.get()
                 body = temp_cmdrdata.get("body")
                 body_code = body.replace(self.system+" ", '')
-
+                
                 if temp_cmdrdata["description"] is None:
                     name = temp_cmdrdata["category"]
                     index = temp_cmdrdata["index_id"]
@@ -1301,7 +1303,7 @@ class CodexTypes():
                     edsm_stations = temp_stationdata.get("stations")
                 else:
                     edsm_stations = {}
-
+                
                 if edsm_stations:
                     for s in edsm_stations:
 
@@ -1346,8 +1348,7 @@ class CodexTypes():
                     if self.hidehumandetailed:
                         self.add_poi("Human", stype, bodycode)
                     else:
-                        self.add_poi(
-                            "Human", "$"+stype+":"+self.stationdata[station]["economy"], bodycode)
+                        self.add_poi("Human", "$"+stype+":"+self.stationdata[station]["economy"], bodycode)
                         
                     if bodycode is not None:
                         keep_latlon = None
