@@ -218,15 +218,14 @@ class InfoLink(HyperlinkLabel):
             anchor=tk.NW
         )
         self.resized = False
-        self.lasttime=datetime.datetime.now()
+        self.lasttime = datetime.datetime.now()
         self.bind('<Configure>', self.__configure_event)
-
 
     def __configure_event(self, event):
         """Handle resizing."""
 
-        difference=datetime.datetime.now() - self.lasttime
-        Debug.logger.debug("diff {}".format(difference.total_seconds()))   
+        difference = datetime.datetime.now() - self.lasttime
+        Debug.logger.debug("diff {}".format(difference.total_seconds()))
         if difference.total_seconds() > 0.5:
             self.resized = False
 
@@ -234,12 +233,12 @@ class InfoLink(HyperlinkLabel):
             Debug.logger.debug("Patrol widget resize")
             self.resized = True
             self.configure(wraplength=event.width-2)
-            self.lasttime=datetime.datetime.now()
+            self.lasttime = datetime.datetime.now()
 
 
 class CanonnPatrol(Frame):
 
-    def __init__(self, parent, gridrow):
+    def __init__(self, parent, container, gridrow):
         """Initialise the ``Patrol``."""
 
         padx, pady = 10, 5  # formatting
@@ -248,8 +247,9 @@ class CanonnPatrol(Frame):
 
         Frame.__init__(
             self,
-            parent
+            container
         )
+        self.parent = parent
         self.ships = []
         self.bind('<<PatrolDone>>', self.update_ui)
         self.IMG_PREV = tk.PhotoImage(file=os.path.join(
@@ -342,6 +342,15 @@ class CanonnPatrol(Frame):
         self.hyperlink['text'] = "Fetching {}".format(self.patrol_name)
         self.hyperlink['url'] = None
 
+    def copyclip(self, value):
+        Debug.logger.debug("copyclip")
+
+        self.parent.clipboard_clear()  # clear clipboard contents
+        self.parent.clipboard_append(value)
+        self.parent.update()
+
+        Debug.logger.debug("copyclip done")
+
     @classmethod
     def plugin_start(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
@@ -370,7 +379,7 @@ class CanonnPatrol(Frame):
             self.patrol_list[index]["excluded"] = True
             self.update()
             if self.copypatrol == 1:
-                copyclip(self.nearest.get("system"))
+                self.copyclip(self.nearest.get("system"))
             # if there are excluded closer then we might need to deal with it
             # self.prev.grid()
 
@@ -385,7 +394,7 @@ class CanonnPatrol(Frame):
             self.patrol_list[index - 1]["excluded"] = False
             self.update()
             if self.copypatrol == 1:
-                copyclip(self.nearest.get("system"))
+                self.copyclip(self.nearest.get("system"))
 
     def update_ui(self, event):
         # rerun every 5 seconds
@@ -1032,7 +1041,7 @@ class CanonnPatrol(Frame):
             self.system = system
             self.update()
             if self.nearest and self.copypatrol == 1:
-                copyclip(self.nearest.get("system"))
+                self.copyclip(self.nearest.get("system"))
 
         # If we have visted a system and then jump out then lets clicknext
         if system and self.nearest:
@@ -1090,18 +1099,6 @@ class CanonnPatrol(Frame):
             self.downloaded = True
             self.patrol_update()
         self.update()
-
-
-def copyclip(value):
-    Debug.logger.debug("copyclip")
-    window = tk.Tk()
-    window.withdraw()
-    window.clipboard_clear()  # clear clipboard contents
-    window.clipboard_append(value)
-    Debug.logger.debug("copyclip_append")
-    window.update()
-    window.destroy()
-    Debug.logger.debug("copyclip done")
 
 
 def getDistance(p, g):

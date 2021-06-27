@@ -204,6 +204,8 @@ class extoolTypes():
                 FleetCarrier = prog.match(entry.get("SignalName"))
                 prog = re.compile("^.*[a-z].*$")
                 FleetCarrier = FleetCarrier and not prog.match(entry.get("SignalName"))
+                prog = re.compile("^[A-Z0-9][A-Z0-9][A-Z0-9]-[A-Z0-9][A-Z0-9][A-Z0-9]$")
+                FleetCarrier = FleetCarrier or prog.match(entry.get("SignalName"))
             if not FleetCarrier:
                 # space only
                 self.send_data(cmdr, entry.get("event"), timestamp, entry)
@@ -220,8 +222,7 @@ class BearingDestination():
     radius = None
     latitude = None
     longitude = None
-    target_lat = None
-    target_lon = None
+    target = {}
 
     def __init__(self, parent, gridrow):
         self.frame = Frame(parent)
@@ -278,22 +279,25 @@ class BearingDestination():
                 lon = None
                 self.state = 0
                 self.hide()
-            self.setTargetLatLon(lat, lon)
+            self.setTargetLatLon("Custom", lat, lon)
             self.calculateBearing(self.body, self.radius, self.latitude, self.longitude)
 
     def eventDeactivate(self, event):
-        lat = None
-        lon = None
-        self.setTargetLatLon(lat, lon)
         self.state = 0
+        self.target = {}
         self.hide()
 
     def ActivateTarget(self, lat, lon):
-        self.setTargetLatLon(lat, lon)
+        self.setTargetLatLon("Custom", lat, lon)
         self.state = 1
         self.calculateBearing(self.body, self.radius, self.latitude, self.longitude)
-
-    def setTargetLatLon(self, lat, lon):
+    
+    def AddTarget(self, name, lat, lon):
+        self.setTargetLatLon(name, lat, lon)
+        self.state = 1
+        self.calculateBearing(self.body, self.radius, self.latitude, self.longitude)
+    
+    def setTargetLatLon(self, name, lat, lon):
         if (lat is not None) or (lon is not None):
             if (lat < -90) or (lat > 90):
                 lat = None
@@ -304,8 +308,10 @@ class BearingDestination():
         else:
             lat = None
             lon = None
-        self.target_lat = lat
-        self.target_lon = lon
+        if (name is not None) and (lat is not None) and (lon is not None):
+            self.target[name] = {"latitude" : lat, "longitude" : lon}
+        else:
+            self.target = {}
 
     def updatePosition(self, body, radius, lat, lon, heading):
         self.latitude = lat
@@ -316,34 +322,47 @@ class BearingDestination():
 
     def calculateBearing(self, body, radius, lat, lon, heading=None):
         if self.state == 1:
-            if (lat is not None) and (lon is not None) and (radius is not None) and (body is not None):
+            if (lat is not None) and (lon is not None) and (radius is not None) and (body is not None) and (len(self.target)>0):
                 radius = radius/1000
-                dist = calc_distance(
-                    lat, lon, self.target_lat, self.target_lon, radius)
-                brng = calc_bearing(lat, lon, self.target_lat,
-                                    self.target_lon, radius)
-                self.updateBearing(round(brng, 2), round(dist, 3), heading)
+                closest_target = None
+                closest_distance = None
+                for target_name in self.target:
+                    dist = calc_distance(lat, lon, self.target[target_name]["latitude"], self.target[target_name]["longitude"], radius)
+                    if closest_target is None:
+                        closest_target = target_name
+                        closest_distance = dist
+                    else:
+                        if dist < closest_distance:
+                            closest_target = target_name
+                            closest_distance = dist
+                brng = calc_bearing(lat, lon, self.target[closest_target]["latitude"],self.target[closest_target]["longitude"], radius)
+                self.updateBearing(closest_target, round(brng, 2), round(dist, 3), heading)
             else:
                 self.state = 0
+                self.target = {}
                 #self.updateBearing("-", "-", "-")
-                self.updateBearing(None, None, None)
+                self.updateBearing()
                 #UpdateRadius(self, self.system, my_body).start()
 
-    def updateBearing(self, bearing=None, distance=None, heading=None):
+    def updateBearing(self, target_name=None, bearing=None, distance=None, heading=None):
         #debug({"heading": heading, "bearing": bearing})
-        fg = "grey"
+        
+        if target_name is not None:
+            fg = "grey"
+            if (bearing and heading):
+                if int(heading) == round(bearing, 0):
+                    fg = "green"
+                bupper = (round(bearing, 0)+1) % 360
+                blower = (round(bearing, 0)-1) % 360
+                if int(heading) in (bupper, blower):
+                    fg = "orange"
 
-        if (bearing and heading):
-            if int(heading) == round(bearing, 0):
-                fg = "green"
-            bupper = (round(bearing, 0)+1) % 360
-            blower = (round(bearing, 0)-1) % 360
-            if int(heading) in (bupper, blower):
-                fg = "orange"
-
-        self.bearing_status["foreground"] = fg
-        self.bearing_status["text"] = "   DEST ({},{}) : BEARING {} / DIST {} km".format(
-            self.target_lat, self.target_lon, bearing, distance)
+            self.bearing_status["foreground"] = fg
+            if target_name == "Custom":
+                self.bearing_status["text"] = "   DEST ({},{}) : BEARING {} / DIST {} km".format(self.target[target_name]["latitude"], self.target[target_name]["longitude"], bearing, distance)
+            else:
+                self.bearing_status["text"] = "   {} : BEARING {} / DIST {} km".format(self.target[target_name]["name"], bearing, distance)
+        
         if self.state == 1:
             self.show()
         else:

@@ -73,7 +73,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.2.0"
+this.version = "6.2.1"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -160,7 +160,7 @@ def plugin_app(parent):
     this.extoolcontrol = extool.extoolTypes()
     this.extool = extool.BearingDestination(table, 3)
     this.codexcontrol.setDestinationWidget(this.extool)
-    this.patrol = patrol.CanonnPatrol(table, 4)
+    this.patrol = patrol.CanonnPatrol(this.parent, table, 4)
     this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 5)
     this.guestbook = guestBook.setup(table, 6)
 
@@ -320,18 +320,20 @@ def dashboard_entry(cmdr, is_beta, entry):
     else:
         this.nearloc['Gravity'] = None
 
-    if entry.get("BodyName"):
+    if 'BodyName' in entry:
         this.body_name = entry.get("BodyName")
     else:
         this.body_name = None
         this.planet_radius = None
 
-    if entry.get("PlanetRadius"):
+    if 'PlanetRadius' in entry:
         this.planet_radius = entry.get("PlanetRadius")
 
-    timestamp = time.mktime(time.strptime(
-        entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ'))
-    this.nearloc['Time'] = timestamp
+    if 'timestamp' in entry:
+        this.nearloc['Time'] = time.mktime(time.strptime(
+            entry['timestamp'], '%Y-%m-%dT%H:%M:%SZ'))
+    else:
+        this.nearloc['Time'] = None
 
     return dashboard_entry_wrapper(cmdr, is_beta, entry)
 
