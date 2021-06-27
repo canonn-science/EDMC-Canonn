@@ -1097,23 +1097,22 @@ class CodexTypes():
             
             while not self.poiq.empty():
                 r = self.poiq.get()
-                if "PROVIDER" in r:
-                    if "CATEGORY" in r:
-                        body = r.get("PLANET")
-                        body_code = body.replace(self.system+" ", '')
-                        hud_category = r.get("CATEGORY")
-                        if hud_category in ("Biology", "Geology"):
-                            continue
-                        english_name = r.get("NAME")
-                        if r.get("LATITUDE") is not None and r.get("LONGITUDE") is not None:
-                            latlon = "(" + str(round(r.get("LATITUDE"), 2)) + "," + str(round(r.get("LONGITUDE"),2)) + ")"
-                        else:
-                            latlon = None
-                        
-                        if r.get("TYPE") != "Surface Station":
-                            self.add_poi(hud_category, r.get("TYPE"), body_code)
-                        self.add_ppoi(body_code, hud_category, english_name)
-                        self.ppoidata[body_code][hud_category][english_name] = [[None, latlon]]
+                if "EXTOOL" in r:
+                    body = r.get("PLANET")
+                    body_code = body.replace(self.system+" ", '')
+                    hud_category = r.get("TYPE")
+                    if hud_category in ("Biology", "Geology"):
+                        continue
+                    english_name = r.get("NAME")
+                    if r.get("LATITUDE") is not None and r.get("LONGITUDE") is not None:
+                        latlon = "(" + str(round(r.get("LATITUDE"), 2)) + "," + str(round(r.get("LONGITUDE"),2)) + ")"
+                    else:
+                        latlon = None
+                    
+                    if r.get("SUBTYPE") is not None:
+                        self.add_poi(hud_category, r.get("SUBTYPE"), body_code)
+                    self.add_ppoi(body_code, hud_category, english_name)
+                    self.ppoidata[body_code][hud_category][english_name] = [[None, latlon]]
                         
                 else:
                 
@@ -1357,6 +1356,8 @@ class CodexTypes():
                                 if station in self.ppoidata[bodycode]["Human"]:
                                     keep_latlon = self.ppoidata[bodycode]["Human"][station]
                                     self.remove_ppoi(bodycode, "Human", station)
+                                if station + ecotype in self.ppoidata[bodycode]["Human"]:
+                                    keep_latlon = self.ppoidata[bodycode]["Human"][station + ecotype]
                         self.add_ppoi(bodycode, "Human", station + ecotype)
                         if keep_latlon is None:
                             self.ppoidata[bodycode]["Human"][station + ecotype] = [[None, latlon]]
@@ -1697,7 +1698,7 @@ class CodexTypes():
                     
                 if "POINTS" in temp_poidata:
                     for v in temp_poidata["POINTS"]:
-                        v["PROVIDER"] = "extool"
+                        v["EXTOOL"] = True
                         self.poiq.put(v)
             except:
                 Debug.logger.debug("Error getting ExTool data")
