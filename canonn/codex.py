@@ -596,7 +596,7 @@ class CodexTypes():
 
         self.typesPlanet = ("Geology", "Thargoid", "Biology", "Guardian",
                             "Human", "Other", "Personal", "Tourist",
-                            "Jumponium", "GreenSystem")
+                            "Jumponium")
         k = 0
         for category in self.typesPlanet:
             self.addimage_planet(category, k+4)
@@ -754,8 +754,9 @@ class CodexTypes():
             for category in self.typesPlanet:
                 if category in self.lockPlanet:
                     self.switchPlanet(category)
-            if self.planetlist_auto and self.planetlist_show:
-                self.switchBodyMode("Body")
+            if name != "MissingData":
+                if self.planetlist_auto and self.planetlist_show:
+                    self.switchBodyMode("Body")
         else:
             self.switchPOI(name)
         # self.visualisePOIData()
@@ -1199,7 +1200,7 @@ class CodexTypes():
 
             while not self.saaq.empty():
                 r = self.saaq.get()
-                print("SAA = ",r)
+                print("SAA = ", r)
                 if "SAAScanComplete" in r:
                     for bodyID in r.get("SAAScanComplete"):
                         body_code = r.get("SAAScanComplete").get(bodyID).replace(self.system+" ", "")
@@ -1958,6 +1959,7 @@ class CodexTypes():
         self.set_image("Other_planet", False)
         self.set_image("Personal_planet", False)
         self.set_image("Tourist_planet", False)
+        self.set_image("Jumponium_planet", False)
 
         # refresh ppoi for unknown list
         self.update_unknown_ppoi(self.planetlist_body)
@@ -2466,8 +2468,6 @@ class CodexTypes():
         for category in self.poidata.copy():
             if category in ('Jumponium', 'GreenSystem'):
                 del self.poidata[category]
-                for body in self.ppoidata.copy():
-                    del self.ppoidata[body][category]
 
     def green_system(self, bodies):
         mats = [
@@ -2543,7 +2543,7 @@ class CodexTypes():
                     quantity = 0
                 if materials.get(target) and int(quantity) < 150:
                     self.add_poi(jclass, f"{target}{modifier}", body_code)
-                    self.add_ppoi(body_code, jclass, f"{target}{modifier}")
+                    self.add_ppoi(body_code, "Jumponium", f"{target}{modifier}")
 
             basic = (materials.get("Carbon") and materials.get(
                 "Vanadium") and materials.get("Germanium"))
@@ -3061,10 +3061,19 @@ class CodexTypes():
                 saa_signal["count"] = int(v.get("Count"))
                 self.saaq.put(saa_signal)
 
+            self.allowed = True
             self.refreshPOIData(None)
             # self.refreshPlanetData(None)
+        
+        if entry.get("event") == "SAAScanComplete":
+            self.system = system
+            saa_signal = {}
+            saa_signal["SAAScanComplete"] = {}
+            saa_signal["SAAScanComplete"][entry.get("BodyID")] = entry.get("BodyName")
+            self.saaq.put(saa_signal)
             self.allowed = True
-
+            self.refreshPOIData(None)
+        
     @classmethod
     def get_codex_names(cls):
         name_ref = {}
