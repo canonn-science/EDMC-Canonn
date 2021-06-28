@@ -446,6 +446,15 @@ class CodexTypes():
         "Tubus", 
         "Tussock"
     ]
+    
+    horizon_bio = [
+        "Brain Tree",
+        "Sinuous Tubers",
+        "Amphora Plant",
+        "Crystalline Shards",
+        "Anemone",
+        "Bark Mounds"
+    ]
 
     bodycount = 0
 
@@ -1242,36 +1251,27 @@ class CodexTypes():
                     if r.get("hud_category") == "Ring":
                         self.add_poi(r.get("hud_category"), "$Hotspots:"+r.get("english_name"), body_code)
                     elif r.get("hud_category") == "Geology":
-                        nsites = 0
-                        if body_code in self.ppoidata:
-                            if "Geology" in self.ppoidata[body_code]:
-                                for type in self.ppoidata[body_code]["Geology"]:
-                                    if self.odyssey:
-                                        nsites += len(self.ppoidata[body_code]["Geology"])
-                                    else:
-                                        nsites += len(self.ppoidata[body_code]["Geology"][type])
-                        if nsites < r.get("count"):
-                            self.add_poi("Geology", "$Sites:Unknown", body_code)
-                            self.add_poi("MissingData", "$Geology:Unknown", body_code)
-                            if body_code not in self.ppoidata:
-                                self.ppoidata[body_code] = {}
+                        if body_code not in self.ppoidata:
+                            self.ppoidata[body_code] = {}
+                        self.update_unknown_ppoi(body_code)
+                        if "Unknown" in self.ppoidata[body_code]["Geology"]:
+                            if len(self.ppoidata[body_code]["Geology"]["Unknown"]) == 0:
+                                self.remove_poi("Geology", "$Sites:Unknown", body_code)
+                                self.remove_poi("MissingData", "$Geology:Unknown", body_code)
+                            elif len(self.ppoidata[body_code]["Geology"]["Unknown"]) > 0:
+                                self.add_poi("Geology", "$Sites:Unknown", body_code)
+                                self.add_poi("MissingData", "$Geology:Unknown", body_code)
                     elif r.get("hud_category") == "Biology":
-                        nsites = 0
-                        if body_code in self.ppoidata:
-                            if "Biology" in self.ppoidata[body_code]:
-                                for type in self.ppoidata[body_code]["Biology"]:
-                                    if self.odyssey:
-                                        nsites += len(self.ppoidata[body_code]
-                                                      ["Biology"])
-                                    else:
-                                        nsites += len(self.ppoidata[body_code]
-                                                      ["Biology"][type])
-                        if nsites < r.get("count"):
-                            self.add_poi("Biology", "Unknown", body_code)
-                            self.add_poi("MissingData", "$Biology:Unknown", body_code)
-                            if body_code not in self.ppoidata:
-                                self.ppoidata[body_code] = {}
-                    self.update_unknown_ppoi(body_code)
+                        if body_code not in self.ppoidata:
+                            self.ppoidata[body_code] = {}
+                        self.update_unknown_ppoi(body_code)
+                        if "Unknown" in self.ppoidata[body_code]["Biology"]:
+                            if len(self.ppoidata[body_code]["Biology"]["Unknown"]) == 0:
+                                self.remove_poi("Biology", "Unknown", body_code)
+                                self.remove_poi("MissingData", "$Biology:Unknown", body_code)
+                            elif len(self.ppoidata[body_code]["Biology"]["Unknown"]) > 0:
+                                self.add_poi("Biology", "Unknown", body_code)
+                                self.add_poi("MissingData", "$Biology:Unknown", body_code)
 
             while not self.cmdrq.empty():
                 # only expecting to go around once
@@ -1403,8 +1403,9 @@ class CodexTypes():
 
         if body not in self.ppoidata:
             return
-
+        
         unk_category = ['Geology', 'Biology']
+        horizon_found = []
         if self.odyssey:
         
             max_category = {}
@@ -1415,8 +1416,20 @@ class CodexTypes():
                     max_category[category] = 0
                     for type in self.ppoidata[body][category]:
                         if type != "Unknown":
-                            min_category[category] += 1
-                            max_category[category] += 1
+                            doit = True
+                            bio_found = None
+                            for bio_test in self.horizon_bio:
+                                if bio_test in type:
+                                    bio_found = bio_test
+                                    break
+                            if bio_found is not None:
+                                if bio_found in horizon_found:
+                                    doit = False
+                                else:
+                                    horizon_found.append(bio_found)
+                            if doit:
+                                min_category[category] += 1
+                                max_category[category] += 1
 
             if body in self.saadata:
                 for category in self.saadata[body]:
@@ -1434,7 +1447,7 @@ class CodexTypes():
                         for i in range(min_category[category]+1, max_category[category]+1):
                             self.ppoidata[body][category]["Unknown"].append(
                                 ["#"+str(i), None])
-            
+        
         else:
 
             max_category = {}
@@ -2005,7 +2018,7 @@ class CodexTypes():
                                          column=0, columnspan=1, sticky="NW")
                 self.planetcol2[-1].grid(row=len(self.planetcol1),
                                          column=1, sticky="NW")
-
+                
                 if self.odyssey:
                     if "Unknown" in self.ppoidata[self.planetlist_body][category]:
                         nunk = len(self.ppoidata[self.planetlist_body][category]["Unknown"])
@@ -2015,7 +2028,7 @@ class CodexTypes():
                                 nsites = self.saadata[self.planetlist_body][category]
                         self.planetcol2[-1]['text'] = str(round(
                             (nsites-nunk)/nsites*100, 2))+"% [" + str(nsites-nunk) + "/" + str(nsites) + "]"
-
+                
                 label = []
                 for type in self.ppoidata[self.planetlist_body][category]:
 

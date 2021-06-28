@@ -57,7 +57,7 @@ def getSystemInfo(system):
 class fakeSystem():
 
     @classmethod
-    def StartJump(cls, cmdr, client, message, wrapper, parent):
+    def StartJump(cls, cmdr, client, message, wrapper, state, parent):
         cls.parent = parent
         cls.wrapper = wrapper
         cls.wrapper = wrapper
@@ -94,8 +94,13 @@ class fakeSystem():
             "SystemAddress": cls.id64,
             "StarClass": "X"
         }
+        
+        cls.localstate = { "dummy" : "dummy" }
+        if state.get("Odyssey"):
+            cls.localstate["Odyssey"] = state.get("Odyssey")
+        
         cls.wrapper(cls.cmdr, True, cls.system, None, None, None, None, event,
-                    {"dummy": "dummy"}, cls.coords["x"], cls.coords["y"], cls.coords["z"], None,
+                    cls.localstate, cls.coords["x"], cls.coords["y"], cls.coords["z"], None,
                     {"Latitude": None, "Longitude": None, "Temperature": None, "Gravity": None}, cls.client)
         cls.parent.after(10000, cls.FSDJump)
 
@@ -127,7 +132,7 @@ class fakeSystem():
             "FuelLevel": 21.086681
         }
         cls.wrapper(cls.cmdr, True, cls.system, None, None, None, None, event,
-                    {"dummy": "dummy"}, cls.coords["x"], cls.coords["y"], cls.coords["z"], None,
+                    cls.localstate, cls.coords["x"], cls.coords["y"], cls.coords["z"], None,
                     {"Latitude": None, "Longitude": None, "Temperature": None, "Gravity": None}, cls.client)
 
 
@@ -140,4 +145,4 @@ def inject(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFro
     if bFakeJump:
         message = entry.get("Message")
         fakeSystem.StartJump(cmdr, client, message,
-                             journal_entry_wrapper, frame)
+                             journal_entry_wrapper, state, frame)
