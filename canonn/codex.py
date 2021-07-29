@@ -3148,7 +3148,7 @@ class CodexTypes():
                 "Radius", entry.get("Radius"))
             self.allowed = True
 
-        if entry.get("event") == "SAASignalsFound":
+        if entry.get("event") in ("SAASignalsFound", "FSSBodySignals"):
             self.system = system
             # if we arent waiting for new data
             bodyName = entry.get("BodyName")
