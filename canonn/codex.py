@@ -519,8 +519,8 @@ class CodexTypes():
         self.systemtitle = Frame(self.titlepanel)
         self.systemtitle.grid(row=0, column=0, sticky="NSEW")
         self.systemtitle.grid_remove()
-        self.systemtitle_name = tk.Label(
-            self.container, text="?")  # moved to container
+        self.systemtitle_name = HyperlinkLabel(
+            self.container, text="?", url=None)  # moved to container
         self.systemtitle_name.grid(row=0, column=0, sticky="W")
         self.systemprogress = tk.Label(self.systemtitle, text="?")
         self.systemprogress.grid(
@@ -1624,6 +1624,12 @@ class CodexTypes():
                     self.ppoidata[body][hud_category][type].append(
                         ["#"+str(index), "("+str(lat)+","+str(lon)+")"])
 
+    """
+    This function is called in a thread so the only TKinter code that can run here is to insert an event
+    using self.frame.event_generate('<<refreshPOIData>>', when='head')
+    Remember no tk inter calls in threads please!
+    """
+
     def getPOIdata(self, system, system64, cmdr):
 
         if not config.shutting_down:
@@ -1781,7 +1787,9 @@ class CodexTypes():
 
             Debug.logger.debug("get POI data in shut sown")
 
-        self.refreshPOIData(None)
+        # really important not to call any functions tha use TK inter in thread or
+        # the plugin will go Kablooie!
+        # self.refreshPOIData(None)
 
     def cleanPOIPanel(self):
         for col in self.systemcol1:
@@ -1860,6 +1868,8 @@ class CodexTypes():
 
         # need to initialise if not exists
         self.systemtitle_name["text"] = self.system
+        self.systemtitle_name[
+            "url"] = f"https://us-central1-canonn-api-236217.cloudfunctions.net/query/codex/biostats?id={self.system64}"
 
         # print(theme.current)
         #print("THEME", config.get_int('theme'))
