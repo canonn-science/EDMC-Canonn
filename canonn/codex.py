@@ -1419,9 +1419,10 @@ class CodexTypes():
 
             self.logqueue = False
             while not self.logq.empty():
-                Debug.logger.debug(f"logq not empty {tmpentry}")
+
                 (tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry, tmpstate, tmpx,
                  tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient) = self.logq.get()
+                Debug.logger.debug(f"logq not empty {tmpentry}")
                 # self.journal_entry(tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry,
                 #                   tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient)
 
