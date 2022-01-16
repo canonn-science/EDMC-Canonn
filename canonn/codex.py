@@ -1419,10 +1419,11 @@ class CodexTypes():
 
             self.logqueue = False
             while not self.logq.empty():
+                Debug.logger.debug(f"logq not empty {tmpentry}")
                 (tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry, tmpstate, tmpx,
                  tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient) = self.logq.get()
-                self.journal_entry(tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry,
-                                   tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient)
+                # self.journal_entry(tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry,
+                #                   tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient)
 
         except Exception as e:
             #line = sys.exc_info()[-1].tb_lineno
