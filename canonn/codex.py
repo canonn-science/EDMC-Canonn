@@ -1870,8 +1870,9 @@ class CodexTypes():
 
         # need to initialise if not exists
         self.systemtitle_name["text"] = self.system
+        #self.systemtitle_name["url"] = f"https://us-central1-canonn-api-236217.cloudfunctions.net/query/codex/biostats?id={self.system64}"
         self.systemtitle_name[
-            "url"] = f"https://us-central1-canonn-api-236217.cloudfunctions.net/query/codex/biostats?id={self.system64}"
+            "url"] = f"https://canonn-science.github.io/canonn-signals/index.html?system={self.system64}"
 
         # print(theme.current)
         #print("THEME", config.get_int('theme'))
