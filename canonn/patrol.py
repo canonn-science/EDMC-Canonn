@@ -120,6 +120,8 @@ def gnosis(ds=None):
     ref_date = datetime.datetime.strptime("2020-09-17 07", "%Y-%m-%d %H")
 
     systems = [
+        {"system": "Varati", "desc": "Visit the home of Canonn Interstellar Research on the Gnosis",
+            "coords": [-178.65625, 77.125, -87.125]},
         {"system": "HIP 17862",
             "desc": "Join the Gnosis to investigate the thargoid wreckage", "coords": [-81.4375, -151.90625, -359.59375]},
         {"system": "Pleiades Sector PN-T b3-0",
@@ -134,8 +136,6 @@ def gnosis(ds=None):
             "desc": "Join the Gnosis for a relaxing meditation session to the sound of the brain trees", "coords": [396.90625, -142.5625, 106.09375]},
         {"system": "Epsilon Indi",
             "desc": "Take a thrilling trip around Mitterand Hollow on the Gnosis", "coords": [3.125, -8.875, 7.125]},
-        {"system": "Varati", "desc": "Visit the home of Canonn Interstellar Research on the Gnosis",
-            "coords": [-178.65625, 77.125, -87.125]},
     ]
 
     wb = weeks_between(target, ref_date)
