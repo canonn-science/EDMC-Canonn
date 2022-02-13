@@ -1071,6 +1071,8 @@ class CodexTypes():
                                 self.add_poi(
                                     "Tourist", 'Fast Orbital Period', body_code)
 
+                        if "life" in b.get('subType'):
+                            self.add_poi("Tourist", b.get('subType'), body_code)
                         # Ringed ELW etc
                         if b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
