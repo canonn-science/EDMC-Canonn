@@ -1100,7 +1100,7 @@ class CodexTypes():
                                 "Tourist", 'Tiny Radius Landable', body_code)
 
                         #    Fast and non-locked rotation
-                        if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get("rotationalPeriodTidallyLocked"):
+                        if b.get('type') == 'Planet' and b.get('rotationalPeriod') and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get("rotationalPeriodTidallyLocked"):
                             self.add_poi(
                                 "Tourist", 'Fast unlocked rotation', body_code)
 
