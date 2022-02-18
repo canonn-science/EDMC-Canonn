@@ -1072,7 +1072,8 @@ class CodexTypes():
                                     "Tourist", 'Fast Orbital Period', body_code)
 
                         if "life" in b.get('subType'):
-                            self.add_poi("Tourist", b.get('subType'), body_code)
+                            self.add_poi("Tourist", b.get(
+                                'subType'), body_code)
                         # Ringed ELW etc
                         if b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
@@ -1156,16 +1157,13 @@ class CodexTypes():
                                 if english_name.split(" ")[0] in self.odyssey_bio:
                                     subcat = " ".join(
                                         english_name.split(" ")[0:2])
-                            if codex_name_ref.get("reward") is not None:
-                                if codex_name_ref.get("reward") > 700000:
-                                    subcat = "($$$) " + subcat
-                                    english_name = "($$$) " + english_name
-                                elif codex_name_ref.get("reward") > 400000:
-                                    subcat = "($$) " + subcat
-                                    english_name = "($$) " + english_name
-                                elif codex_name_ref.get("reward") > 200000:
-                                    subcat = "($) " + subcat
-                                    english_name = "($) " + english_name
+                            if codex_name_ref.get("reward") is not None and int(codex_name_ref.get("reward")/100000) != 0:
+
+                                subcat = "("+str(int(codex_name_ref.get("reward") /
+                                                     100000))+"$) " + subcat
+                                english_name = "("+str(int(codex_name_ref.get(
+                                    "reward")/100000))+"$) " + english_name
+
                     self.add_poi(hud_category, subcat, body_code)
 
                     if (r.get("latitude") is None) or (r.get("longitude") is None):
