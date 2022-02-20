@@ -2775,6 +2775,12 @@ class CodexTypes():
         self.journal_entry(cmdr, None, system, None, signal,
                            None, x, y, z, bodyname, None, None, client)
 
+    """
+    This gets called with dashboard updates it is intended to detect when
+    we get into the sphere of influence I think but self.system is not always set 
+    so we may not be able to switch/
+    """
+
     def updatePlanetData(self, body, latitude, longitude, temperature, gravity):
         self.event = "DashBoard"
         if ((body is None) or (latitude is None) or (longitude is None)):
@@ -2799,7 +2805,8 @@ class CodexTypes():
             self.temperature = temperature
             self.gravity = gravity
             if self.planetlist_auto:
-                if (not self.planetlist_show) or (self.planetlist_body != body.replace(self.system+" ", '')):
+                # don't attempt to switch if self.system is not set.
+                if (self.system and not self.planetlist_show) or (self.system and self.planetlist_body != body.replace(self.system+" ", '')):
                     for category in self.lock.copy():
                         if category == "MissingData":
                             continue
