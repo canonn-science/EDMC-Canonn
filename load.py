@@ -73,7 +73,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.3.3"
+this.version = "6.3.4"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -179,7 +179,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
     Systems.storeNavroute(state)
 
     # we need to fix system if its not set.
-    if system is None and entry.get("SystemAddress") is None:
+    if system is None and entry.get("SystemAddress") is not None:
         d = Systems.systemFromId64(entry.get("SystemAddress"))
         if d:
             Debug.logger.debug(f"setting unknown system to {d}")
