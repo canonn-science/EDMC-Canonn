@@ -1019,28 +1019,30 @@ class CanonnPatrol(Frame):
     def closest(self,message,x,y,z,ship):
         # strip the first 
         location=message.lower()[8:].strip().replace(" ","_")
-        url=f"https://us-central1-populated.cloudfunctions.net/hcs/nearest/{location}/{ship}?x={x}&y={y}&z={z}"
-        r = requests.get(url, timeout=30)
-        #print(url)
-        r.encoding = 'utf-8'
-        if r.status_code == requests.codes.ok:
-            # debug("got EDSM Data")
-            try:
-                j=r.json()
-                system=j.get("system")
-                distance=j.get("distance")
-                station=j.get("station")
-                self.hyperlink['text'] = system
-                self.hyperlink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
-                self.distance['text'] = "{}ly".format(Locale.stringFromNumber(distance, 2))
-                l=location.replace("_"," ")
-                self.infolink['text'] = f"Nearest {l} is at {station} in system {system}"
-                self.infolink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
-            except:
-                plug.show_error(r.text)
+        if location:
+            url=f"https://us-central1-populated.cloudfunctions.net/hcs/nearest/{location}/{ship}?x={x}&y={y}&z={z}"
+            r = requests.get(url, timeout=30)
+            #print(url)
+            r.encoding = 'utf-8'
+            if r.status_code == requests.codes.ok:
+                # debug("got EDSM Data")
+                try:
+                    j=r.json()
+                    system=j.get("system")
+                    distance=j.get("distance")
+                    station=j.get("station")
+                    self.hyperlink['text'] = system
+                    self.hyperlink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
+                    self.distance['text'] = "{}ly".format(Locale.stringFromNumber(distance, 2))
+                    l=location.replace("_"," ")
+                    self.infolink['text'] = f"Nearest {l} is at {station} in system {system}"
+                    self.infolink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
+                except:
+                    plug.show_error(r.text)
+            else:
+                plug.show_error("nearest failure")
         else:
-            plug.show_error("nearest failure")
-                    
+            plug.show_error("nearest what?")        
                         
                     
 
