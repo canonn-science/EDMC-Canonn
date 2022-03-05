@@ -1651,6 +1651,7 @@ class CodexTypes():
             try:
                 url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
                     quote_plus(system.encode('utf8')))
+                url= f"https://spansh.co.uk/api/dump/{system64}"
 
                 # debug("request {}:  Active Threads {}".format(
                 #    url, threading.activeCount()))
@@ -1660,7 +1661,9 @@ class CodexTypes():
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
                     # debug("got EDSM Data")
-                    temp_edsmdata = r.json()
+                    j=r.json()
+                    temp_edsmdata = j.get("system")
+                    
                     # push edsm data only a queue
                     self.edsm_bodyq.put(temp_edsmdata)
                 else:
