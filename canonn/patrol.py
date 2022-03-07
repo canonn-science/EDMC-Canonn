@@ -1016,25 +1016,26 @@ class CanonnPatrol(Frame):
                 "url").replace('viewform', 'formResponse'))
         self.patrol_next(None)
 
-    def closest(self,message,x,y,z,ship):
-        # strip the first 
-        location=message.lower()[8:].strip().replace(" ","_")
+    def closest(self, message, x, y, z, ship):
+        # strip the first
+        location = message.lower()[8:].strip().replace(" ", "_")
         if location:
-            url=f"https://us-central1-populated.cloudfunctions.net/hcs/nearest/{location}/{ship}?x={x}&y={y}&z={z}"
+            url = f"https://us-central1-populated.cloudfunctions.net/hcstest/nearest/{location}/{ship}?x={x}&y={y}&z={z}"
             r = requests.get(url, timeout=30)
-            #print(url)
+            # print(url)
             r.encoding = 'utf-8'
             if r.status_code == requests.codes.ok:
                 # debug("got EDSM Data")
                 try:
-                    j=r.json()
-                    system=j.get("system")
-                    distance=j.get("distance")
-                    station=j.get("station")
+                    j = r.json()
+                    system = j.get("system")
+                    distance = j.get("distance")
+                    station = j.get("station")
                     self.hyperlink['text'] = system
                     self.hyperlink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
-                    self.distance['text'] = "{}ly".format(Locale.stringFromNumber(distance, 2))
-                    l=location.replace("_"," ")
+                    self.distance['text'] = "{}ly".format(
+                        Locale.stringFromNumber(distance, 2))
+                    l = location.replace("_", " ")
                     self.infolink['text'] = f"Nearest {l} is at {station} in system {system}"
                     self.infolink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
                 except:
@@ -1042,9 +1043,7 @@ class CanonnPatrol(Frame):
             else:
                 plug.show_error("nearest failure")
         else:
-            plug.show_error("nearest what?")        
-                        
-                    
+            plug.show_error("nearest what?")
 
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         # We don't care what the journal entry is as long as the system has changed.
@@ -1058,8 +1057,6 @@ class CanonnPatrol(Frame):
 
         if cmdr:
             self.cmdr = cmdr
-
-
 
         if entry.get("event") in ("Location", "StartUp") and not self.patrol_list:
             self.system = system
@@ -1087,7 +1084,7 @@ class CanonnPatrol(Frame):
             self.trigger(system, entry)
 
         if entry.get("event") == "SendText" and entry.get("Message") and entry.get("Message").lower().startswith("nearest"):
-            self.closest(entry.get("Message"),x,y,z,'S')
+            self.closest(entry.get("Message"), x, y, z, 'S')
 
     def load_excluded(self):
         Debug.logger.debug("loading excluded")
