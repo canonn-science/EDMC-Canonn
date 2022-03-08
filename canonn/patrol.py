@@ -1020,7 +1020,7 @@ class CanonnPatrol(Frame):
         # strip the first
         location = message.lower()[8:].strip().replace(" ", "_")
         if location:
-            url = f"https://us-central1-populated.cloudfunctions.net/hcstest/nearest/{location}/{ship}?x={x}&y={y}&z={z}"
+            url = f"https://us-central1-populated.cloudfunctions.net/hcs/nearest/{location}/{ship}?x={x}&y={y}&z={z}"
             r = requests.get(url, timeout=30)
             # print(url)
             r.encoding = 'utf-8'
