@@ -1036,10 +1036,13 @@ class CanonnPatrol(Frame):
                     self.distance['text'] = "{}ly".format(
                         Locale.stringFromNumber(distance, 2))
                     l = location.replace("_", " ")
-                    self.infolink['text'] = f"Nearest {l} is at {station} in system {system}"
+                    if station:
+                        self.infolink['text'] = f"Nearest {l} is at {station} in system {system}"
+                    else:
+                        self.infolink['text'] = f"Nearest {l} is in system {system}"
                     self.infolink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
                 except:
-                    plug.show_error(r.text)
+                    plug.show_error(f"Can't understand \"{message}\"")
             else:
                 plug.show_error("nearest failure")
         else:
