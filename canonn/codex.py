@@ -1072,7 +1072,8 @@ class CodexTypes():
                                     "Tourist", 'Fast Orbital Period', body_code)
 
                         if "life" in b.get('subType'):
-                            self.add_poi("Tourist", b.get('subType'), body_code)
+                            self.add_poi("Tourist", b.get(
+                                'subType'), body_code)
                         # Ringed ELW etc
                         if b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
@@ -1102,7 +1103,7 @@ class CodexTypes():
                                 "Tourist", 'Tiny Radius Landable', body_code)
 
                         #    Fast and non-locked rotation
-                        if b.get('type') == 'Planet' and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get("rotationalPeriodTidallyLocked"):
+                        if b.get('type') == 'Planet' and b.get('rotationalPeriod') and abs(float(b.get('rotationalPeriod'))) < 1 / 24 and not b.get("rotationalPeriodTidallyLocked"):
                             self.add_poi(
                                 "Tourist", 'Fast unlocked rotation', body_code)
 
@@ -1156,16 +1157,13 @@ class CodexTypes():
                                 if english_name.split(" ")[0] in self.odyssey_bio:
                                     subcat = " ".join(
                                         english_name.split(" ")[0:2])
-                            if codex_name_ref.get("reward") is not None:
-                                if codex_name_ref.get("reward") > 700000:
-                                    subcat = "($$$) " + subcat
-                                    english_name = "($$$) " + english_name
-                                elif codex_name_ref.get("reward") > 400000:
-                                    subcat = "($$) " + subcat
-                                    english_name = "($$) " + english_name
-                                elif codex_name_ref.get("reward") > 200000:
-                                    subcat = "($) " + subcat
-                                    english_name = "($) " + english_name
+                            if codex_name_ref.get("reward") is not None and int(codex_name_ref.get("reward")/100000) != 0:
+
+                                subcat = "("+str(int(codex_name_ref.get("reward") /
+                                                     100000))+"$) " + subcat
+                                english_name = "("+str(int(codex_name_ref.get(
+                                    "reward")/100000))+"$) " + english_name
+
                     self.add_poi(hud_category, subcat, body_code)
 
                     if (r.get("latitude") is None) or (r.get("longitude") is None):
@@ -1193,7 +1191,7 @@ class CodexTypes():
 
                         if hud_category == "Biology":
                             k = 0
-                            if english_name.split(" ")[0] in ("($$$)", "($$)", "($)"):
+                            if english_name.split(" ")[0] in ("(1$)", "(2$)", "(3$)", "(4$)", "(5$)", "(6$)", "(7$)", "(8$)", "(9$)"):
                                 k = 1
                             if english_name.split(" ")[k] in self.odyssey_bio:
                                 subcat = " ".join(
@@ -1587,7 +1585,7 @@ class CodexTypes():
 
         if hud_category == "Biology":
             k = 0
-            if type.split(" ")[0] in ("($$$)", "($$)", "($)"):
+            if type.split(" ")[0] in ("(1$)", "(2$)", "(3$)", "(4$)", "(5$)", "(6$)", "(7$)", "(8$)", "(9$)"):
                 k = 1
             if type.split(" ")[k] in self.odyssey_bio:
                 subcat = " ".join(type.split(" ")[0:k+2])
@@ -1653,6 +1651,7 @@ class CodexTypes():
             try:
                 url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
                     quote_plus(system.encode('utf8')))
+                url = f"https://spansh.co.uk/api/dump/{system64}"
 
                 # debug("request {}:  Active Threads {}".format(
                 #    url, threading.activeCount()))
@@ -1662,7 +1661,28 @@ class CodexTypes():
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
                     # debug("got EDSM Data")
-                    temp_edsmdata = r.json()
+                    j = r.json()
+                    temp_edsmdata = j.get("system")
+                    for b in temp_edsmdata.get("bodies"):
+                        if b.get("signals") and b.get("signals").get("signals"):
+                            signals = b.get("signals").get("signals")
+                            for i, v in enumerate(signals):
+                                found = False
+                                type = v.get("Type")
+                                english_name = type.replace("$SAA_SignalType_", "").replace(
+                                    "ical;", "y").replace(";", "")
+                                if " Ring" in bodyName:
+                                    cat = "Ring"
+                                if "$SAA_SignalType_" in type:
+                                    cat = english_name
+
+                                saa_signal = {}
+                                saa_signal["body"] = entry.get("BodyName")
+                                saa_signal["hud_category"] = cat
+                                saa_signal["english_name"] = english_name
+                                saa_signal["count"] = int(v.get("Count"))
+                                self.saaq.put(saa_signal)
+
                     # push edsm data only a queue
                     self.edsm_bodyq.put(temp_edsmdata)
                 else:
@@ -1714,6 +1734,7 @@ class CodexTypes():
                 if "codex" in temp_poidata:
                     for v in temp_poidata["codex"]:
                         self.poiq.put(v)
+
                 if "SAAsignals" in temp_poidata:
                     for v in temp_poidata["SAAsignals"]:
                         self.saaq.put(v)
@@ -2777,6 +2798,12 @@ class CodexTypes():
         self.journal_entry(cmdr, None, system, None, signal,
                            None, x, y, z, bodyname, None, None, client)
 
+    """
+    This gets called with dashboard updates it is intended to detect when
+    we get into the sphere of influence I think but self.system is not always set 
+    so we may not be able to switch/
+    """
+
     def updatePlanetData(self, body, latitude, longitude, temperature, gravity):
         self.event = "DashBoard"
         if ((body is None) or (latitude is None) or (longitude is None)):
@@ -2801,7 +2828,8 @@ class CodexTypes():
             self.temperature = temperature
             self.gravity = gravity
             if self.planetlist_auto:
-                if (not self.planetlist_show) or (self.planetlist_body != body.replace(self.system+" ", '')):
+                # don't attempt to switch if self.system is not set.
+                if (self.system and not self.planetlist_show) or (self.system and self.planetlist_body != body.replace(self.system+" ", '')):
                     for category in self.lock.copy():
                         if category == "MissingData":
                             continue
@@ -2909,16 +2937,12 @@ class CodexTypes():
                                     if english_name.split(" ")[0] in self.odyssey_bio:
                                         subcat = " ".join(
                                             english_name.split(" ")[0:2])
-                                if codex_name_ref.get("reward") is not None:
-                                    if codex_name_ref.get("reward") > 700000:
-                                        subcat = "($$$) " + subcat
-                                        english_name = "($$$) " + english_name
-                                    elif codex_name_ref.get("reward") > 400000:
-                                        subcat = "($$) " + subcat
-                                        english_name = "($$) " + english_name
-                                    elif codex_name_ref.get("reward") > 200000:
-                                        subcat = "($) " + subcat
-                                        english_name = "($) " + english_name
+                                if codex_name_ref.get("reward") is not None and int(codex_name_ref.get("reward")/100000) != 0:
+
+                                    subcat = "("+str(int(codex_name_ref.get(
+                                        "reward") / 100000))+"$) " + subcat
+                                    english_name = "("+str(
+                                        int(codex_name_ref.get("reward")/100000))+"$) " + english_name
 
                         self.add_poi(hud_category, subcat, bodycode)
                     else:

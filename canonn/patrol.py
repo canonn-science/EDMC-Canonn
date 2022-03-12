@@ -32,6 +32,7 @@ from contextlib import closing
 from l10n import Locale
 from ttkHyperlinkLabel import HyperlinkLabel
 import html
+import plug
 
 CYCLE = 60 * 1000 * 60  # 60 minutes
 DEFAULT_URL = ""
@@ -1015,6 +1016,38 @@ class CanonnPatrol(Frame):
                 "url").replace('viewform', 'formResponse'))
         self.patrol_next(None)
 
+    def closest(self, message, x, y, z, ship):
+        # strip the first
+        location = message.lower()[8:].strip().replace(" ", "_")
+        if location:
+            url = f"https://us-central1-populated.cloudfunctions.net/hcs/nearest/{location}/{ship}?x={x}&y={y}&z={z}"
+            r = requests.get(url, timeout=30)
+            # print(url)
+            r.encoding = 'utf-8'
+            if r.status_code == requests.codes.ok:
+                # debug("got EDSM Data")
+                try:
+                    j = r.json()
+                    system = j.get("system")
+                    distance = j.get("distance")
+                    station = j.get("station")
+                    self.hyperlink['text'] = system
+                    self.hyperlink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
+                    self.distance['text'] = "{}ly".format(
+                        Locale.stringFromNumber(distance, 2))
+                    l = location.replace("_", " ")
+                    if station:
+                        self.infolink['text'] = f"Nearest {l} is at {station} in system {system}"
+                    else:
+                        self.infolink['text'] = f"Nearest {l} is in system {system}"
+                    self.infolink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
+                except:
+                    plug.show_error(f"Can't understand \"{message}\"")
+            else:
+                plug.show_error("nearest failure")
+        else:
+            plug.show_error("nearest what?")
+
     def journal_entry(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
         # We don't care what the journal entry is as long as the system has changed.
 
@@ -1052,6 +1085,9 @@ class CanonnPatrol(Frame):
         # After we have done everything else let's see if we can automatically submit and move on
         if system and self.nearest.get("event") and self.nearest.get("system").upper() == system.upper():
             self.trigger(system, entry)
+
+        if entry.get("event") == "SendText" and entry.get("Message") and entry.get("Message").lower().startswith("nearest"):
+            self.closest(entry.get("Message"), x, y, z, 'S')
 
     def load_excluded(self):
         Debug.logger.debug("loading excluded")
