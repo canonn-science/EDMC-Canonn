@@ -1651,7 +1651,7 @@ class CodexTypes():
             try:
                 url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
                     quote_plus(system.encode('utf8')))
-                url= f"https://spansh.co.uk/api/dump/{system64}"
+                url = f"https://spansh.co.uk/api/dump/{system64}"
 
                 # debug("request {}:  Active Threads {}".format(
                 #    url, threading.activeCount()))
@@ -1661,9 +1661,28 @@ class CodexTypes():
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
                     # debug("got EDSM Data")
-                    j=r.json()
+                    j = r.json()
                     temp_edsmdata = j.get("system")
-                    
+                    for b in temp_edsmdata.get("bodies"):
+                        if b.get("signals") and b.get("signals").get("signals"):
+                            signals = b.get("signals").get("signals")
+                            for i, v in enumerate(signals):
+                                found = False
+                                type = v.get("Type")
+                                english_name = type.replace("$SAA_SignalType_", "").replace(
+                                    "ical;", "y").replace(";", "")
+                                if " Ring" in bodyName:
+                                    cat = "Ring"
+                                if "$SAA_SignalType_" in type:
+                                    cat = english_name
+
+                                saa_signal = {}
+                                saa_signal["body"] = entry.get("BodyName")
+                                saa_signal["hud_category"] = cat
+                                saa_signal["english_name"] = english_name
+                                saa_signal["count"] = int(v.get("Count"))
+                                self.saaq.put(saa_signal)
+
                     # push edsm data only a queue
                     self.edsm_bodyq.put(temp_edsmdata)
                 else:
@@ -1715,6 +1734,7 @@ class CodexTypes():
                 if "codex" in temp_poidata:
                     for v in temp_poidata["codex"]:
                         self.poiq.put(v)
+
                 if "SAAsignals" in temp_poidata:
                     for v in temp_poidata["SAAsignals"]:
                         self.saaq.put(v)
