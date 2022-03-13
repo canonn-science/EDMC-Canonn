@@ -16,6 +16,7 @@ import datetime
 from datetime import date
 import json
 import math
+from tkinter import N
 import myNotebook as nb
 import os
 import re
@@ -43,67 +44,6 @@ GUARDIANSITES = "https://us-central1-canonn-api-236217.cloudfunctions.net/guardi
 # FLEETCARRIERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSozf4Ii8TbuDCmk8Qk5ld1W0fUF_5EyHP-OvvnjRQmC9v8NF2_ZZLFy7XOe8pQWTXudaVgdAfxlCFo/pub?gid=470243264&single=true&output=tsv"
 
 ship_types = {
-    'adder': 'Adder',
-    'typex_3': 'Alliance Challenger',
-    'typex': 'Alliance Chieftain',
-    'typex_2': 'Alliance Crusader',
-    'anaconda': 'Anaconda',
-    'asp explorer': 'Asp Explorer',
-    'asp': 'Asp Explorer',
-    'asp scout': 'Asp Scout',
-    'asp_scout': 'Asp Scout',
-    'beluga liner': 'Beluga Liner',
-    'belugaliner': 'Beluga Liner',
-    'cobra mk. iii': 'Cobra MkIII',
-    'cobramkiii': 'Cobra MkIII',
-    'cobra mk. iv': 'Cobra MkIV',
-    'cobramkiv': 'Cobra MkIV',
-    'diamondback explorer': 'Diamondback Explorer',
-    'diamondbackxl': 'Diamondback Explorer',
-    'diamondback scout': 'Diamondback Scout',
-    'diamondback': 'Diamondback Scout',
-    'dolphin': 'Dolphin',
-    'eagle': 'Eagle',
-    'federal assault ship': 'Federal Assault Ship',
-    'federation_dropship_mkii': 'Federal Assault Ship',
-    'federal corvette': 'Federal Corvette',
-    'federation_corvette': 'Federal Corvette',
-    'federal dropship': 'Federal Dropship',
-    'federation_dropship': 'Federal Dropship',
-    'federal gunship': 'Federal Gunship',
-    'federation_gunship': 'Federal Gunship',
-    'fer-de-lance': 'Fer-de-Lance',
-    'ferdelance': 'Fer-de-Lance',
-    'hauler': 'Hauler',
-    'imperial clipper': 'Imperial Clipper',
-    'empire_trader': 'Imperial Clipper',
-    'imperial courier': 'Imperial Courier',
-    'empire_courier': 'Imperial Courier',
-    'imperial cutter': 'Imperial Cutter',
-    'cutter': 'Imperial Cutter',
-    'imperial eagle': 'Imperial Eagle',
-    'empire_eagle': 'Imperial Eagle',
-    'keelback': 'Keelback',
-    'independant_trader': 'Keelback',
-    'krait_mkii': 'Krait MkII',
-    'krait_light': 'Krait Phantom',
-    'mamba': 'Mamba',
-    'orca': 'Orca',
-    'python': 'Python',
-    'sidewinder': 'Sidewinder',
-    'type 6 transporter': 'Type-6 Transporter',
-    'type6': 'Type-6 Transporter',
-    'type 7 transporter': 'Type-7 Transporter',
-    'type7': 'Type-7 Transporter',
-    'type 9 heavy': 'Type-9 Heavy',
-    'type9': 'Type-9 Heavy',
-    'type 10 defender': 'Type-10 Defender',
-    'type9_military': 'Type-10 Defender',
-    'viper mk. iii': 'Viper MkIII',
-    'viper': 'Viper MkIII',
-    'viper mk. iv': 'Viper MkIV',
-    'viper_mkiv': 'Viper MkIV',
-    'vulture': 'Vulture'
 }
 
 
@@ -145,16 +85,19 @@ def gnosis(ds=None):
     return systems[wp]
 
 
-def getShipType(key):
-    try:
-        name = ship_types.get(key.lower())
-    except:
-        return "None"
-    if name:
-        return name
-    else:
-        return key
+def getShipType(id):
+    global ship_types
+    if ship_types.get(id):
+        return ship_types.get(id).get("name")
+    return "None"
 
+def getShipSize(id):
+    global ship_types
+    print(f"ship id {id}")
+    if ship_types.get(id):
+        print(ship_types.get(id))
+        return ship_types.get(id).get("size")
+    return "L"
 
 def _callback(matches):
     id = matches.group(1)
@@ -355,6 +298,13 @@ class CanonnPatrol(Frame):
     @classmethod
     def plugin_start(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
+        
+        # load ship_types ref data
+        global ship_types
+        file = os.path.join(cls.plugin_dir, 'data', 'ships.json')
+        with open(file) as json_file:
+            ship_types = json.load(json_file)
+
 
     '''
     Every hour we will download the latest data
@@ -1016,11 +966,15 @@ class CanonnPatrol(Frame):
                 "url").replace('viewform', 'formResponse'))
         self.patrol_next(None)
 
-    def closest(self, message, x, y, z, ship):
+    def closest(self, message, x, y, z, ship,odyssey):
         # strip the first
+        if odyssey:
+            horizons=""
+        else:
+            horizons="&horizons=y"
         location = message.lower()[8:].strip().replace(" ", "_")
         if location:
-            url = f"https://us-central1-populated.cloudfunctions.net/hcs/nearest/{location}/{ship}?x={x}&y={y}&z={z}"
+            url = f"https://us-central1-populated.cloudfunctions.net/hcs/nearest/{location}/{ship}?x={x}&y={y}&z={z}{horizons}"
             r = requests.get(url, timeout=30)
             # print(url)
             r.encoding = 'utf-8'
@@ -1087,7 +1041,7 @@ class CanonnPatrol(Frame):
             self.trigger(system, entry)
 
         if entry.get("event") == "SendText" and entry.get("Message") and entry.get("Message").lower().startswith("nearest"):
-            self.closest(entry.get("Message"), x, y, z, 'S')
+            self.closest(entry.get("Message"), x, y, z, getShipSize(state.get("ShipType")),state.get("odyssey"))
 
     def load_excluded(self):
         Debug.logger.debug("loading excluded")
