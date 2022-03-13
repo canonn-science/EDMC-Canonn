@@ -1041,7 +1041,7 @@ class CanonnPatrol(Frame):
             self.trigger(system, entry)
 
         if entry.get("event") == "SendText" and entry.get("Message") and entry.get("Message").lower().startswith("nearest"):
-            self.closest(entry.get("Message"), x, y, z, getShipSize(state.get("ShipType")),state.get("odyssey"))
+            self.closest(entry.get("Message"), x, y, z, getShipSize(state.get("ShipType")),state.get("Odyssey"))
 
     def load_excluded(self):
         Debug.logger.debug("loading excluded")
