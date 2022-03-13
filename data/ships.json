@@ -1,0 +1,192 @@
+{
+    "sidewinder": {
+        "id": "128049249",
+        "name": "Sidewinder",
+        "size": "S"
+    },
+    "eagle": {
+        "id": "128049255",
+        "name": "Eagle",
+        "size": "S"
+    },
+    "hauler": {
+        "id": "128049261",
+        "name": "Hauler",
+        "size": "S"
+    },
+    "adder": {
+        "id": "128049267",
+        "name": "Adder",
+        "size": "S"
+    },
+    "viper": {
+        "id": "128049273",
+        "name": "Viper MkIII",
+        "size": "S"
+    },
+    "cobramkiii": {
+        "id": "128049279",
+        "name": "Cobra MkIII",
+        "size": "S"
+    },
+    "type6": {
+        "id": "128049285",
+        "name": "Type-6 Transporter",
+        "size": "M"
+    },
+    "dolphin": {
+        "id": "128049291",
+        "name": "Dolphin",
+        "size": "S"
+    },
+    "type7": {
+        "id": "128049297",
+        "name": "Type-7 Transporter",
+        "size": "L"
+    },
+    "asp": {
+        "id": "128049303",
+        "name": "Asp Explorer",
+        "size": "M"
+    },
+    "vulture": {
+        "id": "128049309",
+        "name": "Vulture",
+        "size": "S"
+    },
+    "empire_trader": {
+        "id": "128049315",
+        "name": "Imperial Clipper",
+        "size": "L"
+    },
+    "federation_dropship": {
+        "id": "128049321",
+        "name": "Federal Dropship",
+        "size": "M"
+    },
+    "orca": {
+        "id": "128049327",
+        "name": "Orca",
+        "size": "L"
+    },
+    "type9": {
+        "id": "128049333",
+        "name": "Type-9 Heavy",
+        "size": "L"
+    },
+    "python": {
+        "id": "128049339",
+        "name": "Python",
+        "size": "M"
+    },
+    "belugaliner": {
+        "id": "128049345",
+        "name": "Beluga Liner",
+        "size": "L"
+    },
+    "ferdelance": {
+        "id": "128049351",
+        "name": "Fer-de-Lance",
+        "size": "M"
+    },
+    "anaconda": {
+        "id": "128049363",
+        "name": "Anaconda",
+        "size": "L"
+    },
+    "federation_corvette": {
+        "id": "128049369",
+        "name": "Federal Corvette",
+        "size": "L"
+    },
+    "cutter": {
+        "id": "128049375",
+        "name": "Imperial Cutter",
+        "size": "L"
+    },
+    "diamondback": {
+        "id": "128671217",
+        "name": "Diamondback Scout",
+        "size": "S"
+    },
+    "empire_courier": {
+        "id": "128671223",
+        "name": "Imperial Courier",
+        "size": "S"
+    },
+    "diamondbackxl": {
+        "id": "128671831",
+        "name": "Diamondback Explorer",
+        "size": "S"
+    },
+    "empire_eagle": {
+        "id": "128672138",
+        "name": "Imperial Eagle",
+        "size": "S"
+    },
+    "federation_dropship_mkii": {
+        "id": "128672145",
+        "name": "Federal Assault Ship",
+        "size": "M"
+    },
+    "federation_gunship": {
+        "id": "128672152",
+        "name": "Federal Gunship",
+        "size": "M"
+    },
+    "viper_mkiv": {
+        "id": "128672255",
+        "name": "Viper MkIV",
+        "size": "S"
+    },
+    "cobramkiv": {
+        "id": "128672262",
+        "name": "Cobra MkIV",
+        "size": "S"
+    },
+    "independant_trader": {
+        "id": "128672269",
+        "name": "Keelback",
+        "size": "M"
+    },
+    "asp_scout": {
+        "id": "128672276",
+        "name": "Asp Scout",
+        "size": "M"
+    },
+    "type9_military": {
+        "id": "128785619",
+        "name": "Type-10 Defender",
+        "size": "L"
+    },
+    "krait_mkii": {
+        "id": "128816567",
+        "name": "Krait MkII",
+        "size": "M"
+    },
+    "typex": {
+        "id": "128816574",
+        "name": "Alliance Chieftain",
+        "size": "M"
+    },
+    "typex_2": {
+        "id": "128816581",
+        "name": "Alliance Crusader",
+        "size": "M"
+    },
+    "typex_3": {
+        "id": "128816588",
+        "name": "Alliance Challenger",
+        "size": "M"
+    },
+    "krait_light": {
+        "id": "128839281",
+        "name": "Krait Phantom",
+        "size": "M"
+    },
+    "mamba": {
+        "id": "128915979",
+        "name": "Mamba",
+        "size": "M"
+    }
+}
