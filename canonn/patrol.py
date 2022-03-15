@@ -91,6 +91,7 @@ def getShipType(id):
         return ship_types.get(id).get("name")
     return "None"
 
+
 def getShipSize(id):
     global ship_types
     print(f"ship id {id}")
@@ -98,6 +99,7 @@ def getShipSize(id):
         print(ship_types.get(id))
         return ship_types.get(id).get("size")
     return "L"
+
 
 def _callback(matches):
     id = matches.group(1)
@@ -298,13 +300,12 @@ class CanonnPatrol(Frame):
     @classmethod
     def plugin_start(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
-        
+
         # load ship_types ref data
         global ship_types
         file = os.path.join(cls.plugin_dir, 'data', 'ships.json')
         with open(file) as json_file:
             ship_types = json.load(json_file)
-
 
     '''
     Every hour we will download the latest data
@@ -966,25 +967,35 @@ class CanonnPatrol(Frame):
                 "url").replace('viewform', 'formResponse'))
         self.patrol_next(None)
 
-    def closest(self, message, x, y, z, ship,odyssey):
+    def closest(self, message, x, y, z, ship, odyssey):
         # strip the first
         if odyssey:
-            horizons=""
+            horizons = ""
         else:
-            horizons="&horizons=y"
+            horizons = "&horizons=y"
+
         location = message.lower()[8:].strip().replace(" ", "_")
         if location:
-            url = f"https://us-central1-populated.cloudfunctions.net/hcs/nearest/{location}/{ship}?x={x}&y={y}&z={z}{horizons}"
+            if message == "nearest challenge":
+                url = f"https://us-central1-canonn-api-236217.cloudfunctions.net/query/challenge/next?cmdr={self.cmdr}&x={x}&y={y}&z={z}{horizons}"
+            else:
+                url = f"https://us-central1-populated.cloudfunctions.net/hcs/nearest/{location}/{ship}?x={x}&y={y}&z={z}{horizons}"
+            Debug.logger.debug(url)
             r = requests.get(url, timeout=30)
             # print(url)
             r.encoding = 'utf-8'
             if r.status_code == requests.codes.ok:
-                # debug("got EDSM Data")
+
                 try:
+
                     j = r.json()
                     system = j.get("system")
                     distance = j.get("distance")
                     station = j.get("station")
+                    if message == "nearest challenge":
+                        location = j.get("english_name")
+                        distance = float(j.get("distance"))
+
                     self.hyperlink['text'] = system
                     self.hyperlink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
                     self.distance['text'] = "{}ly".format(
@@ -1041,7 +1052,8 @@ class CanonnPatrol(Frame):
             self.trigger(system, entry)
 
         if entry.get("event") == "SendText" and entry.get("Message") and entry.get("Message").lower().startswith("nearest"):
-            self.closest(entry.get("Message"), x, y, z, getShipSize(state.get("ShipType")),state.get("Odyssey"))
+            self.closest(entry.get("Message"), x, y, z, getShipSize(
+                state.get("ShipType")), state.get("Odyssey"))
 
     def load_excluded(self):
         Debug.logger.debug("loading excluded")
