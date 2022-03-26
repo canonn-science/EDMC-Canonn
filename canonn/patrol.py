@@ -976,15 +976,18 @@ class CanonnPatrol(Frame):
 
         location = message.lower()[8:].strip().replace(" ", "_")
         if location:
-            is_challenge=(message.lower() == "nearest challenge")
-            if not is_challenge:
-                trade=message.split(' ')[1].lower()
-                quantity=message.split(' ')[2]
+            is_challenge = (message.lower() == "nearest challenge")
+            trade = message.split(' ')[1].lower()
+            if not is_challenge and trade in ("buying", "selling"):
+                trade = message.split(' ')[1].lower()
+                quantity = message.split(' ')[2]
                 print(f"{trade} {quantity} {len(message.split(' '))}")
-            is_trade=(not is_challenge and trade in("buying","selling") and quantity.isnumeric() and len(message.split(" ")) > 3)
+            is_trade = (not is_challenge and trade in ("buying", "selling")
+                        and quantity.isnumeric() and len(message.split(" ")) > 3)
             if is_trade:
-                
-                location="_".join(message.split(' ')[3:]).lower().strip().replace(" ", "_")
+
+                location = "_".join(message.split(
+                    ' ')[3:]).lower().strip().replace(" ", "_")
                 url = f"https://us-central1-populated.cloudfunctions.net/hcs/{trade}/{location}/{ship}/{quantity}?x={x}&y={y}&z={z}{horizons}"
                 print(url)
 
@@ -993,7 +996,6 @@ class CanonnPatrol(Frame):
 
             if not is_trade and not is_challenge:
                 url = f"https://us-central1-populated.cloudfunctions.net/hcs/nearest/{location}/{ship}?x={x}&y={y}&z={z}{horizons}"
-
 
             Debug.logger.debug(url)
             r = requests.get(url, timeout=30)
@@ -1004,17 +1006,17 @@ class CanonnPatrol(Frame):
                 try:
 
                     j = r.json()
-                
+
                     system = j.get("system")
                     distance = j.get("distance")
                     station = j.get("station")
                     if j.get("commodity"):
                         if trade == "buying":
-                            price=int(j.get("commodity").get("buyPrice"))
-                            quantity=int(j.get("commodity").get("demand"))
+                            price = int(j.get("commodity").get("buyPrice"))
+                            quantity = int(j.get("commodity").get("demand"))
                         else:
-                            price=int(j.get("commodity").get("sellPrice"))
-                            quantity=int(j.get("commodity").get("supply"))
+                            price = int(j.get("commodity").get("sellPrice"))
+                            quantity = int(j.get("commodity").get("supply"))
 
                     if message == "nearest challenge":
                         location = j.get("english_name")
@@ -1026,7 +1028,8 @@ class CanonnPatrol(Frame):
                         Locale.stringFromNumber(distance, 2))
                     l = location.replace("_", " ")
                     if is_trade:
-                        self.infolink['text'] = f"{station} is {trade} {Locale.stringFromNumber(quantity,0)} {l} for ${Locale.stringFromNumber(price,0)} in system {system}"
+                        self.infolink[
+                            'text'] = f"{station} is {trade} {Locale.stringFromNumber(quantity,0)} {l} for ${Locale.stringFromNumber(price,0)} in system {system}"
                     else:
                         if station:
                             self.infolink['text'] = f"Nearest {l} is at {station} in system {system}"
