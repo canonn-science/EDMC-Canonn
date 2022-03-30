@@ -11,6 +11,46 @@ The Patrol system is used for directing people to places of interest to Canonn a
  * Galactic Mapping POIs show you the nearest Galactic mapping project entry.
  * Thargoid Sites show you the location of the nearest site and its type. 
  * Guardian Sites shows you the nearest guardian site 
+
+## Search Nearest
+It is now possible to type a search command in the in game message box. NB: The search command will be visible to local players but the response will not. The search results will be stored in the POI section of the plugin in place of any POI. Right clicking on the system name will allow you to copy to the clipboard. 
+
+NB: Data is only updated once per day so may not be completely accurate.
+
+### nearest <station_service>
+This will search for the nearest station service. Service names are [listed on spansh](https://spansh.co.uk/api/stations/field_values/services). The plugin also maintains some convenient aliases eg nearest vista is equivalent to nearest vista genomics. 
+
+### nearest buying <quantity> <commodity>
+This will search for the nearest system with demand for a commodity higher than the specified quantity. 
+
+Eg nearest buying 700 tritium
+
+You can ommit the quantity and it will default to 790
+
+### nearest selling <quantity> <commodity>
+This will search for the nearest system selling a commodity with supply higher than the specified quantity. 
+
+Eg nearest selling 700 tritium.
+
+You can ommit the quantity and it will default to 790
+
+### nearest challenge
+This command will look for the nearest codex entry that you have not yet visited. 
+
+### nearest <economy> economy
+Searches for the nearest station with the supplied economy. 
+
+Eg. nearest prison economy
+
+### nearest <allegiance> allegiance
+Searches for the nearest system with the supplied allegiance. 
+
+Eg. nearest empire allegiance
+
+### nearest <allegiance> station
+Searches for the nearest station with the supplied allegiance. 
+
+Eg. nearest federation station
  
 ## Canonn News Feed
 See the top stories on rotation
