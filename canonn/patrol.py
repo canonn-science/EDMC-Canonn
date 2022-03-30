@@ -978,18 +978,22 @@ class CanonnPatrol(Frame):
         if location:
             is_challenge = (message.lower() == "nearest challenge")
             trade = message.split(' ')[1].lower()
-            if not is_challenge and trade in ("buying", "selling"):
-                trade = message.split(' ')[1].lower()
-                quantity = message.split(' ')[2]
-                print(f"{trade} {quantity} {len(message.split(' '))}")
-            is_trade = (not is_challenge and trade in ("buying", "selling")
-                        and quantity.isnumeric() and len(message.split(" ")) > 3)
+            is_trade = (trade in ("buying", "selling")
+                        and len(message.split(" ")) > 2)
             if is_trade:
-
-                location = "_".join(message.split(
-                    ' ')[3:]).lower().strip().replace(" ", "_")
-                url = f"https://us-central1-populated.cloudfunctions.net/hcs/{trade}/{location}/{ship}/{quantity}?x={x}&y={y}&z={z}{horizons}"
-                print(url)
+                quantity = message.split(' ')[2]
+                if quantity.isnumeric():
+                    location = "_".join(message.split(
+                        ' ')[3:]).lower().strip().replace(" ", "_")
+                else:
+                    # set to something sensible
+                    quantity = 800
+                    location = "_".join(message.split(
+                        ' ')[2:]).lower().strip().replace(" ", "_")
+                if location:
+                    url = f"https://us-central1-populated.cloudfunctions.net/hcs/{trade}/{location}/{ship}/{quantity}?x={x}&y={y}&z={z}{horizons}"
+                else:
+                    plug.show_error("nearest what?")
 
             if is_challenge:
                 url = f"https://us-central1-canonn-api-236217.cloudfunctions.net/query/challenge/next?cmdr={self.cmdr}&x={x}&y={y}&z={z}{horizons}"
@@ -1012,10 +1016,10 @@ class CanonnPatrol(Frame):
                     station = j.get("station")
                     if j.get("commodity"):
                         if trade == "buying":
-                            price = int(j.get("commodity").get("buyPrice"))
+                            price = int(j.get("commodity").get("sellPrice"))
                             quantity = int(j.get("commodity").get("demand"))
                         else:
-                            price = int(j.get("commodity").get("sellPrice"))
+                            price = int(j.get("commodity").get("buyPrice"))
                             quantity = int(j.get("commodity").get("supply"))
 
                     if message == "nearest challenge":
