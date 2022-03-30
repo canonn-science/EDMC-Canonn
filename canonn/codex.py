@@ -1649,8 +1649,7 @@ class CodexTypes():
             self.cmdrq.clear()
 
             try:
-                url = "https://www.edsm.net/api-system-v1/bodies?systemName={}".format(
-                    quote_plus(system.encode('utf8')))
+
                 url = f"https://spansh.co.uk/api/dump/{system64}"
 
                 # debug("request {}:  Active Threads {}".format(
@@ -1666,21 +1665,22 @@ class CodexTypes():
                     for b in temp_edsmdata.get("bodies"):
                         if b.get("signals") and b.get("signals").get("signals"):
                             signals = b.get("signals").get("signals")
-                            for i, v in enumerate(signals):
+                            for key in signals.keys():
                                 found = False
-                                type = v.get("Type")
+                                print(key)
+                                type = key
                                 english_name = type.replace("$SAA_SignalType_", "").replace(
                                     "ical;", "y").replace(";", "")
-                                if " Ring" in bodyName:
+                                if " Ring" in b.get("name"):
                                     cat = "Ring"
                                 if "$SAA_SignalType_" in type:
                                     cat = english_name
 
                                 saa_signal = {}
-                                saa_signal["body"] = entry.get("BodyName")
+                                saa_signal["body"] = b.get("name")
                                 saa_signal["hud_category"] = cat
                                 saa_signal["english_name"] = english_name
-                                saa_signal["count"] = int(v.get("Count"))
+                                saa_signal["count"] = signals.get(key)
                                 self.saaq.put(saa_signal)
 
                     # push edsm data only a queue
@@ -1689,7 +1689,7 @@ class CodexTypes():
                     Debug.logger.debug("EDSM Failed")
                     Debug.logger.error("EDSM Failed")
             except:
-                Debug.logger.debug("Error getting EDSM data")
+                Debug.logger.error("Error getting EDSM data")
 
             try:
                 url = "https://www.edsm.net/api-system-v1/stations?systemName={}".format(
@@ -2874,6 +2874,9 @@ class CodexTypes():
         if (entry.get("event") in ("Location", "StartUp", "CarrierJump")) or (entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace") or (entry.get("event") == "FSDTarget" and self.intaxi) or (self.intaxi and entry.get("event") == "FSDJump" and self.system != system):
             self.system = system
             self.system64 = entry.get("SystemAddress")
+            if not self.system64:
+                 Debug.logger.error("no id64")
+                 Debug.logger.error(entry)
             if (entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace") or (entry.get("event") == "CarrierJump") or (entry.get("event") == "FSDJump"):
                 self.system = entry.get("StarSystem")
             elif entry.get("event") == "FSDTarget" and self.intaxi:
