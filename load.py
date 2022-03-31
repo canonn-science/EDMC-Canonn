@@ -250,7 +250,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     clientreport.submit(cmdr, is_beta, client, entry)
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
-    hdreport.submit(cmdr, is_beta, system, station, entry, client)
+    hdreport.submit(cmdr, is_beta, system, station, entry, client, state)
     codex.submit(cmdr, is_beta, system, x, y, z, entry, body,
                  nearloc['Latitude'], nearloc['Longitude'], client, state)
     fssreports.submit(cmdr, is_beta, system, x, y, z, entry, body,

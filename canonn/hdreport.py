@@ -269,8 +269,12 @@ class hyperdictionDetector():
             cls.state = 0
 
     @classmethod
-    def Music(cls, system, cmdr, timestamp, client):
+    def Music(cls, system, cmdr, timestamp, client, odyssey):
         if cls.state == 2:
+            ody = 'n'
+            if odyssey:
+                ody = 'y'
+
             Debug.logger.debug("Hyperdiction Detected")
             cls.show()
             x, y, z = Systems.edsmGetSystem(system)
@@ -282,8 +286,8 @@ class hyperdictionDetector():
                                     "x": x, "y": y, "z": z,
                                     "destination": cls.target_system,
                                     "dx": dx, "dy": dy, "dz": dz,
-                                    "client": client
-
+                                    "client": client,
+                                    "odyssey": ody
                                  })
             plug.show_error("Hyperdiction: Exit to main menu")
         else:
@@ -297,7 +301,8 @@ class hyperdictionDetector():
         state = 0
 
     @classmethod
-    def submit(cls, cmdr, is_beta, system, station, entry, client):
+    def submit(cls, cmdr, is_beta, system, station, entry, client, state):
+        odyssey = state.get("Odyssey")
         if entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace":
             cls.startJump(entry.get("StarSystem"))
 
@@ -305,7 +310,7 @@ class hyperdictionDetector():
             cls.FSDJump(entry.get("StarSystem"))
 
         if entry.get("event") == "Music" and entry.get("MusicTrack") in ("Unknown_Encounter"):
-            cls.Music(system, cmdr, entry.get("timestamp"), client)
+            cls.Music(system, cmdr, entry.get("timestamp"), client, odyssey)
 
         if entry.get("event") == "SupercruiseExit":
             cls.SupercruiseExit()
@@ -335,8 +340,9 @@ def post_distance(system, centre, entry):
         post_traffic(tag, entry)
 
 
-def submit(cmdr, is_beta, system, station, entry, client):
-    hyperdictionDetector.submit(cmdr, is_beta, system, station, entry, client)
+def submit(cmdr, is_beta, system, station, entry, client, state):
+    hyperdictionDetector.submit(
+        cmdr, is_beta, system, station, entry, client, state)
 
     hdsystems = (
         "Electra", "Asterope", "Delphi", "Merope", "Celaeno", "Maia", "HR 1185", "HIP 23759", "Witch Head Sector DL-Y d17",
