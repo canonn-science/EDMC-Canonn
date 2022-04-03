@@ -211,7 +211,7 @@ def journal2edsm(j):
         else:
             e["atmosphereType"] = "No atmosphere"
         if j.get("TerraformState") == "Terraformable":
-            e["terraformingState"] = 'Candidate for terraforming'
+            e["terraformingState"] = 'Terraformable'
         elif j.get("TerraformState") == "Terraforming":
             e["terraformingState"] = 'Terraforming'
         else:
@@ -993,7 +993,7 @@ class CodexTypes():
                                 "Tourist", "Moon Moon Moon", body_code)
 
                         # Terraforming
-                        if b.get('terraformingState') == 'Candidate for terraforming':
+                        if b.get('terraformingState') == 'Terraformable':
                             if b.get('isLandable'):
                                 if not b.get("rings"):
                                     self.add_poi(
@@ -2875,8 +2875,8 @@ class CodexTypes():
             self.system = system
             self.system64 = entry.get("SystemAddress")
             if not self.system64:
-                 Debug.logger.error("no id64")
-                 Debug.logger.error(entry)
+                Debug.logger.error("no id64")
+                Debug.logger.error(entry)
             if (entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace") or (entry.get("event") == "CarrierJump") or (entry.get("event") == "FSDJump"):
                 self.system = entry.get("StarSystem")
             elif entry.get("event") == "FSDTarget" and self.intaxi:
