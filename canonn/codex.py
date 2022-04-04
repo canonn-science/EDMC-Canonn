@@ -30,6 +30,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 import plug
 from math import sqrt, pow
 import queue
+import re
 
 
 class Queue(queue.Queue):
@@ -473,7 +474,7 @@ class CodexTypes():
     logqueue = True
     logq = Queue()
 
-    edsm_bodyq = Queue()
+    spansh_bodyq = Queue()
     edsm_stationq = Queue()
     poiq = Queue()
     saaq = Queue()
@@ -577,7 +578,7 @@ class CodexTypes():
         #self.stationPlanetData = {}
 
         self.temp_poidata = None
-        self.temp_edsmdata = None
+        self.temp_spanshdata = None
 
         #self.cmdrData = {}
 
@@ -914,6 +915,53 @@ class CodexTypes():
             self.labels[name].grid()
             self.labels[name].grid_remove()
 
+    def bodymismatch(self, systemname, bodyname):
+        procgen_sysname_re = re.compile(
+            '''
+            ^
+            ([A-Za-z0-9.()\' -]+?)[ ]
+            ([A-Z][A-Z]-[A-Z])[ ]
+            ([a-h])(?:([0-9]+)-|)([0-9]+)
+            $
+        ''', re.VERBOSE)
+
+        procgen_sys_body_name_re = re.compile(
+            '''
+            ^
+            (?P<sysname>.+?)
+            (?P<desig>|[ ](?P<stars>A?B?C?D?E?F?G?H?I?J?K?L?M?N?O?))
+            (?:
+            |[ ](?P<nebula>Nebula)
+            |[ ](?P<belt>[A-Z])[ ]Belt(?:|[ ]Cluster[ ](?P<cluster>[1-9][0-9]?))
+            |[ ]Comet[ ](?P<stellarcomet>[1-9][0-9]?)
+            |[ ](?P<planet>[1-9][0-9]?(?:[+][1-9][0-9]?)*)
+            (?:
+            |[ ](?P<planetring>[A-Z])[ ]Ring
+            |[ ]Comet[ ](?P<planetcomet>[1-9][0-9]?)
+            |[ ](?P<moon1>[a-z](?:[+][a-z])*)
+                (?:
+                |[ ](?P<moon1ring>[A-Z])[ ]Ring
+                |[ ]Comet[ ](?P<moon1comet>[1-9][0-9]?)
+                |[ ](?P<moon2>[a-z](?:[+][a-z])*)
+                (?:
+                |[ ](?P<moon2ring>[A-Z])[ ]Ring
+                |[ ]Comet[ ](?P<moon2comet>[1-9][0-9]?)
+                |[ ](?P<moon3>[a-z])
+                )
+                )
+            )
+            )
+            $
+        ''', re.VERBOSE)
+
+        pgsysmatch = procgen_sysname_re.match(systemname)
+        pgbodymatch = procgen_sys_body_name_re.match(bodyname)
+        bodymismatch = (not bodyname.startswith(systemname))
+
+        if pgsysmatch and pgbodymatch and not bodymismatch:
+            return True
+        return False
+
     # this seems horribly confused
     def refreshPOIData(self, event):
 
@@ -923,22 +971,23 @@ class CodexTypes():
             return
 
         try:
-            while not self.edsm_bodyq.empty():
+            while not self.spansh_bodyq.empty():
                 # only expecting to go around once
-                self.temp_edsmdata = self.edsm_bodyq.get()
+                self.temp_spanshdata = self.spansh_bodyq.get()
 
             # if self.temp_edsmdata:
             if not self.bodies:
                 self.bodies = {}
             # restructure the EDSM data
-            if self.temp_edsmdata:
-                edsm_bodies = self.temp_edsmdata.get("bodies")
+            if self.temp_spanshdata:
+                spansh_bodies = self.temp_spanshdata.get("bodies")
             else:
-                edsm_bodies = {}
-            if edsm_bodies:
-                for b in edsm_bodies:
+                spansh_bodies = {}
+            if spansh_bodies:
+                for b in spansh_bodies:
                     if not "Belt Cluster" in b.get("name"):
-                        if b.get("bodyId") not in self.bodies:
+                        # filter out any data errors in spansh
+                        if b.get("bodyId") not in self.bodies and not self.bodymismatch(self.temp_spanshdata.get("name"), b.get("name")):
                             self.bodies[b.get("bodyId")] = b
 
             # Debug.logger.debug("self.bodies")
@@ -1642,7 +1691,7 @@ class CodexTypes():
             # debug("CodexTypes.waiting = True")
             # first we will clear the queues
             self.logq.clear()
-            self.edsm_bodyq.clear()
+            self.spansh_bodyq.clear()
             self.edsm_stationq.clear()
             self.poiq.clear()
             self.saaq.clear()
@@ -1661,9 +1710,11 @@ class CodexTypes():
                 if r.status_code == requests.codes.ok:
                     # debug("got EDSM Data")
                     j = r.json()
-                    temp_edsmdata = j.get("system")
-                    for b in temp_edsmdata.get("bodies"):
-                        if b.get("signals") and b.get("signals").get("signals"):
+                    temp_spanshdata = j.get("system")
+                    for b in temp_spanshdata.get("bodies"):
+                        mismatch = self.bodymismatch(
+                            temp_spanshdata.get("name"), b.get("name"))
+                        if b.get("signals") and b.get("signals").get("signals") and not mismatch:
                             signals = b.get("signals").get("signals")
                             for key in signals.keys():
                                 found = False
@@ -1684,12 +1735,12 @@ class CodexTypes():
                                 self.saaq.put(saa_signal)
 
                     # push edsm data only a queue
-                    self.edsm_bodyq.put(temp_edsmdata)
+                    self.spansh_bodyq.put(temp_spanshdata)
                 else:
-                    Debug.logger.debug("EDSM Failed")
-                    Debug.logger.error("EDSM Failed")
+                    Debug.logger.debug("Spansh Failed")
+                    Debug.logger.error("Spansh Failed")
             except:
-                Debug.logger.error("Error getting EDSM data")
+                Debug.logger.error("Error getting Spansh data")
 
             try:
                 url = "https://www.edsm.net/api-system-v1/stations?systemName={}".format(
@@ -1703,9 +1754,9 @@ class CodexTypes():
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
                     # debug("got EDSM Data")
-                    temp_edsmdata = r.json()
+                    temp_spanshdata = r.json()
                     # push edsm data only a queue
-                    self.edsm_stationq.put(temp_edsmdata)
+                    self.edsm_stationq.put(temp_spanshdata)
                 else:
                     Debug.logger.debug("EDSM Failed")
                     Debug.logger.error("EDSM Failed")
@@ -2683,40 +2734,49 @@ class CodexTypes():
             return
 
     def rings(self, candidate, body_code):
-        if candidate.get("rings"):
+
+        if candidate.get("rings") and not self.bodymismatch(self.system, body_code):
             for ring in candidate.get("rings"):
-                if ring.get("name")[-4:] == "Ring":
-                    ring_code = ring.get("name").replace(self.system+" ", "")
-                    if candidate.get("reserveLevel") and candidate.get("reserveLevel") in ("Pristine", "PristineResources"):
-                        self.add_poi(
-                            "Ring", "$Rings:"+"Pristine {} Rings".format(ring.get("type")), ring_code)
-                    else:
-                        self.add_poi(
-                            "Ring", "$Rings:"+"{} Rings".format(ring.get("type")), ring_code)
-                    if ring_code not in self.saadata:
-                        self.add_poi(
-                            "MissingData", "$Rings:Need SAA", ring_code)
+                ringname = ring.get("name")
+                bodymsimatch = self.bodymismatch(
+                    self.system, ringname.replace(" A Ring", "").replace(" B Ring", "").replace(" C Ring", ""))
+                bodymatch = (not bodymsimatch)
+                if bodymatch:
+                    print(f"{self.system} {ringname}")
+                    if ring.get("name")[-4:] == "Ring":
+                        ring_code = ring.get("name").replace(
+                            self.system+" ", "")
+                        if candidate.get("reserveLevel") and candidate.get("reserveLevel") in ("Pristine", "PristineResources"):
+                            self.add_poi(
+                                "Ring", "$Rings:"+"Pristine {} Rings".format(ring.get("type")), ring_code)
+                        else:
+                            self.add_poi(
+                                "Ring", "$Rings:"+"{} Rings".format(ring.get("type")), ring_code)
+                        if ring_code not in self.saadata:
+                            self.add_poi(
+                                "MissingData", "$Rings:Need SAA", ring_code)
 
-                area = get_area(ring.get("innerRadius"),
-                                ring.get("outerRadius"))
-                density = get_density(ring.get("mass"), ring.get(
-                    "innerRadius"), ring.get("outerRadius"))
+                    area = get_area(ring.get("innerRadius"),
+                                    ring.get("outerRadius"))
+                    density = get_density(ring.get("mass"), ring.get(
+                        "innerRadius"), ring.get("outerRadius"))
 
-                if "Ring" in ring.get("name").replace(self.system+" ", ""):
-                    if ring.get("outerRadius") > 1000000:
-                        self.add_poi(
-                            "Tourist", "Large Radius Rings", body_code)
-                    elif ring.get("innerRadius") < (45935299.69736346 - (1 * 190463268.57872835)):
-                        self.add_poi(
-                            "Tourist", "Small Radius Rings", body_code)
-                    # elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
-                    #    self.add_poi(
-                    #        "Tourist", "Thin Rings", body_code)
-                    elif density < 0.005:
-                        self.add_poi("Tourist", "Low Density Rings", body_code)
-                    elif density > 1000:
-                        self.add_poi(
-                            "Tourist", "High Density Rings", body_code)
+                    if "Ring" in ring.get("name").replace(self.system+" ", ""):
+                        if ring.get("outerRadius") > 1000000:
+                            self.add_poi(
+                                "Tourist", "Large Radius Rings", body_code)
+                        elif ring.get("innerRadius") < (45935299.69736346 - (1 * 190463268.57872835)):
+                            self.add_poi(
+                                "Tourist", "Small Radius Rings", body_code)
+                        # elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
+                        #    self.add_poi(
+                        #        "Tourist", "Thin Rings", body_code)
+                        elif density < 0.005:
+                            self.add_poi(
+                                "Tourist", "Low Density Rings", body_code)
+                        elif density > 1000:
+                            self.add_poi(
+                                "Tourist", "High Density Rings", body_code)
 
     def light_seconds(self, tag, value):
 
