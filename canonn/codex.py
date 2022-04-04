@@ -958,7 +958,7 @@ class CodexTypes():
         pgbodymatch = procgen_sys_body_name_re.match(bodyname)
         bodymismatch = (not bodyname.startswith(systemname))
 
-        if pgsysmatch and pgbodymatch and not bodymismatch:
+        if pgsysmatch and pgbodymatch and bodymismatch:
             return True
         return False
 
@@ -1718,7 +1718,7 @@ class CodexTypes():
                             signals = b.get("signals").get("signals")
                             for key in signals.keys():
                                 found = False
-                                print(key)
+
                                 type = key
                                 english_name = type.replace("$SAA_SignalType_", "").replace(
                                     "ical;", "y").replace(";", "")
@@ -2742,7 +2742,7 @@ class CodexTypes():
                     self.system, ringname.replace(" A Ring", "").replace(" B Ring", "").replace(" C Ring", ""))
                 bodymatch = (not bodymsimatch)
                 if bodymatch:
-                    print(f"{self.system} {ringname}")
+
                     if ring.get("name")[-4:] == "Ring":
                         ring_code = ring.get("name").replace(
                             self.system+" ", "")
@@ -3161,7 +3161,7 @@ class CodexTypes():
                 else:
                     # self.add_poi("Other", "$Warning:" +
                     #             entry.get("SignalName"), None)
-                    print("WARNING : ", entry)
+
                     dovis = False
 
             elif entry.get("IsStation"):
