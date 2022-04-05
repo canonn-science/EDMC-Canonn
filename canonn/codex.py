@@ -1717,8 +1717,6 @@ class CodexTypes():
                         if b.get("signals") and b.get("signals").get("signals") and not mismatch:
                             signals = b.get("signals").get("signals")
                             for key in signals.keys():
-                                found = False
-
                                 type = key
                                 english_name = type.replace("$SAA_SignalType_", "").replace(
                                     "ical;", "y").replace(";", "")
@@ -1733,6 +1731,21 @@ class CodexTypes():
                                 saa_signal["english_name"] = english_name
                                 saa_signal["count"] = signals.get(key)
                                 self.saaq.put(saa_signal)
+                        if b.get("rings"):
+                            for ring in b.get("rings"):
+                                mismatch = self.bodymismatch(
+                                    temp_spanshdata.get("name"), ring.get("name"))
+                                if ring.get("signals") and ring.get("signals").get("signals") and not mismatch:
+                                    signals = ring.get(
+                                        "signals").get("signals")
+                                    for key in signals.keys():
+                                        saa_signal = {}
+                                        saa_signal["body"] = b.get("name")
+                                        saa_signal["hud_category"] = cat
+                                        saa_signal["english_name"] = key
+                                        saa_signal["count"] = signals.get(key)
+
+                                        self.saaq.put(saa_signal)
 
                     # push edsm data only a queue
                     self.spansh_bodyq.put(temp_spanshdata)
