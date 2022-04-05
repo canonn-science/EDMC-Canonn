@@ -2373,44 +2373,59 @@ class CodexTypes():
 
         body_code = body.get("name").replace(self.system+" ", '')
         if body.get("parents"):
+            rings = None
             parent = body.get("parents")[0]
             if parent.get("Planet") and bodies.get(parent.get("Planet")) and bodies.get(parent.get("Planet")).get("rings"):
-
-                # If the parent body has a ring
-                for ring in bodies.get(parent.get("Planet")).get("rings"):
-                    if 'Belt' not in ring.get("name"):
-                        density = get_density(ring.get("mass"), ring.get(
-                            "innerRadius"), ring.get("outerRadius"))
-
-                        r1 = float(ring.get("outerRadius")) * 1000  # m
-                        # convert au to km
-                        r2 = float(body.get("semiMajorAxis")) * 149597870691
-                        r3 = float(body.get("radius")
-                                   or body.get("solarRadius")) * 1000
-                        # and the orbit of the body is close to the outer radius
-
-                        if r2 - r3 < r1 + 15000000:
-                            self.add_poi("Tourist", 'Shepherd Moon', body_code)
-
-            # gah i need to refector this to avoid duplication
+                rings = bodies.get(parent.get("Planet")).get("rings")
+                bodytype = "Moon"
             if parent.get("Star") and bodies.get(parent.get("Star")) and bodies.get(parent.get("Star")).get("rings"):
+                rings = bodies.get(parent.get("Star")).get("rings")
+                bodytype = "Planet"
 
-                # If the parent body has a ring
-                for ring in bodies.get(parent.get("Star")).get("rings"):
+            if rings:
+
+                # find the maximum extent of the ring system
+                maxradius = 0
+                for ring in rings:
                     if 'Belt' not in ring.get("name"):
-                        density = get_density(ring.get("mass"), ring.get(
-                            "innerRadius"), ring.get("outerRadius"))
+                        outerRadius = float(ring.get("outerRadius"))
+                        if maxradius < outerRadius:
+                            maxradius = outerRadius
 
-                        r1 = float(ring.get("outerRadius")) * 1000  # m
-                        # convert au to km
-                        r2 = float(body.get("semiMajorAxis")) * 149597870691
-                        r3 = float(body.get("radius")
-                                   or body.get("solarRadius")) * 1000
-                        # and the orbit of the body is close to the outer radius
+                # if it was all belts maxradius wont be set
+                if maxradius > 0:
+                    # all measurements in meters
+                    semiMajorAxis = float(
+                        body.get("semiMajorAxis")) * 149597870691
+                    bodyRadius = float(body.get("radius")
+                                       or body.get("solarRadius")) * 1000
+                    outerRadius = float(ring.get("outerRadius"))
+                    innerRadius = float(ring.get("innerRadius"))
 
-                        if r2 - r3 < r1 + 15000000:
-                            self.add_poi(
-                                "Tourist", 'Shepherd Planet', body_code)
+                    for ring in rings:
+
+                        separation = min(abs(semiMajorAxis - outerRadius),
+                                         abs(innerRadius - semiMajorAxis))
+
+                        # the body extends one radius past the semiMajorAxis
+                        # so this means that for it to be an outer moon it must be
+                        # a minimum of one radius past the max radius
+                        outer = (maxradius < semiMajorAxis + bodyRadius)
+                        if outer:
+                            type = "Outer"
+                        else:
+                            type = "Inner"
+
+                        proximity = ""
+                        print(f"separation {separation} {body_code}")
+                        if separation < bodyRadius * 2:
+                            proximity = "Close "
+
+                        if separation < bodyRadius * 10:
+                            if semiMajorAxis < maxradius + (bodyRadius * 2):
+
+                                self.add_poi(
+                                    "Tourist", f"{proximity}{type} Shepherd {bodytype}", body_code)
 
     def radius_ly(self, body):
         if body.get("type") == 'Star' and body.get("solarRadius"):
