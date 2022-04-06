@@ -1121,8 +1121,9 @@ class CodexTypes():
                                     "Tourist", 'Fast Orbital Period', body_code)
 
                         if "life" in b.get('subType'):
+                            # journal and spansh have different sub-types
                             self.add_poi("Tourist", b.get(
-                                'subType'), body_code)
+                                'subType').replace("-", " "), body_code)
                         # Ringed ELW etc
                         if b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
