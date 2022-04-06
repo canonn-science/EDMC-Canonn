@@ -2404,8 +2404,24 @@ class CodexTypes():
 
                     for ring in rings:
 
-                        separation = min(abs(semiMajorAxis - outerRadius),
-                                         abs(innerRadius - semiMajorAxis))
+                        innerproximity = (
+                            semiMajorAxis+bodyRadius < innerRadius)
+                        outerproximity = (
+                            semiMajorAxis+bodyRadius > outerRadius)
+                        # is the body in the middle of the rings?
+                        interloping = (
+                            innerRadius <= semiMajorAxis+bodyRadius <= outerRadius)
+                        eccentric = (body.get("orbitalEccentricity")
+                                     and body.get("orbitalEccentricity") > 0.8)
+
+                        if innerproximity:
+                            separation = innerRadius - \
+                                (semiMajorAxis+bodyRadius)
+                        if outerproximity:
+                            separation = (
+                                semiMajorAxis+bodyRadius) - outerRadius
+                        if interloping:
+                            separation = 0
 
                         # the body extends one radius past the semiMajorAxis
                         # so this means that for it to be an outer moon it must be
@@ -2417,15 +2433,29 @@ class CodexTypes():
                             type = "Inner"
 
                         proximity = ""
+
                         print(f"separation {separation} {body_code}")
+
                         if separation < bodyRadius * 2:
                             proximity = "Close "
 
-                        if separation < bodyRadius * 10:
-                            if semiMajorAxis < maxradius + (bodyRadius * 2):
+                        if interloping:
+                            proximity = "Touching "
 
+                        eccentriclabel = ""
+                        if eccentric:
+                            eccentriclabel = "Eccentric "
+
+                        if separation < bodyRadius * 10 or interloping:
+                            # add one radius for touching surface an another for the outer limit
+                            if semiMajorAxis < maxradius + (bodyRadius * 2) or interloping:
                                 self.add_poi(
-                                    "Tourist", f"{proximity}{type} Shepherd {bodytype}", body_code)
+                                    "Tourist", f"{eccentriclabel}{proximity}{type} Shepherd {bodytype}", body_code)
+                        else:
+                            if semiMajorAxis + bodyRadius < maxradius:
+                                # just going to call in inner moon otherwise its confusing
+                                self.add_poi(
+                                    "Tourist", f"{eccentriclabel}Inner Moon", body_code)
 
     def radius_ly(self, body):
         if body.get("type") == 'Star' and body.get("solarRadius"):
