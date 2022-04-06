@@ -1074,33 +1074,33 @@ class CodexTypes():
                             self.add_poi(
                                 "Geology", "$Volcanism:"+b.get('volcanismType').replace(" Volcanism", ""), body_code)
                             # check SAA signals
-                            if body_code not in self.saadata:
+                            """  if body_code not in self.saadata:
                                 if body_code not in self.ppoidata:
-                                    #self.add_poi("Geology", "$Sites:Need SAA", body_code)
+                                    #self.add_poi("Geology", "$Sites:Need DSS", body_code)
                                     self.add_poi(
-                                        "MissingData", "$Geology:Need SAA", body_code)
+                                        "MissingData", "$Geology:Need DSS", body_code)
                                     #self.ppoidata[body_code] = {}
                                 else:
                                     if "Geology" not in self.ppoidata[body_code]:
-                                        #self.add_poi("Geology", "$Sites:Need SAA", body_code)
+                                        #self.add_poi("Geology", "$Sites:Need DSS", body_code)
                                         self.add_poi(
-                                            "MissingData", "$Geology:Need SAA", body_code)
+                                            "MissingData", "$Geology:Need DSS", body_code) """
 
                         # Landable Atmosphere
                         if b.get('type') == 'Planet' and b.get('atmosphereType') != "No atmosphere" and b.get('isLandable'):
                             self.remove_poi(
                                 "MissingData", "$Planets:Need FSS", body_code)
-                            if body_code not in self.saadata:
+                            """ if body_code not in self.saadata:
                                 if body_code not in self.ppoidata:
-                                    #self.add_poi("Biology", "$Species:Need SAA", body_code)
+                                    #self.add_poi("Biology", "$Species:Need DSS", body_code)
                                     self.add_poi(
-                                        "MissingData", "$Biology:Need SAA", body_code)
+                                        "MissingData", "$Biology:Need DSS", body_code)
                                     #self.ppoidata[body_code] = {}
                                 else:
                                     if "Biology" not in self.ppoidata[body_code]:
-                                        #self.add_poi("Biology", "$Species:Need SAA", body_code)
+                                        #self.add_poi("Biology", "$Species:Need DSS", body_code)
                                         self.add_poi(
-                                            "MissingData", "$Biology:Need SAA", body_code)
+                                            "MissingData", "$Biology:Need DSS", body_code) """
 
                         # Thin Atmosphere
                         if b.get('type') == 'Planet' and b.get('atmosphereType') and "Thin" in b.get('atmosphereType') and not b.get('isLandable'):
@@ -1298,13 +1298,13 @@ class CodexTypes():
                         if body_code not in self.saadata:
                             self.saadata[body_code] = {}
                         self.remove_poi(
-                            "MissingData", "$Geology:Need SAA", body_code)
+                            "MissingData", "$Geology:Need DSS", body_code)
                         self.remove_poi(
-                            "MissingData", "$Biology:Need SAA", body_code)
+                            "MissingData", "$Biology:Need DSS", body_code)
                         self.remove_poi(
                             "MissingData", "$Planets:Need FSS", body_code)
                         self.remove_poi(
-                            "MissingData", "$Rings:Need SAA", body_code)
+                            "MissingData", "$Rings:Need DSS", body_code)
                 else:
                     body = r.get("body")
                     body_code = body.replace(self.system+" ", "")
@@ -1313,17 +1313,17 @@ class CodexTypes():
                         self.saadata[body_code] = {}
                     self.saadata[body_code][r.get(
                         "hud_category")] = r.get("count")
-                    #self.remove_poi("Geology", "$Sites:Need SAA", body_code)
-                    #self.remove_poi("Biology", "$Species:Need SAA", body_code)
+                    #self.remove_poi("Geology", "$Sites:Need DSS", body_code)
+                    #self.remove_poi("Biology", "$Species:Need DSS", body_code)
                     self.remove_poi(
-                        "MissingData", "$Geology:Need SAA", body_code)
+                        "MissingData", "$Geology:Need DSS", body_code)
                     self.remove_poi(
-                        "MissingData", "$Biology:Need SAA", body_code)
+                        "MissingData", "$Biology:Need DSS", body_code)
                     self.remove_poi(
                         "MissingData", "$Planets:Need FSS", body_code)
                     self.remove_poi(
-                        "MissingData", "$Rings:Need SAA", body_code)
-                    #self.remove_poi("MissingData", "$Rings:Need SAA", body_code)
+                        "MissingData", "$Rings:Need DSS", body_code)
+                    #self.remove_poi("MissingData", "$Rings:Need DSS", body_code)
 
                     if r.get("hud_category") == "Ring":
                         self.add_poi(
@@ -2812,7 +2812,7 @@ class CodexTypes():
                                 "Ring", "$Rings:"+"{} Rings".format(ring.get("type")), ring_code)
                         if ring_code not in self.saadata:
                             self.add_poi(
-                                "MissingData", "$Rings:Need SAA", ring_code)
+                                "MissingData", "$Rings:Need DSS", ring_code)
 
                     area = get_area(ring.get("innerRadius"),
                                     ring.get("outerRadius"))
