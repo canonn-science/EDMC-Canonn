@@ -1035,7 +1035,7 @@ class CodexTypes():
                         self.close_rings(b, bodies, body_code)
                         self.close_bodies(b, bodies, body_code)
                         self.close_flypast(b, bodies, body_code)
-                        self.rings(b, body_code)
+                        self.rings(b, body_name)
                         self.green_system(bodies)
                         if moon_moon_moon(b):
                             self.add_poi(
@@ -2792,13 +2792,13 @@ class CodexTypes():
             self.add_poi(jclass, f"$BoostFSD:Basic{modifier}", body_code)
             return
 
-    def rings(self, candidate, body_code):
-
-        if candidate.get("rings") and not self.bodymismatch(self.system, body_code):
+    def rings(self, candidate, body_name):
+        body_code = body_name.replace(self.system+" ", '')
+        if candidate.get("rings") and not self.bodymismatch(self.system, body_name):
             for ring in candidate.get("rings"):
                 ringname = ring.get("name")
                 bodymsimatch = self.bodymismatch(
-                    self.system, ringname.replace(" A Ring", "").replace(" B Ring", "").replace(" C Ring", ""))
+                    self.system, ringname)
                 bodymatch = (not bodymsimatch)
                 if bodymatch:
 
