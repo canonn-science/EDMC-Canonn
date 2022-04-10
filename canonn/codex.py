@@ -2618,8 +2618,8 @@ class CodexTypes():
                         body.get("orbitalInclination") == candidate.get("orbitalInclination"))
                     period_match = (body.get("orbitalPeriod") ==
                                     candidate.get("orbitalPeriod"))
-                    non_binary = (180 != abs(
-                        float(body.get("argOfPeriapsis")) - float(candidate.get("argOfPeriapsis"))))
+                    non_binary = (180 != round(abs(
+                                               float(body.get("argOfPeriapsis")) - float(candidate.get("argOfPeriapsis")))))
                     attribute_match = (
                         axis_match and eccentricity_match and inclination_match and period_match)
 
