@@ -1194,9 +1194,11 @@ class CodexTypes():
                     english_name = codex_name_ref.get("english_name")
 
                     body = r.get("body")
-                    if body is None:
-                        continue
-                    body_code = body.replace(self.system+" ", '')
+                    # if the body is unknown we will set body code to ?
+                    if body:
+                        body_code = body.replace(self.system+" ", '')
+                    else:
+                        body_code = '?'
 
                     if hud_category == "Geology":
                         subcat = "$Sites:"+english_name
