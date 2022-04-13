@@ -2975,7 +2975,7 @@ class CodexTypes():
         try:
             bodycode = body.replace(system+" ", '')
         except:
-            bodycode = ""
+            bodycode = "?"
 
         if entry.get("event") == "Embark":
             if entry.get("Taxi"):
@@ -3070,7 +3070,7 @@ class CodexTypes():
 
                         self.add_poi(hud_category, subcat, bodycode)
                     else:
-                        self.add_poi(hud_category, english_name, "")
+                        self.add_poi(hud_category, english_name, "?")
 
                     # refresh planet panel
                     if body:
