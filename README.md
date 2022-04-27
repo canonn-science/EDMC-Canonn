@@ -64,6 +64,20 @@ This captures NHSS information from the FSS scanner and USS Drops. Only logs one
 ## Codex Icons
 The plugin will look up EDSM and Canonn Databases to identify interesting facts about the system and display icons that show you what is in the current system.  This may be biology, geology or system features such as earth like worlds, shepherd moons and close orbits. It will also show you how many bodies are recorded in EDSM and how many bodies there are in total. It also shows you Jumponium materials.
 
+## Surface Navigation
+
+If you are close to the surface of a planet you can send a message in the in game chat that will enable the plugin to display a bearing and distance to a set of coordinates
+
+eg. canonn dest 0 0
+
+## Surface data capture
+
+Typing "canonn capture some text" into the in game chat will store your status.json in the database and effectively record a personal bookmark. This can be used for things like temperature surveys or recording surface coordinates for science projects. You can retrieve you data with this url, substituting your cmdr name https://us-central1-canonn-api-236217.cloudfunctions.net/get_cmdr_status?cmdr=LCU%20No%20Fool%20Like%20One
+
+If the text after the words "canonn capture" start with the following ("guardian", "thargoid", "human", "biology", "geology", "other", "nsp") then that will be recorded as the category and the words after that will be stored as a comment.
+
+eg: Canonn capture biology A rude looking tubus 
+
 ## Codex
 
 This records the codex entries and a bit of extra info about body and lat lon. The codex entries are routed to the appropriate CAPI report. eg fgreports btreports etc. Most data gets sent to be stored in the Canonn API https://api.canonn.tech/documentation
@@ -72,7 +86,7 @@ We also provide excel sheets with much of the data held in the CAPI
 
 * [Surface Biology](https://canonn.fyi/biosheet)
 * [Guardian](https://canonn.fyi/guardiansheet)
-* [Lagrange Clouds](https://docs.google.com/spreadsheets/d/11BCZRci0YlgW0sFdxvB_srq7ssxHzstMAiewhSGHE94)
+* [Lagrange Clouds](canonn.fyi/cloudsheet)
 * [Thargoid](https://canonn.fyi/thargoidsheet)
 
 All Codex data some FSS Events and SAA Signals are stored in a cloud mysql database and used for showing code icons. This data can be accessed through data dumps in compressed json format.

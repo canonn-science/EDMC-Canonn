@@ -73,7 +73,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.5.2"
+this.version = "6.6.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -250,7 +250,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     clientreport.submit(cmdr, is_beta, client, entry)
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
-    hdreport.submit(cmdr, is_beta, system, station, entry, client)
+    hdreport.submit(cmdr, is_beta, system, station, entry, client, state)
     codex.submit(cmdr, is_beta, system, x, y, z, entry, body,
                  nearloc['Latitude'], nearloc['Longitude'], client, state)
     fssreports.submit(cmdr, is_beta, system, x, y, z, entry, body,

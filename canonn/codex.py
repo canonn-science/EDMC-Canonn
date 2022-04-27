@@ -30,6 +30,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 import plug
 from math import sqrt, pow
 import queue
+import re
 
 
 class Queue(queue.Queue):
@@ -211,7 +212,7 @@ def journal2edsm(j):
         else:
             e["atmosphereType"] = "No atmosphere"
         if j.get("TerraformState") == "Terraformable":
-            e["terraformingState"] = 'Candidate for terraforming'
+            e["terraformingState"] = 'Terraformable'
         elif j.get("TerraformState") == "Terraforming":
             e["terraformingState"] = 'Terraforming'
         else:
@@ -473,7 +474,7 @@ class CodexTypes():
     logqueue = True
     logq = Queue()
 
-    edsm_bodyq = Queue()
+    spansh_bodyq = Queue()
     edsm_stationq = Queue()
     poiq = Queue()
     saaq = Queue()
@@ -577,7 +578,7 @@ class CodexTypes():
         #self.stationPlanetData = {}
 
         self.temp_poidata = None
-        self.temp_edsmdata = None
+        self.temp_spanshdata = None
 
         #self.cmdrData = {}
 
@@ -914,6 +915,53 @@ class CodexTypes():
             self.labels[name].grid()
             self.labels[name].grid_remove()
 
+    def bodymismatch(self, systemname, bodyname):
+        procgen_sysname_re = re.compile(
+            '''
+            ^
+            ([A-Za-z0-9.()\' -]+?)[ ]
+            ([A-Z][A-Z]-[A-Z])[ ]
+            ([a-h])(?:([0-9]+)-|)([0-9]+)
+            $
+        ''', re.VERBOSE)
+
+        procgen_sys_body_name_re = re.compile(
+            '''
+            ^
+            (?P<sysname>.+?)
+            (?P<desig>|[ ](?P<stars>A?B?C?D?E?F?G?H?I?J?K?L?M?N?O?))
+            (?:
+            |[ ](?P<nebula>Nebula)
+            |[ ](?P<belt>[A-Z])[ ]Belt(?:|[ ]Cluster[ ](?P<cluster>[1-9][0-9]?))
+            |[ ]Comet[ ](?P<stellarcomet>[1-9][0-9]?)
+            |[ ](?P<planet>[1-9][0-9]?(?:[+][1-9][0-9]?)*)
+            (?:
+            |[ ](?P<planetring>[A-Z])[ ]Ring
+            |[ ]Comet[ ](?P<planetcomet>[1-9][0-9]?)
+            |[ ](?P<moon1>[a-z](?:[+][a-z])*)
+                (?:
+                |[ ](?P<moon1ring>[A-Z])[ ]Ring
+                |[ ]Comet[ ](?P<moon1comet>[1-9][0-9]?)
+                |[ ](?P<moon2>[a-z](?:[+][a-z])*)
+                (?:
+                |[ ](?P<moon2ring>[A-Z])[ ]Ring
+                |[ ]Comet[ ](?P<moon2comet>[1-9][0-9]?)
+                |[ ](?P<moon3>[a-z])
+                )
+                )
+            )
+            )
+            $
+        ''', re.VERBOSE)
+
+        pgsysmatch = procgen_sysname_re.match(systemname)
+        pgbodymatch = procgen_sys_body_name_re.match(bodyname)
+        bodymismatch = (not bodyname.startswith(systemname))
+
+        if pgsysmatch and pgbodymatch and bodymismatch:
+            return True
+        return False
+
     # this seems horribly confused
     def refreshPOIData(self, event):
 
@@ -923,22 +971,23 @@ class CodexTypes():
             return
 
         try:
-            while not self.edsm_bodyq.empty():
+            while not self.spansh_bodyq.empty():
                 # only expecting to go around once
-                self.temp_edsmdata = self.edsm_bodyq.get()
+                self.temp_spanshdata = self.spansh_bodyq.get()
 
             # if self.temp_edsmdata:
             if not self.bodies:
                 self.bodies = {}
             # restructure the EDSM data
-            if self.temp_edsmdata:
-                edsm_bodies = self.temp_edsmdata.get("bodies")
+            if self.temp_spanshdata:
+                spansh_bodies = self.temp_spanshdata.get("bodies")
             else:
-                edsm_bodies = {}
-            if edsm_bodies:
-                for b in edsm_bodies:
+                spansh_bodies = {}
+            if spansh_bodies:
+                for b in spansh_bodies:
                     if not "Belt Cluster" in b.get("name"):
-                        if b.get("bodyId") not in self.bodies:
+                        # filter out any data errors in spansh
+                        if b.get("bodyId") not in self.bodies and not self.bodymismatch(self.temp_spanshdata.get("name"), b.get("name")):
                             self.bodies[b.get("bodyId")] = b
 
             # Debug.logger.debug("self.bodies")
@@ -986,14 +1035,14 @@ class CodexTypes():
                         self.close_rings(b, bodies, body_code)
                         self.close_bodies(b, bodies, body_code)
                         self.close_flypast(b, bodies, body_code)
-                        self.rings(b, body_code)
+                        self.rings(b, body_name)
                         self.green_system(bodies)
                         if moon_moon_moon(b):
                             self.add_poi(
                                 "Tourist", "Moon Moon Moon", body_code)
 
                         # Terraforming
-                        if b.get('terraformingState') == 'Candidate for terraforming':
+                        if b.get('terraformingState') == 'Terraformable':
                             if b.get('isLandable'):
                                 if not b.get("rings"):
                                     self.add_poi(
@@ -1025,33 +1074,33 @@ class CodexTypes():
                             self.add_poi(
                                 "Geology", "$Volcanism:"+b.get('volcanismType').replace(" Volcanism", ""), body_code)
                             # check SAA signals
-                            if body_code not in self.saadata:
+                            """  if body_code not in self.saadata:
                                 if body_code not in self.ppoidata:
-                                    #self.add_poi("Geology", "$Sites:Need SAA", body_code)
+                                    #self.add_poi("Geology", "$Sites:Need DSS", body_code)
                                     self.add_poi(
-                                        "MissingData", "$Geology:Need SAA", body_code)
+                                        "MissingData", "$Geology:Need DSS", body_code)
                                     #self.ppoidata[body_code] = {}
                                 else:
                                     if "Geology" not in self.ppoidata[body_code]:
-                                        #self.add_poi("Geology", "$Sites:Need SAA", body_code)
+                                        #self.add_poi("Geology", "$Sites:Need DSS", body_code)
                                         self.add_poi(
-                                            "MissingData", "$Geology:Need SAA", body_code)
+                                            "MissingData", "$Geology:Need DSS", body_code) """
 
                         # Landable Atmosphere
                         if b.get('type') == 'Planet' and b.get('atmosphereType') != "No atmosphere" and b.get('isLandable'):
                             self.remove_poi(
                                 "MissingData", "$Planets:Need FSS", body_code)
-                            if body_code not in self.saadata:
+                            """ if body_code not in self.saadata:
                                 if body_code not in self.ppoidata:
-                                    #self.add_poi("Biology", "$Species:Need SAA", body_code)
+                                    #self.add_poi("Biology", "$Species:Need DSS", body_code)
                                     self.add_poi(
-                                        "MissingData", "$Biology:Need SAA", body_code)
+                                        "MissingData", "$Biology:Need DSS", body_code)
                                     #self.ppoidata[body_code] = {}
                                 else:
                                     if "Biology" not in self.ppoidata[body_code]:
-                                        #self.add_poi("Biology", "$Species:Need SAA", body_code)
+                                        #self.add_poi("Biology", "$Species:Need DSS", body_code)
                                         self.add_poi(
-                                            "MissingData", "$Biology:Need SAA", body_code)
+                                            "MissingData", "$Biology:Need DSS", body_code) """
 
                         # Thin Atmosphere
                         if b.get('type') == 'Planet' and b.get('atmosphereType') and "Thin" in b.get('atmosphereType') and not b.get('isLandable'):
@@ -1072,8 +1121,9 @@ class CodexTypes():
                                     "Tourist", 'Fast Orbital Period', body_code)
 
                         if "life" in b.get('subType'):
+                            # journal and spansh have different sub-types
                             self.add_poi("Tourist", b.get(
-                                'subType'), body_code)
+                                'subType').replace("-", " "), body_code)
                         # Ringed ELW etc
                         if b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
@@ -1144,9 +1194,11 @@ class CodexTypes():
                     english_name = codex_name_ref.get("english_name")
 
                     body = r.get("body")
-                    if body is None:
-                        continue
-                    body_code = body.replace(self.system+" ", '')
+                    # if the body is unknown we will set body code to ?
+                    if body:
+                        body_code = body.replace(self.system+" ", '')
+                    else:
+                        body_code = '?'
 
                     if hud_category == "Geology":
                         subcat = "$Sites:"+english_name
@@ -1249,13 +1301,13 @@ class CodexTypes():
                         if body_code not in self.saadata:
                             self.saadata[body_code] = {}
                         self.remove_poi(
-                            "MissingData", "$Geology:Need SAA", body_code)
+                            "MissingData", "$Geology:Need DSS", body_code)
                         self.remove_poi(
-                            "MissingData", "$Biology:Need SAA", body_code)
+                            "MissingData", "$Biology:Need DSS", body_code)
                         self.remove_poi(
                             "MissingData", "$Planets:Need FSS", body_code)
                         self.remove_poi(
-                            "MissingData", "$Rings:Need SAA", body_code)
+                            "MissingData", "$Rings:Need DSS", body_code)
                 else:
                     body = r.get("body")
                     body_code = body.replace(self.system+" ", "")
@@ -1264,17 +1316,17 @@ class CodexTypes():
                         self.saadata[body_code] = {}
                     self.saadata[body_code][r.get(
                         "hud_category")] = r.get("count")
-                    #self.remove_poi("Geology", "$Sites:Need SAA", body_code)
-                    #self.remove_poi("Biology", "$Species:Need SAA", body_code)
+                    #self.remove_poi("Geology", "$Sites:Need DSS", body_code)
+                    #self.remove_poi("Biology", "$Species:Need DSS", body_code)
                     self.remove_poi(
-                        "MissingData", "$Geology:Need SAA", body_code)
+                        "MissingData", "$Geology:Need DSS", body_code)
                     self.remove_poi(
-                        "MissingData", "$Biology:Need SAA", body_code)
+                        "MissingData", "$Biology:Need DSS", body_code)
                     self.remove_poi(
                         "MissingData", "$Planets:Need FSS", body_code)
                     self.remove_poi(
-                        "MissingData", "$Rings:Need SAA", body_code)
-                    #self.remove_poi("MissingData", "$Rings:Need SAA", body_code)
+                        "MissingData", "$Rings:Need DSS", body_code)
+                    #self.remove_poi("MissingData", "$Rings:Need DSS", body_code)
 
                     if r.get("hud_category") == "Ring":
                         self.add_poi(
@@ -1642,7 +1694,7 @@ class CodexTypes():
             # debug("CodexTypes.waiting = True")
             # first we will clear the queues
             self.logq.clear()
-            self.edsm_bodyq.clear()
+            self.spansh_bodyq.clear()
             self.edsm_stationq.clear()
             self.poiq.clear()
             self.saaq.clear()
@@ -1661,13 +1713,13 @@ class CodexTypes():
                 if r.status_code == requests.codes.ok:
                     # debug("got EDSM Data")
                     j = r.json()
-                    temp_edsmdata = j.get("system")
-                    for b in temp_edsmdata.get("bodies"):
-                        if b.get("signals") and b.get("signals").get("signals"):
+                    temp_spanshdata = j.get("system")
+                    for b in temp_spanshdata.get("bodies"):
+                        mismatch = self.bodymismatch(
+                            temp_spanshdata.get("name"), b.get("name"))
+                        if b.get("signals") and b.get("signals").get("signals") and not mismatch:
                             signals = b.get("signals").get("signals")
                             for key in signals.keys():
-                                found = False
-                                print(key)
                                 type = key
                                 english_name = type.replace("$SAA_SignalType_", "").replace(
                                     "ical;", "y").replace(";", "")
@@ -1682,14 +1734,29 @@ class CodexTypes():
                                 saa_signal["english_name"] = english_name
                                 saa_signal["count"] = signals.get(key)
                                 self.saaq.put(saa_signal)
+                        if b.get("rings"):
+                            for ring in b.get("rings"):
+                                mismatch = self.bodymismatch(
+                                    temp_spanshdata.get("name"), ring.get("name"))
+                                if ring.get("signals") and ring.get("signals").get("signals") and not mismatch:
+                                    signals = ring.get(
+                                        "signals").get("signals")
+                                    for key in signals.keys():
+                                        saa_signal = {}
+                                        saa_signal["body"] = b.get("name")
+                                        saa_signal["hud_category"] = cat
+                                        saa_signal["english_name"] = key
+                                        saa_signal["count"] = signals.get(key)
+
+                                        self.saaq.put(saa_signal)
 
                     # push edsm data only a queue
-                    self.edsm_bodyq.put(temp_edsmdata)
+                    self.spansh_bodyq.put(temp_spanshdata)
                 else:
-                    Debug.logger.debug("EDSM Failed")
-                    Debug.logger.error("EDSM Failed")
+                    Debug.logger.debug("Spansh Failed")
+                    Debug.logger.error("Spansh Failed")
             except:
-                Debug.logger.error("Error getting EDSM data")
+                Debug.logger.error("Error getting Spansh data")
 
             try:
                 url = "https://www.edsm.net/api-system-v1/stations?systemName={}".format(
@@ -1703,9 +1770,9 @@ class CodexTypes():
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
                     # debug("got EDSM Data")
-                    temp_edsmdata = r.json()
+                    temp_spanshdata = r.json()
                     # push edsm data only a queue
-                    self.edsm_stationq.put(temp_edsmdata)
+                    self.edsm_stationq.put(temp_spanshdata)
                 else:
                     Debug.logger.debug("EDSM Failed")
                     Debug.logger.error("EDSM Failed")
@@ -2309,44 +2376,89 @@ class CodexTypes():
 
         body_code = body.get("name").replace(self.system+" ", '')
         if body.get("parents"):
+            rings = None
             parent = body.get("parents")[0]
             if parent.get("Planet") and bodies.get(parent.get("Planet")) and bodies.get(parent.get("Planet")).get("rings"):
-
-                # If the parent body has a ring
-                for ring in bodies.get(parent.get("Planet")).get("rings"):
-                    if 'Belt' not in ring.get("name"):
-                        density = get_density(ring.get("mass"), ring.get(
-                            "innerRadius"), ring.get("outerRadius"))
-
-                        r1 = float(ring.get("outerRadius")) * 1000  # m
-                        # convert au to km
-                        r2 = float(body.get("semiMajorAxis")) * 149597870691
-                        r3 = float(body.get("radius")
-                                   or body.get("solarRadius")) * 1000
-                        # and the orbit of the body is close to the outer radius
-
-                        if r2 - r3 < r1 + 15000000:
-                            self.add_poi("Tourist", 'Shepherd Moon', body_code)
-
-            # gah i need to refector this to avoid duplication
+                rings = bodies.get(parent.get("Planet")).get("rings")
+                bodytype = "Moon"
             if parent.get("Star") and bodies.get(parent.get("Star")) and bodies.get(parent.get("Star")).get("rings"):
+                rings = bodies.get(parent.get("Star")).get("rings")
+                bodytype = "Planet"
 
-                # If the parent body has a ring
-                for ring in bodies.get(parent.get("Star")).get("rings"):
+            if rings:
+
+                # find the maximum extent of the ring system
+                maxradius = 0
+                for ring in rings:
                     if 'Belt' not in ring.get("name"):
-                        density = get_density(ring.get("mass"), ring.get(
-                            "innerRadius"), ring.get("outerRadius"))
+                        outerRadius = float(ring.get("outerRadius"))
+                        if maxradius < outerRadius:
+                            maxradius = outerRadius
 
-                        r1 = float(ring.get("outerRadius")) * 1000  # m
-                        # convert au to km
-                        r2 = float(body.get("semiMajorAxis")) * 149597870691
-                        r3 = float(body.get("radius")
-                                   or body.get("solarRadius")) * 1000
-                        # and the orbit of the body is close to the outer radius
+                # if it was all belts maxradius wont be set
+                if maxradius > 0:
+                    # all measurements in meters
+                    semiMajorAxis = float(
+                        body.get("semiMajorAxis")) * 149597870691
+                    bodyRadius = float(body.get("radius")
+                                       or body.get("solarRadius")) * 1000
+                    outerRadius = float(ring.get("outerRadius"))
+                    innerRadius = float(ring.get("innerRadius"))
 
-                        if r2 - r3 < r1 + 15000000:
-                            self.add_poi(
-                                "Tourist", 'Shepherd Planet', body_code)
+                    for ring in rings:
+
+                        innerproximity = (
+                            semiMajorAxis+bodyRadius < innerRadius)
+                        outerproximity = (
+                            semiMajorAxis+bodyRadius > outerRadius)
+                        # is the body in the middle of the rings?
+                        interloping = (
+                            innerRadius <= semiMajorAxis+bodyRadius <= outerRadius)
+                        eccentric = (body.get("orbitalEccentricity")
+                                     and body.get("orbitalEccentricity") > 0.8)
+
+                        if innerproximity:
+                            separation = innerRadius - \
+                                (semiMajorAxis+bodyRadius)
+                        if outerproximity:
+                            separation = (
+                                semiMajorAxis+bodyRadius) - outerRadius
+                        if interloping:
+                            separation = 0
+
+                        # the body extends one radius past the semiMajorAxis
+                        # so this means that for it to be an outer moon it must be
+                        # a minimum of one radius past the max radius
+                        outer = (maxradius < semiMajorAxis + bodyRadius)
+                        if outer:
+                            type = "Outer"
+                        else:
+                            type = "Inner"
+
+                        proximity = ""
+
+                        print(f"separation {separation} {body_code}")
+
+                        if separation < bodyRadius * 2:
+                            proximity = "Close "
+
+                        if interloping:
+                            proximity = "Touching "
+
+                        eccentriclabel = ""
+                        if eccentric:
+                            eccentriclabel = "Eccentric "
+
+                        if separation < bodyRadius * 10 or interloping:
+                            # add one radius for touching surface an another for the outer limit
+                            if semiMajorAxis < maxradius + (bodyRadius * 2) or interloping:
+                                self.add_poi(
+                                    "Tourist", f"{eccentriclabel}{proximity}{type} Shepherd {bodytype}", body_code)
+                        else:
+                            if semiMajorAxis + bodyRadius < maxradius:
+                                # just going to call in inner moon otherwise its confusing
+                                self.add_poi(
+                                    "Tourist", f"{eccentriclabel}Inner Moon", body_code)
 
     def radius_ly(self, body):
         if body.get("type") == 'Star' and body.get("solarRadius"):
@@ -2508,8 +2620,8 @@ class CodexTypes():
                         body.get("orbitalInclination") == candidate.get("orbitalInclination"))
                     period_match = (body.get("orbitalPeriod") ==
                                     candidate.get("orbitalPeriod"))
-                    non_binary = (180 != abs(
-                        float(body.get("argOfPeriapsis")) - float(candidate.get("argOfPeriapsis"))))
+                    non_binary = (180 != round(abs(
+                                               float(body.get("argOfPeriapsis")) - float(candidate.get("argOfPeriapsis")))))
                     attribute_match = (
                         axis_match and eccentricity_match and inclination_match and period_match)
 
@@ -2682,41 +2794,50 @@ class CodexTypes():
             self.add_poi(jclass, f"$BoostFSD:Basic{modifier}", body_code)
             return
 
-    def rings(self, candidate, body_code):
-        if candidate.get("rings"):
+    def rings(self, candidate, body_name):
+        body_code = body_name.replace(self.system+" ", '')
+        if candidate.get("rings") and not self.bodymismatch(self.system, body_name):
             for ring in candidate.get("rings"):
-                if ring.get("name")[-4:] == "Ring":
-                    ring_code = ring.get("name").replace(self.system+" ", "")
-                    if candidate.get("reserveLevel") and candidate.get("reserveLevel") in ("Pristine", "PristineResources"):
-                        self.add_poi(
-                            "Ring", "$Rings:"+"Pristine {} Rings".format(ring.get("type")), ring_code)
-                    else:
-                        self.add_poi(
-                            "Ring", "$Rings:"+"{} Rings".format(ring.get("type")), ring_code)
-                    if ring_code not in self.saadata:
-                        self.add_poi(
-                            "MissingData", "$Rings:Need SAA", ring_code)
+                ringname = ring.get("name")
+                bodymsimatch = self.bodymismatch(
+                    self.system, ringname)
+                bodymatch = (not bodymsimatch)
+                if bodymatch:
 
-                area = get_area(ring.get("innerRadius"),
-                                ring.get("outerRadius"))
-                density = get_density(ring.get("mass"), ring.get(
-                    "innerRadius"), ring.get("outerRadius"))
+                    if ring.get("name")[-4:] == "Ring":
+                        ring_code = ring.get("name").replace(
+                            self.system+" ", "")
+                        if candidate.get("reserveLevel") and candidate.get("reserveLevel") in ("Pristine", "PristineResources"):
+                            self.add_poi(
+                                "Ring", "$Rings:"+"Pristine {} Rings".format(ring.get("type")), ring_code)
+                        else:
+                            self.add_poi(
+                                "Ring", "$Rings:"+"{} Rings".format(ring.get("type")), ring_code)
+                        if ring_code not in self.saadata:
+                            self.add_poi(
+                                "MissingData", "$Rings:Need DSS", ring_code)
 
-                if "Ring" in ring.get("name").replace(self.system+" ", ""):
-                    if ring.get("outerRadius") > 1000000:
-                        self.add_poi(
-                            "Tourist", "Large Radius Rings", body_code)
-                    elif ring.get("innerRadius") < (45935299.69736346 - (1 * 190463268.57872835)):
-                        self.add_poi(
-                            "Tourist", "Small Radius Rings", body_code)
-                    # elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
-                    #    self.add_poi(
-                    #        "Tourist", "Thin Rings", body_code)
-                    elif density < 0.005:
-                        self.add_poi("Tourist", "Low Density Rings", body_code)
-                    elif density > 1000:
-                        self.add_poi(
-                            "Tourist", "High Density Rings", body_code)
+                    area = get_area(ring.get("innerRadius"),
+                                    ring.get("outerRadius"))
+                    density = get_density(ring.get("mass"), ring.get(
+                        "innerRadius"), ring.get("outerRadius"))
+
+                    if "Ring" in ring.get("name").replace(self.system+" ", ""):
+                        if ring.get("outerRadius") > 1000000:
+                            self.add_poi(
+                                "Tourist", "Large Radius Rings", body_code)
+                        elif ring.get("innerRadius") < (45935299.69736346 - (1 * 190463268.57872835)):
+                            self.add_poi(
+                                "Tourist", "Small Radius Rings", body_code)
+                        # elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
+                        #    self.add_poi(
+                        #        "Tourist", "Thin Rings", body_code)
+                        elif density < 0.005:
+                            self.add_poi(
+                                "Tourist", "Low Density Rings", body_code)
+                        elif density > 1000:
+                            self.add_poi(
+                                "Tourist", "High Density Rings", body_code)
 
     def light_seconds(self, tag, value):
 
@@ -2854,7 +2975,7 @@ class CodexTypes():
         try:
             bodycode = body.replace(system+" ", '')
         except:
-            bodycode = ""
+            bodycode = "?"
 
         if entry.get("event") == "Embark":
             if entry.get("Taxi"):
@@ -2875,8 +2996,8 @@ class CodexTypes():
             self.system = system
             self.system64 = entry.get("SystemAddress")
             if not self.system64:
-                 Debug.logger.error("no id64")
-                 Debug.logger.error(entry)
+                Debug.logger.error("no id64")
+                Debug.logger.error(entry)
             if (entry.get("event") == "StartJump" and entry.get("JumpType") == "Hyperspace") or (entry.get("event") == "CarrierJump") or (entry.get("event") == "FSDJump"):
                 self.system = entry.get("StarSystem")
             elif entry.get("event") == "FSDTarget" and self.intaxi:
@@ -2949,7 +3070,7 @@ class CodexTypes():
 
                         self.add_poi(hud_category, subcat, bodycode)
                     else:
-                        self.add_poi(hud_category, english_name, "")
+                        self.add_poi(hud_category, english_name, "?")
 
                     # refresh planet panel
                     if body:
@@ -3101,7 +3222,7 @@ class CodexTypes():
                 else:
                     # self.add_poi("Other", "$Warning:" +
                     #             entry.get("SignalName"), None)
-                    print("WARNING : ", entry)
+
                     dovis = False
 
             elif entry.get("IsStation"):
