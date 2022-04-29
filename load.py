@@ -177,7 +177,10 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         journalGetSystem()
     # navroute has some info that we can use in the event that system is null
     Systems.storeNavroute(state)
+    Systems.storeid64(entry)
 
+    # if system does not match the systemAddress in the event then
+    # we need to set the correct system
     if system and entry.get("SystemAddress"):
         d = Systems.systemFromId64(entry.get("SystemAddress"))
         if d and system != d.get("StarSystem"):
@@ -189,7 +192,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         if d:
             Debug.logger.debug(f"setting unknown system to {d}")
             system = d.get("StarSystem")
-            x, y, z = d.get("StarPos")
+            x, y, z = Systems.edsmGetSystem(system)
         else:
             Debug.logger.debug("Can't locate system leaving it blank")
 
