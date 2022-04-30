@@ -1744,7 +1744,7 @@ class CodexTypes():
                                     for key in signals.keys():
                                         saa_signal = {}
                                         saa_signal["body"] = b.get("name")
-                                        saa_signal["hud_category"] = cat
+                                        saa_signal["hud_category"] = "Ring"
                                         saa_signal["english_name"] = key
                                         saa_signal["count"] = signals.get(key)
 
