@@ -1120,19 +1120,19 @@ class CodexTypes():
                                 self.add_poi(
                                     "Tourist", 'Fast Orbital Period', body_code)
 
-                        if "life" in b.get('subType'):
+                        if b.get('subType') and "life" in b.get('subType'):
                             # journal and spansh have different sub-types
                             self.add_poi("Tourist", b.get(
                                 'subType').replace("-", " "), body_code)
                         # Ringed ELW etc
-                        if b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
+                        if b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
                                 self.add_poi("Tourist", 'Ringed {}'.format(
                                     CodexTypes.body_types.get(b.get('subType'))), body_code)
                             if b.get("parents") and b.get("parents")[0] and b.get("parents")[0].get("Planet"):
                                 self.add_poi("Tourist", '{} Moon'.format(
                                     CodexTypes.body_types.get(b.get('subType'))), body_code)
-                        if b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                        if b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
                             self.add_poi(
                                 "Tourist", 'Tidal Locked Earthlike Word', body_code)
 
