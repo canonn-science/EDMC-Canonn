@@ -231,6 +231,8 @@ def journal2edsm(j):
     e["rotationalPeriod"] = j.get("RotationPeriod") / 24 / 60 / 60
     e["argOfPeriapsis"] = j.get("Periapsis")
     e["orbitalEccentricity"] = j.get("Eccentricity")
+    e["meanAnomaly"] = j.get("MeanAnomaly")
+    e["updateTime"] = j.get("timestamp")
     e["rotationalPeriodTidallyLocked"] = (j.get("TidalLock") or False)
     e["name"] = j.get("BodyName")
     if j.get("Rings"):
@@ -1482,7 +1484,7 @@ class CodexTypes():
             #line = sys.exc_info()[-1].tb_lineno
             self.add_poi("Other", 'Plugin Error', None)
             Debug.logger.error("Plugin Error")
-            Debug.logger.exception("Message")
+            Debug.logger.error(e)
 
         Debug.logger.debug(f"refreshPOIData end {self.event}")
 
