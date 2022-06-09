@@ -231,6 +231,8 @@ def journal2edsm(j):
     e["rotationalPeriod"] = j.get("RotationPeriod") / 24 / 60 / 60
     e["argOfPeriapsis"] = j.get("Periapsis")
     e["orbitalEccentricity"] = j.get("Eccentricity")
+    e["meanAnomaly"] = j.get("MeanAnomaly")
+    e["updateTime"] = j.get("timestamp")
     e["rotationalPeriodTidallyLocked"] = (j.get("TidalLock") or False)
     e["name"] = j.get("BodyName")
     if j.get("Rings"):
@@ -1120,19 +1122,19 @@ class CodexTypes():
                                 self.add_poi(
                                     "Tourist", 'Fast Orbital Period', body_code)
 
-                        if "life" in b.get('subType'):
+                        if b.get('subType') and "life" in b.get('subType'):
                             # journal and spansh have different sub-types
                             self.add_poi("Tourist", b.get(
                                 'subType').replace("-", " "), body_code)
                         # Ringed ELW etc
-                        if b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
+                        if b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world', 'Water world', 'Ammonia world'):
                             if b.get("rings"):
                                 self.add_poi("Tourist", 'Ringed {}'.format(
                                     CodexTypes.body_types.get(b.get('subType'))), body_code)
                             if b.get("parents") and b.get("parents")[0] and b.get("parents")[0].get("Planet"):
                                 self.add_poi("Tourist", '{} Moon'.format(
                                     CodexTypes.body_types.get(b.get('subType'))), body_code)
-                        if b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                        if b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
                             self.add_poi(
                                 "Tourist", 'Tidal Locked Earthlike Word', body_code)
 
@@ -1482,7 +1484,7 @@ class CodexTypes():
             #line = sys.exc_info()[-1].tb_lineno
             self.add_poi("Other", 'Plugin Error', None)
             Debug.logger.error("Plugin Error")
-            Debug.logger.exception("Message")
+            Debug.logger.error(e)
 
         Debug.logger.debug(f"refreshPOIData end {self.event}")
 
@@ -1744,7 +1746,7 @@ class CodexTypes():
                                     for key in signals.keys():
                                         saa_signal = {}
                                         saa_signal["body"] = b.get("name")
-                                        saa_signal["hud_category"] = cat
+                                        saa_signal["hud_category"] = "Ring"
                                         saa_signal["english_name"] = key
                                         saa_signal["count"] = signals.get(key)
 

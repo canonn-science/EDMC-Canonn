@@ -90,6 +90,15 @@ class Systems():
                 cls.id_cache[route.get("SystemAddress")] = route
 
     @classmethod
+    def storeId64(cls, event):
+
+        if event.get("StarSystem") and event.get("SystemAddress"):
+            cls.id_cache[event.get("SystemAddress")] = {
+                "StarSystem": event.get("StarSystem"),
+                "SystemAddress": event.get("SystemAddress")
+            }
+
+    @classmethod
     def systemFromId64(cls, id64):
         return cls.id_cache.get(id64)
         # we could try and lookup up from somewhere

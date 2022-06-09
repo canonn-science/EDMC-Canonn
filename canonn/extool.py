@@ -270,11 +270,12 @@ class BearingDestination():
                 elif len(message_part) == 3:
                     lat = float(message_part[2].split(",")[0])
                     lon = float(message_part[2].split(",")[1])
-                elif len(message_part) == 4:
+                elif len(message_part) > 4:
                     lat = float(message_part[2])
                     lon = float(message_part[3])
                 self.state = 1
             except:
+                plug.show_error("unable to set lat and lon")
                 lat = None
                 lon = None
                 self.state = 0

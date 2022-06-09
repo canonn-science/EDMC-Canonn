@@ -73,7 +73,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.6.0"
+this.version = "6.7.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -177,6 +177,14 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         journalGetSystem()
     # navroute has some info that we can use in the event that system is null
     Systems.storeNavroute(state)
+    Systems.storeId64(entry)
+
+    # if system does not match the systemAddress in the event then
+    # we need to set the correct system
+    if system and entry.get("SystemAddress"):
+        d = Systems.systemFromId64(entry.get("SystemAddress"))
+        if d and system != d.get("StarSystem"):
+            system = d.get("StarSystem")
 
     # we need to fix system if its not set.
     if system is None and entry.get("SystemAddress") is not None:
@@ -184,7 +192,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         if d:
             Debug.logger.debug(f"setting unknown system to {d}")
             system = d.get("StarSystem")
-            x, y, z = d.get("StarPos")
+            x, y, z = Systems.edsmGetSystem(system)
         else:
             Debug.logger.debug("Can't locate system leaving it blank")
 
