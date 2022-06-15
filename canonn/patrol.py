@@ -372,6 +372,8 @@ class CanonnPatrol(Frame):
                     quote_plus(self.nearest.get("system")))
                 self.distance['text'] = "{}ly".format(
                     Locale.stringFromNumber(getDistance(p, self.nearest.get("coords")), 1))
+                if self.system == self.nearest.get("system"):
+                    self.distance['text'] = "0ly"
                 self.infolink['text'] = self.nearest.get("instructions")
                 self.infolink['url'] = self.parseurl(self.nearest.get("url"))
 
