@@ -815,7 +815,7 @@ class CanonnPatrol(Frame):
             plug.show_error("Canonn: Failed to fetch GMP POIs")
 
         try:
-            gr = requests.get("https://edastro.com/gec/json/favorites/6")
+            gr = requests.get("https://edastro.com/gec/json/all")
             gr.encoding = 'utf-8'
             gecentries = gr.json()
 
@@ -854,7 +854,7 @@ class CanonnPatrol(Frame):
             entries[entry.get("galMapSearch")] = {
                 "system": entry.get("galMapSearch"),
                 "coordinates": entry.get("coordinates"),
-                "instructions": "GEC: {} : {}".format(html.unescape(entry.get("name")), html.unescape(entry.get("summary"))),
+                "instructions": "GEC: {} : {} (Rating {}/10)".format(html.unescape(entry.get("name")), html.unescape(entry.get("summary")), entry.get("rating")),
                 "url": entry.get("poiUrl")
             }
 
