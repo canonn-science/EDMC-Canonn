@@ -371,7 +371,7 @@ class CanonnPatrol(Frame):
                 self.hyperlink['url'] = "https://www.edsm.net/en/system?systemName={}".format(
                     quote_plus(self.nearest.get("system")))
                 self.distance['text'] = "{}ly".format(
-                    Locale.stringFromNumber(getDistance(p, self.nearest.get("coords")), 2))
+                    Locale.stringFromNumber(getDistance(p, self.nearest.get("coords")), 1))
                 self.infolink['text'] = self.nearest.get("instructions")
                 self.infolink['url'] = self.parseurl(self.nearest.get("url"))
 
@@ -904,8 +904,8 @@ class CanonnPatrol(Frame):
         nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.factionbtn).grid(row=1, column=2,
                                                                                                  sticky="NW")
         # nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideshipsbtn).grid(row=1, column=3, sticky="NW")
-        nb.Checkbutton(frame, text="Hide Galactic Mapping POIS", variable=self.edsmbtn).grid(row=2, column=0,
-                                                                                             sticky="NW")
+        nb.Checkbutton(frame, text="Hide GMP/GEC POIS", variable=self.edsmbtn).grid(row=2, column=0,
+                                                                                    sticky="NW")
         nb.Checkbutton(frame, text="Hide Thargoid Sites", variable=self.thargoidbtn).grid(row=2, column=1,
                                                                                           sticky="NW")
         nb.Checkbutton(frame, text="Hide Guardian Sites", variable=self.guardianbtn).grid(row=2, column=2,
