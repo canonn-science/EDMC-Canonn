@@ -802,35 +802,72 @@ class CanonnPatrol(Frame):
                       'planetFeatures', 'regional', 'pulsar', 'starCluster', 'jumponiumRichSystem', 'surfacePOI',
                       'deepSpaceOutpost', 'mysteryPOI', 'organicPOI', 'restrictedSectors', 'geyserPOI']
 
-        r = requests.get(url)
-        r.encoding = 'utf-8'
-        Debug.logger.debug(r.encoding)
-        entries = r.json()
-        categories = {}
+        try:
+            r = requests.get(url)
+            r.encoding = 'utf-8'
+            Debug.logger.debug(r.encoding)
+            gmpentries = r.json()
+        except Exception as e:
+            Debug.logger.error("Failed to fetch GMP POIs")
+            Debug.logger.error(e)
+            plug.show_error("Canonn: Failed to fetch GMP POIs")
 
-        edsm_patrol = []
+        try:
+            gr = requests.get("https://edastro.com/gec/json/favorites/6")
+            gr.encoding = 'utf-8'
+            gecentries = gr.json()
+
+        except Exception as e:
+            Debug.logger.error("Failed to fetch GEC POIs")
+            Debug.logger.error(e)
+            plug.show_error("Canonn: Failed to fetch GEC POIs")
+
+        entries = {}
+
+        categories = {}
 
         self.patrol_name = "Galactic Mapping"
 
-        for entry in entries:
+        for entry in gmpentries:
 
             if entry.get("type") in validtypes and "Archived: " not in entry.get("name"):
                 # cache these systems we may need them later
                 Systems.storeSystem(entry.get("galMapSearch"),
                                     entry.get("coordinates"))
-                edsm_patrol.append(
-                    newPatrol("Galactic Mapping",
-                              entry.get("galMapSearch"), (
-                                  float(entry.get("coordinates")[0]),
-                                  float(entry.get("coordinates")[1]),
-                                  float(entry.get("coordinates")[2])
-                              ),
-                              "Galactic Mapping Project: {} : {}".format(types.get(entry.get("type")),
-                                                                         # entry.get("name").encode('utf-8')),
-                                                                         html.unescape(entry.get("name"))),
-                              entry.get("galMapUrl"),
-                              None)
-                )
+
+                entries[entry.get("galMapSearch")] = {
+                    "system": entry.get("galMapSearch"),
+                    "coordinates": entry.get("coordinates"),
+                    "instructions": "GMP: {} : {}".format(types.get(entry.get("type")),
+                                                          html.unescape(entry.get("name"))),
+                    "url": entry.get("galMapUrl")
+                }
+
+        for entry in gecentries:
+
+            # cache these systems we may need them later
+            Systems.storeSystem(entry.get("galMapSearch"),
+                                entry.get("coordinates"))
+
+            entries[entry.get("galMapSearch")] = {
+                "system": entry.get("galMapSearch"),
+                "coordinates": entry.get("coordinates"),
+                "instructions": "GEC: {} : {}".format(html.unescape(entry.get("name")), html.unescape(entry.get("summary"))),
+                "url": entry.get("poiUrl")
+            }
+
+        edsm_patrol = []
+
+        for entry in entries.values():
+            edsm_patrol.append(
+                newPatrol("Galactic Mapping",
+                          entry.get("system"),
+                          entry.get("coordinates"),
+                          entry.get("instructions"),
+                          entry.get("url"),
+                          None)
+            )
+
         if not config.shutting_down:
             self.event_generate('<<PatrolDone>>', when='tail')
         return edsm_patrol
