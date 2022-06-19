@@ -9,7 +9,7 @@ except:
     import Tkinter as tk
     from Tkinter import Frame
     from urllib import quote_plus
-
+import shutil
 import codecs
 import csv
 import datetime
@@ -323,8 +323,21 @@ class CanonnPatrol(Frame):
         file = os.path.join(cls.plugin_dir, 'data', 'ships.json')
         with open(file) as json_file:
             ship_types = json.load(json_file)
-        file = os.path.join(cls.plugin_dir, 'data', 'overlay.json')
-        with open(file) as json_file:
+
+        #file = os.path.join(cls.plugin_dir, 'data', 'overlay.json')
+        # make the config directory pass if it fails
+        try:
+            os.mkdir(os.path.join(config.app_dir_path, 'canonn'))
+        except OSError as error:
+            pass
+
+        overlay_json = os.path.join(
+            config.app_dir_path, 'canonn', 'overlay.json')
+        if not os.path.exists(overlay_json):
+            defaults = os.path.join(cls.plugin_dir, 'data', 'overlay.json')
+            shutil.copyfile(defaults, overlay_json)
+
+        with open(overlay_json) as json_file:
             overlay_settings = json.load(json_file)
 
     '''
