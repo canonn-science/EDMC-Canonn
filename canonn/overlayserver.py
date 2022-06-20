@@ -10,16 +10,19 @@ import plug
 # 127.0.0.1:5010
 
 this = sys.modules[__name__]
+this.overlay_connected = False
 
 try:
     import edmcoverlay
-
-    this._overlay = edmcoverlay.Overlay()
-    this.connection = this._overlay.connect()
-
-    print("EDMCOverlay imported")
-except ImportError:
-    print("EDMCOverlay not imported but that is ok")
+    if edmcoverlay.check_game_running():
+        this._overlay = edmcoverlay.Overlay()
+        this.connection = this._overlay.connect()
+        this.overlay_connected = True
+    else:
+        plug.show_error("Restart EDMC after the game is loaded")
+except:
+    this.overlay_connected = False
+    pass
 
 
 def getConfig(rtype, config_data):
@@ -112,8 +115,8 @@ def overlayDisplayMessage(message, cfg, rtype, config_data):
         id = ("CANONN-{}-{}").format(rtype, config['posx'])
         display(data["message"], id, config['color'], config['posx'], config['posy'], config['display_time'], config["header"]
                 ["color"], data["header_text"], config["max_size"], config["header_spacing"], config["line_spacing"])
-    else:
-        print("Cannon Overlay requested but Disabled in the settings")
+    # else:
+    #    print("Cannon Overlay requested but Disabled in the settings")
 
 
 def display(message, id, color, posx, posy, ttl, header_color, header_text, max_size=20, header_spacing=45, line_spacing=20):
@@ -134,10 +137,21 @@ def display(message, id, color, posx, posy, ttl, header_color, header_text, max_
 
 
 def send_message(id, text, color, x, y, ttl=4, size="normal"):
-    #print("{} => {} //x:{}/y:{}".format(id,text,x,y))
+    # print("{} => {} //x:{}/y:{}".format(id,text,x,y))
     # at this point we have checked config so if we
     # have failed then its because the plugin is missing
+
+    if this.overlay_connected == False:
+        plug.show_error("Retrying Overlay Connection")
+        this._overlay = edmcoverlay.Overlay()
+        this.connection = this._overlay.connect()
+        this.overlay_connected = True
+
     try:
-        this._overlay.send_message(id, text, color, x, y, ttl=ttl, size=size)
+        if edmcoverlay.check_game_running():
+            this._overlay.send_message(
+                id, text, color, x, y, ttl=ttl, size=size)
+        else:
+            plug.show_error("Game not running")
     except:
         plug.show_error("Need to install the EDMCOverlay plugin")
