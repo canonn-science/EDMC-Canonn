@@ -15,7 +15,7 @@ It's structure should look like this:
       
     },
     
-     "codex-ignore-list":[
+  "codex-ignore-list":[
         
     ]
 }
@@ -39,7 +39,7 @@ The object should look like this:
                 "text":"Header text",
                 "color":"#EE4220"
             }
-        }
+}
 ```
 
 You can modify all of these parameters:
