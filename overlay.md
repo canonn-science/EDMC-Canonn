@@ -4,6 +4,8 @@
 The canonn overlay allows a multitude of options in order to customize the overlay look and behavior.
 The [overlay.json](https://github.com/canonn-science/EDMC-Canonn/blob/develop-docs/data/overlay.json) file is loaded when the plugin starts and provides information on how to display the overlay on your screen.
 
+**After any edit to this file, restart the plugin to have the changes appear**
+
 It's structure should look like this:
 ```json
 {
@@ -56,6 +58,7 @@ You can modify all of these parameters:
 | `header.text`    | Text, ex: "New POI"                                  | The text in the header, this text is sometimes concatenated with the distance                                    |
 | `header.color`   | Color in ##rrggbb format, ex: #FFFFFF                | The header text color    |
 
+Use websites such as (RapidTables)[https://www.rapidtables.com/web/color/RGB_Color.html] to get #rrggbb colors
 
 ## Positions
 
