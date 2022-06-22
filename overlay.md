@@ -58,7 +58,7 @@ You can modify all of these parameters:
 | `header.text`    | Text, ex: "New POI"                                  | The text in the header, this text is sometimes concatenated with the distance                                    |
 | `header.color`   | Color in ##rrggbb format, ex: #FFFFFF                | The header text color    |
 
-Use websites such as (RapidTables)[https://www.rapidtables.com/web/color/RGB_Color.html] to get #rrggbb colors
+Use websites such as [RapidTables](https://www.rapidtables.com/web/color/RGB_Color.html) to get #rrggbb colors
 
 ## Positions
 
