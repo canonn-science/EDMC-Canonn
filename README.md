@@ -3,6 +3,21 @@ EDMC plugin to automatically collect accurate science data from the galaxy and c
 
 # Features
 
+## Overlay
+
+The EDMC-Canonn plugin can be combined with [EDMC-Overlay](https://github.com/inorton/EDMCOverlay#readme) or [EDMC-Overlay2 for linux ](https://github.com/sersorrel/edmcoverlay2#readme) to display text overlaid on the game screen. 
+
+Just install the EDMC-Overlay plugin as you would any other plugin and enable the overlay options in the Canonn Plugin settings.
+
+![Settings](images/overlay_settings.png)
+
+* Enable Overlay: If selected enables the overlay
+* Enable Patrols: Displays the patrol text as an overlay
+* Enable Nearest Command: Displays the text from the "nearest" command results on screen
+* Enable Additional Informatio: Does what it says on the tin
+
+The positon of the text on screen can be configured by editing a json file. For details see [overlay.md](overlay.md)
+
 ## Patrol System
 The Patrol system is used for directing people to places of interest to Canonn and for providing some useful location information. The patrol will display the nearest location to the commander position. Patrols are not automaticaly updated they only get loaded on statup of after going into the configuration screen
  

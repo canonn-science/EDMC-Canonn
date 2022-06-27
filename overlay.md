@@ -1,8 +1,9 @@
 
 # Canonn Overlay Configuration
 
-The canonn overlay allows a multitude of options in order to customize the overlay look and behavior.
-The [overlay.json](https://github.com/canonn-science/EDMC-Canonn/blob/develop-docs/data/overlay.json) file is loaded when the plugin starts and provides information on how to display the overlay on your screen.
+The canonn overlay allows a multitude of options in order to customize the overlay look and behavior. This can be controlled by editing [overlay.json](../../canonn/overlay.json). The file supplied with the build is copied to the [canonn configuration directory](../../canonn) and the copy can be edited without being overwritten by subsequent releases. 
+
+The [overlay.json](../../canonn/overlay.json) file is loaded when the plugin starts and provides information on how to display the overlay on your screen.
 
 **After any edit to this file, restart the plugin to have the changes appear**
 
