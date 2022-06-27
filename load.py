@@ -236,12 +236,20 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         system = entry.get("StarSystem")
         Systems.storeSystem(system, entry.get("StarPos"))
 
-    if system:
-        x, y, z = Systems.edsmGetSystem(system)
-    else:
-        x = None
-        y = None
-        z = None
+    x = None
+    y = None
+    z = None
+
+    if system and entry.get("StarPos") is None:
+        try:
+            x, y, z = Systems.edsmGetSystem(system)
+        except:
+            x = None
+            y = None
+            z = None
+
+    if system and entry.get("StarPos"):
+        x, y, z = entry.get("StarPos")
 
     return journal_entry_wrapper(cmdr, is_beta, system, this.SysFactionState, this.SysFactionAllegiance,
                                  this.DistFromStarLS, station, entry,
