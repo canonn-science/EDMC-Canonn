@@ -40,7 +40,7 @@ DEFAULT_URL = ""
 WRAP_LENGTH = 200
 
 THARGOIDSITES = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFRhsa3g0tpYFkqyBR2HrfUjXfjW6gSRnnDhFtVtPlWtpuNAHKujI5fH6Lnh3ctt0SAyNywnesv8H_/pub?gid=1675294629&single=true&output=tsv"
-GUARDIANSITES = "https://us-central1-canonn-api-236217.cloudfunctions.net/guardian_tour"
+GUARDIANSITES = "https://drive.google.com/uc?id=1m8q9lE4_cAI8CotM-oaEm5RWHeeJjoil"
 # FLEETCARRIERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSozf4Ii8TbuDCmk8Qk5ld1W0fUF_5EyHP-OvvnjRQmC9v8NF2_ZZLFy7XOe8pQWTXudaVgdAfxlCFo/pub?gid=470243264&single=true&output=tsv"
 
 ship_types = {
