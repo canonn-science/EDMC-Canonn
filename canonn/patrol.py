@@ -179,7 +179,7 @@ class InfoLink(HyperlinkLabel):
             self.resized = False
 
         if not self.resized:
-            Debug.logger.debug("Patrol widget resize")
+            #Debug.logger.debug("Patrol widget resize")
             self.resized = True
             self.configure(wraplength=event.width-2)
             self.lasttime = datetime.datetime.now()
@@ -341,7 +341,8 @@ class CanonnPatrol(Frame):
         if not os.path.exists(patrol_json):
             defaults = os.path.join(
                 cls.plugin_dir, 'data', 'EDMC-Canonn.patrol')
-            shutil.copyfile(defaults, patrol_json)
+            if os.path.exists(defaults):
+                shutil.copyfile(defaults, patrol_json)
 
         with open(overlay_json) as json_file:
             overlay_settings = json.load(json_file)
