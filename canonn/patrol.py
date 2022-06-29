@@ -207,7 +207,7 @@ class CanonnPatrol(Frame):
             CanonnPatrol.plugin_dir, "icons", "right_arrow.gif"))
 
         self.patrol_config = os.path.join(
-            Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
+            config.app_dir_path, 'canonn', 'EDMC-Canonn.patrol')
 
         self.canonnbtn = tk.IntVar(value=config.get_int("HideCanonn"))
         self.factionbtn = tk.IntVar(value=config.get_int("HideFaction"))
@@ -324,7 +324,6 @@ class CanonnPatrol(Frame):
         with open(file) as json_file:
             ship_types = json.load(json_file)
 
-        #file = os.path.join(cls.plugin_dir, 'data', 'overlay.json')
         # make the config directory pass if it fails
         try:
             os.mkdir(os.path.join(config.app_dir_path, 'canonn'))
@@ -335,6 +334,13 @@ class CanonnPatrol(Frame):
             config.app_dir_path, 'canonn', 'overlay.json')
         if not os.path.exists(overlay_json):
             defaults = os.path.join(cls.plugin_dir, 'data', 'overlay.json')
+            shutil.copyfile(defaults, overlay_json)
+
+        overlay_json = os.path.join(
+            config.app_dir_path, 'canonn', 'EDMC-Canonn.patrol')
+        if not os.path.exists(overlay_json):
+            defaults = os.path.join(
+                cls.plugin_dir, 'data', 'EDMC-Canonn.patrol')
             shutil.copyfile(defaults, overlay_json)
 
         with open(overlay_json) as json_file:
@@ -1305,7 +1311,7 @@ class CanonnPatrol(Frame):
     def load_excluded(self):
         Debug.logger.debug("loading excluded")
         self.patrol_config = os.path.join(
-            Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
+            config.app_dir_path, 'canonn', 'EDMC-Canonn.patrol')
         try:
             with open(self.patrol_config) as json_file:
                 self.excluded = json.load(json_file)
@@ -1314,7 +1320,7 @@ class CanonnPatrol(Frame):
 
     def save_excluded(self):
         self.patrol_config = os.path.join(
-            Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
+            config.app_dir_path, 'canonn', 'EDMC-Canonn.patrol')
         excluded = {}
         for patrol in self.patrol_list:
             if patrol.get("excluded") and not patrol.get("type") in ('BGS', 'SHIPS'):
