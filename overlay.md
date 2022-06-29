@@ -1,9 +1,9 @@
 
 # Canonn Overlay Configuration
 
-The canonn overlay allows a multitude of options in order to customize the overlay look and behavior. This can be controlled by editing [overlay.json](../../canonn/overlay.json). The file supplied with the build is copied to the [canonn configuration directory](../../canonn) and the copy can be edited without being overwritten by subsequent releases. 
+The canonn overlay allows a multitude of options in order to customize the overlay look and behavior. This can be controlled by editing [overlay.json](data/overlay.json). The file supplied with the build is copied to the canonn configuration directory which is in the same directory as the plugins directory (eg. %APPDATA%\Local\EDMarketConnector\canonn) and the copy can be edited without being overwritten by subsequent releases. 
 
-The [overlay.json](../../canonn/overlay.json) file is loaded when the plugin starts and provides information on how to display the overlay on your screen.
+The overlay.json file in the canonn configuration directory is loaded when the plugin starts and provides information on how to display the overlay on your screen.
 
 **After any edit to this file, restart the plugin to have the changes appear**
 
