@@ -99,7 +99,7 @@ def wrapText(text, max_length):
 
 
 def overlayDisplayMessage(message, cfg, rtype, config_data):
-    if cfg["EnableOverlay"] == 1:
+    if cfg["EnableOverlay"] == 1 and config_data is not None:
         if(rtype.split("_")[0] == "patrol" and int(cfg["EnableOverlayPatrol"]) == 0):
             return
         if(rtype.split("_")[0] == "addinfo" and int(cfg["EnableOverlayAddinfo"]) == 0):
