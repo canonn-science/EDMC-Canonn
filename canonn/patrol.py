@@ -336,12 +336,12 @@ class CanonnPatrol(Frame):
             defaults = os.path.join(cls.plugin_dir, 'data', 'overlay.json')
             shutil.copyfile(defaults, overlay_json)
 
-        overlay_json = os.path.join(
+        patrol_json = os.path.join(
             config.app_dir_path, 'canonn', 'EDMC-Canonn.patrol')
-        if not os.path.exists(overlay_json):
+        if not os.path.exists(patrol_json):
             defaults = os.path.join(
                 cls.plugin_dir, 'data', 'EDMC-Canonn.patrol')
-            shutil.copyfile(defaults, overlay_json)
+            shutil.copyfile(defaults, patrol_json)
 
         with open(overlay_json) as json_file:
             overlay_settings = json.load(json_file)
