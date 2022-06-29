@@ -3,6 +3,21 @@ EDMC plugin to automatically collect accurate science data from the galaxy and c
 
 # Features
 
+## Overlay
+
+The EDMC-Canonn plugin can be combined with [EDMC-Overlay](https://github.com/inorton/EDMCOverlay#readme) or [EDMC-Overlay2 for linux ](https://github.com/sersorrel/edmcoverlay2#readme) to display text overlaid on the game screen. 
+
+Just install the EDMC-Overlay plugin as you would any other plugin and enable the overlay options in the Canonn Plugin settings.
+
+![Settings](images/overlay_settings.png)
+
+* Enable Overlay: If selected enables the overlay
+* Enable Patrols: Displays the patrol text as an overlay
+* Enable Nearest Command: Displays the text from the "nearest" command results on screen
+* Enable Additional Informatio: Does what it says on the tin
+
+The positon of the text on screen can be configured by editing a json file. For details see [overlay.md](overlay.md)
+
 ## Patrol System
 The Patrol system is used for directing people to places of interest to Canonn and for providing some useful location information. The patrol will display the nearest location to the commander position. Patrols are not automaticaly updated they only get loaded on statup of after going into the configuration screen
  
@@ -11,46 +26,25 @@ The Patrol system is used for directing people to places of interest to Canonn a
  * Galactic Mapping POIs show you the nearest Galactic mapping project entry.
  * Thargoid Sites show you the location of the nearest site and its type. 
  * Guardian Sites shows you the nearest guardian site 
+ 
+**If the `Enable Patrols` setting in EDSM in the overlay section is enabled, patrols will be displayed when entering a system or when patrols are refreshed**
 
 ## Search Nearest
 It is now possible to type a search command in the in game message box. NB: The search command will be visible to local players but the response will not. The search results will be stored in the POI section of the plugin in place of any POI. Right clicking on the system name will allow you to copy to the clipboard. 
 
 NB: Data is only updated once per day so may not be completely accurate.
 
-### nearest [station_service]
-This will search for the nearest station service. Service names are [listed on spansh](https://spansh.co.uk/api/stations/field_values/services). The plugin also maintains some convenient aliases eg nearest vista is equivalent to nearest vista genomics. 
+**If the `Enable nearest command` setting in EDSM in the overlay section is enabled, the result of the nearest command will be displayed**
 
-### nearest buying [quantity] [commodity]
-This will search for the nearest system with demand for a commodity higher than the specified quantity. 
-
-Eg nearest buying 700 tritium
-
-You can ommit the quantity and it will default to 790
-
-### nearest selling [quantity] [commodity]
-This will search for the nearest system selling a commodity with supply higher than the specified quantity. 
-
-Eg nearest selling 700 tritium.
-
-You can ommit the quantity and it will default to 790
-
-### nearest challenge
-This command will look for the nearest codex entry that you have not yet visited. 
-
-### nearest [economy] economy
-Searches for the nearest station with the supplied economy. 
-
-Eg. nearest prison economy
-
-### nearest [allegiance] allegiance
-Searches for the nearest system with the supplied allegiance. 
-
-Eg. nearest empire allegiance
-
-### nearest [allegiance] station
-Searches for the nearest station with the supplied allegiance. 
-
-Eg. nearest federation station
+| Command                                  | Example                         | Description                                                                                                                                                                                                                                                  |
+|------------------------------------------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `nearest [station_service]`              | nearest Universal Cartographics | This will search for the nearest station service. Service names are [listed on spansh](https://spansh.co.uk/api/stations/field_values/services). The plugin also maintains some convenient aliases eg nearest vista is equivalent to nearest vista genomics. |
+| `nearest buying [quantity] [commodity]`  | nearest buying 700 tritium      | This will search for the nearest system with demand for a commodity higher than the specified quantity. (If the quantity is ommited it will default to 790)                                                                                                  |
+| `nearest selling [quantity] [commodity]` | nearest selling 700 tritium     | This will search for the nearest system with demand for a commodity higher than the specified quantity. (If the quantity is ommited it will default to 790)                                                                                                  |
+| `nearest challenge`                      | nearest challenge               | This command will look for the nearest codex entry that you have not yet visited.                                                                                                                                                                            |
+| `nearest [economy] economy`              | nearest prison economy          | Searches for the nearest station with the supplied economy.                                                                                                                                                                                                  |
+| `nearest [allegiance] allegiance`        | nearest empire allegiance       | Searches for the nearest system with the supplied allegiance.                                                                                                                                                                                                |
+| `nearest [allegiance] station`           | nearest federation station      | Searches for the nearest station with the supplied allegiance.                                                                                                                                                                                               |
  
 ## Canonn News Feed
 See the top stories on rotation

@@ -9,7 +9,7 @@ except:
     import Tkinter as tk
     from Tkinter import Frame
     from urllib import quote_plus
-
+import shutil
 import codecs
 import csv
 import datetime
@@ -34,16 +34,19 @@ from l10n import Locale
 from ttkHyperlinkLabel import HyperlinkLabel
 import html
 import plug
-
+import canonn.overlayserver as overlayService
 CYCLE = 60 * 1000 * 60  # 60 minutes
 DEFAULT_URL = ""
 WRAP_LENGTH = 200
 
 THARGOIDSITES = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRFRhsa3g0tpYFkqyBR2HrfUjXfjW6gSRnnDhFtVtPlWtpuNAHKujI5fH6Lnh3ctt0SAyNywnesv8H_/pub?gid=1675294629&single=true&output=tsv"
-GUARDIANSITES = "https://us-central1-canonn-api-236217.cloudfunctions.net/guardian_tour"
+GUARDIANSITES = "https://drive.google.com/uc?id=1m8q9lE4_cAI8CotM-oaEm5RWHeeJjoil"
 # FLEETCARRIERS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSozf4Ii8TbuDCmk8Qk5ld1W0fUF_5EyHP-OvvnjRQmC9v8NF2_ZZLFy7XOe8pQWTXudaVgdAfxlCFo/pub?gid=470243264&single=true&output=tsv"
 
 ship_types = {
+}
+overlay_settings = {
+
 }
 
 
@@ -204,7 +207,7 @@ class CanonnPatrol(Frame):
             CanonnPatrol.plugin_dir, "icons", "right_arrow.gif"))
 
         self.patrol_config = os.path.join(
-            Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
+            config.app_dir_path, 'canonn', 'EDMC-Canonn.patrol')
 
         self.canonnbtn = tk.IntVar(value=config.get_int("HideCanonn"))
         self.factionbtn = tk.IntVar(value=config.get_int("HideFaction"))
@@ -213,6 +216,20 @@ class CanonnPatrol(Frame):
         self.copypatrolbtn = tk.IntVar(value=config.get_int("CopyPatrol"))
         self.thargoidbtn = tk.IntVar(value=config.get_int("HideThargoids"))
         self.guardianbtn = tk.IntVar(value=config.get_int("HideGuardians"))
+
+        # Overlay
+        self.overlay_enabled_btn = tk.IntVar(
+            value=config.get_int("EnableOverlay"))
+        self.overlay_patrol_enabled_btn = tk.IntVar(
+            value=config.get_int("EnableOverlayPatrol"))
+        self.overlay_addinfo_enabled_btn = tk.IntVar(
+            value=config.get_int("EnableOverlayAddinfo"))
+        self.overlay_nearest_enabled_btn = tk.IntVar(
+            value=config.get_int("EnableOverlayNearest"))
+        self.overlay_enabled = self.overlay_enabled_btn.get()
+        self.overlay_patrol_enabled = self.overlay_enabled_btn.get()
+        self.overlay_addinfo_enabled = self.overlay_enabled_btn.get()
+        self.overlay_nearest_enabled = self.overlay_nearest_enabled_btn.get()
         # self.fleetbtn = tk.IntVar(value=config.get_int("HideFleet"))
 
         self.canonn = self.canonnbtn.get()
@@ -280,7 +297,6 @@ class CanonnPatrol(Frame):
 
         self.started = False
         self.downloaded = False
-
         # self.patrol_update()
         self.bind('<<PatrolDisplay>>', self.update_desc)
 
@@ -303,9 +319,32 @@ class CanonnPatrol(Frame):
 
         # load ship_types ref data
         global ship_types
+        global overlay_settings
         file = os.path.join(cls.plugin_dir, 'data', 'ships.json')
         with open(file) as json_file:
             ship_types = json.load(json_file)
+
+        # make the config directory pass if it fails
+        try:
+            os.mkdir(os.path.join(config.app_dir_path, 'canonn'))
+        except OSError as error:
+            pass
+
+        overlay_json = os.path.join(
+            config.app_dir_path, 'canonn', 'overlay.json')
+        if not os.path.exists(overlay_json):
+            defaults = os.path.join(cls.plugin_dir, 'data', 'overlay.json')
+            shutil.copyfile(defaults, overlay_json)
+
+        patrol_json = os.path.join(
+            config.app_dir_path, 'canonn', 'EDMC-Canonn.patrol')
+        if not os.path.exists(patrol_json):
+            defaults = os.path.join(
+                cls.plugin_dir, 'data', 'EDMC-Canonn.patrol')
+            shutil.copyfile(defaults, patrol_json)
+
+        with open(overlay_json) as json_file:
+            overlay_settings = json.load(json_file)
 
     '''
     Every hour we will download the latest data
@@ -342,6 +381,7 @@ class CanonnPatrol(Frame):
         """
         index = self.nearest.get("index")
         Debug.logger.debug("prev {}".format(index))
+
         if index > 0:
             self.patrol_list[index - 1]["excluded"] = False
             self.update()
@@ -371,7 +411,9 @@ class CanonnPatrol(Frame):
                 self.hyperlink['url'] = "https://www.edsm.net/en/system?systemName={}".format(
                     quote_plus(self.nearest.get("system")))
                 self.distance['text'] = "{}ly".format(
-                    Locale.stringFromNumber(getDistance(p, self.nearest.get("coords")), 2))
+                    Locale.stringFromNumber(getDistance(p, self.nearest.get("coords")), 1))
+                if self.system == self.nearest.get("system"):
+                    self.distance['text'] = "0ly"
                 self.infolink['text'] = self.nearest.get("instructions")
                 self.infolink['url'] = self.parseurl(self.nearest.get("url"))
 
@@ -380,6 +422,30 @@ class CanonnPatrol(Frame):
                 self.prev.grid()
                 self.next.grid()
                 self.capi_update = False
+
+                # Overlay
+                cfg = {
+                    "EnableOverlay": self.overlay_enabled,
+                    "EnableOverlayPatrol": self.overlay_patrol_enabled,
+                    "EnableOverlayAddinfo": self.overlay_addinfo_enabled,
+                    "EnableOverlayNearest": self.overlay_nearest_enabled
+                }
+                # rating scrap
+                if(len(self.infolink['text'].split("(Rating ")) > 1):
+                    rating = self.infolink['text'].split(
+                        "(Rating ")[1].split("/")[0]
+                else:
+                    rating = "N/A"
+                data = {
+                    "system": self.nearest.get("system"),
+                    "distance": self.distance['text'].replace("ly", ""),
+                    "text": self.infolink['text'],
+                    "rating": rating,
+                }
+                global overlay_settings
+                overlayService.overlayDisplayMessage(
+                    data, cfg, "patrol", overlay_settings)
+
                 Debug.logger.debug("finished refresh")
             else:
                 if self.system:
@@ -802,35 +868,72 @@ class CanonnPatrol(Frame):
                       'planetFeatures', 'regional', 'pulsar', 'starCluster', 'jumponiumRichSystem', 'surfacePOI',
                       'deepSpaceOutpost', 'mysteryPOI', 'organicPOI', 'restrictedSectors', 'geyserPOI']
 
-        r = requests.get(url)
-        r.encoding = 'utf-8'
-        Debug.logger.debug(r.encoding)
-        entries = r.json()
-        categories = {}
+        try:
+            r = requests.get(url)
+            r.encoding = 'utf-8'
+            Debug.logger.debug(r.encoding)
+            gmpentries = r.json()
+        except Exception as e:
+            Debug.logger.error("Failed to fetch GMP POIs")
+            Debug.logger.error(e)
+            plug.show_error("Canonn: Failed to fetch GMP POIs")
 
-        edsm_patrol = []
+        try:
+            gr = requests.get("https://edastro.com/gec/json/all")
+            gr.encoding = 'utf-8'
+            gecentries = gr.json()
+
+        except Exception as e:
+            Debug.logger.error("Failed to fetch GEC POIs")
+            Debug.logger.error(e)
+            plug.show_error("Canonn: Failed to fetch GEC POIs")
+
+        entries = {}
+
+        categories = {}
 
         self.patrol_name = "Galactic Mapping"
 
-        for entry in entries:
+        for entry in gmpentries:
 
             if entry.get("type") in validtypes and "Archived: " not in entry.get("name"):
                 # cache these systems we may need them later
                 Systems.storeSystem(entry.get("galMapSearch"),
                                     entry.get("coordinates"))
-                edsm_patrol.append(
-                    newPatrol("Galactic Mapping",
-                              entry.get("galMapSearch"), (
-                                  float(entry.get("coordinates")[0]),
-                                  float(entry.get("coordinates")[1]),
-                                  float(entry.get("coordinates")[2])
-                              ),
-                              "Galactic Mapping Project: {} : {}".format(types.get(entry.get("type")),
-                                                                         # entry.get("name").encode('utf-8')),
-                                                                         html.unescape(entry.get("name"))),
-                              entry.get("galMapUrl"),
-                              None)
-                )
+
+                entries[entry.get("galMapSearch")] = {
+                    "system": entry.get("galMapSearch"),
+                    "coordinates": entry.get("coordinates"),
+                    "instructions": "GMP: {} : {}".format(types.get(entry.get("type")),
+                                                          html.unescape(entry.get("name"))),
+                    "url": entry.get("galMapUrl")
+                }
+
+        for entry in gecentries:
+
+            # cache these systems we may need them later
+            Systems.storeSystem(entry.get("galMapSearch"),
+                                entry.get("coordinates"))
+
+            entries[entry.get("galMapSearch")] = {
+                "system": entry.get("galMapSearch"),
+                "coordinates": entry.get("coordinates"),
+                "instructions": "GEC: {} : {} (Rating {}/10)".format(html.unescape(entry.get("name")), html.unescape(entry.get("summary")), entry.get("rating")),
+                "url": entry.get("poiUrl")
+            }
+
+        edsm_patrol = []
+
+        for entry in entries.values():
+            edsm_patrol.append(
+                newPatrol("Galactic Mapping",
+                          entry.get("system"),
+                          entry.get("coordinates"),
+                          entry.get("instructions"),
+                          entry.get("url"),
+                          None)
+            )
+
         if not config.shutting_down:
             self.event_generate('<<PatrolDone>>', when='tail')
         return edsm_patrol
@@ -846,6 +949,21 @@ class CanonnPatrol(Frame):
         self.guardianbtn = tk.IntVar(value=config.get_int("HideGuardians"))
         self.copypatrolbtn = tk.IntVar(value=config.get_int("CopyPatrol"))
         # self.fleetbtn = tk.IntVar(value=config.get_int("HideFleet"))
+
+        # Overlay part
+        self.overlay_enabled_btn = tk.IntVar(
+            value=config.get_int("EnableOverlay"))
+        self.overlay_patrol_enabled_btn = tk.IntVar(
+            value=config.get_int("EnableOverlayPatrol"))
+        self.overlay_addinfo_enabled_btn = tk.IntVar(
+            value=config.get_int("EnableOverlayAddinfo"))
+        self.overlay_nearest_enabled_btn = tk.IntVar(
+            value=config.get_int("EnableOverlayNearest"))
+
+        self.overlay_enabled = self.overlay_enabled_btn.get()
+        self.overlay_patrol_enabled = self.overlay_patrol_enabled_btn.get()
+        self.overlay_addinfo_enabled = self.overlay_addinfo_enabled_btn.get()
+        self.overlay_nearest_enabled = self.overlay_nearest_enabled_btn.get()
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
@@ -867,16 +985,28 @@ class CanonnPatrol(Frame):
         nb.Checkbutton(frame, text="Hide Canonn Faction Systems", variable=self.factionbtn).grid(row=1, column=2,
                                                                                                  sticky="NW")
         # nb.Checkbutton(frame, text="Hide Your Ships", variable=self.hideshipsbtn).grid(row=1, column=3, sticky="NW")
-        nb.Checkbutton(frame, text="Hide Galactic Mapping POIS", variable=self.edsmbtn).grid(row=2, column=0,
-                                                                                             sticky="NW")
+        nb.Checkbutton(frame, text="Hide GMP/GEC POIS", variable=self.edsmbtn).grid(row=2, column=0,
+                                                                                    sticky="NW")
         nb.Checkbutton(frame, text="Hide Thargoid Sites", variable=self.thargoidbtn).grid(row=2, column=1,
                                                                                           sticky="NW")
         nb.Checkbutton(frame, text="Hide Guardian Sites", variable=self.guardianbtn).grid(row=2, column=2,
                                                                                           sticky="NW")
         # nb.Checkbutton(frame, text="Hide DSSA Fleet", variable=self.fleetbtn).grid(row=2, column=3,
         #                                                                                  sticky="NW")
-        nb.Checkbutton(frame, text="Automatically copy the patrol to the clipboard", variable=self.copypatrolbtn).grid(
+        nb.Checkbutton(frame, text="Automatically copy the patrol to the clipboard (Recommended if using overlay patrols)", variable=self.copypatrolbtn).grid(
             row=3, column=0, sticky="NW", )
+
+        # Overlay part
+        nb.Label(frame, text="Overlay Settings").grid(
+            row=4, column=0, sticky="NW")
+        nb.Checkbutton(frame, text="Enable Overlay", variable=self.overlay_enabled_btn).grid(
+            row=5, column=0, sticky="NW")
+        nb.Checkbutton(frame, text="Enable Patrols", variable=self.overlay_patrol_enabled_btn).grid(
+            row=5, column=1, sticky="NW")
+        nb.Checkbutton(frame, text="Enable additional information",
+                       variable=self.overlay_addinfo_enabled_btn).grid(row=6, column=0, sticky="NW")
+        nb.Checkbutton(frame, text="Enable nearest command",
+                       variable=self.overlay_nearest_enabled_btn).grid(row=6, column=1, sticky="NW")
 
         Debug.logger.debug("canonn: {}, faction: {} , EDSM {}".format(
             self.canonn, self.faction, self.edsm))
@@ -930,6 +1060,20 @@ class CanonnPatrol(Frame):
         config.set('HideGuardians', self.guardianbtn.get())
         # config.set('HideFleet', self.fleetbtn.get())
         config.set('CopyPatrol', self.copypatrolbtn.get())
+
+        # Overlay
+        config.set('EnableOverlay', self.overlay_enabled_btn.get())
+        config.set('EnableOverlayPatrol',
+                   self.overlay_patrol_enabled_btn.get())
+        config.set('EnableOverlayAddinfo',
+                   self.overlay_addinfo_enabled_btn.get())
+        config.set('EnableOverlayNearest',
+                   self.overlay_nearest_enabled_btn.get())
+
+        self.overlay_enabled = self.overlay_enabled_btn.get()
+        self.overlay_patrol_enabled = self.overlay_patrol_enabled_btn.get()
+        self.overlay_addinfo_enabled = self.overlay_addinfo_enabled_btn.get()
+        self.overlay_nearest_enabled = self.overlay_nearest_enabled_btn.get()
 
         self.canonn = self.canonnbtn.get()
         self.faction = self.factionbtn.get()
@@ -1022,23 +1166,87 @@ class CanonnPatrol(Frame):
                             price = int(j.get("commodity").get("buyPrice"))
                             quantity = int(j.get("commodity").get("supply"))
 
-                    if message == "nearest challenge":
+                    cfg = {
+                        "EnableOverlay": self.overlay_enabled,
+                        "EnableOverlayPatrol": self.overlay_patrol_enabled,
+                        "EnableOverlayAddinfo": self.overlay_addinfo_enabled,
+                        "EnableOverlayNearest": self.overlay_nearest_enabled,
+                    }
+                    global overlay_settings
+
+                    if message.lower() == "nearest challenge":
                         location = j.get("english_name")
                         distance = float(j.get("distance"))
+
+                        # Overlay nearest_challenge
+                        data = {
+                            "system": system,
+                            "distance": distance,
+                            "location": location,
+                        }
+
+                        overlayService.overlayDisplayMessage(
+                            data, cfg, "nearest_challenge", overlay_settings)
+                        self.copyclip(system)
 
                     self.hyperlink['text'] = system
                     self.hyperlink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
                     self.distance['text'] = "{}ly".format(
                         Locale.stringFromNumber(distance, 2))
                     l = location.replace("_", " ")
+
                     if is_trade:
                         self.infolink[
                             'text'] = f"{station} is {trade} {Locale.stringFromNumber(quantity,0)} {l} for ${Locale.stringFromNumber(price,0)} in system {system}"
+
+                        # Overlay trading
+                        data = {
+                            "station": station,
+                            "trade": trade,
+                            "text": self.infolink['text'],
+                            "system": system,
+                            "distance": self.distance['text'],
+                        }
+
+                        overlayService.overlayDisplayMessage(
+                            data, cfg, "nearest_trading", overlay_settings)
+                        self.copyclip(system)
+
                     else:
                         if station:
                             self.infolink['text'] = f"Nearest {l} is at {station} in system {system}"
+
+                            # Overlay station
+                            data = {
+                                "station": station,
+                                "location": l,
+                                "text": self.infolink['text'],
+                                "system": system,
+                                "distance": self.distance['text'],
+                            }
+
+                            overlayService.overlayDisplayMessage(
+                                data, cfg, "nearest_station", overlay_settings)
+                            self.copyclip(system)
+
                         else:
+                            if message != "nearest challenge":  # Avoid triggering twice
+
+                                # Overlay nearest
+                                data = {
+                                    "station": station,
+                                    "location": l,
+                                    "text": self.infolink['text'],
+                                    "system": system,
+                                    "distance": self.distance['text'],
+                                }
+
+                                overlayService.overlayDisplayMessage(
+                                    data, cfg, "nearest", overlay_settings)
+                                self.copyclip(system)
+
                             self.infolink['text'] = f"Nearest {l} is in system {system}"
+
                     self.infolink['url'] = f"https://www.edsm.net/en/system?systemName={system}"
                 except:
                     plug.show_error(f"Can't understand \"{message}\"")
@@ -1062,6 +1270,17 @@ class CanonnPatrol(Frame):
 
         if entry.get("event") in ("Location", "StartUp") and not self.patrol_list:
             self.system = system
+            # Overlay startup message
+
+            cfg = {
+                "EnableOverlay": self.overlay_enabled,
+                "EnableOverlayPatrol": self.overlay_patrol_enabled,
+                "EnableOverlayAddinfo": self.overlay_addinfo_enabled,
+            }
+            global overlay_settings
+            overlayService.overlayDisplayMessage(
+                "Startup", cfg, "startup", overlay_settings)
+
             if not self.downloaded:
                 self.downloaded = True
                 self.patrol_update()
@@ -1092,7 +1311,7 @@ class CanonnPatrol(Frame):
     def load_excluded(self):
         Debug.logger.debug("loading excluded")
         self.patrol_config = os.path.join(
-            Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
+            config.app_dir_path, 'canonn', 'EDMC-Canonn.patrol')
         try:
             with open(self.patrol_config) as json_file:
                 self.excluded = json.load(json_file)
@@ -1101,7 +1320,7 @@ class CanonnPatrol(Frame):
 
     def save_excluded(self):
         self.patrol_config = os.path.join(
-            Release.plugin_dir, 'data', 'EDMC-Canonn.patrol')
+            config.app_dir_path, 'canonn', 'EDMC-Canonn.patrol')
         excluded = {}
         for patrol in self.patrol_list:
             if patrol.get("excluded") and not patrol.get("type") in ('BGS', 'SHIPS'):
