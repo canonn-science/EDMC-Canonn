@@ -47,8 +47,6 @@ class TargetDisplay(Frame):
 
         self.label.config(fg="black")
         self.label["text"] = self.target_text
-        overlayService.overlayDisplayMessage(
-            data, cfg, "nearest_challenge", overlay_settings)
 
     def safe_callback(self, text, level):
         self.target_text = text
