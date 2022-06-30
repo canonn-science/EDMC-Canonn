@@ -268,7 +268,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     clientreport.submit(cmdr, is_beta, client, entry)
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
-    hdreport.submit(cmdr, is_beta, system, station, entry, client, state)
+
     codex.submit(cmdr, is_beta, system, x, y, z, entry, body,
                  nearloc['Latitude'], nearloc['Longitude'], client, state)
     fssreports.submit(cmdr, is_beta, system, x, y, z, entry, body,
@@ -295,6 +295,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     guestBook.journal_entry(entry)
     this.target.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                               state, x, y, z, body, nearloc, client)
+    hdreport.submit(cmdr, is_beta, system, station, entry, client, state)
 
 
 def dashboard_entry(cmdr, is_beta, entry):
