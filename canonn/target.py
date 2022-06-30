@@ -43,6 +43,8 @@ class TargetDisplay(Frame):
         if self.target_level == 1:
             self.label["background"] = "#fe7e03"
         if self.target_level == 2:
+            self.label["background"] = "#B6EE56"
+        if self.target_level == 3:
             self.label["background"] = "#348939"
 
         self.label.config(fg="black")
@@ -95,8 +97,26 @@ class spanshCheck(threading.Thread):
             # debug("got EDSM Data")
             spansh = r.json()
 
-        if spansh and spansh.get("system").get("bodies") and len(spansh.get("system").get("bodies")) > 0:
-            self.callback(f"Target: {self.name} scanned", 2)
+        totalbodies=None
+        if spansh:
+            totalbodies=spansh.get("system").get("bodyCount")
+        bodycount=0
+        if spansh and spansh.get("system").get("bodies"):
+            for body in spansh.get("system").get("bodies"):
+                if body.get("type") in ('Planet','Star'):
+                    bodycount+=1
+
+        
+        if spansh and totalbodies and totalbodies == bodycount:
+            self.callback(f"Target: {self.name} fully scanned", 3)
+            return
+
+        if spansh and bodycount > 0 and totalbodies:
+            self.callback(f"Target: {self.name} scanned {bodycount}/{totalbodies}", 2)
+            return
+
+        if spansh and bodycount > 0:
+            self.callback(f"Target: {self.name} scanned {bodycount}/?", 2)
             return
 
         if spansh and spansh.get("system").get("name"):
