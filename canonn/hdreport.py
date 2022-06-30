@@ -333,7 +333,13 @@ def get_distance(a, b):
 
 
 def post_distance(system, centre, entry):
-    d = int(get_distance(system, centre) / 10) * 10
+    try:
+        d = int(get_distance(system, centre) / 10) * 10
+    except Exception as e:
+        Debug.logger.error(f"post_distance failed")
+        Debug.logger.error(e)
+        return
+
     Debug.logger.debug("distance {}".format(d))
     if d <= 250:
         tag = "{} ({})".format(centre, int(d))
