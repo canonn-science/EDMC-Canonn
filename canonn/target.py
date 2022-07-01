@@ -55,7 +55,7 @@ class TargetDisplay(Frame):
     def safe_callback(self, text, level):
         self.target_text = text
         self.target_level = level
-        self.event_generate('<<setTarget>>', when='tail')
+        self.event_generate('<<setTarget>>', when='head')
 
     def journal_entry(self, cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                       state, x, y, z, body, nearloc, client):
@@ -66,10 +66,9 @@ class TargetDisplay(Frame):
 
                 for route_system in navroute.get("Route"):
                     if route_system.get("SystemAddress") == entry.get("SystemAddress"):
-                        self.grid_remove()
+                        self.label.grid_remove()
                         return
 
-            Debug.logger.debug("Target ")
             spanshCheck(entry.get("SystemAddress"), entry.get(
                 "Name"), self.safe_callback).start()
 
@@ -78,7 +77,7 @@ class TargetDisplay(Frame):
             "MusicTrack") != "GalaxyMap")
 
         if reset:
-            self.grid_remove()
+            self.label.grid_remove()
 
 
 class spanshCheck(threading.Thread):
@@ -101,7 +100,6 @@ class spanshCheck(threading.Thread):
             # debug("got EDSM Data")
             if requests.codes.ok:
                 spansh = r.json()
-                Debug.logger.error("Spansh Data fetched")
         else:
             plug.show_error(f"error: canonn -> spansh ({r.status_code})")
             Debug.logger.error(f"error: canonn -> spansh ({r.status_code})")
@@ -110,29 +108,34 @@ class spanshCheck(threading.Thread):
         totalbodies = None
 
         if spansh and spansh.get("system"):
-            Debug.logger.error("Spansh Data fetched")
+
             totalbodies = spansh.get("system").get("bodyCount")
             bodycount = 0
             if spansh.get("system").get("bodies"):
+
                 for body in spansh.get("system").get("bodies"):
                     if body.get("type") in ('Planet', 'Star'):
                         bodycount += 1
 
             if totalbodies and totalbodies == bodycount:
+
                 self.callback(
                     f"Target: {self.name} fully scanned {bodycount}/{totalbodies}", 3)
                 return
 
             if bodycount > 0 and totalbodies:
+
                 self.callback(
                     f"Target: {self.name} scanned {bodycount}/{totalbodies}", 2)
                 return
 
             if bodycount > 0:
+
                 self.callback(f"Target: {self.name} scanned {bodycount}/?", 2)
                 return
 
             if spansh.get("system").get("name"):
+
                 self.callback(f"Target: {self.name} logged", 1)
                 return
 
