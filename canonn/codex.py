@@ -1702,7 +1702,7 @@ class CodexTypes():
             self.poiq.clear()
             self.saaq.clear()
             self.cmdrq.clear()
-
+            temp_spanshdata = {}
             try:
 
                 url = f"https://spansh.co.uk/api/dump/{system64}"
@@ -1782,37 +1782,39 @@ class CodexTypes():
             except:
                 Debug.logger.debug("Error getting EDSM data")
 
-            try:
-                EDversion = "N"
-                if self.odyssey:
-                    EDversion = "Y"
-                url = "https://us-central1-canonn-api-236217.cloudfunctions.net/query/getSystemPoi?system={}&odyssey={}&cmdr={}".format(
-                    quote_plus(system.encode('utf8')), EDversion, cmdr)
+            temp_poidata = {}
+            if temp_spanshdata.get("bodies") and len(temp_spanshdata.get("bodies")) > 0:
+                try:
+                    EDversion = "N"
+                    if self.odyssey:
+                        EDversion = "Y"
+                    url = "https://us-central1-canonn-api-236217.cloudfunctions.net/query/getSystemPoi?system={}&odyssey={}&cmdr={}".format(
+                        quote_plus(system.encode('utf8')), EDversion, cmdr)
 
-                # debug(url)
-                # debug("request {}:  Active Threads {}".format(
-                #    url, threading.activeCount()))
-                headers = {"Accept-Encoding": "gzip, deflate", }
-                r = requests.get(url, headers=headers, timeout=30)
-                # debug("request complete")
-                r.encoding = 'utf-8'
-                if r.status_code == requests.codes.ok:
-                    # debug("got POI Data")
-                    temp_poidata = r.json()
+                    # debug(url)
+                    # debug("request {}:  Active Threads {}".format(
+                    #    url, threading.activeCount()))
+                    headers = {"Accept-Encoding": "gzip, deflate", }
+                    r = requests.get(url, headers=headers, timeout=30)
+                    # debug("request complete")
+                    r.encoding = 'utf-8'
+                    if r.status_code == requests.codes.ok:
+                        # debug("got POI Data")
+                        temp_poidata = r.json()
 
-                # push the data ont a queue
-                if "codex" in temp_poidata:
-                    for v in temp_poidata["codex"]:
-                        self.poiq.put(v)
+                    # push the data ont a queue
+                    if "codex" in temp_poidata:
+                        for v in temp_poidata["codex"]:
+                            self.poiq.put(v)
 
-                if "SAAsignals" in temp_poidata:
-                    for v in temp_poidata["SAAsignals"]:
-                        self.saaq.put(v)
-                if "cmdr" in temp_poidata:
-                    for v in temp_poidata["cmdr"]:
-                        self.cmdrq.put(v)
-            except:
-                debug("Error getting POI data")
+                    if "SAAsignals" in temp_poidata:
+                        for v in temp_poidata["SAAsignals"]:
+                            self.saaq.put(v)
+                    if "cmdr" in temp_poidata:
+                        for v in temp_poidata["cmdr"]:
+                            self.cmdrq.put(v)
+                except:
+                    debug("Error getting POI data")
 
             try:
                 url = "https://elite.laulhere.com/ExTool/info.php?mode=chksaa&system64={}".format(
