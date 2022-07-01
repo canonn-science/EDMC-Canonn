@@ -1485,6 +1485,7 @@ class CodexTypes():
             self.add_poi("Other", 'Plugin Error', None)
             Debug.logger.error("Plugin Error")
             Debug.logger.error(e)
+            Debug.logger.exception(e)
 
         Debug.logger.debug(f"refreshPOIData end {self.event}")
 
