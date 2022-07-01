@@ -10,6 +10,8 @@ except:
     import Tkinter as tk
     from Tkinter import Frame
 
+from canonn.debug import Debug
+
 
 class TargetDisplay(Frame):
 
@@ -37,7 +39,7 @@ class TargetDisplay(Frame):
         self.bind('<<setTarget>>', self.set_target)
 
     def set_target(self, event):
-        self.label.pack()
+        self.label.grid()
         if self.target_level == 0:
             self.label["background"] = "#9b1d1e"
         if self.target_level == 1:
@@ -58,6 +60,7 @@ class TargetDisplay(Frame):
     def journal_entry(self, cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                       state, x, y, z, body, nearloc, client):
         if entry.get("event") == "FSDTarget":
+
             navroute = state.get("NavRoute")
             if navroute and navroute.get("Route"):
 
@@ -66,6 +69,7 @@ class TargetDisplay(Frame):
                         self.grid_remove()
                         return
 
+            Debug.logger.debug("Target ")
             spanshCheck(entry.get("SystemAddress"), entry.get(
                 "Name"), self.safe_callback).start()
 
@@ -93,34 +97,43 @@ class spanshCheck(threading.Thread):
         r = requests.get(url, timeout=30)
         # debug("request complete")
         r.encoding = 'utf-8'
-        if r.status_code == requests.codes.ok:
+        if r.status_code in (requests.codes.ok, requests.codes.not_found):
             # debug("got EDSM Data")
-            spansh = r.json()
+            if requests.codes.ok:
+                spansh = r.json()
+                Debug.logger.error("Spansh Data fetched")
+        else:
+            plug.show_error(f"error: canonn -> spansh ({r.status_code})")
+            Debug.logger.error(f"error: canonn -> spansh ({r.status_code})")
+            Debug.logger.error(r.text)
 
-        totalbodies=None
-        if spansh:
-            totalbodies=spansh.get("system").get("bodyCount")
-        bodycount=0
-        if spansh and spansh.get("system").get("bodies"):
-            for body in spansh.get("system").get("bodies"):
-                if body.get("type") in ('Planet','Star'):
-                    bodycount+=1
+        totalbodies = None
 
-        
-        if spansh and totalbodies and totalbodies == bodycount:
-            self.callback(f"Target: {self.name} fully scanned", 3)
-            return
+        if spansh and spansh.get("system"):
+            Debug.logger.error("Spansh Data fetched")
+            totalbodies = spansh.get("system").get("bodyCount")
+            bodycount = 0
+            if spansh.get("system").get("bodies"):
+                for body in spansh.get("system").get("bodies"):
+                    if body.get("type") in ('Planet', 'Star'):
+                        bodycount += 1
 
-        if spansh and bodycount > 0 and totalbodies:
-            self.callback(f"Target: {self.name} scanned {bodycount}/{totalbodies}", 2)
-            return
+            if totalbodies and totalbodies == bodycount:
+                self.callback(
+                    f"Target: {self.name} fully scanned {bodycount}/{totalbodies}", 3)
+                return
 
-        if spansh and bodycount > 0:
-            self.callback(f"Target: {self.name} scanned {bodycount}/?", 2)
-            return
+            if bodycount > 0 and totalbodies:
+                self.callback(
+                    f"Target: {self.name} scanned {bodycount}/{totalbodies}", 2)
+                return
 
-        if spansh and spansh.get("system").get("name"):
-            self.callback(f"Target: {self.name} logged", 1)
-            return
+            if bodycount > 0:
+                self.callback(f"Target: {self.name} scanned {bodycount}/?", 2)
+                return
+
+            if spansh.get("system").get("name"):
+                self.callback(f"Target: {self.name} logged", 1)
+                return
 
         self.callback(f"Target: {self.name} missing", 0)
