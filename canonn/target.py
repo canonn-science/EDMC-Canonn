@@ -69,8 +69,7 @@ class TargetDisplay(Frame):
                         self.label.grid_remove()
                         return
 
-            spanshCheck(entry.get("SystemAddress"), entry.get(
-                "Name"), self.safe_callback).start()
+            spanshCheck(entry, self.safe_callback).start()
 
         reset = (entry.get("event") in ("StartJump", "FSDJump"))
         reset = reset or (entry.get("event") == "Music" and entry.get(
@@ -81,10 +80,11 @@ class TargetDisplay(Frame):
 
 
 class spanshCheck(threading.Thread):
-    def __init__(self, id64, name, callback):
+    def __init__(self, entry, callback):
         threading.Thread.__init__(self)
-        self.id64 = id64
-        self.name = name
+        self.id64 = entry.get("SystemAddress")
+        self.name = entry.get("Name")
+        self.starclass = entry.get("StarClass")
         self.callback = callback
 
     def run(self):
@@ -120,23 +120,23 @@ class spanshCheck(threading.Thread):
             if totalbodies and totalbodies == bodycount:
 
                 self.callback(
-                    f"Target: {self.name} fully scanned {bodycount}/{totalbodies}", 3)
+                    f"Target: {self.name} fully scanned {bodycount}/{totalbodies} ({self.starclass})", 3)
                 return
 
             if bodycount > 0 and totalbodies:
 
                 self.callback(
-                    f"Target: {self.name} scanned {bodycount}/{totalbodies}", 2)
+                    f"Target: {self.name} scanned {bodycount}/{totalbodies} ({self.starclass})", 2)
                 return
 
             if bodycount > 0:
 
-                self.callback(f"Target: {self.name} scanned {bodycount}/?", 2)
+                self.callback(f"Target: {self.name} scanned {bodycount}/? ({self.starclass})", 2)
                 return
 
             if spansh.get("system").get("name"):
 
-                self.callback(f"Target: {self.name} logged", 1)
+                self.callback(f"Target: {self.name} logged ({self.starclass})", 1)
                 return
 
-        self.callback(f"Target: {self.name} missing", 0)
+        self.callback(f"Target: {self.name} missing ({self.starclass})", 0)
