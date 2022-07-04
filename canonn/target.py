@@ -26,6 +26,7 @@ class TargetDisplay(Frame):
         )
 
         self.news_data = []
+        self.mid_jump=False
         self.columnconfigure(1, weight=1)
         #self.grid(row=gridrow, column=0, sticky="EW", columnspan=1)
         self.grid(row=gridrow, column=0, columnspan=2, sticky="EW")
@@ -35,11 +36,14 @@ class TargetDisplay(Frame):
 
         # hidden at first
         self.label.grid_remove()
+        #self.grid_remove()
         # need a callback event to prevent threading disasters
         self.bind('<<setTarget>>', self.set_target)
 
     def set_target(self, event):
+        #self.grid()
         self.label.grid()
+
         if self.target_level == 0:
             self.label["background"] = "#9b1d1e"
         if self.target_level == 1:
@@ -67,9 +71,18 @@ class TargetDisplay(Frame):
                 for route_system in navroute.get("Route"):
                     if route_system.get("SystemAddress") == entry.get("SystemAddress"):
                         self.label.grid_remove()
+                        #self.grid_remove()
                         return
+            
+            if not self.mid_jump:
+                spanshCheck(entry, self.safe_callback).start()
 
-            spanshCheck(entry, self.safe_callback).start()
+        if entry.get("event") in ("StartJump"):
+            self.mid_jump=True
+        if entry.get("event") in ("FSDJump"):
+            self.mid_jump=False
+        
+        
 
         reset = (entry.get("event") in ("StartJump", "FSDJump"))
         reset = reset or (entry.get("event") == "Music" and entry.get(
@@ -77,6 +90,8 @@ class TargetDisplay(Frame):
 
         if reset:
             self.label.grid_remove()
+
+        
 
 
 class spanshCheck(threading.Thread):
@@ -139,4 +154,4 @@ class spanshCheck(threading.Thread):
                 self.callback(f"Target: {self.name} logged ({self.starclass})", 1)
                 return
 
-        self.callback(f"Target: {self.name} missing ({self.starclass})", 0)
+        self.callback(f"Target: {self.name} missing ({self.starclass})", 0) 
