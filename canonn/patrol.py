@@ -150,7 +150,7 @@ class PatrolLink(HyperlinkLabel):
 
     def __configure_event(self, event):
         """Handle resizing."""
-        Debug.logger.debug("Patrol: Link widget resize")
+        #Debug.logger.debug("Patrol: Link widget resize")
         self.configure(wraplength=event.width)
 
 
@@ -174,7 +174,7 @@ class InfoLink(HyperlinkLabel):
         """Handle resizing."""
 
         difference = datetime.datetime.now() - self.lasttime
-        Debug.logger.debug("diff {}".format(difference.total_seconds()))
+        #Debug.logger.debug("diff {}".format(difference.total_seconds()))
         if difference.total_seconds() > 0.5:
             self.resized = False
 
@@ -305,13 +305,13 @@ class CanonnPatrol(Frame):
         self.hyperlink['url'] = None
 
     def copyclip(self, value):
-        Debug.logger.debug("copyclip")
+        # Debug.logger.debug("copyclip")
 
         self.parent.clipboard_clear()  # clear clipboard contents
         self.parent.clipboard_append(value)
         self.parent.update()
 
-        Debug.logger.debug("copyclip done")
+        #Debug.logger.debug("copyclip done")
 
     @classmethod
     def plugin_start(cls, plugin_dir):
@@ -365,8 +365,8 @@ class CanonnPatrol(Frame):
         # if it the last patrol lets not go any further.
         index = self.nearest.get("index")
         if index + 1 < len(self.patrol_list):
-            Debug.logger.debug("len {} ind {}".format(
-                len(self.patrol_list), index))
+            # Debug.logger.debug("len {} ind {}".format(
+            #    len(self.patrol_list), index))
             self.nearest["excluded"] = True
             self.patrol_list[index]["excluded"] = True
             self.update()
@@ -381,7 +381,7 @@ class CanonnPatrol(Frame):
         It does this by unsetting the excluded flag on the previous patrol
         """
         index = self.nearest.get("index")
-        Debug.logger.debug("prev {}".format(index))
+        #Debug.logger.debug("prev {}".format(index))
 
         if index > 0:
             self.patrol_list[index - 1]["excluded"] = False
@@ -391,7 +391,7 @@ class CanonnPatrol(Frame):
 
     def update_ui(self, event):
         # rerun every 5 seconds
-        Debug.logger.debug('in update_ui')
+        #Debug.logger.debug('in update_ui')
         # self.after(5000, self.update_ui)
         self.update()
 
@@ -399,12 +399,12 @@ class CanonnPatrol(Frame):
 
         if self.visible():
 
-            Debug.logger.debug("Patrol update: Visible")
+            #Debug.logger.debug("Patrol update: Visible")
             capi_update = self.patrol_list and self.system and self.capi_update
             journal_update = self.patrol_list and self.system
 
             if journal_update or capi_update:
-                Debug.logger.debug("journal_update or capi_update")
+                #Debug.logger.debug("journal_update or capi_update")
                 self.sort_patrol()
                 p = Systems.edsmGetSystem(self.system)
                 self.nearest = self.getNearest(p)
@@ -447,7 +447,7 @@ class CanonnPatrol(Frame):
                 overlayService.overlayDisplayMessage(
                     data, cfg, "patrol", overlay_settings)
 
-                Debug.logger.debug("finished refresh")
+                #Debug.logger.debug("finished refresh")
             else:
                 if self.system:
                     self.hyperlink['text'] = "Fetching patrols..."
@@ -513,7 +513,7 @@ class CanonnPatrol(Frame):
             retval = "Canonn Influence {}%{} Please complete missions for Canonn to increase our influence{}".format(
                 Locale.stringFromNumber(float(bgs.get("influence") * 100), 2), states, update_text)
 
-        Debug.logger.debug("{}: {}".format(bgs.get("system_name"), retval))
+        #Debug.logger.debug("{}: {}".format(bgs.get("system_name"), retval))
         return retval
 
     def getGnosis(self):
@@ -745,8 +745,8 @@ class CanonnPatrol(Frame):
         if self.system:
             Debug.logger.debug("Download Patrol Data")
 
-            Debug.logger.debug(
-                "Patrol Download for system {}".format(self.system))
+            # Debug.logger.debug(
+            #    "Patrol Download for system {}".format(self.system))
 
             # if patrol list is populated then was can save
             if self.patrol_list:
@@ -756,7 +756,7 @@ class CanonnPatrol(Frame):
 
             patrol_list = []
             if self.faction != 1:
-                Debug.logger.debug("Getting Faction Data")
+                #Debug.logger.debug("Getting Faction Data")
                 self.patrol_name = "Cannon Factions"
                 if not self.started and not config.shutting_down:
                     self.event_generate('<<PatrolDisplay>>', when='tail')
@@ -1009,9 +1009,6 @@ class CanonnPatrol(Frame):
         nb.Checkbutton(frame, text="Enable nearest command",
                        variable=self.overlay_nearest_enabled_btn).grid(row=6, column=1, sticky="NW")
 
-        Debug.logger.debug("canonn: {}, faction: {} , EDSM {}".format(
-            self.canonn, self.faction, self.edsm))
-
         return frame
 
     def visible(self):
@@ -1088,9 +1085,6 @@ class CanonnPatrol(Frame):
         if self.visible():
             # we should fire off an extra download
             UpdateThread(self).start()
-
-        Debug.logger.debug("canonn: {}, faction: {} hideEDSM {}".format(
-            self.canonn, self.faction, self.edsm))
 
     def trigger(self, system, entry):
         # exit if the events dont match
@@ -1288,8 +1282,7 @@ class CanonnPatrol(Frame):
             self.update()
 
         if self.system != system and entry.get("event") in ("Location", "FSDJump", "StartUp"):
-            Debug.logger.debug(
-                "Refreshing Patrol ({})".format(entry.get("event")))
+
             self.system = system
             self.update()
             if self.nearest and self.copypatrol == 1:
