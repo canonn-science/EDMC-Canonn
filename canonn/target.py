@@ -13,35 +13,32 @@ except:
 from canonn.debug import Debug
 
 
-class TargetDisplay(Frame):
+class TargetDisplay():
 
     def __init__(self, parent, gridrow):
         padx, pady = 10, 5  # formatting
         sticky = tk.EW + tk.N  # full width, stuck to the top
         anchor = tk.NW
 
-        Frame.__init__(
-            self,
-            parent
-        )
+        self.frame = Frame(parent)
 
         self.news_data = []
-        self.mid_jump=False
-        self.columnconfigure(1, weight=1)
+        self.mid_jump = False
+        self.frame.columnconfigure(1, weight=1)
         #self.grid(row=gridrow, column=0, sticky="EW", columnspan=1)
-        self.grid(row=gridrow, column=0, columnspan=2, sticky="EW")
+        self.frame.grid(row=gridrow, column=0, columnspan=2, sticky="EW")
 
-        self.label = tk.Label(self, text="Target")
+        self.label = tk.Label(self.frame, text="Target")
         self.label.grid(row=0, column=0, sticky="EW")
 
         # hidden at first
         self.label.grid_remove()
-        #self.grid_remove()
+        # self.grid_remove()
         # need a callback event to prevent threading disasters
-        self.bind('<<setTarget>>', self.set_target)
+        self.frame.bind('<<setTarget>>', self.set_target)
 
     def set_target(self, event):
-        #self.grid()
+        # self.grid()
         self.label.grid()
 
         if self.target_level == 0:
@@ -59,7 +56,7 @@ class TargetDisplay(Frame):
     def safe_callback(self, text, level):
         self.target_text = text
         self.target_level = level
-        self.event_generate('<<setTarget>>', when='head')
+        self.frame.event_generate('<<setTarget>>', when='head')
 
     def journal_entry(self, cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                       state, x, y, z, body, nearloc, client):
@@ -70,28 +67,28 @@ class TargetDisplay(Frame):
 
                 for route_system in navroute.get("Route"):
                     if route_system.get("SystemAddress") == entry.get("SystemAddress"):
+                        self.label["text"] = None
                         self.label.grid_remove()
-                        #self.grid_remove()
+                        self.frame.grid()
+
                         return
-            
+
             if not self.mid_jump:
                 spanshCheck(entry, self.safe_callback).start()
 
         if entry.get("event") in ("StartJump"):
-            self.mid_jump=True
+            self.mid_jump = True
         if entry.get("event") in ("FSDJump"):
-            self.mid_jump=False
-        
-        
+            self.mid_jump = False
 
         reset = (entry.get("event") in ("StartJump", "FSDJump"))
         reset = reset or (entry.get("event") == "Music" and entry.get(
             "MusicTrack") != "GalaxyMap")
 
         if reset:
+            self.label["text"] = None
             self.label.grid_remove()
-
-        
+            self.frame.grid()
 
 
 class spanshCheck(threading.Thread):
@@ -146,12 +143,14 @@ class spanshCheck(threading.Thread):
 
             if bodycount > 0:
 
-                self.callback(f"Target: {self.name} scanned {bodycount}/? ({self.starclass})", 2)
+                self.callback(
+                    f"Target: {self.name} scanned {bodycount}/? ({self.starclass})", 2)
                 return
 
             if spansh.get("system").get("name"):
 
-                self.callback(f"Target: {self.name} logged ({self.starclass})", 1)
+                self.callback(
+                    f"Target: {self.name} logged ({self.starclass})", 1)
                 return
 
-        self.callback(f"Target: {self.name} missing ({self.starclass})", 0) 
+        self.callback(f"Target: {self.name} missing ({self.starclass})", 0)
