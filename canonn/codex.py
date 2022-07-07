@@ -280,7 +280,6 @@ class codexName(threading.Thread):
 
     def run(self):
         self.callback()
-        
 
 
 class poiTypes(threading.Thread):
@@ -508,7 +507,7 @@ class CodexTypes():
         #self.frame.bind('<<refreshPlanetData>>', self.refreshPlanetData)
 
         self.container = Frame(self.frame, highlightthickness=1)
-        self.container.grid(row=0, column=0, sticky="NSEW",columnspan=2)
+        self.container.grid(row=0, column=0, sticky="NSEW", columnspan=2)
         self.container.grid_remove()
 
         self.titlepanel = Frame(self.container)
@@ -966,7 +965,7 @@ class CodexTypes():
 
     # this seems horribly confused
     def refreshPOIData(self, event):
-        
+
         #Debug.logger.debug(f"refreshPOIData {self.event} {self.waitingPOI}")
 
         if self.waitingPOI:
@@ -985,7 +984,7 @@ class CodexTypes():
                 spansh_bodies = self.temp_spanshdata.get("bodies")
             else:
                 spansh_bodies = {}
-            
+
             if spansh_bodies:
                 for b in spansh_bodies:
 
@@ -996,19 +995,19 @@ class CodexTypes():
 
             # Debug.logger.debug("self.bodies")
             # Debug.logger.debug(self.bodies)
-            if nvl(CodexTypes.fsscount,0) == 0 and self.temp_spanshdata and self.temp_spanshdata.get("bodyCount"):
-                CodexTypes.fsscount=self.temp_spanshdata.get("bodyCount")
-            
+            if nvl(CodexTypes.fsscount, 0) == 0 and self.temp_spanshdata and self.temp_spanshdata.get("bodyCount"):
+                CodexTypes.fsscount = self.temp_spanshdata.get("bodyCount")
+
             bodies = self.bodies
-            
+
             if len(self.bodies) > 0:
                 # bodies = self.temp_edsmdata.json().get("bodies")
                 bodies = self.bodies
                 if bodies:
-                    len_bodies=0
+                    len_bodies = 0
                     for body in bodies.values():
-                        if body.get("type") in ("Planet","Star"):
-                            len_bodies+=1
+                        if body.get("type") in ("Planet", "Star"):
+                            len_bodies += 1
                     CodexTypes.bodycount = len_bodies
                     if not CodexTypes.fsscount:
                         CodexTypes.fsscount = 0
@@ -1019,8 +1018,8 @@ class CodexTypes():
                             self.systemprogress.grid()
                             # self.systemprogress["text"]="{}%".format(round((float(CodexTypes.bodycount)/float(CodexTypes.fsscount))*100,1))
                             self.systemprogress["text"] = "{}/{}".format(
-                                CodexTypes.bodycount, nvl(CodexTypes.fsscount,'?'))
-                    #else:
+                                CodexTypes.bodycount, nvl(CodexTypes.fsscount, '?'))
+                    # else:
 
                     #    self.systemprogress.grid()
                     #    self.systemprogress.grid_remove()
@@ -1441,8 +1440,10 @@ class CodexTypes():
                                     "body": bodyname, "coords": latlon}
 
             for station in self.stationdata:
+                Debug.logger.debug(json.dumps(self.stationdata, indent=4))
                 stype = self.stationdata[station]["type"]
-                ecotype = " [" + self.stationdata[station]["economy"] + "]"
+                etype = self.stationdata[station].get("economy") or "None"
+                ecotype = " [" + etype + "]"
 
                 if station in self.settlementdata:
                     bodycode = self.settlementdata[station]["body"].replace(
@@ -1478,8 +1479,9 @@ class CodexTypes():
                     if self.hidehumandetailed:
                         self.add_poi("Human", stype, None)
                     else:
-                        self.add_poi("Human", "$"+stype+":" +
-                                     self.stationdata[station]["economy"], None)
+                        if etype != "None":
+                            self.add_poi("Human", "$"+stype+":" +
+                                         etype, None)
 
             self.logqueue = False
             while not self.logq.empty():
@@ -1508,7 +1510,7 @@ class CodexTypes():
         and generate unknown for missing index
         """
 
-        #Debug.logger.debug(f"update_unknown_ppoi")
+        # Debug.logger.debug(f"update_unknown_ppoi")
 
         if body not in self.ppoidata:
             return
@@ -1632,7 +1634,7 @@ class CodexTypes():
         check if it exist in the unknown list and remove it
         """
 
-        #Debug.logger.debug(
+        # Debug.logger.debug(
         #    f"add_ppoi_wsaa {body} {hud_category} {type} {index} {lat} {lon} {scanned}")
 
         self.add_ppoi(body, hud_category, type)
@@ -1923,7 +1925,6 @@ class CodexTypes():
 
         #Debug.logger.debug(f"visualise POI Data event={self.event}")
 
-        
         self.set_image("MissingData", False)
         self.set_image("Geology", False)
         self.set_image("Cloud", False)
@@ -1949,13 +1950,13 @@ class CodexTypes():
             self.set_image(category, True)
             nothing = False
         nothing = False
-        
+
         # need to initialise if not exists
         self.systemtitle_name["text"] = self.system
         #self.systemtitle_name["url"] = f"https://us-central1-canonn-api-236217.cloudfunctions.net/query/codex/biostats?id={self.system64}"
         self.systemtitle_name[
             "url"] = f"https://canonn-science.github.io/canonn-signals/index.html?system={self.system64}"
-        
+
         # print(theme.current)
         #print("THEME", config.get_int('theme'))
 
@@ -2117,7 +2118,7 @@ class CodexTypes():
         self.planettitle.grid_remove()
         self.planetpanel.grid_remove()
 
-        #Debug.logger.debug(
+        # Debug.logger.debug(
         #    f"visualise Planet Data event={self.event} body={self.planetlist_body}")
 
         if self.planetlist_body not in self.ppoidata:
@@ -2293,7 +2294,7 @@ class CodexTypes():
 
     def remove_poi(self, hud_category, english_name, body):
 
-        #Debug.logger.debug(
+        # Debug.logger.debug(
         #    f"remove_poi - {hud_category} {english_name} {body}")
 
         if hud_category in self.poidata:
@@ -2309,9 +2310,6 @@ class CodexTypes():
                     del self.poidata[hud_category][english_name]
             if len(self.poidata[hud_category]) == 0:
                 del self.poidata[hud_category]
-
-    
-    
 
     def shepherd_moon(self, body, bodies):
 
@@ -3688,7 +3686,7 @@ class codexEmitter(Emitter):
 
 def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     Debug.logger.debug("detected test request")
-    
+
     testentry = {
         "timestamp": "2019-10-10T10:21:36Z",
         "event": "ApproachSettlement",
