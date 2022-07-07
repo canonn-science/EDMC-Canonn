@@ -23,6 +23,7 @@ from canonn import nhss
 from canonn import patrol
 from canonn import release
 from canonn import extool
+import canonn.target
 from canonn.debug import Debug
 from canonn.debug import debug
 from canonn.systems import Systems, journalGetSystem
@@ -73,7 +74,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.8.1"
+this.version = "6.9.0"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -163,6 +164,7 @@ def plugin_app(parent):
     this.patrol = patrol.CanonnPatrol(this.parent, table, 4)
     this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 5)
     this.guestbook = guestBook.setup(table, 6)
+    this.target = canonn.target.TargetDisplay(table, 7)
 
     whitelist = whiteList(parent)
     whitelist.fetchData()
@@ -266,7 +268,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     clientreport.submit(cmdr, is_beta, client, entry)
     factionkill.submit(cmdr, is_beta, system, station, entry, client)
     nhss.submit(cmdr, is_beta, system, station, entry, client)
-    hdreport.submit(cmdr, is_beta, system, station, entry, client, state)
+
     codex.submit(cmdr, is_beta, system, x, y, z, entry, body,
                  nearloc['Latitude'], nearloc['Longitude'], client, state)
     fssreports.submit(cmdr, is_beta, system, x, y, z, entry, body,
@@ -291,6 +293,9 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
                           station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     this.extool.journal_entry(cmdr, is_beta, system, entry, client)
     guestBook.journal_entry(entry)
+    this.target.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
+                              state, x, y, z, body, nearloc, client)
+    hdreport.submit(cmdr, is_beta, system, station, entry, client, state)
 
 
 def dashboard_entry(cmdr, is_beta, entry):

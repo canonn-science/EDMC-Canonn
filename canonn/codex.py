@@ -279,9 +279,7 @@ class codexName(threading.Thread):
         self.callback = callback
 
     def run(self):
-        Debug.logger.debug("running codexName")
         self.callback()
-        Debug.logger.debug("codexName Callback Complete")
 
 
 class poiTypes(threading.Thread):
@@ -341,7 +339,7 @@ class saaScan():
 class organicScan():
 
     def __init__(self):
-        debug("We only use class methods here")
+        Debug.logger.debug("We only use class methods here")
 
     @classmethod
     def journal_entry(cls, cmdr, is_beta, system, station, entry, state, x, y, z, body, latitude, longitude, temperature, gravity, client):
@@ -509,7 +507,7 @@ class CodexTypes():
         #self.frame.bind('<<refreshPlanetData>>', self.refreshPlanetData)
 
         self.container = Frame(self.frame, highlightthickness=1)
-        self.container.grid(row=0, column=0, sticky="NSEW")
+        self.container.grid(row=0, column=0, sticky="NSEW", columnspan=2)
         self.container.grid_remove()
 
         self.titlepanel = Frame(self.container)
@@ -525,9 +523,10 @@ class CodexTypes():
         self.systemtitle_name = HyperlinkLabel(
             self.container, text="?", url=None)  # moved to container
         self.systemtitle_name.grid(row=0, column=0, sticky="W")
-        self.systemprogress = tk.Label(self.systemtitle, text="?")
+        #self.systemprogress = tk.Label(self.systemtitle, text="?")
+        self.systemprogress = tk.Label(self.container, text="?")
         self.systemprogress.grid(
-            row=0, column=2, sticky="NSEW")  # moved to next row
+            row=0, column=1, sticky="W")  # moved to next row
         self.systemprogress.grid_remove()
 
         self.planetpanel = Frame(self.container)
@@ -639,7 +638,7 @@ class CodexTypes():
         # self.systemprogress.grid_remove()
 
     def nextBodyMode(self, event):
-        Debug.logger.debug(f"nextBodyMode {self.event}")
+        #Debug.logger.debug(f"nextBodyMode {self.event}")
         if self.icon_body["text"] == "Body":
             self.switchBodyMode("Body_auto")
         elif self.icon_body["text"] == "Body_auto":
@@ -651,7 +650,7 @@ class CodexTypes():
                 self.switchBodyMode("Body_auto")
 
     def switchBodyMode(self, mode):
-        Debug.logger.debug(f"switchBodyMode {mode}")
+        #Debug.logger.debug(f"switchBodyMode {mode}")
         if mode == "Body":
             self.planetlist_auto = False
             self.planetlist_show = True
@@ -967,7 +966,7 @@ class CodexTypes():
     # this seems horribly confused
     def refreshPOIData(self, event):
 
-        Debug.logger.debug(f"refreshPOIData {self.event} {self.waitingPOI}")
+        #Debug.logger.debug(f"refreshPOIData {self.event} {self.waitingPOI}")
 
         if self.waitingPOI:
             return
@@ -985,8 +984,10 @@ class CodexTypes():
                 spansh_bodies = self.temp_spanshdata.get("bodies")
             else:
                 spansh_bodies = {}
+
             if spansh_bodies:
                 for b in spansh_bodies:
+
                     if not "Belt Cluster" in b.get("name"):
                         # filter out any data errors in spansh
                         if b.get("bodyId") not in self.bodies and not self.bodymismatch(self.temp_spanshdata.get("name"), b.get("name")):
@@ -994,26 +995,34 @@ class CodexTypes():
 
             # Debug.logger.debug("self.bodies")
             # Debug.logger.debug(self.bodies)
+            if nvl(CodexTypes.fsscount, 0) == 0 and self.temp_spanshdata and self.temp_spanshdata.get("bodyCount"):
+                CodexTypes.fsscount = self.temp_spanshdata.get("bodyCount")
+
+            bodies = self.bodies
 
             if len(self.bodies) > 0:
                 # bodies = self.temp_edsmdata.json().get("bodies")
                 bodies = self.bodies
                 if bodies:
-                    CodexTypes.bodycount = len(bodies)
+                    len_bodies = 0
+                    for body in bodies.values():
+                        if body.get("type") in ("Planet", "Star"):
+                            len_bodies += 1
+                    CodexTypes.bodycount = len_bodies
                     if not CodexTypes.fsscount:
                         CodexTypes.fsscount = 0
 
-                    if nvl(CodexTypes.fsscount, 0) > nvl(CodexTypes.bodycount, 0):
+                    if nvl(CodexTypes.fsscount, 0) >= nvl(CodexTypes.bodycount, 0):
                         # self.add_poi("Planets", "Unexplored Bodies", "")
                         if CodexTypes.fsscount > 0:
                             self.systemprogress.grid()
                             # self.systemprogress["text"]="{}%".format(round((float(CodexTypes.bodycount)/float(CodexTypes.fsscount))*100,1))
                             self.systemprogress["text"] = "{}/{}".format(
-                                CodexTypes.bodycount, CodexTypes.fsscount)
-                    else:
+                                CodexTypes.bodycount, nvl(CodexTypes.fsscount, '?'))
+                    # else:
 
-                        self.systemprogress.grid()
-                        self.systemprogress.grid_remove()
+                    #    self.systemprogress.grid()
+                    #    self.systemprogress.grid_remove()
 
                     for k in bodies.keys():
                         if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
@@ -1031,7 +1040,7 @@ class CodexTypes():
                         body_code = b.get("name").replace(self.system+" ", '')
                         body_name = b.get("name")
 
-                        self.sheperd_moon(b, bodies)
+                        self.shepherd_moon(b, bodies)
                         self.trojan(b, bodies)
                         self.ringed_star(b)
                         self.close_rings(b, bodies, body_code)
@@ -1431,8 +1440,10 @@ class CodexTypes():
                                     "body": bodyname, "coords": latlon}
 
             for station in self.stationdata:
+                Debug.logger.debug(json.dumps(self.stationdata, indent=4))
                 stype = self.stationdata[station]["type"]
-                ecotype = " [" + self.stationdata[station]["economy"] + "]"
+                etype = self.stationdata[station].get("economy") or "None"
+                ecotype = " [" + etype + "]"
 
                 if station in self.settlementdata:
                     bodycode = self.settlementdata[station]["body"].replace(
@@ -1468,15 +1479,16 @@ class CodexTypes():
                     if self.hidehumandetailed:
                         self.add_poi("Human", stype, None)
                     else:
-                        self.add_poi("Human", "$"+stype+":" +
-                                     self.stationdata[station]["economy"], None)
+                        if etype != "None":
+                            self.add_poi("Human", "$"+stype+":" +
+                                         etype, None)
 
             self.logqueue = False
             while not self.logq.empty():
 
                 (tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry, tmpstate, tmpx,
                  tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient) = self.logq.get()
-                Debug.logger.debug(f"logq not empty {tmpentry}")
+                #Debug.logger.debug(f"logq not empty {tmpentry}")
                 # self.journal_entry(tmpcmdr, tmpis_beta, tmpsystem, tmpstation, tmpentry,
                 #                   tmpstate, tmpx, tmpy, tmpz, tmpbody, tmplat, tmplon, tmpclient)
 
@@ -1485,8 +1497,9 @@ class CodexTypes():
             self.add_poi("Other", 'Plugin Error', None)
             Debug.logger.error("Plugin Error")
             Debug.logger.error(e)
+            Debug.logger.exception(e)
 
-        Debug.logger.debug(f"refreshPOIData end {self.event}")
+        #Debug.logger.debug(f"refreshPOIData end {self.event}")
 
         self.visualisePOIData()
         self.visualisePlanetData()
@@ -1497,7 +1510,7 @@ class CodexTypes():
         and generate unknown for missing index
         """
 
-        Debug.logger.debug(f"update_unknown_ppoi")
+        # Debug.logger.debug(f"update_unknown_ppoi")
 
         if body not in self.ppoidata:
             return
@@ -1606,7 +1619,7 @@ class CodexTypes():
         check if it exist in the unknown list and remove it
         """
 
-        Debug.logger.debug(f"add_ppoi {body} {hud_category} {type}")
+        #Debug.logger.debug(f"add_ppoi {body} {hud_category} {type}")
 
         if body not in self.ppoidata:
             self.ppoidata[body] = {}
@@ -1621,8 +1634,8 @@ class CodexTypes():
         check if it exist in the unknown list and remove it
         """
 
-        Debug.logger.debug(
-            f"add_ppoi_wsaa {body} {hud_category} {type} {index} {lat} {lon} {scanned}")
+        # Debug.logger.debug(
+        #    f"add_ppoi_wsaa {body} {hud_category} {type} {index} {lat} {lon} {scanned}")
 
         self.add_ppoi(body, hud_category, type)
         if "Unknown" not in self.ppoidata[body][hud_category]:
@@ -1701,7 +1714,7 @@ class CodexTypes():
             self.poiq.clear()
             self.saaq.clear()
             self.cmdrq.clear()
-
+            temp_spanshdata = {}
             try:
 
                 url = f"https://spansh.co.uk/api/dump/{system64}"
@@ -1755,8 +1768,7 @@ class CodexTypes():
                     # push edsm data only a queue
                     self.spansh_bodyq.put(temp_spanshdata)
                 else:
-                    Debug.logger.debug("Spansh Failed")
-                    Debug.logger.error("Spansh Failed")
+                    Debug.logger.error(f"Spansh result {r.status_code}")
             except:
                 Debug.logger.error("Error getting Spansh data")
 
@@ -1772,46 +1784,53 @@ class CodexTypes():
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
                     # debug("got EDSM Data")
-                    temp_spanshdata = r.json()
+                    temp_stationdata = r.json()
                     # push edsm data only a queue
-                    self.edsm_stationq.put(temp_spanshdata)
+                    self.edsm_stationq.put(temp_stationdata)
                 else:
-                    Debug.logger.debug("EDSM Failed")
-                    Debug.logger.error("EDSM Failed")
+                    Debug.logger.error(f"EDSM Failed {r.status_code}")
             except:
-                Debug.logger.debug("Error getting EDSM data")
+                Debug.logger.error("Error getting EDSM data")
 
-            try:
-                EDversion = "N"
-                if self.odyssey:
-                    EDversion = "Y"
-                url = "https://us-central1-canonn-api-236217.cloudfunctions.net/query/getSystemPoi?system={}&odyssey={}&cmdr={}".format(
-                    quote_plus(system.encode('utf8')), EDversion, cmdr)
+            temp_poidata = {}
+            if temp_spanshdata.get("bodies") and len(temp_spanshdata.get("bodies")) > 0:
+                Debug.logger.debug("Getting Canonn Data")
+                try:
+                    EDversion = "N"
+                    if self.odyssey:
+                        EDversion = "Y"
+                    url = "https://us-central1-canonn-api-236217.cloudfunctions.net/query/getSystemPoi?system={}&odyssey={}&cmdr={}".format(
+                        quote_plus(system.encode('utf8')), EDversion, cmdr)
 
-                # debug(url)
-                # debug("request {}:  Active Threads {}".format(
-                #    url, threading.activeCount()))
-                headers = {"Accept-Encoding": "gzip, deflate", }
-                r = requests.get(url, headers=headers, timeout=30)
-                # debug("request complete")
-                r.encoding = 'utf-8'
-                if r.status_code == requests.codes.ok:
-                    # debug("got POI Data")
-                    temp_poidata = r.json()
+                    # debug(url)
+                    # debug("request {}:  Active Threads {}".format(
+                    #    url, threading.activeCount()))
+                    headers = {"Accept-Encoding": "gzip, deflate", }
+                    r = requests.get(url, headers=headers, timeout=30)
+                    # debug("request complete")
+                    r.encoding = 'utf-8'
+                    if r.status_code == requests.codes.ok:
+                        # debug("got POI Data")
+                        temp_poidata = r.json()
+                    else:
+                        Debug.logger.error("Canonn data not recived")
 
-                # push the data ont a queue
-                if "codex" in temp_poidata:
-                    for v in temp_poidata["codex"]:
-                        self.poiq.put(v)
+                    # push the data ont a queue
+                    if "codex" in temp_poidata:
+                        for v in temp_poidata["codex"]:
+                            self.poiq.put(v)
 
-                if "SAAsignals" in temp_poidata:
-                    for v in temp_poidata["SAAsignals"]:
-                        self.saaq.put(v)
-                if "cmdr" in temp_poidata:
-                    for v in temp_poidata["cmdr"]:
-                        self.cmdrq.put(v)
-            except:
-                debug("Error getting POI data")
+                    if "SAAsignals" in temp_poidata:
+                        for v in temp_poidata["SAAsignals"]:
+                            self.saaq.put(v)
+                    if "cmdr" in temp_poidata:
+                        for v in temp_poidata["cmdr"]:
+                            self.cmdrq.put(v)
+                except:
+                    Debug.logger.error("Error getting POI data")
+            else:
+                Debug.logger.debug("Skipping Canonn Fetch")
+                Debug.logger.debug(temp_spanshdata.get("bodies"))
 
             try:
                 url = "https://elite.laulhere.com/ExTool/info.php?mode=chksaa&system64={}".format(
@@ -1904,23 +1923,8 @@ class CodexTypes():
         self.cleanPOIPanel()
         self.systempanel.grid_remove()
 
-        Debug.logger.debug(f"visualise POI Data event={self.event}")
+        #Debug.logger.debug(f"visualise POI Data event={self.event}")
 
-        #unscanned = nvl(self.fsscount, 0) > nvl(self.bodycount, 0)
-
-        # we have set an event type that can override waiting
-        # if self.event:
-        # Debug.logger.debug(f"Allowed event {self.event}")
-        # self.waitingPOI = False
-        # self.allowed = True
-        # self.event = None
-        # else:
-        # Debug.logger.debug(f"Not allowed event")
-
-        # we may want to try again if the data hasn't been fetched yet
-        # if self.waitingPOI or not self.allowed:
-        # Debug.logger.debug(f"Still waiting for POI data")
-        # else:
         self.set_image("MissingData", False)
         self.set_image("Geology", False)
         self.set_image("Cloud", False)
@@ -1938,16 +1942,6 @@ class CodexTypes():
         self.set_image("Jumponium", False)
         self.set_image("GreenSystem", False)
 
-        # if len(self.ppoidata)>0:
-        #    self.icon_body.grid()
-        # else:
-        #    self.icon_body.grid_remove()
-
-        # if self.poidata or unscanned:
-
-        # self.frame.grid()
-        # self.cleanup_poidata()
-
         nothing = True
         for category in self.poidata:
             if self.hidemissingdata:
@@ -1956,9 +1950,6 @@ class CodexTypes():
             self.set_image(category, True)
             nothing = False
         nothing = False
-        # else:
-        #    self.frame.grid()
-        #    self.frame.grid_remove()
 
         # need to initialise if not exists
         self.systemtitle_name["text"] = self.system
@@ -2127,8 +2118,8 @@ class CodexTypes():
         self.planettitle.grid_remove()
         self.planetpanel.grid_remove()
 
-        Debug.logger.debug(
-            f"visualise Planet Data event={self.event} body={self.planetlist_body}")
+        # Debug.logger.debug(
+        #    f"visualise Planet Data event={self.event} body={self.planetlist_body}")
 
         if self.planetlist_body not in self.ppoidata:
             return
@@ -2303,8 +2294,8 @@ class CodexTypes():
 
     def remove_poi(self, hud_category, english_name, body):
 
-        Debug.logger.debug(
-            f"remove_poi - {hud_category} {english_name} {body}")
+        # Debug.logger.debug(
+        #    f"remove_poi - {hud_category} {english_name} {body}")
 
         if hud_category in self.poidata:
             if english_name in self.poidata[hud_category]:
@@ -2320,49 +2311,7 @@ class CodexTypes():
             if len(self.poidata[hud_category]) == 0:
                 del self.poidata[hud_category]
 
-    # def cleanup_poidata(self):
-        # # if we have bio or geo then remove Bio Bio and Geo Geo
-        # # if we have Jumponium+ and Jumponium then use the best value
-        # # We can't simply loop because there is an order of precedence
-
-        # bodies = {}
-        # """ for poi in self.poidata:
-            # if not bodies.get(poi.get("body")):
-                # bodies[poi.get("body")] = {"name": poi.get("body")}
-                # bodies[poi.get("body")][poi.get("hud_category")] = 0
-            # if not bodies.get(poi.get("body")) and not bodies.get(poi.get("body")).get(poi.get("hud_category")):
-                # bodies[poi.get("body")][poi.get("hud_category")] = 0
-
-            # bodies[poi.get("body")][poi.get("hud_category")] += 1
-
-            # if poi.get("hud_category") == "Jumponium":
-                # if not bodies[poi.get("body")].get("Jumplevel"):
-                # bodies[poi.get("body")]["Jumplevel"] = poi.get(
-                # "english_name")
-                # else:
-                # bodies[poi.get("body")]["Jumplevel"] = self.compare_jumponioum(
-                # poi.get("english_name"), bodies[poi.get("body")]["Jumplevel"]) """
-
-        # for k in bodies.keys():
-            # body = bodies.get(k)
-            # bodyname = body.get("name")
-
-            # for cat in ("Biology", "Geology", "Thargoid", "Guardian"):
-
-                # if body.get(cat) and body.get(cat) > 1:
-                # Debug.logging.debug(f"removing {cat}")
-                # self.remove_poi(cat, cat, body.get("name"))
-
-            # """ for jumplevel in ("Basic", "Standard", "Premium"):
-                # for mod in ("+v", "+b", "+v+b", "+b+v"):
-                # if body.get("Jumplevel") and not body.get("Jumplevel") == f"{jumplevel}{mod}":
-                # Debug.logging.debug(f"removing {jumplevel}{mod}")
-                # self.remove_poi(
-                # Jumponium, f"{jumplevel}{mod}", body.get("name")) """
-
-    # this is used to trigger display of merged data
-
-    def sheperd_moon(self, body, bodies):
+    def shepherd_moon(self, body, bodies):
 
         def get_density(mass, inner, outer):
             a1 = math.pi * pow(inner, 2)
@@ -2899,10 +2848,10 @@ class CodexTypes():
     def compare_jumponioum(self, v1, v2):
 
         if len(v1) > len(v2):
-            Debug.logging.debug(f"{v1} vs {v2} = {v1}")
+            #Debug.logging.debug(f"{v1} vs {v2} = {v1}")
             return v1
         else:
-            Debug.logging.debug(f"{v1} vs {v2} = {v2}")
+            #Debug.logging.debug(f"{v1} vs {v2} = {v2}")
             return v2
 
     def fake_biology(self, cmdr, system, x, y, z, planet, count, client):
@@ -3016,10 +2965,11 @@ class CodexTypes():
             self.fssdata = {}
             self.nfss = 0
             self.fccount = 0
-            Debug.logger.debug("Calling PoiTypes")
+            #Debug.logger.debug("Calling PoiTypes")
             self.allowed = True
             self.logq.clear()
             self.logqueue = True
+            self.systemprogress.grid_remove()
             poiTypes(self.system, self.system64, cmdr, self.getPOIdata).start()
 
         if self.system64 != entry.get("SystemAddress"):
@@ -3736,64 +3686,6 @@ class codexEmitter(Emitter):
 
 def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
     Debug.logger.debug("detected test request")
-    # testentry = {
-    #     "timestamp": "2019-09-12T09:01:35Z", "event": "CodexEntry", "EntryID": 2100101,
-    #     "Name": "$Codex_Ent_Thargoid_Barnacle_01_Name;", "Name_Localised": "Common Thargoid Barnacle",
-    #     "SubCategory": "$Codex_SubCategory_Organic_Structures;",
-    #     "SubCategory_Localised": "Organic structures", "Category": "$Codex_Category_Biology;",
-    #     "Category_Localised": "Biological and Geological", "Region": "$Codex_RegionName_18;",
-    #     "Region_Localised": "Inner Orion Spur", "System": "Merope", "SystemAddress": 224644818084,
-    #     "NearestDestination": "$SAA_Unknown_Signal:#type=$SAA_SignalType_Thargoid;:#index=1;",
-    #     "NearestDestination_Localised": "Surface signal: Thargoid (1)"
-    # }
-    # submit("Factabulous Altimus", False, 'Merope', -78.59375, -149.625, -340.53125, testentry,
-    #        'Merope 2 a', 2.656142, 143.024597, client)
-    # testentry = {
-    #     "timestamp": "2019-09-12T14:46:03Z", "event": "CodexEntry", "EntryID": 2205002,
-    #     "Name": "$Codex_Ent_S_Seed_SdTp05_Bl_Name;", "Name_Localised": "Caeruleum Chalice Pod",
-    #     "SubCategory": "$Codex_SubCategory_Organic_Structures;", "SubCategory_Localised": "Organic structures",
-    #     "Category": "$Codex_Category_Biology;", "Category_Localised": "Biological and Geological",
-    #     "Region": "$Codex_RegionName_23;", "Region_Localised": "Acheron", "System": "Pyra Dryoae ET-O d7-7",
-    #     "SystemAddress": 252639699395, "IsNewEntry": True
-    # }
-    # submit(cmdr, False, "Pyra Dryoae ET-O d7-7", 7825.40625, -101.96875, 62316.9375, testentry,
-    #        None, None, None, client)
-    #
-    # testentry = {
-    #     "Name_Localised": "Purpureum Metallic Crystals",
-    #     "SystemAddress": 355710669314,
-    #     "Region_Localised": "Inner Orion Spur",
-    #     "Name": "$Codex_Ent_L_Cry_MetCry_Pur_Name;",
-    #     "EntryID": 2100802,
-    #     "System": "Plaa Eurk MU-A c1",
-    #     "SubCategory_Localised": "Organic structures",
-    #     "Category_Localised": "Biological and Geological",
-    #     "Region": "$Codex_RegionName_18;",
-    #     "timestamp": "2019-09-12T15:28:19Z",
-    #     "event": "CodexEntry",
-    #     "Category": "$Codex_Category_Biology;",
-    #     "SubCategory": "$Codex_SubCategory_Organic_Structures;"
-    # }
-    # submit("The_Martus", False, "Plaa Eurk MU-A c1", -1807.4375, 174.84375, -1058.5, testentry,
-    #        None, None, None, client)
-    #
-    # testentry = {
-    #     "Name_Localised": "Test Data",
-    #     "SystemAddress": 355710669314,
-    #     "Region_Localised": "Andromeda Wormhole",
-    #     "Name": "$tet_test_test;",
-    #     "EntryID": 9999999999,
-    #     "System": "Raxxla",
-    #     "SubCategory_Localised": "Imaginary structures",
-    #     "Category_Localised": "Insanity",
-    #     "Region": "$Codex_RegionName_00;",
-    #     "timestamp": "2019-09-12T15:28:19Z",
-    #     "event": "CodexEntry",
-    #     "Category": "$Codex_Category_Insanity;",
-    #     "SubCategory": "$Codex_SubCategory_Imaginary_Structures;"
-    # }
-    # submit("Test Date", False, "Raxxla", -1807.4375, 174.84375, -1058.5, testentry,
-    #        None, None, None, client)
 
     testentry = {
         "timestamp": "2019-10-10T10:21:36Z",

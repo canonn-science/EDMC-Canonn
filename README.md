@@ -3,6 +3,19 @@ EDMC plugin to automatically collect accurate science data from the galaxy and c
 
 # Features
 
+## System Target Info
+
+If you select a target system on the galaxy map using the "Set Target" button. The plugin will check if the system has been logged in Spansh.
+
+| Example | Description |
+|-----------------|-------------------------------------------------------------|
+| ![Red](images/target_red.png) | The system is not in Spansh | 
+| ![Amber](images/target_amber.png) | The system coordinates are in Spansh but no bodies | 
+| ![Light Green](images/target_lightgreen.png) | The system is in Spansh and some bodies scanned | 
+| ![Green](images/target_green.png) | The system is in Spansh and all bodies scanned | 
+
+NB: While using this can increase your chances of finding unexplored systems it isn't perfect as not all commanders will contribute to Spansh.
+
 ## Overlay
 
 The EDMC-Canonn plugin can be combined with [EDMC-Overlay](https://github.com/inorton/EDMCOverlay#readme) or [EDMC-Overlay2 for linux ](https://github.com/sersorrel/edmcoverlay2#readme) to display text overlaid on the game screen. 
@@ -56,7 +69,29 @@ Hyperdiction reporting is logged from the Thargoid Encounter Stats screen. There
 This captures NHSS information from the FSS scanner and USS Drops. Only logs one instance of each threat level per system
 
 ## Codex Icons
-The plugin will look up EDSM and Canonn Databases to identify interesting facts about the system and display icons that show you what is in the current system.  This may be biology, geology or system features such as earth like worlds, shepherd moons and close orbits. It will also show you how many bodies are recorded in EDSM and how many bodies there are in total. It also shows you Jumponium materials.
+
+The plugin will look up EDSM and Canonn Databases to identify interesting facts about the system and display icons that show you what is in the current system.  This may be biology, geology or system features such as earth like worlds, shepherd moons and close orbits. It will also show you how many bodies are recorded in EDSM and how many bodies there are in total. It also shows you Jumponium materials. Hover over the icons in game for a dropdown list. You can click on an icon to keep the list view always visible.
+
+| Icon | name | Description |
+|---|-----------------|---------------------------------------------------------------------------------------|
+| ![system](icons/system.gif) | System Mode | Displayed when in system mode. 
+| ![system](icons/system_planet.gif) | Automatic Mode | Modes will automatically switch when in a body or leaving a body.
+| ![system](icons/planet.gif) | Planet Mode | An extra layer of icons are displayed for individual planets
+| ![Missing](icons/MissingData_grey.gif) | Missing Data | This is displayed if there is data that needs capturing.
+| ![Biology](icons/biology_grey.gif) | Biology | This shows which species are present on each planet.
+| ![Geology](icons/Geology_grey.gif) | Geology | This shows what types of geological activity is present on each planet.
+| ![Anomaly](icons/Anomaly_grey.gif) | Anomaly | Displayed when there are anomalies in Notable Stellar Phenomena.
+| ![Cloud](icons/Cloud_grey.gif) | Cloud | Displayed when there are Lagrange Clouds and Contents in Notable Stellar Phenomena.
+| ![Guardian](icons/Guardian_grey.gif) | Guardian | Guardian beacons and ruins have been found in system.
+| ![Thargoid](icons/Thargoid_grey.gif) | Thargoid | Thargoid surface sites and barnacles are in the system.
+| ![Human](icons/Human_grey.gif) | Human | Human structures and fleet carriers are present. 
+| ![Planets](icons/Planets_grey.gif) | High Value Planets | High value planets are found in system.
+| ![Personal](icons/Personal_grey.gif) | Personal | Personal POIs recorded with the canonn capture command.
+| ![Ring](icons/Ring_grey.gif) | Rings | Rings and their contents are displayed with this Icon.
+| ![Tourist](icons/Tourist_grey.gif) | Tourist | Display notable facts about a system like collisions or unusual conditions.
+| ![Green](icons/GreenSystem_grey.gif) | GreenSystem | All materials needed for premium jumponium synthesis can be found in the system.
+| ![Jumponium](icons/Jumponium_grey.gif) | Jumponium | Displayed when materials needed for jumponium synthesis can be found in the system.
+| ![Error](icons/None_grey.gif) | Error | Usually displayed when there is a plugin error.
 
 ## Surface Navigation
 
