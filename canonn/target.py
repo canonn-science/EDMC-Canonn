@@ -44,11 +44,11 @@ class TargetDisplay():
         if self.target_level == 0:
             self.label["background"] = "#fc0303"
         if self.target_level == 1:
-            self.label["background"] = "#fe7e03"
+            self.label["background"] = "#FFA500"
         if self.target_level == 2:
-            self.label["background"] = "#B6EE56"
+            self.label["background"] = "#ffff00"
         if self.target_level == 3:
-            self.label["background"] = "#348939"
+            self.label["background"] = "#00ff00"
 
         self.label.config(fg="black")
         self.label["text"] = self.target_text
