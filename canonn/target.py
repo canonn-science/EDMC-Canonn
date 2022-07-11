@@ -42,7 +42,7 @@ class TargetDisplay():
         self.label.grid()
 
         if self.target_level == 0:
-            self.label["background"] = "#9b1d1e"
+            self.label["background"] = "#fc0303"
         if self.target_level == 1:
             self.label["background"] = "#fe7e03"
         if self.target_level == 2:
