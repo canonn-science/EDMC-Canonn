@@ -10,8 +10,8 @@ If you select a target system on the galaxy map using the "Set Target" button. T
 | Example | Description |
 |-----------------|-------------------------------------------------------------|
 | ![Red](images/target_red.png) | The system is not in Spansh | 
-| ![Amber](images/target_amber.png) | The system coordinates are in Spansh but no bodies | 
-| ![Light Green](images/target_lightgreen.png) | The system is in Spansh and some bodies scanned | 
+| ![Amber](images/target_orange.png) | The system coordinates are in Spansh but no bodies | 
+| ![Light Green](images/target_yellow.png) | The system is in Spansh and some bodies scanned | 
 | ![Green](images/target_green.png) | The system is in Spansh and all bodies scanned | 
 
 NB: While using this can increase your chances of finding unexplored systems it isn't perfect as not all commanders will contribute to Spansh.
