@@ -1715,8 +1715,9 @@ class CodexTypes():
             self.saaq.clear()
             self.cmdrq.clear()
             temp_spanshdata = {}
-            self.ppoidata={}
-            self.saadata={}
+            self.ppoidata = {}
+            self.poidata = {}
+            self.saadata = {}
             try:
 
                 url = f"https://spansh.co.uk/api/dump/{system64}"
