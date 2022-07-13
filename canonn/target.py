@@ -76,7 +76,7 @@ class TargetDisplay():
             if not self.mid_jump:
                 spanshCheck(entry, self.safe_callback).start()
 
-        if entry.get("event") in ("StartJump"):
+        if entry.get("event") in ("StartJump") and entry.get("JumpType") == "Hyperspace":
             self.mid_jump = True
         if entry.get("event") in ("FSDJump"):
             self.mid_jump = False
