@@ -60,13 +60,13 @@ NB: Data is only updated once per day so may not be completely accurate.
 | `nearest [allegiance] station`           | nearest federation station      | Searches for the nearest station with the supplied allegiance.                                                                                                                                                                                               |
  
 ## Canonn News Feed
-See the top stories on rotation
+See the top stories on rotation. Click on "Canonn" to advance to the next headline. Click on the headline to open the web page.
 
 ## Hyperdiction reporting 
 Hyperdiction reporting is logged from the Thargoid Encounter Stats screen. There is also a button in the settings which will allow you to upload all hyperdictions from your journal. 
 
 ## NHSS Reporting
-This captures NHSS information from the FSS scanner and USS Drops. Only logs one instance of each threat level per system
+This captures NHSS information from the FSS scanner and USS Drops. Only logs one instance of each threat level per system.
 
 ## Codex Icons
 

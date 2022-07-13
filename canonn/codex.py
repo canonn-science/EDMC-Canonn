@@ -1715,6 +1715,8 @@ class CodexTypes():
             self.saaq.clear()
             self.cmdrq.clear()
             temp_spanshdata = {}
+            self.ppoidata={}
+            self.saadata={}
             try:
 
                 url = f"https://spansh.co.uk/api/dump/{system64}"
@@ -1851,7 +1853,7 @@ class CodexTypes():
                 if "SAAScanComplete" in temp_saadata:
                     self.saaq.put(temp_saadata)
             except:
-                debug("Error getting SAA data")
+                Debug.logger.error("Error getting SAA data")
 
             # try:
                 # url = "https://api.canonn.tech/systems?systemName={}".format(
@@ -1886,7 +1888,7 @@ class CodexTypes():
                         v["EXTOOL"] = True
                         self.poiq.put(v)
             except:
-                Debug.logger.debug("Error getting ExTool data")
+                Debug.logger.error("Error getting ExTool data")
 
             self.waitingPOI = False
             Debug.logger.debug("Triggering Event")
