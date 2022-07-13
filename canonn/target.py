@@ -62,16 +62,16 @@ class TargetDisplay():
                       state, x, y, z, body, nearloc, client):
         if entry.get("event") == "FSDTarget":
 
-            navroute = state.get("NavRoute")
-            if navroute and navroute.get("Route"):
+            #navroute = state.get("NavRoute")
+            # if navroute and navroute.get("Route"):
 
-                for route_system in navroute.get("Route"):
-                    if route_system.get("SystemAddress") == entry.get("SystemAddress"):
-                        self.label["text"] = None
-                        self.label.grid_remove()
-                        self.frame.grid()
+            #    for route_system in navroute.get("Route"):
+            #        if route_system.get("SystemAddress") == entry.get("SystemAddress"):
+            #            self.label["text"] = None
+            #            self.label.grid_remove()
+            #            self.frame.grid()
 
-                        return
+            #            return
 
             if not self.mid_jump:
                 spanshCheck(entry, self.safe_callback).start()
