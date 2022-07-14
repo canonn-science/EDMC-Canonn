@@ -2972,6 +2972,7 @@ class CodexTypes():
             self.allowed = True
             self.logq.clear()
             self.logqueue = True
+            self.systemprogress["text"] = ""
             self.systemprogress.grid_remove()
             poiTypes(self.system, self.system64, cmdr, self.getPOIdata).start()
 
