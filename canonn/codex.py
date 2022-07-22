@@ -970,7 +970,6 @@ class CodexTypes():
 
         if self.waitingPOI:
             return
-
         try:
             while not self.spansh_bodyq.empty():
                 # only expecting to go around once
@@ -978,6 +977,8 @@ class CodexTypes():
 
             # if self.temp_edsmdata:
             if not self.bodies:
+                self.systemprogress["text"] = ""
+                self.systemprogress.grid_remove()
                 self.bodies = {}
             # restructure the EDSM data
             if self.temp_spanshdata:
@@ -1715,9 +1716,13 @@ class CodexTypes():
             self.saaq.clear()
             self.cmdrq.clear()
             temp_spanshdata = {}
+            self.temp_spanshdata = {}
             self.ppoidata = {}
             self.poidata = {}
             self.saadata = {}
+            self.bodies = None
+            CodexTypes.bodycount = None
+            CodexTypes.fsscount = None
             try:
 
                 url = f"https://spansh.co.uk/api/dump/{system64}"
@@ -1796,18 +1801,19 @@ class CodexTypes():
                 Debug.logger.error("Error getting EDSM data")
 
             temp_poidata = {}
-            if temp_spanshdata.get("bodies") and len(temp_spanshdata.get("bodies")) > 0:
-                Debug.logger.debug("Getting Canonn Data")
-                try:
-                    EDversion = "N"
-                    if self.odyssey:
-                        EDversion = "Y"
-                    url = "https://us-central1-canonn-api-236217.cloudfunctions.net/query/getSystemPoi?system={}&odyssey={}&cmdr={}".format(
-                        quote_plus(system.encode('utf8')), EDversion, cmdr)
+            #if temp_spanshdata.get("bodies") and len(temp_spanshdata.get("bodies")) > 0:
+            Debug.logger.debug("Getting Canonn Data")
+            try:
+                EDversion = "N"
+                if self.odyssey:
+                    EDversion = "Y"
+                url = "https://us-central1-canonn-api-236217.cloudfunctions.net/query/getSystemPoi?system={}&odyssey={}&cmdr={}".format(
+                    quote_plus(system.encode('utf8')), EDversion, cmdr)
 
-                    # debug(url)
-                    # debug("request {}:  Active Threads {}".format(
-                    #    url, threading.activeCount()))
+                # debug(url)
+                # debug("request {}:  Active Threads {}".format(
+                #    url, threading.activeCount()))
+                if temp_spanshdata.get("bodies") and len(temp_spanshdata.get("bodies")) > 0:
                     headers = {"Accept-Encoding": "gzip, deflate", }
                     r = requests.get(url, headers=headers, timeout=30)
                     # debug("request complete")
@@ -1817,23 +1823,25 @@ class CodexTypes():
                         temp_poidata = r.json()
                     else:
                         Debug.logger.error("Canonn data not recived")
+                else:
+                    Debug.logger.debug("Skipping Canonn Fetch")
+                    temp_poidata=[]
+                # push the data ont a queue
+                if "codex" in temp_poidata:
+                    for v in temp_poidata["codex"]:
+                        self.poiq.put(v)
 
-                    # push the data ont a queue
-                    if "codex" in temp_poidata:
-                        for v in temp_poidata["codex"]:
-                            self.poiq.put(v)
-
-                    if "SAAsignals" in temp_poidata:
-                        for v in temp_poidata["SAAsignals"]:
-                            self.saaq.put(v)
-                    if "cmdr" in temp_poidata:
-                        for v in temp_poidata["cmdr"]:
-                            self.cmdrq.put(v)
-                except:
-                    Debug.logger.error("Error getting POI data")
-            else:
-                Debug.logger.debug("Skipping Canonn Fetch")
-                Debug.logger.debug(temp_spanshdata.get("bodies"))
+                if "SAAsignals" in temp_poidata:
+                    for v in temp_poidata["SAAsignals"]:
+                        self.saaq.put(v)
+                if "cmdr" in temp_poidata:
+                    for v in temp_poidata["cmdr"]:
+                        self.cmdrq.put(v)
+            except:
+                Debug.logger.error("Error getting POI data")
+            #else:
+            #    Debug.logger.debug("Skipping Canonn Fetch")
+            #    Debug.logger.debug(temp_spanshdata.get("bodies"))
 
             try:
                 url = "https://elite.laulhere.com/ExTool/info.php?mode=chksaa&system64={}".format(
@@ -2972,6 +2980,7 @@ class CodexTypes():
             self.allowed = True
             self.logq.clear()
             self.logqueue = True
+            self.systemprogress["text"] = ""
             self.systemprogress.grid_remove()
             poiTypes(self.system, self.system64, cmdr, self.getPOIdata).start()
 
