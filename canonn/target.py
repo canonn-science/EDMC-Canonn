@@ -12,6 +12,7 @@ except:
     from Tkinter import Frame
 
 from canonn.debug import Debug
+from theme import theme
 
 FULLYSCANNED = 4
 PARTIALSCAN = 3
@@ -36,25 +37,21 @@ class TargetDisplay():
         sticky = tk.EW + tk.N  # full width, stuck to the top
         anchor = tk.NW
 
-        self.frame = Frame(parent)
+        self.gridrow = gridrow
+        self.parent = parent
 
         self.systemq = Queue()
         self.system_cache = SystemCache(100)
 
         self.news_data = []
         self.mid_jump = False
-        self.frame.columnconfigure(1, weight=1)
-        #self.grid(row=gridrow, column=0, sticky="EW", columnspan=1)
-        self.frame.grid(row=gridrow, column=0, columnspan=2, sticky="EW")
 
-        self.label = tk.Label(self.frame, text="Target")
-        self.label.grid(row=0, column=0, sticky="EW")
+        # get the parent to take care of events
+        self.parent.bind('<<setTarget>>', self.set_target)
 
-        # hidden at first
-        self.label.grid_remove()
-        # self.grid_remove()
-        # need a callback event to prevent threading disasters
-        self.frame.bind('<<setTarget>>', self.set_target)
+        # we do not declare any widgets here as we will need to destroy them
+        # to force the frame to be hidden. But we start hidden so set a value
+        self.hidden = True
 
     """
     When this is called we will go through the queue and display anything 
@@ -63,9 +60,10 @@ class TargetDisplay():
     """
 
     def set_target(self, event):
+
         iterations = 0
         while not self.systemq.empty():
-
+            self.show()
             iterations += 1
             system = self.systemq.get()
             # cache the system
@@ -73,7 +71,9 @@ class TargetDisplay():
                 self.system_cache.put(system)
 
             totalbodies, bodycount = body_check(system)
-            self.label.grid()
+
+            # self.label.grid()
+
             target_level = state_check(system)
             if target_level == MISSING:
                 target_text = f"Target: {system.get('name')} missing ({system.get('starclass')})"
@@ -96,19 +96,40 @@ class TargetDisplay():
             self.label.config(fg="black")
             self.label["text"] = target_text
 
+    def hide(self):
+        plug.show_error("hide")
+        if not self.hidden:
+            self.hidden = True
+            self.label.destroy()
+            self.frame.destroy()
+
+    def show(self):
+        plug.show_error("show")
+        # only do this if the frame does not exist
+        if self.hidden:
+            self.hidden = False
+            self.frame = Frame(self.parent)
+            theme.update(self.frame)
+            self.frame.columnconfigure(1, weight=1)
+            self.frame.grid(row=self.gridrow, column=0,
+                            columnspan=2)
+            self.label = tk.Label(self.frame)
+            self.label.grid(row=0, column=0)
+
     """
     This will put the system in the queue
     """
 
     def safe_callback(self, spansh):
         self.systemq.put(spansh)
-        self.frame.event_generate('<<setTarget>>', when='tail')
+        self.parent.event_generate('<<setTarget>>', when='tail')
 
     def journal_entry(self, cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                       state, x, y, z, body, nearloc, client):
         if entry.get("event") == "FSDTarget":
 
             if not self.mid_jump:
+
                 cache = self.system_cache.get(entry.get("SystemAddress"))
                 # if the system is in the cache and fully scanned don't ask spansh again
                 if state_check(cache) == FULLYSCANNED:
@@ -129,8 +150,7 @@ class TargetDisplay():
 
         if reset:
             self.label["text"] = None
-            self.label.grid_remove()
-            self.frame.grid()
+            self.hide()
 
 
 """
