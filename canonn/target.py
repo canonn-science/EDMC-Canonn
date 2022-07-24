@@ -97,14 +97,14 @@ class TargetDisplay():
             self.label["text"] = target_text
 
     def hide(self):
-        plug.show_error("hide")
+
         if not self.hidden:
             self.hidden = True
             self.label.destroy()
             self.frame.destroy()
 
     def show(self):
-        plug.show_error("show")
+
         # only do this if the frame does not exist
         if self.hidden:
             self.hidden = False
