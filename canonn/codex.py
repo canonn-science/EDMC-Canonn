@@ -1043,6 +1043,7 @@ class CodexTypes():
 
                         self.shepherd_moon(b, bodies)
                         self.hot_landable(b)
+                        self.helium_rich(b)
                         self.trojan(b, bodies)
                         self.ringed_star(b)
                         self.close_rings(b, bodies, body_code)
@@ -2322,6 +2323,18 @@ class CodexTypes():
                     del self.poidata[hud_category][english_name]
             if len(self.poidata[hud_category]) == 0:
                 del self.poidata[hud_category]
+
+    def helium_rich(self, b):
+        body_code = b.get("name").replace(self.system+" ", '')
+        gasgiant = b.get('subType') and "gas giant" in b.get('subType').lower()
+        composition = b.get("atmosphereComposition")
+
+        if gasgiant and b.get('subType').lower() in ('helium rich gas giant', 'helium-rich gas giant', 'helium gas giant'):
+            self.add_poi(
+                "Tourist", f"{b.get('subType').replace('-',' ')}", body_code)
+
+        if gasgiant and composition and composition.get("Helium") and float(composition.get("Helium")) >= 30:
+            self.add_poi("Tourist", f"Helium Rich System", None)
 
     def hot_landable(self, b):
         body_code = b.get("name").replace(self.system+" ", '')
