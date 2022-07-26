@@ -1042,6 +1042,7 @@ class CodexTypes():
                         body_name = b.get("name")
 
                         self.shepherd_moon(b, bodies)
+                        self.hot_landable(b)
                         self.trojan(b, bodies)
                         self.ringed_star(b)
                         self.close_rings(b, bodies, body_code)
@@ -1801,7 +1802,7 @@ class CodexTypes():
                 Debug.logger.error("Error getting EDSM data")
 
             temp_poidata = {}
-            #if temp_spanshdata.get("bodies") and len(temp_spanshdata.get("bodies")) > 0:
+            # if temp_spanshdata.get("bodies") and len(temp_spanshdata.get("bodies")) > 0:
             Debug.logger.debug("Getting Canonn Data")
             try:
                 EDversion = "N"
@@ -1825,7 +1826,7 @@ class CodexTypes():
                         Debug.logger.error("Canonn data not recived")
                 else:
                     Debug.logger.debug("Skipping Canonn Fetch")
-                    temp_poidata=[]
+                    temp_poidata = []
                 # push the data ont a queue
                 if "codex" in temp_poidata:
                     for v in temp_poidata["codex"]:
@@ -1839,7 +1840,7 @@ class CodexTypes():
                         self.cmdrq.put(v)
             except:
                 Debug.logger.error("Error getting POI data")
-            #else:
+            # else:
             #    Debug.logger.debug("Skipping Canonn Fetch")
             #    Debug.logger.debug(temp_spanshdata.get("bodies"))
 
@@ -2322,6 +2323,16 @@ class CodexTypes():
             if len(self.poidata[hud_category]) == 0:
                 del self.poidata[hud_category]
 
+    def hot_landable(self, b):
+        body_code = b.get("name").replace(self.system+" ", '')
+        if b.get('subType'):
+            type = b.get('subType').replace('-', ' ')
+        temperature = b.get("surfaceTemperature")
+        if b.get('isLandable') and temperature and float(temperature) > 590 and float(temperature) < 610:
+            self.add_poi("Tourist", f"Hot walkable {type}", body_code)
+        elif b.get('isLandable') and temperature and float(temperature) >= 610:
+            self.add_poi("Tourist", f"Hot landable {type}", body_code)
+
     def shepherd_moon(self, body, bodies):
 
         def get_density(mass, inner, outer):
@@ -2398,8 +2409,6 @@ class CodexTypes():
                             type = "Inner"
 
                         proximity = ""
-
-                        print(f"separation {separation} {body_code}")
 
                         if separation < bodyRadius * 2:
                             proximity = "Close "
