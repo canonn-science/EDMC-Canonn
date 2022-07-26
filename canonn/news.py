@@ -65,24 +65,22 @@ class NewsLink(HyperlinkLabel):
             anchor=tk.NW
         )
         self.resized = False
-        self.lasttime=datetime.datetime.now()
+        self.lasttime = datetime.datetime.now()
         self.bind('<Configure>', self.__configure_event)
-
 
     def __configure_event(self, event):
         "Handle resizing."
 
-        difference=datetime.datetime.now() - self.lasttime
-        Debug.logger.debug("diff {}".format(difference.total_seconds()))   
-        if difference.total_seconds() > 0.5:
+        difference = datetime.datetime.now() - self.lasttime
+        Debug.logger.debug("diff {}".format(difference.total_seconds()))
+        if difference.total_seconds() > 0.1:
             self.resized = False
 
         if not self.resized:
             Debug.logger.debug("News widget resize")
             self.resized = True
             self.configure(wraplength=event.width-2)
-            self.lasttime=datetime.datetime.now()
-
+            self.lasttime = datetime.datetime.now()
 
 
 class CanonnNews(Frame):
