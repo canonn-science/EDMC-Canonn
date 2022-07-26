@@ -149,7 +149,6 @@ class TargetDisplay():
             "MusicTrack") != "GalaxyMap")
 
         if reset:
-            self.label["text"] = None
             self.hide()
 
 
