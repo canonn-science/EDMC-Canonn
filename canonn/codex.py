@@ -1151,8 +1151,11 @@ class CodexTypes():
                                 "Tourist", 'Tidal Locked Earthlike Word', body_code)
 
                         #    Landable high-g (>3g)
-                        if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
+                        if b.get('type') == 'Planet' and float(b.get('gravity')) > 2.7 and b.get('isLandable'):
                             self.add_poi("Tourist", 'High Gravity', body_code)
+                        elif b.get('type') == 'Planet' and float(b.get('gravity')) > 2.5 and b.get('isLandable'):
+                            self.add_poi(
+                                "Tourist", 'Walkable High Gravity', body_code)
 
                         #    Landable large (>18000km radius)
                         if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
@@ -2341,9 +2344,7 @@ class CodexTypes():
         if b.get('subType'):
             type = b.get('subType').replace('-', ' ')
         temperature = b.get("surfaceTemperature")
-        if b.get('isLandable') and temperature and float(temperature) > 590 and float(temperature) < 610:
-            self.add_poi("Tourist", f"Hot walkable {type}", body_code)
-        elif b.get('isLandable') and temperature and float(temperature) >= 610:
+        if b.get('isLandable') and temperature and float(temperature) > 800:
             self.add_poi("Tourist", f"Hot landable {type}", body_code)
 
     def shepherd_moon(self, body, bodies):
