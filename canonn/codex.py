@@ -978,6 +978,8 @@ class CodexTypes():
             # if self.temp_edsmdata:
             if not self.bodies:
                 self.systemprogress["text"] = ""
+                self.systemprogress["fg"] = None
+                theme.update(self.systemprogress)
                 self.systemprogress.grid_remove()
                 self.bodies = {}
             # restructure the EDSM data
@@ -3003,6 +3005,9 @@ class CodexTypes():
             self.logq.clear()
             self.logqueue = True
             self.systemprogress["text"] = ""
+            self.systemprogress["fg"] = None
+            theme.update(self.systemprogress)
+
             self.systemprogress.grid_remove()
             poiTypes(self.system, self.system64, cmdr, self.getPOIdata).start()
 
@@ -3145,6 +3150,9 @@ class CodexTypes():
             self.add_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
             self.refreshPOIData(None)
+
+        if entry.get("WasDiscovered"):
+            self.systemprogress["fg"] = "#348939"
 
         if entry.get("event") == "FSSSignalDiscovered":
             dovis = False
