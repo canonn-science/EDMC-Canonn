@@ -1028,9 +1028,9 @@ class CodexTypes():
                     #    self.systemprogress.grid_remove()
 
                     for k in bodies.keys():
-                        if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
-                            CodexTypes.parentRadius = self.light_seconds(
-                                "solarRadius", bodies.get(k).get("solarRadius"))
+                        #if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
+                        #    CodexTypes.parentRadius = self.light_seconds(
+                        #        "solarRadius", bodies.get(k).get("solarRadius"))
 
                         # lets normalise radius between planets and stars
                         if bodies.get(k).get("solarRadius") is not None:
@@ -3302,8 +3302,8 @@ class CodexTypes():
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
             self.system = system
-            CodexTypes.parentRadius = self.light_seconds(
-                "Radius", entry.get("Radius"))
+            #CodexTypes.parentRadius = self.light_seconds(
+            #    "Radius", entry.get("Radius"))
             self.allowed = True
 
         if entry.get("event") in ("SAASignalsFound", "FSSBodySignals"):
