@@ -1028,7 +1028,7 @@ class CodexTypes():
                     #    self.systemprogress.grid_remove()
 
                     for k in bodies.keys():
-                        #if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
+                        # if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
                         #    CodexTypes.parentRadius = self.light_seconds(
                         #        "solarRadius", bodies.get(k).get("solarRadius"))
 
@@ -2346,7 +2346,7 @@ class CodexTypes():
         if b.get('subType'):
             type = b.get('subType').replace('-', ' ')
         temperature = b.get("surfaceTemperature")
-        if b.get('isLandable') and temperature and float(temperature) > 800:
+        if b.get('isLandable') and temperature and float(temperature) > 1500:
             self.add_poi("Tourist", f"Hot landable {type}", body_code)
 
     def shepherd_moon(self, body, bodies):
@@ -3302,7 +3302,7 @@ class CodexTypes():
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
             self.system = system
-            #CodexTypes.parentRadius = self.light_seconds(
+            # CodexTypes.parentRadius = self.light_seconds(
             #    "Radius", entry.get("Radius"))
             self.allowed = True
 
