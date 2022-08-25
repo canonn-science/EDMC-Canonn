@@ -978,6 +978,8 @@ class CodexTypes():
             # if self.temp_edsmdata:
             if not self.bodies:
                 self.systemprogress["text"] = ""
+                self.systemprogress["fg"] = None
+                theme.update(self.systemprogress)
                 self.systemprogress.grid_remove()
                 self.bodies = {}
             # restructure the EDSM data
@@ -1026,9 +1028,9 @@ class CodexTypes():
                     #    self.systemprogress.grid_remove()
 
                     for k in bodies.keys():
-                        if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
-                            CodexTypes.parentRadius = self.light_seconds(
-                                "solarRadius", bodies.get(k).get("solarRadius"))
+                        # if bodies.get(k).get("name") == self.system and bodies.get(k).get("type") == "Star":
+                        #    CodexTypes.parentRadius = self.light_seconds(
+                        #        "solarRadius", bodies.get(k).get("solarRadius"))
 
                         # lets normalise radius between planets and stars
                         if bodies.get(k).get("solarRadius") is not None:
@@ -1042,6 +1044,8 @@ class CodexTypes():
                         body_name = b.get("name")
 
                         self.shepherd_moon(b, bodies)
+                        self.hot_landable(b)
+                        self.helium_rich(b)
                         self.trojan(b, bodies)
                         self.ringed_star(b)
                         self.close_rings(b, bodies, body_code)
@@ -1149,8 +1153,11 @@ class CodexTypes():
                                 "Tourist", 'Tidal Locked Earthlike Word', body_code)
 
                         #    Landable high-g (>3g)
-                        if b.get('type') == 'Planet' and b.get('gravity') > 3 and b.get('isLandable'):
+                        if b.get('type') == 'Planet' and float(b.get('gravity')) > 2.7 and b.get('isLandable'):
                             self.add_poi("Tourist", 'High Gravity', body_code)
+                        elif b.get('type') == 'Planet' and float(b.get('gravity')) > 2.5 and b.get('isLandable'):
+                            self.add_poi(
+                                "Tourist", 'Walkable High Gravity', body_code)
 
                         #    Landable large (>18000km radius)
                         if b.get('type') == 'Planet' and b.get('radius') > 18000 and b.get('isLandable'):
@@ -1801,7 +1808,7 @@ class CodexTypes():
                 Debug.logger.error("Error getting EDSM data")
 
             temp_poidata = {}
-            #if temp_spanshdata.get("bodies") and len(temp_spanshdata.get("bodies")) > 0:
+            # if temp_spanshdata.get("bodies") and len(temp_spanshdata.get("bodies")) > 0:
             Debug.logger.debug("Getting Canonn Data")
             try:
                 EDversion = "N"
@@ -1825,7 +1832,7 @@ class CodexTypes():
                         Debug.logger.error("Canonn data not recived")
                 else:
                     Debug.logger.debug("Skipping Canonn Fetch")
-                    temp_poidata=[]
+                    temp_poidata = []
                 # push the data ont a queue
                 if "codex" in temp_poidata:
                     for v in temp_poidata["codex"]:
@@ -1839,7 +1846,7 @@ class CodexTypes():
                         self.cmdrq.put(v)
             except:
                 Debug.logger.error("Error getting POI data")
-            #else:
+            # else:
             #    Debug.logger.debug("Skipping Canonn Fetch")
             #    Debug.logger.debug(temp_spanshdata.get("bodies"))
 
@@ -2322,6 +2329,26 @@ class CodexTypes():
             if len(self.poidata[hud_category]) == 0:
                 del self.poidata[hud_category]
 
+    def helium_rich(self, b):
+        body_code = b.get("name").replace(self.system+" ", '')
+        gasgiant = b.get('subType') and "gas giant" in b.get('subType').lower()
+        composition = b.get("atmosphereComposition")
+
+        if gasgiant and b.get('subType').lower() in ('helium rich gas giant', 'helium-rich gas giant', 'helium gas giant'):
+            self.add_poi(
+                "Tourist", f"{b.get('subType').replace('-',' ')}", body_code)
+
+        if gasgiant and composition and composition.get("Helium") and float(composition.get("Helium")) >= 30:
+            self.add_poi("Tourist", f"Helium Rich System", None)
+
+    def hot_landable(self, b):
+        body_code = b.get("name").replace(self.system+" ", '')
+        if b.get('subType'):
+            type = b.get('subType').replace('-', ' ')
+        temperature = b.get("surfaceTemperature")
+        if b.get('isLandable') and temperature and float(temperature) > 1500:
+            self.add_poi("Tourist", f"Hot landable {type}", body_code)
+
     def shepherd_moon(self, body, bodies):
 
         def get_density(mass, inner, outer):
@@ -2398,8 +2425,6 @@ class CodexTypes():
                             type = "Inner"
 
                         proximity = ""
-
-                        print(f"separation {separation} {body_code}")
 
                         if separation < bodyRadius * 2:
                             proximity = "Close "
@@ -2981,6 +3006,9 @@ class CodexTypes():
             self.logq.clear()
             self.logqueue = True
             self.systemprogress["text"] = ""
+            self.systemprogress["fg"] = None
+            theme.update(self.systemprogress)
+
             self.systemprogress.grid_remove()
             poiTypes(self.system, self.system64, cmdr, self.getPOIdata).start()
 
@@ -3123,6 +3151,9 @@ class CodexTypes():
             self.add_poi("Guardian", "Guardian Beacon", "")
             self.allowed = True
             self.refreshPOIData(None)
+
+        if entry.get("WasDiscovered"):
+            self.systemprogress["fg"] = "#348939"
 
         if entry.get("event") == "FSSSignalDiscovered":
             dovis = False
@@ -3271,8 +3302,8 @@ class CodexTypes():
 
         if entry.get("event") == "Scan" and entry.get("AutoScan") and entry.get("BodyID") == 1:
             self.system = system
-            CodexTypes.parentRadius = self.light_seconds(
-                "Radius", entry.get("Radius"))
+            # CodexTypes.parentRadius = self.light_seconds(
+            #    "Radius", entry.get("Radius"))
             self.allowed = True
 
         if entry.get("event") in ("SAASignalsFound", "FSSBodySignals"):

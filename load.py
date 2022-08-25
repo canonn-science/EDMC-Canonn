@@ -24,6 +24,7 @@ from canonn import patrol
 from canonn import release
 from canonn import extool
 import canonn.target
+import canonn.guardian
 from canonn.debug import Debug
 from canonn.debug import debug
 from canonn.systems import Systems, journalGetSystem
@@ -74,7 +75,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.9.3"
+this.version = "6.9.4"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -165,6 +166,7 @@ def plugin_app(parent):
     this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 5)
     this.guestbook = guestBook.setup(table, 6)
     this.target = canonn.target.TargetDisplay(table, 7)
+    this.guardian = canonn.guardian.Display(table, 8)
 
     whitelist = whiteList(parent)
     whitelist.fetchData()
@@ -295,6 +297,9 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
     guestBook.journal_entry(entry)
     this.target.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                               state, x, y, z, body, nearloc, client)
+    this.guardian.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
+                                state, x, y, z, body, nearloc, client)
+
     hdreport.submit(cmdr, is_beta, system, station, entry, client, state)
 
 
