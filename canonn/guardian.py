@@ -7,6 +7,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 from canonn.debug import Debug
 from canonn.helper import objdict
 from theme import theme
+import sys
 
 
 class Display():
@@ -37,7 +38,8 @@ class Display():
             self.frame.columnconfigure(1, weight=1)
             self.frame.grid(row=self.gridrow, column=0,
                             columnspan=2)
-            self.label = HyperlinkLabel(self.frame)
+            self.label = HyperlinkLabel(
+                self.frame, cursor=sys.platform == 'darwin' and 'pointinghand' or 'hand2')
             self.label.grid(row=0, column=0)
 
             siteid = re.search(r'\$Ancient:#index=(.+);',
@@ -45,7 +47,8 @@ class Display():
 
             theme.update(self.label)
             self.label["text"] = "Click here to report ruin layout"
-            self.label.url = f"https://docs.google.com/forms/d/e/1FAIpQLSfS2GwRdzqYfxbSrjU7hgJckDNJbHISgiHp1gWFEHXkrTmhXw/viewform?usp=pp_url&entry.2021507511={self.cmdr}&entry.1090208472={self.system}&entry.2118720333={self.entry.BodyName}&entry.865635247={siteid}"
+            self.label[
+                "url"] = f"https://docs.google.com/forms/d/e/1FAIpQLSfS2GwRdzqYfxbSrjU7hgJckDNJbHISgiHp1gWFEHXkrTmhXw/viewform?usp=pp_url&entry.2021507511={self.cmdr}&entry.1090208472={self.system}&entry.2118720333={self.entry.BodyName}&entry.865635247={siteid}"
 
     def journal_entry(self, cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, journal,
                       state, x, y, z, body, nearloc, client):
