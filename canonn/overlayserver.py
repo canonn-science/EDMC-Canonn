@@ -143,10 +143,14 @@ def send_message(id, text, color, x, y, ttl=4, size="normal"):
     # have failed then its because the plugin is missing
 
     if this.overlay_connected == False:
-        plug.show_error("Retrying Overlay Connection")
-        this._overlay = edmcoverlay.Overlay()
-        this.connection = this._overlay.connect()
-        this.overlay_connected = True
+        #plug.show_error("Retrying Overlay Connection")
+        # we can retry but maybe its disabled
+        try:
+            this._overlay = edmcoverlay.Overlay()
+            this.connection = this._overlay.connect()
+            this.overlay_connected = True
+        except:
+            pass
 
     try:
         if edmcoverlay.check_game_running():

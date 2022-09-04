@@ -1,15 +1,15 @@
 import plug
+from config import config
+import os
 import threading
 import requests
 import json
 from queue import Queue
+from pathlib import Path
 
-try:
-    import tkinter as tk
-    from tkinter import Frame
-except:
-    import Tkinter as tk
-    from Tkinter import Frame
+import tkinter as tk
+from tkinter import Frame
+import csv
 
 from canonn.debug import Debug
 from theme import theme
@@ -32,6 +32,10 @@ retrieve the data from the queue and update the display and the cache of retriev
 
 class TargetDisplay():
 
+    @classmethod
+    def set_plugin_dir(cls, plugin_dir):
+        cls.plugin_dir = plugin_dir
+
     def __init__(self, parent, gridrow):
         padx, pady = 10, 5  # formatting
         sticky = tk.EW + tk.N  # full width, stuck to the top
@@ -45,6 +49,10 @@ class TargetDisplay():
 
         self.news_data = []
         self.mid_jump = False
+        self.icon = tk.PhotoImage(file=os.path.join(
+            TargetDisplay.plugin_dir, "icons", "floppy.gif"))
+        self.note = tk.PhotoImage(file=os.path.join(
+            TargetDisplay.plugin_dir, "icons", "notepad.gif"))
 
         # get the parent to take care of events
         self.parent.bind('<<setTarget>>', self.set_target)
@@ -64,8 +72,11 @@ class TargetDisplay():
         iterations = 0
         while not self.systemq.empty():
             self.show()
+            self.floppy["image"] = self.icon
             iterations += 1
             system = self.systemq.get()
+            # we will add this data so save button can use it
+            self.spansh = system
             # cache the system
             if system and system.get("system") and state_check(system) == FULLYSCANNED:
                 self.system_cache.put(system)
@@ -95,6 +106,42 @@ class TargetDisplay():
 
             self.label.config(fg="black")
             self.label["text"] = target_text
+            self.floppy.bind("<Button-1>", self.save)
+
+    def openfile(self, event):
+        csvpath = os.path.join(config.app_dir_path, 'canonn')
+        csvfile = os.path.join(csvpath, "targets.csv")
+        os.system(f"notepad.exe {csvfile}")
+
+    def save(self, event):
+        # this should always exist but better safe than sorry
+        csvpath = os.path.join(config.app_dir_path, 'canonn')
+        csvfile = os.path.join(csvpath, "targets.csv")
+        try:
+            os.mkdir(csvpath)
+        except OSError as error:
+            pass
+
+        name = self.spansh.get("name")
+        id64 = self.spansh.get("id64")
+        starclass = self.spansh.get("starclass")
+        x, y, z = "", "", ""
+        if self.spansh.get("system"):
+            x, y, z = self.spansh.get("system").get("coords").values()
+
+        rows = []
+        if not Path(csvfile).is_file():
+            rows.append(["system", "id64", "starclass", "x", "y", "z"])
+
+        rows.append([name, id64, starclass, str(x), str(y), str(z)])
+
+        with open(csvfile, 'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerows(rows)
+
+        # now we can provide a link to open the file
+        self.floppy.bind("<Button-1>", self.openfile)
+        self.floppy["image"] = self.note
 
     def hide(self):
 
@@ -102,6 +149,7 @@ class TargetDisplay():
             self.hidden = True
             self.label.destroy()
             self.frame.destroy()
+            self.floppy.destroy()
 
     def show(self):
 
@@ -109,12 +157,17 @@ class TargetDisplay():
         if self.hidden:
             self.hidden = False
             self.frame = Frame(self.parent)
-            theme.update(self.frame)
-            self.frame.columnconfigure(1, weight=1)
+
+            self.frame.columnconfigure(2, weight=1)
             self.frame.grid(row=self.gridrow, column=0,
                             columnspan=2)
             self.label = tk.Label(self.frame)
             self.label.grid(row=0, column=0)
+
+            self.floppy = tk.Label(self.frame, image=self.icon, cursor="hand2")
+            self.floppy.grid(row=0, column=1)
+            theme.update(self.frame)
+            theme.update(self.floppy)
 
     """
     This will put the system in the queue

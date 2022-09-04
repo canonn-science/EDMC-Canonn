@@ -75,7 +75,7 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.9.4"
+this.version = "6.9.5"
 
 this.client_version = "{}.{}".format(myPlugin, this.version)
 this.body_name = None
@@ -130,6 +130,7 @@ def plugin_start(plugin_dir):
     capture.plugin_start(plugin_dir)
     extool.BearingDestination.plugin_start(plugin_dir)
     extool.extoolTypes.plugin_start(plugin_dir)
+    canonn.target.TargetDisplay.set_plugin_dir(plugin_dir)
 
     return 'Canonn'
 
