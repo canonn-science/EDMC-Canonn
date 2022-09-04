@@ -220,7 +220,13 @@ class HDInspector(Frame):
 
 
 class hyperdictionDetector():
-    state = 0
+    NEUTRAL = 0
+    JUMPSTARTED = 1
+    MISJUMP = 2
+    THARGOIDS = 3
+    HOSTILE = 3
+
+    state = NEUTRAL
     target_system = ""
 
     @classmethod
@@ -234,17 +240,18 @@ class hyperdictionDetector():
 
     @classmethod
     def setup(cls, parent, gridrow):
+        cls.parent = parent
         cls.frame = tk.Frame(parent)
         cls.frame.grid(row=gridrow)
         cls.container = tk.Frame(cls.frame)
         cls.container.columnconfigure(1, weight=1)
         cls.container.grid(row=1)
-        cls.banner = tk.Label(cls.container, text="HYPERDICTION", fg="red")
-        cls.banner.grid(row=0, column=0, columnspan=1, sticky="NSEW")
+        cls.banner = tk.Label(cls.container, text="HYPERDICTION", fg="green")
+        cls.banner.grid(row=0, column=0, columnspan=1)
         cls.banner.config(font=("Arial Black", 22))
         cls.instructions = tk.Label(
-            cls.container, text="Please exit to main menu for confirmation", fg="red")
-        cls.instructions.grid(row=1, column=0, columnspan=1, sticky="NSEW")
+            cls.container, text="Please exit to main menu for confirmation", fg="green")
+        cls.instructions.grid(row=1, column=0, columnspan=1)
         cls.instructions.config(font=("Arial Black", 8))
         cls.hide()
         return cls.frame
@@ -254,46 +261,85 @@ class hyperdictionDetector():
         Debug.logger.debug(
             "startJump setting state 1 {}".format(target_system))
         cls.hide()
-        cls.state = 1
+        cls.state = cls.JUMPSTARTED
         cls.target_system = target_system
 
     @classmethod
     def FSDJump(cls, system):
-        if cls.state == 1 and not system == cls.target_system:
+        if cls.state == cls.JUMPSTARTED and not system == cls.target_system:
             Debug.logger.debug("FSDJump setting state 2 {} {}".format(
                 system, cls.target_system))
-            cls.state = 2
+            cls.state = cls.MISJUMP
         else:
             Debug.logger.debug("FSDJUMP resetting state back {} {}".format(
                 system, cls.target_system))
-            cls.state = 0
+            cls.state = cls.NEUTRAL
 
     @classmethod
     def Music(cls, system, cmdr, timestamp, client, odyssey):
-        if cls.state == 2:
+        if cls.state == cls.MISJUMP:
             ody = 'n'
             if odyssey:
                 ody = 'y'
-
-            Debug.logger.debug("Hyperdiction Detected")
-            cls.show()
             x, y, z = Systems.edsmGetSystem(system)
             dx, dy, dz = Systems.edsmGetSystem(cls.target_system)
-            canonn.emitter.post("https://europe-west1-canonn-api-236217.cloudfunctions.net/postHDDetected",
-                                {"cmdr": cmdr,
-                                    "system": system,
-                                    "timestamp": timestamp,
-                                    "x": x, "y": y, "z": z,
-                                    "destination": cls.target_system,
-                                    "dx": dx, "dy": dy, "dz": dz,
-                                    "client": client,
-                                    "odyssey": ody
-                                 })
-            plug.show_error("Hyperdiction: Exit to main menu")
+            cls.hdvalues = {
+                "cmdr": cmdr,
+                "system": system,
+                "timestamp": timestamp,
+                "x": x, "y": y, "z": z,
+                "destination": cls.target_system,
+                "dx": dx, "dy": dy, "dz": dz,
+                "client": client,
+                "odyssey": ody,
+                "hostile": False
+            }
+            # set the state to thargoids
+            cls.banner["fg"] = "green"
+            cls.instructions["fg"] = "green"
+            cls.instructions["text"] = "Thargoids not hostile"
+            cls.state = cls.THARGOIDS
+            Debug.logger.debug("Hyperdiction Detected")
+            # we will wait 3 seconds for a hostile interaction before
+            # sending a message
+            cls.parent.after(3000, cls.hyperdiction)
         else:
             Debug.logger.debug("FSDJUMP resetting state back")
             cls.hide()
-            cls.state == 0
+            cls.state == cls.NEUTRAL
+
+    @classmethod
+    def Combat(cls, system, cmdr, timestamp, client, odyssey):
+        if cls.THARGOIDS:
+            ody = 'n'
+            if odyssey:
+                ody = 'y'
+            x, y, z = Systems.edsmGetSystem(system)
+            dx, dy, dz = Systems.edsmGetSystem(cls.target_system)
+            cls.hdvalues = {
+                "cmdr": cmdr,
+                "system": system,
+                "timestamp": timestamp,
+                "x": x, "y": y, "z": z,
+                "destination": cls.target_system,
+                "dx": dx, "dy": dy, "dz": dz,
+                "client": client,
+                "odyssey": ody,
+                "hostile": False
+            }
+            cls.banner["fg"] = "red"
+            cls.instructions["fg"] = "red"
+            cls.instructions["text"] = "Thargoids are hostile"
+            cls.hdvalues["hostile"] = True
+            cls.state = cls.HOSTILE
+
+    @classmethod
+    def hyperdiction(cls):
+        Debug.logger.debug("Hyperdiction Detected")
+        cls.show()
+        canonn.emitter.post(
+            "https://europe-west1-canonn-api-236217.cloudfunctions.net/postHDDetected", cls.hdvalues)
+        plug.show_error("Hyperdiction: Exit to main menu")
 
     @classmethod
     def SupercruiseExit(cls):
@@ -311,6 +357,9 @@ class hyperdictionDetector():
 
         if entry.get("event") == "Music" and entry.get("MusicTrack") in ("Unknown_Encounter"):
             cls.Music(system, cmdr, entry.get("timestamp"), client, odyssey)
+
+        if entry.get("event") == "Music" and entry.get("MusicTrack") in ("Combat_Unknown"):
+            cls.Combat(system, cmdr, entry.get("timestamp"), client, odyssey)
 
         if entry.get("event") == "SupercruiseExit":
             cls.SupercruiseExit()
