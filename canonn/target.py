@@ -38,7 +38,7 @@ class TargetDisplay():
         self.frame.bind('<<setTarget>>', self.set_target)
 
     def set_target(self, event):
-        # self.grid()
+        # self.grid()#
         self.label.grid()
 
         if self.target_level == 0:
