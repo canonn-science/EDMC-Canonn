@@ -2,3 +2,6 @@
 data/EDMC-Canonn.patrol
 *.pyc
 .vscode/settings.json
+
+# PyCharm
+.idea
