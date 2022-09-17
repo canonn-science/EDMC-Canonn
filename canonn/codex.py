@@ -2516,6 +2516,7 @@ class CodexTypes():
     def close_bodies(self, candidate, bodies, body_code):
         if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
             distance = None
+            comparitor = None
 
             if isBinary(candidate) and candidate.get("semiMajorAxis") is not None:
                 body = get_sibling(candidate, bodies)
@@ -2542,7 +2543,7 @@ class CodexTypes():
                 if distance is not None and r1 is not None and r2 is not None:
                     comparitor = 2 * (r1 + r2)
 
-                if distance is not None and distance < comparitor:
+                if distance is not None and comparitor is not None and distance < comparitor:
 
                     if candidate.get("isLandable"):
                         self.add_poi(
