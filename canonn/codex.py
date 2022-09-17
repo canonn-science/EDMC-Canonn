@@ -2516,7 +2516,7 @@ class CodexTypes():
     def close_bodies(self, candidate, bodies, body_code):
         if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
             distance = None
-            comparitor = None
+            #comparitor = None
 
             if isBinary(candidate) and candidate.get("semiMajorAxis") is not None:
                 body = get_sibling(candidate, bodies)
@@ -3248,7 +3248,7 @@ class CodexTypes():
 
                     dovis = True
             else:
-                # ^HIP 454-4( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$
+
                 prog = re.compile(
                     "^"+self.system+"( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$")
                 result = prog.match(entry.get("SignalName"))
