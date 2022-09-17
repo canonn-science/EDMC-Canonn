@@ -2541,8 +2541,8 @@ class CodexTypes():
                 # to account for things like stars and gas giants
                 if distance is not None and r1 is not None and r2 is not None:
                     comparitor = 2 * (r1 + r2)
-
-                    if distance is not None and distance < comparitor:
+                    # Distance is check in the previous IF, no need to check it here
+                    if distance < comparitor:
 
                         if candidate.get("isLandable"):
                             self.add_poi(
