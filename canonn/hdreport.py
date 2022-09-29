@@ -344,7 +344,7 @@ class hyperdictionDetector():
     @classmethod
     def SupercruiseExit(cls):
         cls.hide()
-        state = 0
+        state = cls.NEUTRAL
 
     @classmethod
     def submit(cls, cmdr, is_beta, system, station, entry, client, state):

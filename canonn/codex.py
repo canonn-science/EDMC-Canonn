@@ -1747,7 +1747,9 @@ class CodexTypes():
                     for b in temp_spanshdata.get("bodies"):
                         mismatch = self.bodymismatch(
                             temp_spanshdata.get("name"), b.get("name"))
-                        if b.get("signals") and b.get("signals").get("signals") and not mismatch:
+                        in_date = (b.get("signals") and b.get("signals").get(
+                            "updateTime") and not b.get("signals").get("updateTime").startswith("2020"))
+                        if b.get("signals") and b.get("signals").get("signals") and not mismatch and in_date:
                             signals = b.get("signals").get("signals")
                             for key in signals.keys():
                                 type = key
@@ -2288,6 +2290,13 @@ class CodexTypes():
 
     def add_poi(self, hud_category, english_name, body):
 
+        # check if its bark mounds. if no volcanism then we will exit
+        if "Bark Mounds" in english_name and self.odyssey:
+            # we need to change for volcanism
+            for b in self.bodies.values():
+                if b.get("name") == str(body) or b.get("name") == f"{self.system} {str(body)}" and b.get('volcanismType') and b.get('volcanismType') == 'No volcanism':
+                    return
+
         #Debug.logger.debug(f"add_poi - {hud_category} {english_name} {body}")
 
         if hud_category not in self.poidata:
@@ -2516,6 +2525,7 @@ class CodexTypes():
     def close_bodies(self, candidate, bodies, body_code):
         if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
             distance = None
+            #comparitor = None
 
             if isBinary(candidate) and candidate.get("semiMajorAxis") is not None:
                 body = get_sibling(candidate, bodies)
@@ -2542,7 +2552,7 @@ class CodexTypes():
                 if distance is not None and r1 is not None and r2 is not None:
                     comparitor = 2 * (r1 + r2)
 
-                if distance is not None and distance < comparitor:
+                if distance is not None and comparitor is not None and distance < comparitor:
 
                     if candidate.get("isLandable"):
                         self.add_poi(
@@ -3247,7 +3257,7 @@ class CodexTypes():
 
                     dovis = True
             else:
-                # ^HIP 454-4( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$
+
                 prog = re.compile(
                     "^"+self.system+"( [IVX]+ |[ ]).*$|^[A-Z][A-Z][A-Z][- ][0-9][0-9][0-9] .*$|^.* [A-Z][A-Z][A-Z][- ][0-9][0-9][0-9]$")
                 result = prog.match(entry.get("SignalName"))

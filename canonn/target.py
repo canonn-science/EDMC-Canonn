@@ -88,19 +88,19 @@ class TargetDisplay():
             target_level = state_check(system)
             if target_level == MISSING:
                 target_text = f"Target: {system.get('name')} missing ({system.get('starclass')})"
-                self.label["background"] = "#9b1d1e"
+                self.label["background"] = "#fc0303"
             if target_level == LOGGED:
                 target_text = f"Target: {system.get('name')} logged ({system.get('starclass')})"
-                self.label["background"] = "#fe7e03"
+                self.label["background"] = "#FFA500"
             if target_level == UNKNOWNSCAN:
                 target_text = f"Target: {system.get('name')} scanned {bodycount}/? ({system.get('starclass')})"
-                self.label["background"] = "#B6EE56"
+                self.label["background"] = "#FFA500"
             if target_level == PARTIALSCAN:
                 target_text = f"Target: {system.get('name')} scanned {bodycount}/{totalbodies} ({system.get('starclass')})"
-                self.label["background"] = "#B6EE56"
+                self.label["background"] = "#FFA500"
             if target_level == FULLYSCANNED:
                 target_text = f"Target: {system.get('name')} fully scanned {bodycount}/{totalbodies} ({system.get('starclass')})"
-                self.label["background"] = "#348939"
+                self.label["background"] = "#00ff00"
             if iterations > 1:
                 plug.show_error(f"target {system.get('name')} skipped")
 
