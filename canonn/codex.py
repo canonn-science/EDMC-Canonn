@@ -26,6 +26,7 @@ from canonn.emitter import Emitter
 from config import config
 from canonn.tooltip import CreateToolTip
 from ttkHyperlinkLabel import HyperlinkLabel
+from canonn.release import ClientVersion
 
 import plug
 from math import sqrt, pow
@@ -1733,11 +1734,14 @@ class CodexTypes():
             try:
 
                 url = f"https://spansh.co.uk/api/dump/{system64}"
+                headers = {
+                    'User-Agent': f"{ClientVersion.client()} (getPOIData)"
+                }
 
                 # debug("request {}:  Active Threads {}".format(
                 #    url, threading.activeCount()))
 
-                r = requests.get(url, timeout=30)
+                r = requests.get(url, timeout=30, headers=headers)
                 # debug("request complete")
                 r.encoding = 'utf-8'
                 if r.status_code == requests.codes.ok:
@@ -2964,7 +2968,7 @@ class CodexTypes():
                 cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client)
 
     def journal_entry_wrap(self, cmdr, is_beta, system, station, entry, state, x, y, z, body, lat, lon, client):
-
+        self.client = client
         self.odyssey = state.get("Odyssey")
         self.event = entry.get("event")
         if state.get("Raw"):

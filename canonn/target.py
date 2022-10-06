@@ -12,6 +12,7 @@ from tkinter import Frame
 import csv
 
 from canonn.debug import Debug
+from canonn.release import ClientVersion
 from theme import theme
 
 FULLYSCANNED = 4
@@ -239,12 +240,15 @@ class spanshCheck(threading.Thread):
         self.callback = callback
 
     def run(self):
+        headers = {
+            'User-Agent': f"{ClientVersion.client()} (canonn.target.py)"
+        }
         url = f"https://spansh.co.uk/api/dump/{self.id64}"
         spansh = None
         # debug("request {}:  Active Threads {}".format(
         #    url, threading.activeCount()))
 
-        r = requests.get(url, timeout=30)
+        r = requests.get(url, timeout=30, headers=headers)
         # debug("request complete")
         r.encoding = 'utf-8'
         if r.status_code in (requests.codes.ok, requests.codes.not_found):

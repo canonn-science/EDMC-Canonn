@@ -22,6 +22,7 @@ from canonn import news
 from canonn import nhss
 from canonn import patrol
 from canonn import release
+from canonn.release import ClientVersion
 from canonn import extool
 import canonn.target
 import canonn.guardian
@@ -74,9 +75,11 @@ this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
 
-this.version = "6.9.7"
+this.version = ClientVersion.version()
+this.client_version = ClientVersion.client()
 
-this.client_version = "{}.{}".format(myPlugin, this.version)
+Debug.logger.debug(this.client_version)
+
 this.body_name = None
 this.planet_radius = None
 
