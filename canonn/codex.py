@@ -1735,11 +1735,8 @@ class CodexTypes():
 
                 url = f"https://spansh.co.uk/api/dump/{system64}"
                 headers = {
-                    'User-Agent': f"{ClientVersion.client()} (getPOIData)"
+                    'User-Agent': f"{ClientVersion.client()} (canonn.codex.py)"
                 }
-
-                # debug("request {}:  Active Threads {}".format(
-                #    url, threading.activeCount()))
 
                 r = requests.get(url, timeout=30, headers=headers)
                 # debug("request complete")
