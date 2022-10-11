@@ -34,6 +34,15 @@ import queue
 import re
 
 
+# identify the genus
+def get_genus(value):
+    for type in CodexTypes.genus.values():
+        if type in value:
+            return type
+    else:
+        return "Unkown"
+
+
 class Queue(queue.Queue):
     '''
     A custom queue subclass that provides a :meth:`clear` method.
@@ -429,6 +438,32 @@ class CodexTypes():
         '$economy_Undefined;': 'Undefined',
         '$economy_Damaged;': 'Damaged',
         '$economy_Repair;': 'Repair'
+    }
+
+    genus = {
+        "$Codex_Ent_Aleoids_Genus_Name;": "Aleoida",
+        "$Codex_Ent_Bacterial_Genus_Name;": "Bacterium",
+        "$Codex_Ent_Brancae_Name;": "Brain Tree",
+        "$Codex_Ent_Cactoid_Genus_Name;": "Cactoida",
+        "$Codex_Ent_Clepeus_Genus_Name;": "Clypeus",
+        "$Codex_Ent_Clypeus_Genus_Name;": "Clypeus",
+        "$Codex_Ent_Conchas_Genus_Name;": "Concha",
+        "$Codex_Ent_Cone_Name;": "Bark Mounds",
+        "$Codex_Ent_Electricae_Genus_Name;": "Electricae",
+        "$Codex_Ent_Fonticulus_Genus_Name;": "Fonticulua",
+        "$Codex_Ent_Fumerolas_Genus_Name;": "Fumerola",
+        "$Codex_Ent_Fungoids_Genus_Name;": "Fungoida",
+        "$Codex_Ent_Ground_Struct_Ice_Name;": "Crystalline Shards",
+        "$Codex_Ent_Osseus_Genus_Name;": "Osseus",
+        "$Codex_Ent_Recepta_Genus_Name;": "Recepta",
+        "$Codex_Ent_Seed_Name;": "Brain Trees",
+        "$Codex_Ent_Shrubs_Genus_Name;": "Frutexa",
+        "$Codex_Ent_Sphere_Name;": "Anemone",
+        "$Codex_Ent_Stratum_Genus_Name;": "Stratum",
+        "$Codex_Ent_Tube_Name;": "Sinuous Tubers",
+        "$Codex_Ent_Tubus_Genus_Name;": "Tubus",
+        "$Codex_Ent_Tussocks_Genus_Name;": "Tussock",
+        "$Codex_Ent_Vents_Name;": "Amphora Plant"
     }
 
     odyssey_bio = [
@@ -1208,10 +1243,16 @@ class CodexTypes():
                         [None, latlon]]
 
                 else:
-
-                    codex_name_ref = CodexTypes.name_ref[str(r.get("entryid"))]
-                    hud_category = codex_name_ref.get("hud_category")
-                    english_name = codex_name_ref.get("english_name")
+                    if r.get("entryid"):
+                        codex_name_ref = CodexTypes.name_ref[str(
+                            r.get("entryid"))]
+                        hud_category = codex_name_ref.get("hud_category")
+                        english_name = codex_name_ref.get("english_name")
+                        reward = codex_name_ref.get("reward")
+                    else:
+                        hud_category = r.get("hud_category")
+                        english_name = r.get("english_name")
+                        reward = None
 
                     body = r.get("body")
                     # if the body is unknown we will set body code to ?
@@ -1229,12 +1270,12 @@ class CodexTypes():
                                 if english_name.split(" ")[0] in self.odyssey_bio:
                                     subcat = " ".join(
                                         english_name.split(" ")[0:2])
-                            if codex_name_ref.get("reward") is not None and int(codex_name_ref.get("reward")/100000) != 0:
+                            if reward is not None and int(reward/100000) != 0:
 
-                                subcat = "("+str(int(codex_name_ref.get("reward") /
+                                subcat = "("+str(int(reward /
                                                      100000))+"$) " + subcat
-                                english_name = "("+str(int(codex_name_ref.get(
-                                    "reward")/100000))+"$) " + english_name
+                                english_name = "("+str(int(reward/100000)
+                                                       )+"$) " + english_name
 
                     self.add_poi(hud_category, subcat, body_code)
 
@@ -1526,10 +1567,13 @@ class CodexTypes():
 
         unk_category = ['Geology', 'Biology']
         horizon_found = []
+
+        # for odyssey
         if self.odyssey:
 
             max_category = {}
             min_category = {}
+
             for category in self.ppoidata[body]:
                 if category in unk_category:
                     min_category[category] = 0
@@ -1567,9 +1611,8 @@ class CodexTypes():
                         for i in range(min_category[category]+1, max_category[category]+1):
                             self.ppoidata[body][category]["Unknown"].append(
                                 ["#"+str(i), None])
-
+        # if not odyssey then do it for horizons
         else:
-
             max_category = {}
             for category in self.ppoidata[body]:
                 if (category == "Geology") or (category == "Biology"):
@@ -1767,6 +1810,18 @@ class CodexTypes():
                                 saa_signal["english_name"] = english_name
                                 saa_signal["count"] = signals.get(key)
                                 self.saaq.put(saa_signal)
+                        if b.get("signals") and b.get("signals").get("genuses"):
+                            debug("got genuses")
+                            b.get("signals").get("genuses")
+                            for genus in b.get("signals").get("genuses"):
+
+                                english_name = CodexTypes.genus.get(genus)
+                                debug(f"genus {english_name}")
+                                saa_signal = {}
+                                saa_signal["body"] = b.get("name")
+                                saa_signal["hud_category"] = "Biology"
+                                saa_signal["english_name"] = english_name
+                                self.poiq.put(saa_signal)
                         if b.get("rings"):
                             for ring in b.get("rings"):
                                 mismatch = self.bodymismatch(
@@ -1939,9 +1994,61 @@ class CodexTypes():
         self.systemcol1 = []
         self.systemcol2 = []
 
+    """
+    We need to make sure that if we have genus and species we only display species.
+    """
+
+    def cleanPOIdata(self):
+
+        # create a list of bodies from poidata
+        def get_bodies(data):
+            bodies = []
+            for key in data.keys():
+                bodies.extend(data.get(key))
+            return list(set(bodies))
+
+        bio = self.poidata.get("Biology")
+
+        newbio = {}
+        bodies = {}
+        for body in get_bodies(bio):
+            bodies[body] = {}
+
+        if bio:
+            # reorganise data
+            for entry in bio.keys():
+                for body in bio.get(entry):
+                    #Debug.logger.debug(f"{body} -> {entry}")
+                    # populate bodies with bodyid->genus->entry
+                    if not bodies[body].get(get_genus(entry)):
+                        bodies[body][get_genus(entry)] = []
+                    bodies[body][get_genus(entry)].append(entry)
+            # Debug.logger.debug(bodies)
+            # now we need to recreate bio without the genus if another entry exists
+
+            for bodyid, genus in bodies.items():
+
+                for entries in genus.values():
+                    #Debug.logger.debug(f"{bodyid} -> {genus} -> {entries}")
+                    # if we only have one entry we must add it regardless
+                    if len(entries) == 1:
+                        if not newbio.get(entries[0]):
+                            newbio[entries[0]] = []
+                            newbio[entries[0]].append(bodyid)
+                    # then we only add entries if they are not the genus
+                    # the genus may already have been added in teh previous step
+                    for entry in entries:
+                        if not entry == get_genus(entry):
+                            if not newbio.get(entry):
+                                newbio[entry] = []
+                                newbio[entry].append(bodyid)
+
+            self.poidata["Biology"] = newbio
+
     def visualisePOIData(self):
         # clear it if it exists
         self.cleanPOIPanel()
+
         self.systempanel.grid_remove()
 
         #Debug.logger.debug(f"visualise POI Data event={self.event}")
@@ -1971,15 +2078,13 @@ class CodexTypes():
             self.set_image(category, True)
             nothing = False
         nothing = False
-
+        # fix the poi data to remove genus
+        self.cleanPOIdata()
         # need to initialise if not exists
         self.systemtitle_name["text"] = self.system
         #self.systemtitle_name["url"] = f"https://us-central1-canonn-api-236217.cloudfunctions.net/query/codex/biostats?id={self.system64}"
         self.systemtitle_name[
             "url"] = f"https://canonn-science.github.io/canonn-signals/index.html?system={self.system64}"
-
-        # print(theme.current)
-        #print("THEME", config.get_int('theme'))
 
         openlist = False
         for category in self.types:
@@ -2135,6 +2240,19 @@ class CodexTypes():
 
     def visualisePlanetData(self):
 
+        def cleanPlanteData(data):
+            newbio = {}
+            # ensure that if we have a full entry we do not display genus
+            bio = data.get("Biology")
+            if bio:
+                for key in bio.keys():
+                    if len(bio.keys()) == 1:
+                        newbio[key] = bio.get(key)
+                    if not key == get_genus(key):
+                        newbio[key] = bio.get(key)
+            data["Biology"] = newbio
+            return data
+
         self.cleanPlanetPanel()
         self.planettitle.grid_remove()
         self.planetpanel.grid_remove()
@@ -2170,6 +2288,9 @@ class CodexTypes():
 
         for category in self.typesPlanet:
             self.planetlist[category].grid_remove()
+
+            self.ppoidata[self.planetlist_body] = cleanPlanteData(
+                self.ppoidata[self.planetlist_body])
 
             if category in self.ppoidata[self.planetlist_body]:
 
@@ -3340,6 +3461,16 @@ class CodexTypes():
                 saa_signal["english_name"] = english_name
                 saa_signal["count"] = int(v.get("Count"))
                 self.saaq.put(saa_signal)
+
+            if entry.get("Genuses"):
+                Debug.logger.debug("Genuses in SAA")
+                for genus in entry.get("Genuses"):
+                    saa_signal = {}
+                    saa_signal["body"] = entry.get("BodyName")
+                    saa_signal["hud_category"] = 'Biology'
+                    saa_signal["english_name"] = CodexTypes.genus.get(
+                        genus.get("Genus"))
+                    self.poiq.put(saa_signal)
 
             self.allowed = True
             self.refreshPOIData(None)
