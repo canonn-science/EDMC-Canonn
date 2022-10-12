@@ -2011,10 +2011,11 @@ class CodexTypes():
 
         newbio = {}
         bodies = {}
-        for body in get_bodies(bio):
-            bodies[body] = {}
 
         if bio:
+            for body in get_bodies(bio):
+                bodies[body] = {}
+
             # reorganise data
             for entry in bio.keys():
                 for body in bio.get(entry):
