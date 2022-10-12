@@ -2241,13 +2241,6 @@ class CodexTypes():
         self.planetcol2 = []
 
     def visualisePlanetData(self):
-
-        def check4genus(value, data):
-            for entry in data:
-                if value == entry.get("key"):
-                    return True
-            return False
-
         """
         A helper function to remove Genus when a sample of the species is 
         already found.
@@ -2260,37 +2253,36 @@ class CodexTypes():
             if bio:
 
                 for key in bio.keys():
-                    # build a dict of genuses
+                    # build a dict of genuses containing array of specimens
                     if not genuses.get(get_genus(key)):
                         genuses[get_genus(key)] = []
                     genuses[get_genus(key)].append(
                         {"key": key, "value": bio.get(key)})
 
-                Debug.logger.debug(genuses)
+                # Debug.logger.debug(genuses)
 
                 # we will check if we have more than one specimen
                 # for each genus and decide which to keep
                 for genus in genuses.keys():
-                    # we need to check if the list of values in the genus contains
-
                     for specimen in genuses.get(genus):
 
+                        isGenus = specimen.get("key") == genus
+                        # Debug.logger.debug(
+                        #    f"genus {genus} specimen {specimen} hasGenus {hasGenus}")
                         # The genus is the only entry so we keep it
-                        hasGenus = specimen.get("key") == genus
-                        Debug.logger.debug(
-                            f"genus {genus} specimen {specimen} hasGenus {hasGenus}")
-                        if hasGenus and len(genuses.get(genus)) == 1:
+                        if isGenus and len(genuses.get(genus)) == 1:
                             newbio[specimen.get("key")] = specimen.get("value")
-                            Debug.logger.debug(f"adding {specimen}")
+                            #Debug.logger.debug(f"adding {specimen}")
                         # we are not a genus so can always be returned
-                        elif not specimen.get("key") in CodexTypes.genus.values():
-                            Debug.logger.debug(f"adding {specimen}")
+                        elif not isGenus:
+                            #Debug.logger.debug(f"adding {specimen}")
                             newbio[specimen.get("key")] = specimen.get("value")
                         else:
-                            Debug.logger.debug(f"skipping {specimen}")
+                            pass
+                            #Debug.logger.debug(f"skipping {specimen}")
 
                 data["Biology"] = newbio
-                Debug.logger.debug(newbio)
+                # Debug.logger.debug(newbio)
             return data
 
         self.cleanPlanetPanel()
