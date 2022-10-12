@@ -10,6 +10,7 @@ except:
     from urllib import quote_plus
     from urllib import unquote
 
+from operator import truediv
 import canonn.emitter
 import json
 import math
@@ -2241,17 +2242,55 @@ class CodexTypes():
 
     def visualisePlanetData(self):
 
+        def check4genus(value, data):
+            for entry in data:
+                if value == entry.get("key"):
+                    return True
+            return False
+
+        """
+        A helper function to remove Genus when a sample of the species is 
+        already found.
+        """
         def cleanPlanetData(data):
             newbio = {}
+            genuses = {}
             # ensure that if we have a full entry we do not display genus
             bio = data.get("Biology")
             if bio:
+
                 for key in bio.keys():
-                    if len(bio.keys()) == 1:
-                        newbio[key] = bio.get(key)
-                    if not key == get_genus(key):
-                        newbio[key] = bio.get(key)
+                    # build a dict of genuses
+                    if not genuses.get(get_genus(key)):
+                        genuses[get_genus(key)] = []
+                    genuses[get_genus(key)].append(
+                        {"key": key, "value": bio.get(key)})
+
+                Debug.logger.debug(genuses)
+
+                # we will check if we have more than one specimen
+                # for each genus and decide which to keep
+                for genus in genuses.keys():
+                    # we need to check if the list of values in the genus contains
+
+                    for specimen in genuses.get(genus):
+
+                        # The genus is the only entry so we keep it
+                        hasGenus = specimen.get("key") == genus
+                        Debug.logger.debug(
+                            f"genus {genus} specimen {specimen} hasGenus {hasGenus}")
+                        if hasGenus and len(genuses.get(genus)) == 1:
+                            newbio[specimen.get("key")] = specimen.get("value")
+                            Debug.logger.debug(f"adding {specimen}")
+                        # we are not a genus so can always be returned
+                        elif not specimen.get("key") in CodexTypes.genus.values():
+                            Debug.logger.debug(f"adding {specimen}")
+                            newbio[specimen.get("key")] = specimen.get("value")
+                        else:
+                            Debug.logger.debug(f"skipping {specimen}")
+
                 data["Biology"] = newbio
+                Debug.logger.debug(newbio)
             return data
 
         self.cleanPlanetPanel()
@@ -2278,7 +2317,7 @@ class CodexTypes():
 
         # refresh ppoi for unknown list
         self.update_unknown_ppoi(self.planetlist_body)
-
+        Debug.logger.debug(self.ppoidata[self.planetlist_body])
         for category in self.ppoidata[self.planetlist_body]:
             self.set_image(category+"_planet", True)
 
