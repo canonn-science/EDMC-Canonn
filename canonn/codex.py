@@ -2240,7 +2240,7 @@ class CodexTypes():
 
     def visualisePlanetData(self):
 
-        def cleanPlanteData(data):
+        def cleanPlanetData(data):
             newbio = {}
             # ensure that if we have a full entry we do not display genus
             bio = data.get("Biology")
@@ -2250,15 +2250,12 @@ class CodexTypes():
                         newbio[key] = bio.get(key)
                     if not key == get_genus(key):
                         newbio[key] = bio.get(key)
-            data["Biology"] = newbio
+                data["Biology"] = newbio
             return data
 
         self.cleanPlanetPanel()
         self.planettitle.grid_remove()
         self.planetpanel.grid_remove()
-
-        # Debug.logger.debug(
-        #    f"visualise Planet Data event={self.event} body={self.planetlist_body}")
 
         if self.planetlist_body not in self.ppoidata:
             return
@@ -2289,7 +2286,7 @@ class CodexTypes():
         for category in self.typesPlanet:
             self.planetlist[category].grid_remove()
 
-            self.ppoidata[self.planetlist_body] = cleanPlanteData(
+            self.ppoidata[self.planetlist_body] = cleanPlanetData(
                 self.ppoidata[self.planetlist_body])
 
             if category in self.ppoidata[self.planetlist_body]:
