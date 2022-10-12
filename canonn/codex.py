@@ -2043,7 +2043,7 @@ class CodexTypes():
                         if not entry == get_genus(entry):
                             if not newbio.get(entry):
                                 newbio[entry] = []
-                                newbio[entry].append(bodyid)
+                            newbio[entry].append(bodyid)
 
             self.poidata["Biology"] = newbio
 
