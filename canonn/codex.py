@@ -2045,7 +2045,7 @@ class CodexTypes():
                                 newbio[entry] = []
                             newbio[entry].append(bodyid)
                         if newbio.get(entry):
-                            newbio[entry]=list(set(newbio.get(entry)))
+                            newbio[entry] = list(set(newbio.get(entry)))
             Debug.logger.debug(f"newbio {newbio}")
             self.poidata["Biology"] = newbio
 

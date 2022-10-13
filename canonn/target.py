@@ -13,6 +13,7 @@ import csv
 
 from canonn.debug import Debug
 from canonn.release import ClientVersion
+from canonn.systems import Systems
 from theme import theme
 
 FULLYSCANNED = 4
@@ -37,11 +38,12 @@ class TargetDisplay():
     def set_plugin_dir(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
 
-    def __init__(self, parent, gridrow):
+    def __init__(self, parent, gridrow, codexControl):
         padx, pady = 10, 5  # formatting
         sticky = tk.EW + tk.N  # full width, stuck to the top
         anchor = tk.NW
 
+        self.codexControl = codexControl
         self.gridrow = gridrow
         self.parent = parent
 
@@ -54,7 +56,8 @@ class TargetDisplay():
             TargetDisplay.plugin_dir, "icons", "floppy.gif"))
         self.note = tk.PhotoImage(file=os.path.join(
             TargetDisplay.plugin_dir, "icons", "notepad.gif"))
-
+        self.magnify = tk.PhotoImage(file=os.path.join(
+            TargetDisplay.plugin_dir, "icons", "swap.gif"))
         # get the parent to take care of events
         self.parent.bind('<<setTarget>>', self.set_target)
 
@@ -74,6 +77,9 @@ class TargetDisplay():
         while not self.systemq.empty():
             self.show()
             self.floppy["image"] = self.icon
+
+            # only show if we have coordinates
+            self.zoom["image"] = self.magnify
             iterations += 1
             system = self.systemq.get()
             # we will add this data so save button can use it
@@ -105,14 +111,47 @@ class TargetDisplay():
             if iterations > 1:
                 plug.show_error(f"target {system.get('name')} skipped")
 
+            # set the target for the codeconntrols
+            if self.spansh.get("system") and target_level in (UNKNOWNSCAN, PARTIALSCAN, FULLYSCANNED):
+                self.target = {
+                    "name": self.spansh.get("name"),
+                    "id64": self.spansh.get("id64"),
+                    "coords": self.spansh.get("system").get("coords").values()
+                }
+            else:
+                self.target = None
+
             self.label.config(fg="black")
             self.label["text"] = target_text
             self.floppy.bind("<Button-1>", self.save)
+            self.zoom.bind("<Button-1>", self.jump)
 
     def openfile(self, event):
         csvpath = os.path.join(config.app_dir_path, 'canonn')
         csvfile = os.path.join(csvpath, "targets.csv")
         os.system(f"notepad.exe {csvfile}")
+
+    def jump(self, event):
+
+        # if not new store the spansh values as new so that we can jump
+        # then after we jump swap current with new so that we can swap again
+
+        swap = {}
+        if self.target:
+
+            entry = {
+                "event": "Location",
+                "StarSystem": self.target.get("name"), "SystemAddress": self.target.get("id64"), "StarPos": self.target.get("coords")
+            }
+            x, y, z = self.target.get("coords")
+
+            self.codexControl.journal_entry(
+                self.cmdr, False, self.target.get("name"), None, entry, self.state, x, y, z, None, None, None, self.client)
+
+        # swap over current and taget so we can switch back.
+        swap = self.current
+        self.current = self.target
+        self.target = swap
 
     def save(self, event):
         # this should always exist but better safe than sorry
@@ -151,6 +190,7 @@ class TargetDisplay():
             self.label.destroy()
             self.frame.destroy()
             self.floppy.destroy()
+            self.zoom.destroy()
 
     def show(self):
 
@@ -159,7 +199,7 @@ class TargetDisplay():
             self.hidden = False
             self.frame = Frame(self.parent)
 
-            self.frame.columnconfigure(2, weight=1)
+            self.frame.columnconfigure(3, weight=1)
             self.frame.grid(row=self.gridrow, column=0,
                             columnspan=2)
             self.label = tk.Label(self.frame)
@@ -167,8 +207,12 @@ class TargetDisplay():
 
             self.floppy = tk.Label(self.frame, image=self.icon, cursor="hand2")
             self.floppy.grid(row=0, column=1)
+            self.zoom = tk.Label(
+                self.frame, image=self.magnify, cursor="hand2")
+            self.zoom.grid(row=0, column=2)
             theme.update(self.frame)
             theme.update(self.floppy)
+            theme.update(self.zoom)
 
     """
     This will put the system in the queue
@@ -181,6 +225,16 @@ class TargetDisplay():
     def journal_entry(self, cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                       state, x, y, z, body, nearloc, client):
         if entry.get("event") == "FSDTarget":
+            self.cmdr = cmdr
+            self.client = client
+            self.state = state
+
+            # store the system settings as current so that we can recycle
+            self.current = {
+                "name": system,
+                "id64": Systems.id64FromSystem(system),
+                "coords": [x, y, z]
+            }
 
             if not self.mid_jump:
 
@@ -203,6 +257,7 @@ class TargetDisplay():
             "MusicTrack") != "GalaxyMap")
 
         if reset:
+            self.target = None
             self.hide()
 
 

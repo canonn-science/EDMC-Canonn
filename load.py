@@ -168,7 +168,7 @@ def plugin_app(parent):
     this.patrol = patrol.CanonnPatrol(this.parent, table, 4)
     this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 5)
     this.guestbook = guestBook.setup(table, 6)
-    this.target = canonn.target.TargetDisplay(table, 7)
+    this.target = canonn.target.TargetDisplay(table, 7, this.codexcontrol)
     this.guardian = canonn.guardian.Display(table, 8)
 
     whitelist = whiteList(parent)
