@@ -35,7 +35,7 @@ Just install the EDMC-Overlay plugin as you would any other plugin and enable th
 * Enable Overlay: If selected enables the overlay
 * Enable Patrols: Displays the patrol text as an overlay
 * Enable Nearest Command: Displays the text from the "nearest" command results on screen
-* Enable Additional Informatio: Does what it says on the tin
+* Enable Additional Information: Does what it says on the tin
 
 The positon of the text on screen can be configured by editing a json file. For details see [overlay.md](overlay.md)
 
