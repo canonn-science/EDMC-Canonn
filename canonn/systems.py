@@ -99,6 +99,19 @@ class Systems():
             }
 
     @classmethod
+    def id64FromSystem(cls, system):
+        for id in cls.id_cache.values():
+            if system == id.get("StarSystem"):
+                return id.get("SystemAddress")
+        cls.edsmGetSystem(cls, system)
+        # try again
+        for id in cls.id_cache.keys():
+            if system == id.get("StarSystem"):
+                return id.get("SystemAddress")
+        # still here?
+        return None
+
+    @classmethod
     def systemFromId64(cls, id64):
         return cls.id_cache.get(id64)
         # we could try and lookup up from somewhere
@@ -120,9 +133,14 @@ class Systems():
 
         else:
             url = 'https://www.edsm.net/api-v1/system?systemName=' + \
-                quote_plus(system) + '&showCoordinates=1'
+                quote_plus(system) + '&showCoordinates=1&showId=1'
             r = requests.get(url)
             s = r.json()
+
+            # cache the id64
+            if s.get("id64"):
+                cls.storeId64({"StarSystem": s.get("name"),
+                               "SystemAddress": s.get("id64")})
 
             cls.systemCache[system] = (
                 s["coords"]["x"], s["coords"]["y"], s["coords"]["z"])

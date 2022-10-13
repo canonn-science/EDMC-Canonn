@@ -16,6 +16,14 @@ If you select a target system on the galaxy map using the "Set Target" button. T
 
 NB: While using this can increase your chances of finding unexplored systems it isn't perfect as not all commanders will contribute to Spansh.
 
+| Icon | Description
+|---------------------------|--------------------------------------------------|
+| ![Save](icons/floppy.gif) | Clicking on the save icon will save some system details to a csv file|
+| ![Notepad](icons/notepad.gif) | Clicking on this icon will open the csv file in notepad
+| ![Swap](icons/swap.gif) | Clicking here will fetch the codex data for the system and display it in place of the current system. Clicking again will restore the current system.
+
+The csv file can be found in %APPDATA%\EDMarketConnector\canonn\target.csv or equivalent for your system.
+
 ## Overlay
 
 The EDMC-Canonn plugin can be combined with [EDMC-Overlay](https://github.com/inorton/EDMCOverlay#readme) or [EDMC-Overlay2 for linux ](https://github.com/sersorrel/edmcoverlay2#readme) to display text overlaid on the game screen. 
@@ -27,7 +35,7 @@ Just install the EDMC-Overlay plugin as you would any other plugin and enable th
 * Enable Overlay: If selected enables the overlay
 * Enable Patrols: Displays the patrol text as an overlay
 * Enable Nearest Command: Displays the text from the "nearest" command results on screen
-* Enable Additional Informatio: Does what it says on the tin
+* Enable Additional Information: Does what it says on the tin
 
 The positon of the text on screen can be configured by editing a json file. For details see [overlay.md](overlay.md)
 

@@ -34,6 +34,19 @@ import datetime
 from ttkHyperlinkLabel import HyperlinkLabel
 
 
+class ClientVersion():
+    ver = "6.9.7"
+    client_version = f"EDMC-Canonn.{ver}"
+
+    @classmethod
+    def version(cls):
+        return cls.ver
+
+    @classmethod
+    def client(cls):
+        return cls.client_version
+
+
 RELEASE_CYCLE = 60 * 1000 * 60  # 1 Hour
 DEFAULT_URL = 'https://github.com/canonn-science/EDMC-Canonn/releases'
 WRAP_LENGTH = 200
@@ -63,14 +76,14 @@ class ReleaseLink(HyperlinkLabel):
             anchor=tk.NW
         )
         self.resized = False
-        self.lasttime=datetime.datetime.now()
+        self.lasttime = datetime.datetime.now()
         self.bind('<Configure>', self.__configure_event)
 
     def __configure_event(self, event):
         "Handle resizing."
 
-        difference=datetime.datetime.now() - self.lasttime
-        
+        difference = datetime.datetime.now() - self.lasttime
+
         if difference.total_seconds() > 0.5:
             self.resized = False
 
@@ -132,7 +145,6 @@ class Release(Frame):
 
         # self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
         self.bind('<<ReleaseUpdate>>', self.release_update)
-
 
         Debug.logger.debug(config.get_str('Canonn:RemoveBackup'))
 
