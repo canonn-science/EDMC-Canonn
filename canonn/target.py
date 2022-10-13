@@ -123,8 +123,13 @@ class TargetDisplay():
 
             self.label.config(fg="black")
             self.label["text"] = target_text
+
             self.floppy.bind("<Button-1>", self.save)
-            self.zoom.bind("<Button-1>", self.jump)
+            if self.target:
+                self.zoom.grid()
+                self.zoom.bind("<Button-1>", self.jump)
+            else:
+                self.zoom.grid_remove()
 
     def openfile(self, event):
         csvpath = os.path.join(config.app_dir_path, 'canonn')
