@@ -2512,6 +2512,8 @@ class CodexTypes():
             self.add_poi("Tourist", f"Hot landable {type}", body_code)
 
     def shepherd_moon(self, body, bodies):
+        if body.get("type") == "Barycentre":
+            return
 
         def get_density(mass, inner, outer):
             a1 = math.pi * pow(inner, 2)
@@ -2551,8 +2553,12 @@ class CodexTypes():
                     # all measurements in meters
                     semiMajorAxis = float(
                         body.get("semiMajorAxis")) * 149597870691
-                    bodyRadius = float(body.get("radius")
-                                       or body.get("solarRadius")) * 1000
+                    try:
+                        bodyRadius = float(body.get("radius")
+                                           or body.get("solarRadius")) * 1000
+                    except:
+                        print(json.dumps(body, indent=4))
+                        raise
                     outerRadius = float(ring.get("outerRadius"))
                     innerRadius = float(ring.get("innerRadius"))
 
@@ -2676,6 +2682,9 @@ class CodexTypes():
                     self.add_poi("Tourist", 'Close Flypast', body_code)
 
     def close_bodies(self, candidate, bodies, body_code):
+        if candidate.get("type") == "Barycentre":
+            return
+
         if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
             distance = None
             #comparitor = None
