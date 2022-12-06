@@ -1271,6 +1271,7 @@ class CodexTypes():
                                 if english_name.split(" ")[0] in self.odyssey_bio:
                                     subcat = " ".join(
                                         english_name.split(" ")[0:2])
+                            # rewards scale
                             if reward is not None and int(reward/1000000) != 0:
 
                                 subcat = "("+str(int(reward /
