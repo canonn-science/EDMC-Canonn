@@ -131,7 +131,7 @@ def plugin_start(plugin_dir):
     journaldata.plugin_start(plugin_dir)
     capture.plugin_start(plugin_dir)
     extool.BearingDestination.plugin_start(plugin_dir)
-    extool.extoolTypes.plugin_start(plugin_dir)
+
     canonn.target.TargetDisplay.set_plugin_dir(plugin_dir)
 
     return 'Canonn'

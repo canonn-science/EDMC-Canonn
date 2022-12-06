@@ -1271,11 +1271,11 @@ class CodexTypes():
                                 if english_name.split(" ")[0] in self.odyssey_bio:
                                     subcat = " ".join(
                                         english_name.split(" ")[0:2])
-                            if reward is not None and int(reward/100000) != 0:
+                            if reward is not None and int(reward/1000000) != 0:
 
                                 subcat = "("+str(int(reward /
-                                                     100000))+"$) " + subcat
-                                english_name = "("+str(int(reward/100000)
+                                                     1000000))+"$) " + subcat
+                                english_name = "("+str(int(reward/1000000)
                                                        )+"$) " + english_name
 
                     self.add_poi(hud_category, subcat, body_code)
@@ -1908,62 +1908,6 @@ class CodexTypes():
             # else:
             #    Debug.logger.debug("Skipping Canonn Fetch")
             #    Debug.logger.debug(temp_spanshdata.get("bodies"))
-
-            try:
-                url = "https://elite.laulhere.com/ExTool/info.php?mode=chksaa&system64={}".format(
-                    system64)
-
-                # debug(url)
-                # debug("request {}:  Active Threads {}".format(
-                #    url, threading.activeCount()))
-                #headers = {"Accept-Encoding": "gzip, deflate", }
-                r = requests.get(url, timeout=30)
-                # debug("request complete")
-                r.encoding = 'utf-8'
-                if r.status_code == requests.codes.ok:
-                    # debug("got POI Data")
-                    temp_saadata = r.json()
-
-                # push the data ont a queue
-                if "SAAScanComplete" in temp_saadata:
-                    self.saaq.put(temp_saadata)
-            except:
-                Debug.logger.error("Error getting SAA data")
-
-            # try:
-                # url = "https://api.canonn.tech/systems?systemName={}".format(
-                # quote_plus(system.encode('utf8')))
-
-                # r = requests.get(url, timeout=30)
-                # # debug("request complete")
-                # r.encoding = 'utf-8'
-                # if r.status_code == requests.codes.ok:
-                # # push canonn data only a queue
-                # # self.canonnq.put(r.json())
-                # pass
-                # else:
-                # Debug.logger.debug("Canonn Failed")
-                # Debug.logger.error("Canonn Failed")
-            # except:
-                # Debug.logger.debug("Error getting Canonn data")
-
-            try:
-                url = "http://elite.laulhere.com/ExTool/info.php?mode=canonn&system={}".format(
-                    quote_plus(system.encode('utf8')))
-
-                r = requests.get(url, timeout=30)
-                # debug("request complete")
-                r.encoding = 'utf-8'
-                if r.status_code == requests.codes.ok:
-                    # push canonn data only a queue
-                    temp_poidata = r.json()
-
-                if "POINTS" in temp_poidata:
-                    for v in temp_poidata["POINTS"]:
-                        v["EXTOOL"] = True
-                        self.poiq.put(v)
-            except:
-                Debug.logger.error("Error getting ExTool data")
 
             self.waitingPOI = False
             Debug.logger.debug("Triggering Event")
@@ -3225,12 +3169,12 @@ class CodexTypes():
                                     if english_name.split(" ")[0] in self.odyssey_bio:
                                         subcat = " ".join(
                                             english_name.split(" ")[0:2])
-                                if codex_name_ref.get("reward") is not None and int(codex_name_ref.get("reward")/100000) != 0:
+                                if codex_name_ref.get("reward") is not None and int(codex_name_ref.get("reward")/1000000) != 0:
 
                                     subcat = "("+str(int(codex_name_ref.get(
-                                        "reward") / 100000))+"$) " + subcat
+                                        "reward") / 1000000))+"$) " + subcat
                                     english_name = "("+str(
-                                        int(codex_name_ref.get("reward")/100000))+"$) " + english_name
+                                        int(codex_name_ref.get("reward")/1000000))+"$) " + english_name
 
                         self.add_poi(hud_category, subcat, bodycode)
                     else:
