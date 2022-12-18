@@ -370,8 +370,7 @@ def dashboard_entry_wrapper(cmdr, is_beta, entry, ):
 
     this.codexcontrol.updatePlanetData(
         this.body_name, this.nearloc['Latitude'], this.nearloc['Longitude'], this.nearloc['Temperature'], this.nearloc['Gravity'])
-    this.extoolcontrol.updateStatus(
-        this.body_name, this.planet_radius, this.nearloc)
+
     this.extool.updatePosition(this.body_name, this.planet_radius,
                                this.nearloc['Latitude'], this.nearloc['Longitude'], this.nearloc['Heading'])
 
