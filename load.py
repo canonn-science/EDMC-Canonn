@@ -95,7 +95,7 @@ def plugin_prefs(parent, cmdr, is_beta):
     this.release.plugin_prefs(frame, cmdr, is_beta, 1)
     this.patrol.plugin_prefs(frame, cmdr, is_beta, 2)
     this.codexcontrol.plugin_prefs(frame, cmdr, is_beta, 3)
-    hdreport.HDInspector(frame, cmdr, is_beta, this.client_version, 4)
+    #hdreport.HDInspector(frame, cmdr, is_beta, this.client_version, 4)
     Debug.plugin_prefs(frame, this.client_version, 5)
     capture.plugin_prefs(frame, cmdr, is_beta, 6)
     this.extool.plugin_prefs(frame, cmdr, is_beta, 7)
