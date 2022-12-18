@@ -162,7 +162,7 @@ def plugin_app(parent):
     this.news = news.CanonnNews(table, 0)
     this.release = release.Release(table, this.version, 1)
     this.codexcontrol = codex.CodexTypes(table, 2)
-    this.extoolcontrol = extool.extoolTypes()
+    #this.extoolcontrol = extool.extoolTypes()
     this.extool = extool.BearingDestination(table, 3)
     this.codexcontrol.setDestinationWidget(this.extool)
     this.patrol = patrol.CanonnPatrol(this.parent, table, 4)
@@ -284,8 +284,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
                               x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry,
                                     state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
-    this.extoolcontrol.journal_entry(
-        cmdr, is_beta, system, station, entry, state, client)
+
     whiteList.journal_entry(cmdr, is_beta, system, station, entry, state,
                             x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS,
