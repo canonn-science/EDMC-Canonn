@@ -2873,7 +2873,7 @@ class CodexTypes():
 
         if materials:
             for target in mats:
-                if CodexTypes.raw_mats.get(target.lower()):
+                if CodexTypes.raw_mats is not None and CodexTypes.raw_mats.get(target.lower()):
                     quantity = CodexTypes.raw_mats.get(target.lower())
                 else:
                     quantity = 0
