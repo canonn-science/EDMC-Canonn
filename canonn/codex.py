@@ -2703,15 +2703,11 @@ class CodexTypes():
                 r2 = self.radius_ly(candidate)
                 # to account for things like stars and gas giants
                 if distance is not None and r1 is not None and r2 is not None:
-                    comparitor = 2 * (r1 + r2)
-
-                if distance is not None and comparitor is not None and distance < comparitor:
-
-                    if candidate.get("isLandable"):
-                        self.add_poi(
-                            "Tourist", 'Close Orbit Landable', body_code)
-                    else:
-                        self.add_poi("Tourist", 'Close Orbit', body_code)
+                    if distance < (2 * (r1 + r2)):
+                        if candidate.get("isLandable"):
+                            self.add_poi("Tourist", 'Close Orbit Landable', body_code)
+                        else:
+                            self.add_poi("Tourist", 'Close Orbit', body_code)
 
     def close_rings(self, candidate, bodies, body_code):
 
