@@ -1232,8 +1232,8 @@ class CodexTypes():
                         continue
                     english_name = r.get("NAME")
                     if r.get("LATITUDE") is not None and r.get("LONGITUDE") is not None:
-                        latlon = "(" + str(round(r.get("LATITUDE"), 2)) + \
-                            "," + str(round(r.get("LONGITUDE"), 2)) + ")"
+                        latlon = "(" + str(round(r.get("LATITUDE"), 4)) + \
+                            "," + str(round(r.get("LONGITUDE"), 4)) + ")"
                     else:
                         latlon = None
 
@@ -1283,8 +1283,8 @@ class CodexTypes():
                     if (r.get("latitude") is None) or (r.get("longitude") is None):
                         latlon = None
                     else:
-                        latlon = "("+str(round(float(r.get("latitude")), 2)) + \
-                            "," + str(round(float(r.get("longitude")), 2)) + ")"
+                        latlon = "("+str(round(float(r.get("latitude")), 4)) + \
+                            "," + str(round(float(r.get("longitude")), 4)) + ")"
 
                     if (r.get("index_id") is None):
                         index = None
@@ -1441,8 +1441,8 @@ class CodexTypes():
                 else:
                     name = temp_cmdrdata["description"]
                     index = None
-                latlon = "("+str(round(float(temp_cmdrdata["latitude"]), 2))+","+str(
-                    round(float(temp_cmdrdata["longitude"]), 2))+")"
+                latlon = "("+str(round(float(temp_cmdrdata["latitude"]), 4))+","+str(
+                    round(float(temp_cmdrdata["longitude"]), 4))+")"
                 self.add_poi("Personal", name, body_code)
 
                 self.add_ppoi(body_code, "Personal", name)
@@ -3233,7 +3233,7 @@ class CodexTypes():
 
                             if self.odyssey:
                                 self.add_ppoi_wsaa(bodycode, hud_category, english_name, 0, round(
-                                    self.latitude, 2), round(self.longitude, 2), True)
+                                    self.latitude, 4), round(self.longitude, 4), True)
 
                             else:
                                 near_dest = entry.get(
@@ -3241,7 +3241,7 @@ class CodexTypes():
                                 if (near_dest[2].split("=")[0] == "#index"):
                                     idx = int(near_dest[2].split("=")[1][:-1])
                                     self.add_ppoi_wsaa(bodycode, hud_category, english_name, idx, round(
-                                        self.latitude, 2), round(self.longitude, 2), True)
+                                        self.latitude, 4), round(self.longitude, 4), True)
 
                             if hud_category == "Geology":
                                 if "Unknown" in self.ppoidata[bodycode]["Geology"]:
