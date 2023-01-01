@@ -1232,8 +1232,8 @@ class CodexTypes():
                         continue
                     english_name = r.get("NAME")
                     if r.get("LATITUDE") is not None and r.get("LONGITUDE") is not None:
-                        latlon = "(" + str(round(r.get("LATITUDE"), 2)) + \
-                            "," + str(round(r.get("LONGITUDE"), 2)) + ")"
+                        latlon = "(" + str(r.get("LATITUDE")) + \
+                            "," + str(r.get("LONGITUDE")) + ")"
                     else:
                         latlon = None
 
@@ -1284,8 +1284,8 @@ class CodexTypes():
                     if (r.get("latitude") is None) or (r.get("longitude") is None):
                         latlon = None
                     else:
-                        latlon = "("+str(round(float(r.get("latitude")), 2)) + \
-                            "," + str(round(float(r.get("longitude")), 2)) + ")"
+                        latlon = "("+str(float(r.get("latitude"))) + \
+                            "," + str(float(r.get("longitude"))) + ")"
 
                     if (r.get("index_id") is None):
                         index = None
@@ -1442,8 +1442,8 @@ class CodexTypes():
                 else:
                     name = temp_cmdrdata["description"]
                     index = None
-                latlon = "("+str(round(float(temp_cmdrdata["latitude"]), 2))+","+str(
-                    round(float(temp_cmdrdata["longitude"]), 2))+")"
+                latlon = "("+str(float(temp_cmdrdata["latitude"]))+","+str(
+                    float(temp_cmdrdata["longitude"]))+")"
                 self.add_poi("Personal", name, body_code)
 
                 self.add_ppoi(body_code, "Personal", name)
@@ -1502,8 +1502,8 @@ class CodexTypes():
                         self.system+" ", "")
                     latlon = None
                     if self.settlementdata[station]["coords"] is not None:
-                        latlon = "("+str(round(float(self.settlementdata[station]["coords"][0]), 2)) + "," + str(
-                            round(float(self.settlementdata[station]["coords"][1]), 2)) + ")"
+                        latlon = "("+str(float(self.settlementdata[station]["coords"][0])) + "," + str(
+                            float(self.settlementdata[station]["coords"][1])) + ")"
                     if self.hidehumandetailed:
                         self.add_poi("Human", stype, bodycode)
                     else:
@@ -1725,7 +1725,7 @@ class CodexTypes():
                 index = len(self.ppoidata[body][hud_category][type])+1
 
             self.ppoidata[body][hud_category][type].append(
-                ["#"+str(index), "("+str(lat)+","+str(lon)+")"])
+                ["#"+str(index), "("+str(round(lat,4))+","+str(round(lon,4))+")"])
             self.update_unknown_ppoi(body)
 
         else:
@@ -3186,16 +3186,16 @@ class CodexTypes():
                         if (hud_category == "Geology") or (hud_category == "Biology"):
 
                             if self.odyssey:
-                                self.add_ppoi_wsaa(bodycode, hud_category, english_name, 0, round(
-                                    self.latitude, 2), round(self.longitude, 2), True)
+                                self.add_ppoi_wsaa(bodycode, hud_category, english_name, 0, 
+                                    self.latitude, self.longitude, True)
 
                             else:
                                 near_dest = entry.get(
                                     "NearestDestination").split(":")
                                 if (near_dest[2].split("=")[0] == "#index"):
                                     idx = int(near_dest[2].split("=")[1][:-1])
-                                    self.add_ppoi_wsaa(bodycode, hud_category, english_name, idx, round(
-                                        self.latitude, 2), round(self.longitude, 2), True)
+                                    self.add_ppoi_wsaa(bodycode, hud_category, english_name, idx, 
+                                        self.latitude, self.longitude, True)
 
                             if hud_category == "Geology":
                                 if "Unknown" in self.ppoidata[bodycode]["Geology"]:
