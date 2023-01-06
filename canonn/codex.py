@@ -1082,6 +1082,7 @@ class CodexTypes():
 
                         self.shepherd_moon(b, bodies)
                         self.hot_landable(b)
+                        self.synchronous_orbit(b)
                         self.helium_rich(b)
                         self.trojan(b, bodies)
                         self.ringed_star(b)
@@ -2455,6 +2456,13 @@ class CodexTypes():
         temperature = b.get("surfaceTemperature")
         if b.get('isLandable') and temperature and float(temperature) > 1500:
             self.add_poi("Tourist", f"Hot landable {type}", body_code)
+
+    def synchronous_orbit(self, b):
+        body_code = b.get("name").replace(self.system+" ", '')
+        valid=(b.get("rotationalPeriod") and b.get("orbitalPeriod"))
+        if valid and round(float(b.get("rotationalPeriod")),4) == round(float(b.get("orbitalPeriod")),4):
+            self.add_poi("Tourist", f"Synchronous Orbit", body_code)
+
 
     def shepherd_moon(self, body, bodies):
         if body.get("type") == "Barycentre":
