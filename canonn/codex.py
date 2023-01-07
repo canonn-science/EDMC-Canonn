@@ -1186,9 +1186,9 @@ class CodexTypes():
                             if b.get("parents") and b.get("parents")[0] and b.get("parents")[0].get("Planet"):
                                 self.add_poi("Tourist", '{} Moon'.format(
                                     CodexTypes.body_types.get(b.get('subType'))), body_code)
-                        if b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
-                            self.add_poi(
-                                "Tourist", 'Tidal Locked Earthlike Word', body_code)
+                        #if b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                        #    self.add_poi(
+                        #        "Tourist", 'Tidal Locked Earthlike World', body_code)
 
                         #    Landable high-g (>3g)
                         if b.get('type') == 'Planet' and float(b.get('gravity')) > 2.7 and b.get('isLandable'):
@@ -2459,9 +2459,15 @@ class CodexTypes():
 
     def synchronous_orbit(self, b):
         body_code = b.get("name").replace(self.system+" ", '')
-        valid=(b.get("rotationalPeriod") and b.get("orbitalPeriod"))
+        valid=(b.get("rotationalPeriod") and b.get("orbitalPeriod") and b.get("rotationalPeriodTidallyLocked"))
+        earthlike=(b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world'))
+        starchild=(b.get("parents") and len(b.get("parents")) > 0 and list(b.get("parents")[0].keys())[0] == 'Star"')
+
         if valid and round(float(b.get("rotationalPeriod")),4) == round(float(b.get("orbitalPeriod")),4):
-            self.add_poi("Tourist", f"Synchronous Orbit", body_code)
+            if earthlike and starchild:
+                self.add_poi("Tourist", f"Eyeball Earthlike", body_code)
+            else:
+                self.add_poi("Tourist", f"Synchronous Orbit", body_code)
 
 
     def shepherd_moon(self, body, bodies):
