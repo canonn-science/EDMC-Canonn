@@ -1186,7 +1186,7 @@ class CodexTypes():
                             if b.get("parents") and b.get("parents")[0] and b.get("parents")[0].get("Planet"):
                                 self.add_poi("Tourist", '{} Moon'.format(
                                     CodexTypes.body_types.get(b.get('subType'))), body_code)
-                        #if b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                        # if b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
                         #    self.add_poi(
                         #        "Tourist", 'Tidal Locked Earthlike World', body_code)
 
@@ -1726,7 +1726,7 @@ class CodexTypes():
                 index = len(self.ppoidata[body][hud_category][type])+1
 
             self.ppoidata[body][hud_category][type].append(
-                ["#"+str(index), "("+str(round(lat,4))+","+str(round(lon,4))+")"])
+                ["#"+str(index), "("+str(round(lat, 4))+","+str(round(lon, 4))+")"])
             self.update_unknown_ppoi(body)
 
         else:
@@ -2459,16 +2459,18 @@ class CodexTypes():
 
     def synchronous_orbit(self, b):
         body_code = b.get("name").replace(self.system+" ", '')
-        valid=(b.get("rotationalPeriod") and b.get("orbitalPeriod") and b.get("rotationalPeriodTidallyLocked"))
-        earthlike=(b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world'))
-        starchild=(b.get("parents") and len(b.get("parents")) > 0 and list(b.get("parents")[0].keys())[0] == 'Star"')
+        valid = (b.get("rotationalPeriod") and b.get("orbitalPeriod")
+                 and b.get("rotationalPeriodTidallyLocked"))
+        earthlike = (b.get('subType') and b.get('subType')
+                     in ('Earthlike body', 'Earth-like world'))
+        starchild = (b.get("parents") and len(b.get("parents")) >
+                     0 and list(b.get("parents")[0].keys())[0] == 'Star')
 
-        if valid and round(float(b.get("rotationalPeriod")),4) == round(float(b.get("orbitalPeriod")),4):
+        if valid and round(float(b.get("rotationalPeriod")), 4) == round(float(b.get("orbitalPeriod")), 4):
             if earthlike and starchild:
                 self.add_poi("Tourist", f"Eyeball Earthlike", body_code)
             else:
                 self.add_poi("Tourist", f"Synchronous Orbit", body_code)
-
 
     def shepherd_moon(self, body, bodies):
         if body.get("type") == "Barycentre":
@@ -3200,16 +3202,16 @@ class CodexTypes():
                         if (hud_category == "Geology") or (hud_category == "Biology"):
 
                             if self.odyssey:
-                                self.add_ppoi_wsaa(bodycode, hud_category, english_name, 0, 
-                                    self.latitude, self.longitude, True)
+                                self.add_ppoi_wsaa(bodycode, hud_category, english_name, 0,
+                                                   self.latitude, self.longitude, True)
 
                             else:
                                 near_dest = entry.get(
                                     "NearestDestination").split(":")
                                 if (near_dest[2].split("=")[0] == "#index"):
                                     idx = int(near_dest[2].split("=")[1][:-1])
-                                    self.add_ppoi_wsaa(bodycode, hud_category, english_name, idx, 
-                                        self.latitude, self.longitude, True)
+                                    self.add_ppoi_wsaa(bodycode, hud_category, english_name, idx,
+                                                       self.latitude, self.longitude, True)
 
                             if hud_category == "Geology":
                                 if "Unknown" in self.ppoidata[bodycode]["Geology"]:
