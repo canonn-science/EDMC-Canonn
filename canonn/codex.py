@@ -1082,6 +1082,7 @@ class CodexTypes():
 
                         self.shepherd_moon(b, bodies)
                         self.hot_landable(b)
+                        self.synchronous_orbit(b)
                         self.helium_rich(b)
                         self.trojan(b, bodies)
                         self.ringed_star(b)
@@ -1185,9 +1186,9 @@ class CodexTypes():
                             if b.get("parents") and b.get("parents")[0] and b.get("parents")[0].get("Planet"):
                                 self.add_poi("Tourist", '{} Moon'.format(
                                     CodexTypes.body_types.get(b.get('subType'))), body_code)
-                        if b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
-                            self.add_poi(
-                                "Tourist", 'Tidal Locked Earthlike Word', body_code)
+                        # if b.get('subType') and b.get('subType') in ('Earthlike body', 'Earth-like world') and b.get('rotationalPeriodTidallyLocked'):
+                        #    self.add_poi(
+                        #        "Tourist", 'Tidal Locked Earthlike World', body_code)
 
                         #    Landable high-g (>3g)
                         if b.get('type') == 'Planet' and float(b.get('gravity')) > 2.7 and b.get('isLandable'):
@@ -1232,8 +1233,8 @@ class CodexTypes():
                         continue
                     english_name = r.get("NAME")
                     if r.get("LATITUDE") is not None and r.get("LONGITUDE") is not None:
-                        latlon = "(" + str(round(r.get("LATITUDE"), 2)) + \
-                            "," + str(round(r.get("LONGITUDE"), 2)) + ")"
+                        latlon = "(" + str(r.get("LATITUDE")) + \
+                            "," + str(r.get("LONGITUDE")) + ")"
                     else:
                         latlon = None
 
@@ -1271,11 +1272,12 @@ class CodexTypes():
                                 if english_name.split(" ")[0] in self.odyssey_bio:
                                     subcat = " ".join(
                                         english_name.split(" ")[0:2])
-                            if reward is not None and int(reward/100000) != 0:
+                            # rewards scale
+                            if reward is not None and int(reward/1000000) != 0:
 
                                 subcat = "("+str(int(reward /
-                                                     100000))+"$) " + subcat
-                                english_name = "("+str(int(reward/100000)
+                                                     1000000))+"$) " + subcat
+                                english_name = "("+str(int(reward/1000000)
                                                        )+"$) " + english_name
 
                     self.add_poi(hud_category, subcat, body_code)
@@ -1283,8 +1285,8 @@ class CodexTypes():
                     if (r.get("latitude") is None) or (r.get("longitude") is None):
                         latlon = None
                     else:
-                        latlon = "("+str(round(float(r.get("latitude")), 2)) + \
-                            "," + str(round(float(r.get("longitude")), 2)) + ")"
+                        latlon = "("+str(float(r.get("latitude"))) + \
+                            "," + str(float(r.get("longitude"))) + ")"
 
                     if (r.get("index_id") is None):
                         index = None
@@ -1441,8 +1443,8 @@ class CodexTypes():
                 else:
                     name = temp_cmdrdata["description"]
                     index = None
-                latlon = "("+str(round(float(temp_cmdrdata["latitude"]), 2))+","+str(
-                    round(float(temp_cmdrdata["longitude"]), 2))+")"
+                latlon = "("+str(float(temp_cmdrdata["latitude"]))+","+str(
+                    float(temp_cmdrdata["longitude"]))+")"
                 self.add_poi("Personal", name, body_code)
 
                 self.add_ppoi(body_code, "Personal", name)
@@ -1501,8 +1503,8 @@ class CodexTypes():
                         self.system+" ", "")
                     latlon = None
                     if self.settlementdata[station]["coords"] is not None:
-                        latlon = "("+str(round(float(self.settlementdata[station]["coords"][0]), 2)) + "," + str(
-                            round(float(self.settlementdata[station]["coords"][1]), 2)) + ")"
+                        latlon = "("+str(float(self.settlementdata[station]["coords"][0])) + "," + str(
+                            float(self.settlementdata[station]["coords"][1])) + ")"
                     if self.hidehumandetailed:
                         self.add_poi("Human", stype, bodycode)
                     else:
@@ -1724,7 +1726,7 @@ class CodexTypes():
                 index = len(self.ppoidata[body][hud_category][type])+1
 
             self.ppoidata[body][hud_category][type].append(
-                ["#"+str(index), "("+str(lat)+","+str(lon)+")"])
+                ["#"+str(index), "("+str(round(lat, 4))+","+str(round(lon, 4))+")"])
             self.update_unknown_ppoi(body)
 
         else:
@@ -1908,62 +1910,6 @@ class CodexTypes():
             # else:
             #    Debug.logger.debug("Skipping Canonn Fetch")
             #    Debug.logger.debug(temp_spanshdata.get("bodies"))
-
-            try:
-                url = "https://elite.laulhere.com/ExTool/info.php?mode=chksaa&system64={}".format(
-                    system64)
-
-                # debug(url)
-                # debug("request {}:  Active Threads {}".format(
-                #    url, threading.activeCount()))
-                #headers = {"Accept-Encoding": "gzip, deflate", }
-                r = requests.get(url, timeout=30)
-                # debug("request complete")
-                r.encoding = 'utf-8'
-                if r.status_code == requests.codes.ok:
-                    # debug("got POI Data")
-                    temp_saadata = r.json()
-
-                # push the data ont a queue
-                if "SAAScanComplete" in temp_saadata:
-                    self.saaq.put(temp_saadata)
-            except:
-                Debug.logger.error("Error getting SAA data")
-
-            # try:
-                # url = "https://api.canonn.tech/systems?systemName={}".format(
-                # quote_plus(system.encode('utf8')))
-
-                # r = requests.get(url, timeout=30)
-                # # debug("request complete")
-                # r.encoding = 'utf-8'
-                # if r.status_code == requests.codes.ok:
-                # # push canonn data only a queue
-                # # self.canonnq.put(r.json())
-                # pass
-                # else:
-                # Debug.logger.debug("Canonn Failed")
-                # Debug.logger.error("Canonn Failed")
-            # except:
-                # Debug.logger.debug("Error getting Canonn data")
-
-            try:
-                url = "http://elite.laulhere.com/ExTool/info.php?mode=canonn&system={}".format(
-                    quote_plus(system.encode('utf8')))
-
-                r = requests.get(url, timeout=30)
-                # debug("request complete")
-                r.encoding = 'utf-8'
-                if r.status_code == requests.codes.ok:
-                    # push canonn data only a queue
-                    temp_poidata = r.json()
-
-                if "POINTS" in temp_poidata:
-                    for v in temp_poidata["POINTS"]:
-                        v["EXTOOL"] = True
-                        self.poiq.put(v)
-            except:
-                Debug.logger.error("Error getting ExTool data")
 
             self.waitingPOI = False
             Debug.logger.debug("Triggering Event")
@@ -2511,7 +2457,24 @@ class CodexTypes():
         if b.get('isLandable') and temperature and float(temperature) > 1500:
             self.add_poi("Tourist", f"Hot landable {type}", body_code)
 
+    def synchronous_orbit(self, b):
+        body_code = b.get("name").replace(self.system+" ", '')
+        valid = (b.get("rotationalPeriod") and b.get("orbitalPeriod")
+                 and b.get("rotationalPeriodTidallyLocked"))
+        earthlike = (b.get('subType') and b.get('subType')
+                     in ('Earthlike body', 'Earth-like world'))
+        starchild = (b.get("parents") and len(b.get("parents")) >
+                     0 and list(b.get("parents")[0].keys())[0] == 'Star')
+
+        if valid and round(float(b.get("rotationalPeriod")), 4) == round(float(b.get("orbitalPeriod")), 4):
+            if earthlike and starchild:
+                self.add_poi("Tourist", f"Eyeball Earthlike", body_code)
+            else:
+                self.add_poi("Tourist", f"Synchronous Orbit", body_code)
+
     def shepherd_moon(self, body, bodies):
+        if body.get("type") == "Barycentre":
+            return
 
         def get_density(mass, inner, outer):
             a1 = math.pi * pow(inner, 2)
@@ -2551,8 +2514,12 @@ class CodexTypes():
                     # all measurements in meters
                     semiMajorAxis = float(
                         body.get("semiMajorAxis")) * 149597870691
-                    bodyRadius = float(body.get("radius")
-                                       or body.get("solarRadius")) * 1000
+                    try:
+                        bodyRadius = float(body.get("radius")
+                                           or body.get("solarRadius")) * 1000
+                    except:
+                        print(json.dumps(body, indent=4))
+                        raise
                     outerRadius = float(ring.get("outerRadius"))
                     innerRadius = float(ring.get("innerRadius"))
 
@@ -2676,6 +2643,9 @@ class CodexTypes():
                     self.add_poi("Tourist", 'Close Flypast', body_code)
 
     def close_bodies(self, candidate, bodies, body_code):
+        if candidate.get("type") == "Barycentre":
+            return
+
         if candidate.get("semiMajorAxis") is not None and candidate.get("orbitalEccentricity") is not None:
             distance = None
             #comparitor = None
@@ -2919,7 +2889,7 @@ class CodexTypes():
 
         if materials:
             for target in mats:
-                if CodexTypes.raw_mats.get(target.lower()):
+                if CodexTypes.raw_mats is not None and CodexTypes.raw_mats.get(target.lower()):
                     quantity = CodexTypes.raw_mats.get(target.lower())
                 else:
                     quantity = 0
@@ -3216,12 +3186,12 @@ class CodexTypes():
                                     if english_name.split(" ")[0] in self.odyssey_bio:
                                         subcat = " ".join(
                                             english_name.split(" ")[0:2])
-                                if codex_name_ref.get("reward") is not None and int(codex_name_ref.get("reward")/100000) != 0:
+                                if codex_name_ref.get("reward") is not None and int(codex_name_ref.get("reward")/1000000) != 0:
 
                                     subcat = "("+str(int(codex_name_ref.get(
-                                        "reward") / 100000))+"$) " + subcat
+                                        "reward") / 1000000))+"$) " + subcat
                                     english_name = "("+str(
-                                        int(codex_name_ref.get("reward")/100000))+"$) " + english_name
+                                        int(codex_name_ref.get("reward")/1000000))+"$) " + english_name
 
                         self.add_poi(hud_category, subcat, bodycode)
                     else:
@@ -3232,16 +3202,16 @@ class CodexTypes():
                         if (hud_category == "Geology") or (hud_category == "Biology"):
 
                             if self.odyssey:
-                                self.add_ppoi_wsaa(bodycode, hud_category, english_name, 0, round(
-                                    self.latitude, 2), round(self.longitude, 2), True)
+                                self.add_ppoi_wsaa(bodycode, hud_category, english_name, 0,
+                                                   self.latitude, self.longitude, True)
 
                             else:
                                 near_dest = entry.get(
                                     "NearestDestination").split(":")
                                 if (near_dest[2].split("=")[0] == "#index"):
                                     idx = int(near_dest[2].split("=")[1][:-1])
-                                    self.add_ppoi_wsaa(bodycode, hud_category, english_name, idx, round(
-                                        self.latitude, 2), round(self.longitude, 2), True)
+                                    self.add_ppoi_wsaa(bodycode, hud_category, english_name, idx,
+                                                       self.latitude, self.longitude, True)
 
                             if hud_category == "Geology":
                                 if "Unknown" in self.ppoidata[bodycode]["Geology"]:

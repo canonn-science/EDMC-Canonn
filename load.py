@@ -95,7 +95,7 @@ def plugin_prefs(parent, cmdr, is_beta):
     this.release.plugin_prefs(frame, cmdr, is_beta, 1)
     this.patrol.plugin_prefs(frame, cmdr, is_beta, 2)
     this.codexcontrol.plugin_prefs(frame, cmdr, is_beta, 3)
-    hdreport.HDInspector(frame, cmdr, is_beta, this.client_version, 4)
+    #hdreport.HDInspector(frame, cmdr, is_beta, this.client_version, 4)
     Debug.plugin_prefs(frame, this.client_version, 5)
     capture.plugin_prefs(frame, cmdr, is_beta, 6)
     this.extool.plugin_prefs(frame, cmdr, is_beta, 7)
@@ -131,7 +131,7 @@ def plugin_start(plugin_dir):
     journaldata.plugin_start(plugin_dir)
     capture.plugin_start(plugin_dir)
     extool.BearingDestination.plugin_start(plugin_dir)
-    extool.extoolTypes.plugin_start(plugin_dir)
+
     canonn.target.TargetDisplay.set_plugin_dir(plugin_dir)
 
     return 'Canonn'
@@ -162,7 +162,7 @@ def plugin_app(parent):
     this.news = news.CanonnNews(table, 0)
     this.release = release.Release(table, this.version, 1)
     this.codexcontrol = codex.CodexTypes(table, 2)
-    this.extoolcontrol = extool.extoolTypes()
+    #this.extoolcontrol = extool.extoolTypes()
     this.extool = extool.BearingDestination(table, 3)
     this.codexcontrol.setDestinationWidget(this.extool)
     this.patrol = patrol.CanonnPatrol(this.parent, table, 4)
@@ -284,8 +284,7 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
                               x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     this.codexcontrol.journal_entry(cmdr, is_beta, system, station, entry,
                                     state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
-    this.extoolcontrol.journal_entry(
-        cmdr, is_beta, system, station, entry, state, client)
+
     whiteList.journal_entry(cmdr, is_beta, system, station, entry, state,
                             x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     materialReport.submit(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS,
@@ -371,8 +370,7 @@ def dashboard_entry_wrapper(cmdr, is_beta, entry, ):
 
     this.codexcontrol.updatePlanetData(
         this.body_name, this.nearloc['Latitude'], this.nearloc['Longitude'], this.nearloc['Temperature'], this.nearloc['Gravity'])
-    this.extoolcontrol.updateStatus(
-        this.body_name, this.planet_radius, this.nearloc)
+
     this.extool.updatePosition(this.body_name, this.planet_radius,
                                this.nearloc['Latitude'], this.nearloc['Longitude'], this.nearloc['Heading'])
 
