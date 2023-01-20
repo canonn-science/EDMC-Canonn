@@ -69,8 +69,6 @@ this.nearloc = {
     'Time': None
 }
 
-myPlugin = "EDMC-Canonn"
-
 this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
 this.DistFromStarLS = None  # take distance to star
