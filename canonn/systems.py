@@ -113,8 +113,18 @@ class Systems():
 
     @classmethod
     def systemFromId64(cls, id64):
-        return cls.id_cache.get(id64)
-        # we could try and lookup up from somewhere
+        if cls.id_cache.get(id64):
+            return cls.id_cache.get(id64)
+        else:
+            # look up the system name and coords from spansh
+            Debug.logger.debug("Fetching System From Spansh")
+            r = requests.get(f"https://spansh.co.uk/api/dump/{id64}")
+            if requests.codes.ok:
+                j = r.json().get("system")
+                cls.storeId64(
+                    {"SystemAddress": id64, "StarSystem": j.get("name")})
+                cls.storeSystem(j.get("name"), j.get("coords"))
+                return cls.id_cache.get(id64)
 
     @classmethod
     def edsmGetSystem(cls, system):
