@@ -35,7 +35,22 @@ import queue
 import re
 
 
+def plugin_error(func):
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except Exception as e:
+            Debug.logger.error(f"{func.__name__} had an error")
+            Debug.logger.error(args)
+            Debug.logger.error(e)
+            self = args[0]
+            self.add_poi("Other", 'Plugin Error', args[3])
+
+    return wrapper
+
 # identify the genus
+
+
 def get_genus(value):
     for type in CodexTypes.genus.values():
         if type in value:
@@ -1080,7 +1095,7 @@ class CodexTypes():
                         body_code = b.get("name").replace(self.system+" ", '')
                         body_name = b.get("name")
 
-                        self.shepherd_moon(b, bodies)
+                        self.shepherd_moon(b, bodies, body_code)
                         self.hot_landable(b)
                         self.synchronous_orbit(b)
                         self.helium_rich(b)
@@ -2472,7 +2487,8 @@ class CodexTypes():
             else:
                 self.add_poi("Tourist", f"Synchronous Orbit", body_code)
 
-    def shepherd_moon(self, body, bodies):
+    @plugin_error
+    def shepherd_moon(self, body, bodies, body_code):
         if body.get("type") == "Barycentre":
             return
 
@@ -2583,69 +2599,65 @@ class CodexTypes():
             return self.light_seconds('radius', body.get("radius"))
         return None
 
+    @plugin_error
     def close_flypast(self, body, bodies, body_code):
-        try:
-            for sibling in bodies.values():
-                p1 = body.get("parents")
-                p2 = sibling.get("parents")
 
-                valid_body = True
-                valid_body = (p2 and valid_body)
-                valid_body = (p1 and valid_body)
-                valid_body = (body.get("type") in (
-                    "Planet", "Star") and valid_body)
-                valid_body = (sibling.get("type") in (
-                    "Planet", "Star") and valid_body)
-                valid_body = (body.get("semiMajorAxis")
-                              is not None and valid_body)
-                valid_body = (sibling.get("semiMajorAxis")
-                              is not None and valid_body)
-                valid_body = (body.get("orbitalEccentricity")
-                              is not None and valid_body)
-                valid_body = (sibling.get("orbitalEccentricity")
-                              is not None and valid_body)
-                valid_body = (body.get("orbitalPeriod")
-                              is not None and valid_body)
-                valid_body = (sibling.get("orbitalPeriod")
-                              is not None and valid_body)
-                not_self = (body.get("bodyId") != sibling.get("bodyId"))
-                valid_body = (not_self and valid_body)
+        for sibling in bodies.values():
+            p1 = body.get("parents")
+            p2 = sibling.get("parents")
 
-                # if we share teh same parent and not the same body
-                if valid_body and str(p1[0]) == str(p2[0]):
-                    a1 = self.apoapsis("semiMajorAxis", body.get(
-                        "semiMajorAxis"), body.get("orbitalEccentricity"))
-                    a2 = self.apoapsis("semiMajorAxis", sibling.get(
-                        "semiMajorAxis"), sibling.get("orbitalEccentricity"))
-                    p1 = self.periapsis("semiMajorAxis", body.get(
-                        "semiMajorAxis"), body.get("orbitalEccentricity"))
-                    p2 = self.periapsis("semiMajorAxis", sibling.get(
-                        "semiMajorAxis"), sibling.get("orbitalEccentricity"))
-                    r1 = sibling.get("radius")
-                    r2 = body.get("radius")
+            valid_body = True
+            valid_body = (p2 and valid_body)
+            valid_body = (p1 and valid_body)
+            valid_body = (body.get("type") in (
+                "Planet", "Star") and valid_body)
+            valid_body = (sibling.get("type") in (
+                "Planet", "Star") and valid_body)
+            valid_body = (body.get("semiMajorAxis")
+                          is not None and valid_body)
+            valid_body = (sibling.get("semiMajorAxis")
+                          is not None and valid_body)
+            valid_body = (body.get("orbitalEccentricity")
+                          is not None and valid_body)
+            valid_body = (sibling.get("orbitalEccentricity")
+                          is not None and valid_body)
+            valid_body = (body.get("orbitalPeriod")
+                          is not None and valid_body)
+            valid_body = (sibling.get("orbitalPeriod")
+                          is not None and valid_body)
+            not_self = (body.get("bodyId") != sibling.get("bodyId"))
+            valid_body = (not_self and valid_body)
 
-                    # we want this to be in km
-                    adistance = (abs(a1 - a2) * 299792.5436) - (r1 + r2)
-                    pdistance = (abs(p1 - a2) * 299792.5436) - (r1 + r2)
-                    # print("distance {}, radii = {}".format(distance,r1+r2))
-                    period = get_synodic_period(body, sibling)
+            # if we share teh same parent and not the same body
+            if valid_body and str(p1[0]) == str(p2[0]):
+                a1 = self.apoapsis("semiMajorAxis", body.get(
+                    "semiMajorAxis"), body.get("orbitalEccentricity"))
+                a2 = self.apoapsis("semiMajorAxis", sibling.get(
+                    "semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                p1 = self.periapsis("semiMajorAxis", body.get(
+                    "semiMajorAxis"), body.get("orbitalEccentricity"))
+                p2 = self.periapsis("semiMajorAxis", sibling.get(
+                    "semiMajorAxis"), sibling.get("orbitalEccentricity"))
+                r1 = sibling.get("radius")
+                r2 = body.get("radius")
 
-                    # its close if less than 100km
-                    collision = (adistance < 0 or pdistance < 0)
-                    close = (adistance < 100 or pdistance < 100)
-                    # only considering a 30 day period
-                    if collision and period < 40:
-                        self.add_poi(
-                            "Tourist", 'Collision Flypast', body_code)
-                    elif close and period < 40:
-                        self.add_poi("Tourist", 'Close Flypast', body_code)
-        except Exception as e:
-            Debug.logger.error("Bodies error")
-            Debug.logger.error(body)
-            Debug.logger.error(e)
-            Debug.logger.exception(e)
-            raise
+                # we want this to be in km
+                adistance = (abs(a1 - a2) * 299792.5436) - (r1 + r2)
+                pdistance = (abs(p1 - a2) * 299792.5436) - (r1 + r2)
+                # print("distance {}, radii = {}".format(distance,r1+r2))
+                period = get_synodic_period(body, sibling)
 
+                # its close if less than 100km
+                collision = (adistance < 0 or pdistance < 0)
+                close = (adistance < 100 or pdistance < 100)
+                # only considering a 30 day period
+                if collision and period < 40:
+                    self.add_poi(
+                        "Tourist", 'Collision Flypast', body_code)
+                elif close and period < 40:
+                    self.add_poi("Tourist", 'Close Flypast', body_code)
+
+    @plugin_error
     def close_bodies(self, candidate, bodies, body_code):
         if candidate.get("type") == "Barycentre":
             return
@@ -2687,6 +2699,7 @@ class CodexTypes():
                     else:
                         self.add_poi("Tourist", 'Close Orbit', body_code)
 
+    @plugin_error
     def close_rings(self, candidate, bodies, body_code):
 
         # need to modify this to look at barycentres too
