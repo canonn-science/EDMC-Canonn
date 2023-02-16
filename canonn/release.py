@@ -95,7 +95,7 @@ class ReleaseLink(HyperlinkLabel):
 
 class ReleaseThread(threading.Thread):
     def __init__(self, release):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="canonn-ReleaseThread")
         self.release = release
 
     def run(self):
@@ -148,7 +148,9 @@ class Release(Frame):
 
         Debug.logger.debug(config.get_str('Canonn:RemoveBackup'))
 
-        self.update(None)
+        # trigger the update *after* the Tk main loop is running, since it can get the result and
+        # try and send a Tk event before EDMC manages to get the main loop started.
+        self.after_idle(self.update, None)
 
         if self.rmbackup.get() == 1 and config.get_str('Canonn:RemoveBackup') and config.get_str('Canonn:RemoveBackup') != "None":
             delete_dir = config.get_str('Canonn:RemoveBackup')
