@@ -35,7 +35,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 
 class ClientVersion():
-    ver = "7.0.0"
+    ver = "7.0.1"
     client_version = f"EDMC-Canonn.{ver}"
 
     @classmethod
@@ -95,7 +95,7 @@ class ReleaseLink(HyperlinkLabel):
 
 class ReleaseThread(threading.Thread):
     def __init__(self, release):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="canonn-ReleaseThread")
         self.release = release
 
     def run(self):
@@ -148,7 +148,9 @@ class Release(Frame):
 
         Debug.logger.debug(config.get_str('Canonn:RemoveBackup'))
 
-        self.update(None)
+        # trigger the update *after* the Tk main loop is running, since it can get the result and
+        # try and send a Tk event before EDMC manages to get the main loop started.
+        self.after_idle(self.update, None)
 
         if self.rmbackup.get() == 1 and config.get_str('Canonn:RemoveBackup') and config.get_str('Canonn:RemoveBackup') != "None":
             delete_dir = config.get_str('Canonn:RemoveBackup')
@@ -175,9 +177,10 @@ class Release(Frame):
         ReleaseThread(self).start()
 
     def release_pull(self):
+        headers = "X-GitHub-Api-Version:2022-11-28"
         self.latest = {}
         r = requests.get(
-            "https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest")
+            "https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest", headers)
         latest = r.json()
         # Debug.logger.debug(latest)
         if not r.status_code == requests.codes.ok:

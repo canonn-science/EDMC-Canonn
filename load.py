@@ -40,7 +40,8 @@ import plug
 
 this = sys.modules[__name__]
 
-plugin_name = os.path.basename(os.path.dirname(__file__))
+# stripping `EDMC-` keeps our name consistent with what EDMC displays.
+plugin_name = os.path.basename(os.path.dirname(__file__)).removeprefix('EDMC-')
 logger = logging.getLogger(f'{appname}.{plugin_name}')
 
 # If the Logger has handlers then it was already set up by the core code, else
@@ -68,8 +69,6 @@ this.nearloc = {
     'Gravity': None,
     'Time': None
 }
-
-myPlugin = "EDMC-Canonn"
 
 this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
@@ -134,7 +133,7 @@ def plugin_start(plugin_dir):
 
     canonn.target.TargetDisplay.set_plugin_dir(plugin_dir)
 
-    return 'Canonn'
+    return plugin_name
 
 
 def plugin_stop():
@@ -178,6 +177,8 @@ def plugin_app(parent):
 
 
 def journal_entry(cmdr, is_beta, system, station, entry, state):
+    if entry.get("StarSystem") and entry.get("StarPos"):
+        Systems.storeSystem(entry.get("StarSystem"), entry.get("StarPos"))
 
     # we will cache some date from the latest journal because we will probably need it.
     if entry.get("event" == "LoadGame"):
@@ -202,9 +203,6 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             x, y, z = Systems.edsmGetSystem(system)
         else:
             Debug.logger.debug("Can't locate system leaving it blank")
-
-    if entry.get("StarSystem") and entry.get("StarPos"):
-        Systems.storeSystem(entry.get("StarSystem"), entry.get("StarPos"))
 
     if "SystemFaction" in entry:
 
@@ -239,7 +237,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         Systems.storeSystem(system, entry.get("StarPos"))
         this.DistFromStarLS = None
 
-    if entry.get("event") == "CarrierJump":
+    if entry.get("event") == "CarrierJump" and entry.get("StarSystem"):
         system = entry.get("StarSystem")
         Systems.storeSystem(system, entry.get("StarPos"))
 
@@ -257,6 +255,22 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
 
     if system and entry.get("StarPos"):
         x, y, z = entry.get("StarPos")
+
+    ignorelist = ["LoadGame", "Statistics", "Friends",
+                  "ReceiveText", "FSSSignalDiscovered", "SquadronStartup"]
+
+    mismatch64 = (entry.get("SystemAddress") and entry.get(
+        "SystemAddress") != Systems.id64FromSystem(system))
+    badsystem = (system is None or system == "" or mismatch64)
+
+    if badsystem and not entry.get("event") in ignorelist:
+        if system is None or system == "":
+            #plug.show_error(f"Canonn: system is blank {entry.get('event')}")
+            Debug.logger.error(f"Canonn: system is blank {entry.get('event')}")
+        else:
+            #plug.show_error(f"Canonn: id64 mismatch {entry.get('event')}")
+            Debug.logger.error(f"Canonn: id64 mismatch {entry.get('event')}")
+        Debug.logger.error(entry)
 
     return journal_entry_wrapper(cmdr, is_beta, system, this.SysFactionState, this.SysFactionAllegiance,
                                  this.DistFromStarLS, station, entry,

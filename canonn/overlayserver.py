@@ -7,22 +7,13 @@ import sys
 import json
 import plug
 
+from canonn.debug import Debug
+
+
 # 127.0.0.1:5010
 
 this = sys.modules[__name__]
-this.overlay_connected = False
 
-try:
-    import edmcoverlay
-    if edmcoverlay.check_game_running():
-        this._overlay = edmcoverlay.Overlay()
-        this.connection = this._overlay.connect()
-        this.overlay_connected = True
-    else:
-        plug.show_error("Restart EDMC after the game is loaded")
-except:
-    this.overlay_connected = False
-    pass
 
 
 def getConfig(rtype, config_data):
@@ -137,26 +128,60 @@ def display(message, id, color, posx, posy, ttl, header_color, header_text, max_
         i += 1
 
 
+# this is being lazy-loaded, but better to have something in the named
+# slot than nothing.  makes debugging easier.  `import` will overwrite
+# this with the actual module, if we are able to do so.
+#
+# given the potential for EDMC to load our plugin first, before the
+# EDMCOverlay plugin, or some plugin that offers a compatibility layer
+# with it, I switched to pure lazy loading — slippycheeze
+edmcoverlay = None
+
+# make sure this *always* has a value, so `send_message` doesn't have to.
+this._overlay = None
+
+# make sure we only warn the user *once* that EDMCOverlay isn't available; we
+# default to being rather spammy until they turn off the option, and we can be
+# nicer than that.
+this._warned_about_missing_overlay = False
+
+
 def send_message(id, text, color, x, y, ttl=4, size="normal"):
     # print("{} => {} //x:{}/y:{}".format(id,text,x,y))
     # at this point we have checked config so if we
     # have failed then its because the plugin is missing
 
-    if this.overlay_connected == False:
-        #plug.show_error("Retrying Overlay Connection")
-        # we can retry but maybe its disabled
-        try:
-            this._overlay = edmcoverlay.Overlay()
-            this.connection = this._overlay.connect()
-            this.overlay_connected = True
-        except:
-            pass
+    # make sure the byte compiler does not treat this as a local variable.
+    global edmcoverlay
 
     try:
-        if edmcoverlay.check_game_running():
-            this._overlay.send_message(
-                id, text, color, x, y, ttl=ttl, size=size)
-        else:
-            plug.show_error("Game not running")
-    except:
-        plug.show_error("Need to install the EDMCOverlay plugin")
+        if edmcoverlay is None:
+            import edmcoverlay
+        if this._overlay is None:
+            this._overlay = edmcoverlay.Overlay()
+
+        if this._overlay is not None:
+            this._overlay.send_message(id, text, color, x, y, ttl=ttl, size=size)
+
+        # in the event the overlay is not available, we can silently ignore the
+        # problem in the hope it improves later.  user won't get an alert, but
+        # better than a string of failures every time we try and send.
+    except ModuleNotFoundError:
+        if not this._warned_about_missing_overlay:
+            Debug.logger.exception("import of edmcoverlay failed")
+            plug.show_error(f"Need to install the EDMCOverlay plugin: {ex}")
+            this._warned_about_missing_overlay = True
+        pass                    # suppress this error, we "handled" it ourselves.
+    except Exception as ex:
+        Debug.logger.exception("sending a message through the EDMCOverlay plugin failed")
+
+        # the reasonable inference is that `_overlay.send_message()` is
+        # throwing, so then the connection is probably broken.
+        #
+        # If the problem is, eg, that the EDMCOverlay.exe server has crashed or
+        # our socket was strangely closed, or something, the new client instance
+        # will start another, so this is a solid recovery strategy.
+        this._overlay = None
+
+        # ...and suppress the problem, neh?
+        pass

@@ -71,8 +71,10 @@ class Emitter(threading.Thread):
         else:
             # first check to see if we are an official release
             repo, tag = client.split(".", 1)
+            headers = "X-GitHub-Api-Version:2022-11-28"
+
             r = requests.get(
-                "https://api.github.com/repos/canonn-science/{}/releases/tags/{}".format(repo, tag))
+                "https://api.github.com/repos/canonn-science/{}/releases/tags/{}".format(repo, tag), headers)
             j = r.json()
             if r.status_code == 404:
                 Debug.logger.debug("Release not in github")
@@ -84,15 +86,19 @@ class Emitter(threading.Thread):
                 Debug.logger.debug("Release in github")
                 Emitter.route = Emitter.urls.get("live")
 
-            r = requests.get(
-                "{}/clientroutes?clientVersion={}".format(Emitter.urls.get("live"), client))
-            j = r.json()
-            if not r.status_code == requests.codes.ok or not j:
-                Debug.logger.debug("Using {}".format(Emitter.route))
-            else:
-                Emitter.route = j[0].get("route")
-                Debug.logger.debug(
-                    "Route override to {}".format(Emitter.route))
+            try:
+                r = requests.get(
+                    "{}/clientroutes?clientVersion={}".format(Emitter.urls.get("live"), client))
+                j = r.json()
+                if not r.status_code == requests.codes.ok or not j:
+                    Debug.logger.debug("Using {}".format(Emitter.route))
+                else:
+                    Emitter.route = j[0].get("route")
+                    Debug.logger.debug(
+                        "Route override to {}".format(Emitter.route))
+            except:
+                Debug.logger.debug("failed to get route")
+                Emitter.route = Emitter.urls.get("developement")
 
         return Emitter.route
 
