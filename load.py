@@ -40,7 +40,8 @@ import plug
 
 this = sys.modules[__name__]
 
-plugin_name = os.path.basename(os.path.dirname(__file__))
+# stripping `EDMC-` keeps our name consistent with what EDMC displays.
+plugin_name = os.path.basename(os.path.dirname(__file__)).removeprefix('EDMC-')
 logger = logging.getLogger(f'{appname}.{plugin_name}')
 
 # If the Logger has handlers then it was already set up by the core code, else
@@ -68,8 +69,6 @@ this.nearloc = {
     'Gravity': None,
     'Time': None
 }
-
-myPlugin = "EDMC-Canonn"
 
 this.SysFactionState = None  # variable for state of controling faction
 this.SysFactionAllegiance = None  # variable for allegiance of controlling faction
@@ -134,7 +133,7 @@ def plugin_start(plugin_dir):
 
     canonn.target.TargetDisplay.set_plugin_dir(plugin_dir)
 
-    return 'Canonn'
+    return plugin_name
 
 
 def plugin_stop():
