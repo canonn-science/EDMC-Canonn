@@ -175,9 +175,10 @@ class Release(Frame):
         ReleaseThread(self).start()
 
     def release_pull(self):
+        headers = "X-GitHub-Api-Version:2022-11-28"
         self.latest = {}
         r = requests.get(
-            "https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest")
+            "https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest", headers)
         latest = r.json()
         # Debug.logger.debug(latest)
         if not r.status_code == requests.codes.ok:
