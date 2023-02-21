@@ -35,7 +35,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 
 class ClientVersion():
-    ver = "7.0.1"
+    ver = "7.0.2"
     client_version = f"EDMC-Canonn.{ver}"
 
     @classmethod
