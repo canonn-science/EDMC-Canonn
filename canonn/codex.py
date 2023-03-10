@@ -2404,12 +2404,12 @@ class CodexTypes():
 
     def add_poi(self, hud_category, english_name, body):
 
-        # check if its bark mounds. if no volcanism then we will exit
+        # check if its bark mounds. if no volcanism then we will adjust the name
         if "Bark Mounds" in english_name and self.odyssey:
             # we need to change for volcanism
             for b in self.bodies.values():
                 if b.get("name") == str(body) or b.get("name") == f"{self.system} {str(body)}" and b.get('volcanismType') and b.get('volcanismType') == 'No volcanism':
-                    return
+                    english_name = "Ex-Bark Mounds"
 
         # Debug.logger.debug(f"add_poi - {hud_category} {english_name} {body}")
 
