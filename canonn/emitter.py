@@ -125,23 +125,27 @@ class Emitter(threading.Thread):
         self.send(payload, url)
 
     def send(self, payload, url):
-        fullurl = "{}/{}".format(url, self.modelreport)
-        r = requests.post(fullurl, data=json.dumps(payload, ensure_ascii=False).encode(
-            'utf8'), headers={"content-type": "application/json"})
+        try:
+            fullurl = "{}/{}".format(url, self.modelreport)
+            r = requests.post(fullurl, data=json.dumps(payload, ensure_ascii=False).encode(
+                'utf8'), headers={"content-type": "application/json"})
 
-        if not r.status_code == requests.codes.ok:
-            Debug.logger.error("{}/{}".format(url, self.modelreport))
-            Debug.logger.error(r.status_code)
-            headers = r.headers
-            contentType = str(headers['content-type'])
-            Debug.logger.error(contentType)
-            if 'json' in contentType:
-                Debug.logger.error(json.dumps(r.json()))
-            else:
-                if "Offline for Maintenance" in str(r.content):
-                    Debug.logger.error("Canonn API Offline")
+            if not r.status_code == requests.codes.ok:
+                Debug.logger.error("{}/{}".format(url, self.modelreport))
+                Debug.logger.error(r.status_code)
+                headers = r.headers
+                contentType = str(headers['content-type'])
+                Debug.logger.error(contentType)
+                if 'json' in contentType:
+                    Debug.logger.error(json.dumps(r.json()))
                 else:
-                    Debug.logger.error(r.content)
-            Debug.logger.error(json.dumps(payload))
-        else:
-            Debug.logger.debug("{}?id={}".format(fullurl, r.json().get("id")))
+                    if "Offline for Maintenance" in str(r.content):
+                        Debug.logger.error("Canonn API Offline")
+                    else:
+                        Debug.logger.error(r.content)
+                Debug.logger.error(json.dumps(payload))
+            else:
+                Debug.logger.debug("{}?id={}".format(
+                    fullurl, r.json().get("id")))
+        except:
+            Debug.logger.error("unable to send to api.canonn.tech")
