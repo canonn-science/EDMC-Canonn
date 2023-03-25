@@ -304,7 +304,7 @@ class spanshCheck(threading.Thread):
             'User-Agent': f"{ClientVersion.client()} (canonn.target.py)"
         }
         url = f"https://spansh.co.uk/api/dump/{self.id64}"
-        spansh = None
+        spansh = {}
         # debug("request {}:  Active Threads {}".format(
         #    url, threading.activeCount()))
 
@@ -313,7 +313,7 @@ class spanshCheck(threading.Thread):
         r.encoding = 'utf-8'
         if r.status_code in (requests.codes.ok, requests.codes.not_found):
             # debug("got EDSM Data")
-            if requests.codes.ok:
+            if r.ok:
                 spansh = r.json()
         else:
             plug.show_error(f"error: canonn -> spansh ({r.status_code})")
