@@ -79,6 +79,8 @@ class Systems():
     @classmethod
     def storeSystem(cls, system, pos):
         if not system in cls.systemCache:
+            if type(pos) is dict:
+                pos = sorted(pos.values())
             cls.systemCache[system] = pos
 
     @classmethod
@@ -119,7 +121,7 @@ class Systems():
             # look up the system name and coords from spansh
             Debug.logger.debug("Fetching System From Spansh")
             r = requests.get(f"https://spansh.co.uk/api/dump/{id64}")
-            if requests.codes.ok:
+            if r.ok:
                 j = r.json().get("system")
                 cls.storeId64(
                     {"SystemAddress": id64, "StarSystem": j.get("name")})

@@ -15,7 +15,6 @@ from canonn.debug import Debug
 this = sys.modules[__name__]
 
 
-
 def getConfig(rtype, config_data):
     config = config_data["types"][rtype]
     position = config_data["positions"][config["position"]]
@@ -161,7 +160,8 @@ def send_message(id, text, color, x, y, ttl=4, size="normal"):
             this._overlay = edmcoverlay.Overlay()
 
         if this._overlay is not None:
-            this._overlay.send_message(id, text, color, x, y, ttl=ttl, size=size)
+            this._overlay.send_message(
+                id, text, color, x, y, ttl=ttl, size=size)
 
         # in the event the overlay is not available, we can silently ignore the
         # problem in the hope it improves later.  user won't get an alert, but
@@ -169,11 +169,13 @@ def send_message(id, text, color, x, y, ttl=4, size="normal"):
     except ModuleNotFoundError:
         if not this._warned_about_missing_overlay:
             Debug.logger.exception("import of edmcoverlay failed")
-            plug.show_error(f"Need to install the EDMCOverlay plugin: {ex}")
+            plug.show_error(f"Need to install the EDMCOverlay plugin")
             this._warned_about_missing_overlay = True
-        pass                    # suppress this error, we "handled" it ourselves.
+        # suppress this error, we "handled" it ourselves.
+        pass
     except Exception as ex:
-        Debug.logger.exception("sending a message through the EDMCOverlay plugin failed")
+        Debug.logger.exception(
+            "sending a message through the EDMCOverlay plugin failed")
 
         # the reasonable inference is that `_overlay.send_message()` is
         # throwing, so then the connection is probably broken.
