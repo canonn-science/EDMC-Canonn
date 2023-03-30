@@ -256,7 +256,7 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
         x, y, z = entry.get("StarPos")
 
     ignorelist = ["LoadGame", "Statistics", "Friends",
-                  "ReceiveText", "FSSSignalDiscovered", "SquadronStartup"]
+                  "ReceiveText", "FSSSignalDiscovered", "SquadronStartup", "FSDTarget"]
 
     mismatch64 = (entry.get("SystemAddress") and entry.get(
         "SystemAddress") != Systems.id64FromSystem(system))
