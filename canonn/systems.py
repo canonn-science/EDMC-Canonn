@@ -78,9 +78,11 @@ class Systems():
 
     @classmethod
     def storeSystem(cls, system, pos):
+
         if not system in cls.systemCache:
             if type(pos) is dict:
-                pos = sorted(pos.values())
+                # we will assume x y z in correct order
+                pos = pos.values()
             cls.systemCache[system] = pos
 
     @classmethod
