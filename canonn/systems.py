@@ -82,7 +82,7 @@ class Systems():
         if not system in cls.systemCache:
             if type(pos) is dict:
                 # we will assume x y z in correct order
-                pos = pos.values()
+                pos = list(pos.values())
             cls.systemCache[system] = pos
 
     @classmethod
