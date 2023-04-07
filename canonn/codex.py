@@ -1094,6 +1094,7 @@ class CodexTypes():
                         self.rings(b, body_name)
                         self.green_system(bodies)
                         self.deeply_nested(b, body_code)
+                        self.satellite_star(b, body_code)
 
                         # Terraforming
                         if b.get('terraformingState') == 'Terraformable':
