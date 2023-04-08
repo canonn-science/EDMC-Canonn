@@ -34,6 +34,9 @@ from math import sqrt, pow
 import queue
 import re
 
+DWARFS = ("L (Brown dwarf) Star",
+          "T (Brown dwarf) Star", "Y (Brown dwarf) Star")
+
 
 def plugin_error(func):
     def wrapper(*args, **kwargs):
@@ -100,22 +103,6 @@ def get_null(body):
         if not p1 == None:
             return p1
     return None
-
-
-def moon_moon_moon(body):
-    # we are going to count parents that are planets
-    # ignore barycenters
-    moons = 0
-    if body.get("parents") and body.get("type") == 'Planet':
-        for parent in body.get("parents"):
-            if parent.get("Planet"):
-                moons += 1
-            if parent.get("Star"):
-                break
-        if moons >= 3:
-            return True
-
-    return False
 
 
 def isBinary(body):
@@ -1106,9 +1093,8 @@ class CodexTypes():
                         self.close_flypast(b, bodies, body_code)
                         self.rings(b, body_name)
                         self.green_system(bodies)
-                        if moon_moon_moon(b):
-                            self.add_poi(
-                                "Tourist", "Moon Moon Moon", body_code)
+                        self.deeply_nested(b, body_code)
+                        self.satellite_star(b, body_code)
 
                         # Terraforming
                         if b.get('terraformingState') == 'Terraformable':
@@ -1898,7 +1884,7 @@ class CodexTypes():
                 #    url, threading.activeCount()))
                 if temp_spanshdata.get("bodies") and len(temp_spanshdata.get("bodies")) > 0:
                     headers = {"Accept-Encoding": "gzip, deflate", }
-                    r = requests.get(url, headers=headers, timeout=30)
+                    r = requests.get(url, headers=headers, timeout=45)
                     # debug("request complete")
                     r.encoding = 'utf-8'
                     if r.status_code == requests.codes.ok:
@@ -2784,7 +2770,7 @@ class CodexTypes():
                 if "Ring" in ring.get("name"):
                     hasRings = True
 
-        if hasRings:
+        if hasRings and candidate.get("subType") not in DWARFS:
             self.add_poi("Tourist", "Ringed Star", body_code)
 
     def has_bio(self, body):
@@ -2836,6 +2822,46 @@ class CodexTypes():
         for category in self.poidata.copy():
             if category in ('Jumponium', 'GreenSystem'):
                 del self.poidata[category]
+
+    def satellite_star(self, body, body_code):
+        # excluding brown dwarfs
+        # if the star is designated a name ending in a digit it is a planet
+        # if the star is designated a name ending in a lower case char it is a planet
+        if body.get("type") == "Star" and body.get("subType") not in DWARFS:
+            if body_code[-1].islower() and body_code[-1].isalpha() and body_code[-2] == " ":
+                self.add_poi("Tourist", "Star as Moon", body_code)
+            if body_code[-1].isdigit() and body_code[-2] == " ":
+                self.add_poi("Tourist", "Star as Planet", body_code)
+
+    def deeply_nested(self, body, body_code):
+        # true moon moon moons have parents that are planets
+        # we are going to count parents that are planets
+        # ignore barycenters
+        mooncubed = False
+        nested = False
+        moons = 0
+        if body.get("parents") and body.get("type") == 'Planet':
+            for parent in body.get("parents"):
+                if parent.get("Planet"):
+                    moons += 1
+                if parent.get("Star"):
+                    break
+            if moons >= 3:
+                mooncubed = True
+
+        # The game treats some stars as planets so we want to be able to count those too
+        # In this case teh last three digits of the name will be lower case
+        # eg. HR 999 1 a b c
+        name = body.get("name")
+        if len(name) > 6:
+            if name[-6:][1::2].isalpha() & name[-6:][1::2].islower() and name[-6:][0::2] == "   ":
+                nested = True
+
+        if mooncubed:
+            self.add_poi("Tourist", "Moon Moon Moon", body_code)
+
+        if nested and not mooncubed:
+            self.add_poi("Tourist", "Deeply Nested", body_code)
 
     def green_system(self, bodies):
         mats = [

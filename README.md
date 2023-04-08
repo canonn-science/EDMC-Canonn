@@ -101,6 +101,48 @@ The plugin will look up EDSM and Canonn Databases to identify interesting facts 
 | ![Jumponium](icons/Jumponium_grey.gif) | Jumponium | Displayed when materials needed for jumponium synthesis can be found in the system.
 | ![Error](icons/None_grey.gif) | Error | Usually displayed when there is a plugin error.
 
+# Tourist Icons
+                    
+| name | Description
+|-----------------------------------|------------------------------------------------|
+| Close Flypast | Bodies that will pass close to each other but will never collide |
+| Close Orbit | As above but not landable |
+| Close Orbit Landable | A landable that orbits very close to another body |
+| Close Ring Proximity | Rings of two bodies that may be close to each other |
+| Collision Flypast | These bodies are on similar orbits and have a chance of colliding in the future. Ed observatory collisions plugin can confirm |
+| Deeply Nested | This is based on the in game nomenclature. If the last three chars are lower case then it is deeply nested. This will cover stars as well |
+| Eyeball Earthlike | An Earthlike world that always presents the same face to the sun |
+| Fast Orbital Period | The orbital period should be less than an hour to qualify |
+| Fast unlocked rotation | it rotates fast but is not tidally locked |
+| Gas Giant with \[Ammonia\|Water\] based life| Strictly speaking any body type with life will show up her but it is only gas giants |
+| Helium Gas Giant | To date, there have only been 15 Helium Giants found, and all but one of those are hand placed |
+| Helium Rich Gas Giant | Gas giants that lost their hydrogen due to insufficient mass to hold onto it, or that their parent star was once hotter in the past, driving hydrogen off quicker than normal |
+| Helium Rich System | Helium rich system indicates that the boxel may contain Helium Rich Gas Giants |
+| High Density Rings | Rings that are very massive compared to size |
+| High Gravity | High gravity landable bodies |
+| Highly Eccentric Orbit | The orbit is closed to a straight line than a circle |
+| Hot landable \[type\] | Hot landable bodies |
+| Inner Moon | These are like shepherds but in between rings but not close enough to have cleared them |
+| Landable Ringed Body | Landable bodies with rings. These can often have pretty views. |
+| Large Radius Landable | Big landable planets |
+| Large Radius Rings | Large rings in relation to the body size |
+| Low Density Rings | Rings that have little mass compared to size |
+| \[type\] Moon | moons that are these types: Earth-like world, Water world, Ammonia world |
+| Moon Moon Moon | This looks for moons of moons of moons. It does not consider brown dwarves to be be planets so this is much rarer than you might think. |
+| Ringed Star | Starts with rings. Now Excluded brown dwarfs |
+| Ringed \[type\] | Ringed Workds that are  these types: Earth-like world, Water world, Ammonia world |
+| Shepherd Moon | A moon that is close enough to the rings of the body it orbits to have cleared the orbit |
+| Small Radius Rings | Small rings in relation to body size |
+| Star as Moon | The game has designated the star as a moon (excluding brown stars) |
+| Star as Planet | The game has designated the star as a planet (excluding brown stars) |
+| Synchronous Orbit | Bodies that always show the same face to the body they orbit |
+| Thin Rings | very narrow rings  AK| Taylor rings |
+| Tiny Radius Landable | Tiny landable planets |
+| Trojan | These are bodies on trojan orbits. They may be planets moons or suns |
+| Walkable High Gravity | High gravity landable bodies you can walk on |
+
+
+
 ## Surface Navigation
 
 If you are close to the surface of a planet you can send a message in the in game chat that will enable the plugin to display a bearing and distance to a set of coordinates
