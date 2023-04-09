@@ -2827,10 +2827,11 @@ class CodexTypes():
         # excluding brown dwarfs
         # if the star is designated a name ending in a digit it is a planet
         # if the star is designated a name ending in a lower case char it is a planet
+        name=body.get("name")
         if body.get("type") == "Star" and body.get("subType") not in DWARFS:
-            if body_code[-1].islower() and body_code[-1].isalpha() and body_code[-2] == " ":
+            if name[-1].islower() and name[-1].isalpha() and name[-2] == " ":
                 self.add_poi("Tourist", "Star as Moon", body_code)
-            if body_code[-1].isdigit() and body_code[-2] == " ":
+            if name[-1].isdigit() and name[-2] == " ":
                 self.add_poi("Tourist", "Star as Planet", body_code)
 
     def deeply_nested(self, body, body_code):
