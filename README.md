@@ -39,15 +39,20 @@ Just install the EDMC-Overlay plugin as you would any other plugin and enable th
 
 The positon of the text on screen can be configured by editing a json file. For details see [overlay.md](overlay.md)
 
-## Patrol System
-The Patrol system is used for directing people to places of interest to Canonn and for providing some useful location information. The patrol will display the nearest location to the commander position. Patrols are not automaticaly updated they only get loaded on statup of after going into the configuration screen
+## POI System
+The POI system is used for directing people to places of interest to Canonn and for providing some useful location information. The POI section will display the nearest location to the commander position. Patrols are not automaticaly updated they only get loaded on statup of after going into the configuration screen
  
  * Canonn patrols usually consist of locations where data is incomplete. 
  * Canonn Influence Patrol: This tells you where systems have a Canonn Presence and gives some informatio about the current state
  * Galactic Mapping POIs show you the nearest Galactic mapping project entry.
  * Thargoid Sites show you the location of the nearest site and its type. 
  * Guardian Sites shows you the nearest guardian site 
- 
+
+
+    ![POI Section](images/poi_data.png)
+    
+
+
 **If the `Enable Patrols` setting in EDSM in the overlay section is enabled, patrols will be displayed when entering a system or when patrols are refreshed**
 
 ## Search Nearest
