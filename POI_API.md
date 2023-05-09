@@ -1,7 +1,7 @@
 # POI API
-The POI system has an API that can be used to supply patrols. You may want to direct people to search a set of systems or perform actions at certain locations. If you want to add your own POI data then please leave a message on our discord in the #software or #software_lab as we can arrange.
+The POI system has an API that can be used to supply patrols. You may want to direct people to search a set of systems or perform actions at certain locations. If you want to add your own POI data then please leave a message on our [discord](https://canonn.fyi/discord) in the #software or #software_lab and we can arrange integration.
 
-POI data can be supplied as a TSV formatted sheet or as json. TSV can be served from Google sheets making it convenient for commanders who do not have access to a server. Json format is more useful for commanders wit their own servers. 
+POI data can be supplied as a TSV formatted sheet or as json. TSV can be served from Google sheets making it convenient for commanders who do not have access to a server. Json format is more useful for commanders with their own servers. 
 
 ## How POIs are added
 The Canonn plugin can get a list of POI urls from a google sheet, making it easy to add and remove POI data. The POI list and POI data are typically downloaded by the plugin at startup and only gets updated when the plugin is restarted or when the plugin user changes any configuration settings. 
