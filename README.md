@@ -48,19 +48,24 @@ The POI system is used for directing people to places of interest to Canonn and 
  * Thargoid Sites show you the location of the nearest site and its type. 
  * Guardian Sites shows you the nearest guardian site 
 
+### Usage
+* Click on the green arrows to see next or previous POI.
+* Click on the POI message to open a web page associated with the POI
+* Click on the System Name to visit the EDSM page for the system
 
-    ![POI Section](images/poi_data.png)
-    
+![POI Section](images/poi_data.png)
 
+If you wish to create POI lists for inclusion then please read [POI_API.md](POI_API.md)
 
-**If the `Enable Patrols` setting in EDSM in the overlay section is enabled, patrols will be displayed when entering a system or when patrols are refreshed**
+**If the `Enable Patrols` setting in EDMC-Canonn settings overlay section is enabled, patrols will be displayed when entering a system or when patrols are refreshed**
+
 
 ## Search Nearest
 It is now possible to type a search command in the in game message box. NB: The search command will be visible to local players but the response will not. The search results will be stored in the POI section of the plugin in place of any POI. Right clicking on the system name will allow you to copy to the clipboard. 
 
 NB: Data is only updated once per day so may not be completely accurate.
 
-**If the `Enable nearest command` setting in EDSM in the overlay section is enabled, the result of the nearest command will be displayed**
+**If the `Enable nearest command` setting in EDMC-Canonn settings overlay section is enabled, the result of the nearest command will be displayed**
 
 | Command                                  | Example                         | Description                                                                                                                                                                                                                                                  |
 |------------------------------------------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
