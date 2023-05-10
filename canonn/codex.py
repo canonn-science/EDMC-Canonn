@@ -1900,6 +1900,10 @@ class CodexTypes():
                     for v in temp_poidata["codex"]:
                         self.poiq.put(v)
 
+                if "ScanOrganic" in temp_poidata:
+                    for v in temp_poidata["ScanOrganic"]:
+                        self.poiq.put(v)
+
                 if "SAAsignals" in temp_poidata:
                     for v in temp_poidata["SAAsignals"]:
                         self.saaq.put(v)
