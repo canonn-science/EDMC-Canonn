@@ -3209,10 +3209,13 @@ class CodexTypes():
 
         if entry.get("event") in ("CodexEntry", "ScanOrganic") and not entry.get("Category") == '$Codex_Category_StellarBodies;':
             # Make Organic Scan Look Like a Codex Entry
-            if not entry.get("EntryID"):
-                entry["EntryID"] = CodexTypes.variety_ref(entry.get("Variety"))
-                entry["Name_Localised"] = entry.get("Variety_Localised")
-                entry["Name"] = entry.get("Variety")
+            if entry.get("event") == "ScanOrganic":
+                print(entry.get("Variant"))
+                print(CodexTypes.variety_ref.get(entry.get("Variant")))
+                entry["EntryID"] = CodexTypes.variety_ref.get(
+                    entry.get("Variant")).get("entryid")
+                entry["Name_Localised"] = entry.get("Variant_Localised")
+                entry["Name"] = entry.get("Variant")
             # really we need to identify the codex types
             self.system = system
             entry_id = entry.get("EntryID")
