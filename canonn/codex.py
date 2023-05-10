@@ -1900,6 +1900,10 @@ class CodexTypes():
                     for v in temp_poidata["codex"]:
                         self.poiq.put(v)
 
+                if "ScanOrganic" in temp_poidata:
+                    for v in temp_poidata["ScanOrganic"]:
+                        self.poiq.put(v)
+
                 if "SAAsignals" in temp_poidata:
                     for v in temp_poidata["SAAsignals"]:
                         self.saaq.put(v)
@@ -2827,7 +2831,7 @@ class CodexTypes():
         # excluding brown dwarfs
         # if the star is designated a name ending in a digit it is a planet
         # if the star is designated a name ending in a lower case char it is a planet
-        name=body.get("name")
+        name = body.get("name")
         if body.get("type") == "Star" and body.get("subType") not in DWARFS:
             if name[-1].islower() and name[-1].isalpha() and name[-2] == " ":
                 self.add_poi("Tourist", "Star as Moon", body_code)
@@ -3207,7 +3211,15 @@ class CodexTypes():
             self.allowed = True
             self.refreshPOIData(None)
 
-        if entry.get("event") == "CodexEntry" and not entry.get("Category") == '$Codex_Category_StellarBodies;':
+        if entry.get("event") in ("CodexEntry", "ScanOrganic") and not entry.get("Category") == '$Codex_Category_StellarBodies;':
+            # Make Organic Scan Look Like a Codex Entry
+            if entry.get("event") == "ScanOrganic":
+                print(entry.get("Variant"))
+                print(CodexTypes.variety_ref.get(entry.get("Variant")))
+                entry["EntryID"] = CodexTypes.variety_ref.get(
+                    entry.get("Variant")).get("entryid")
+                entry["Name_Localised"] = entry.get("Variant_Localised")
+                entry["Name"] = entry.get("Variant")
             # really we need to identify the codex types
             self.system = system
             entry_id = entry.get("EntryID")
@@ -3542,6 +3554,10 @@ class CodexTypes():
             # for entry in r.json():
             #    name_ref[entry.get("entryid")] = entry
             cls.name_ref = r.json()
+
+            # create a variety lookup for scan_organic
+            for entry in cls.name_ref.values():
+                cls.variety_ref[entry.get("name")] = entry
         else:
             Debug.logger.error("error in get_codex_names")
 
@@ -3549,15 +3565,17 @@ class CodexTypes():
     def plugin_start(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
         cls.name_ref = {}
+        cls.variety_ref = {}
 
+        # we are going to load from the file initially
         file = os.path.join(cls.plugin_dir, 'data', 'codex_name_ref.json')
         # try:
         with open(file) as json_file:
             cls.name_ref = json.load(json_file)
 
-        # make this a dict
-        # for entry in name_ref_array:
-        #    cls.name_ref[entry.get("entryid")] = entry
+        # create a variety lookup for scan_organic
+        for entry in cls.name_ref.values():
+            cls.variety_ref[entry.get("name")] = entry
 
         codexName(cls.get_codex_names).start()
         # except:
