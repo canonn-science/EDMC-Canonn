@@ -193,9 +193,10 @@ class TargetDisplay():
         if not self.hidden:
             self.hidden = True
             self.label.destroy()
-            self.frame.destroy()
             self.floppy.destroy()
             self.zoom.destroy()
+            # frame must be the last thing we destroy
+            self.frame.destroy()
 
     def show(self):
 
