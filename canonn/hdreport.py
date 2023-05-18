@@ -358,7 +358,7 @@ class hyperdictionDetector():
         if entry.get("event") == "Music" and entry.get("MusicTrack") in ("Unknown_Encounter"):
             cls.Music(system, cmdr, entry.get("timestamp"), client, odyssey)
 
-        if entry.get("event") == "Music" and entry.get("MusicTrack") in ("Combat_Unknown"):
+        if entry.get("event") == "Music" and entry.get("MusicTrack") in ("Combat_Unknown", "", "Combat_Dogfight", "Combat_Hunters"):
             cls.Combat(system, cmdr, entry.get("timestamp"), client, odyssey)
 
         if entry.get("event") == "SupercruiseExit":
