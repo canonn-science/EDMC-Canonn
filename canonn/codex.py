@@ -2398,7 +2398,9 @@ class CodexTypes():
         if "Bark Mounds" in english_name and self.odyssey:
             # we need to change for volcanism
             for b in self.bodies.values():
-                if b.get("name") == str(body) or b.get("name") == f"{self.system} {str(body)}" and b.get('volcanismType') and b.get('volcanismType') == 'No volcanism':
+                novolcanoes = (b.get('volcanismType') is None or b.get(
+                    'volcanismType') == 'No volcanism')
+                if b.get("name") == str(body) or b.get("name") == f"{self.system} {str(body)}" and novolcanoes:
                     english_name = "Ex-Bark Mounds"
 
         # Debug.logger.debug(f"add_poi - {hud_category} {english_name} {body}")
@@ -2524,7 +2526,7 @@ class CodexTypes():
                         bodyRadius = float(body.get("radius")
                                            or body.get("solarRadius")) * 1000
                     except:
-                        print(json.dumps(body, indent=4))
+
                         raise
                     outerRadius = float(ring.get("outerRadius"))
                     innerRadius = float(ring.get("innerRadius"))
@@ -3214,8 +3216,7 @@ class CodexTypes():
         if entry.get("event") in ("CodexEntry", "ScanOrganic") and not entry.get("Category") == '$Codex_Category_StellarBodies;':
             # Make Organic Scan Look Like a Codex Entry
             if entry.get("event") == "ScanOrganic":
-                print(entry.get("Variant"))
-                print(CodexTypes.variety_ref.get(entry.get("Variant")))
+
                 entry["EntryID"] = CodexTypes.variety_ref.get(
                     entry.get("Variant")).get("entryid")
                 entry["Name_Localised"] = entry.get("Variant_Localised")

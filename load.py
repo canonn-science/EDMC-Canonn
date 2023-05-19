@@ -22,6 +22,7 @@ from canonn import news
 from canonn import nhss
 from canonn import patrol
 from canonn import release
+from canonn import organic_scanner
 from canonn.release import ClientVersion
 from canonn import extool
 import canonn.target
@@ -167,7 +168,8 @@ def plugin_app(parent):
     this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 5)
     this.guestbook = guestBook.setup(table, 6)
     this.target = canonn.target.TargetDisplay(table, 7, this.codexcontrol)
-    this.guardian = canonn.guardian.Display(table, 8)
+    this.scan_organic = organic_scanner.OrganicScanner(table, 8)
+    this.guardian = canonn.guardian.Display(table, 9)
 
     whitelist = whiteList(parent)
     whitelist.fetchData()
@@ -310,6 +312,8 @@ def journal_entry_wrapper(cmdr, is_beta, system, SysFactionState, SysFactionAlle
                           station, entry, state, x, y, z, body, nearloc['Latitude'], nearloc['Longitude'], client)
     this.extool.journal_entry(cmdr, is_beta, system, entry, client)
     guestBook.journal_entry(entry)
+    this.scan_organic.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
+                                    state, x, y, z, body, nearloc, client)
     this.target.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
                               state, x, y, z, body, nearloc, client)
     this.guardian.journal_entry(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
@@ -386,6 +390,8 @@ def dashboard_entry_wrapper(cmdr, is_beta, entry, ):
 
     this.extool.updatePosition(this.body_name, this.planet_radius,
                                this.nearloc['Latitude'], this.nearloc['Longitude'], this.nearloc['Heading'])
+    this.scan_organic.updatePosition(
+        this.body_name, this.planet_radius, this.nearloc)
 
 
 def cmdr_data(data, is_beta):
