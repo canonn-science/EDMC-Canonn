@@ -23,6 +23,8 @@ class OrganicScanner():
                 self.target_distance = self.get_distances(self.genus)
                 self.distance_label["text"] = 0
                 self.distance = 0
+                theme.update(self.label)
+                theme.update(self.distance_label)
 
             else:
                 self.lastloc = None
