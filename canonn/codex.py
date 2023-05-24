@@ -34,8 +34,14 @@ from math import sqrt, pow
 import queue
 import re
 
-DWARFS = ("L (Brown dwarf) Star",
-          "T (Brown dwarf) Star", "Y (Brown dwarf) Star")
+DWARFS = (
+    "L (Brown dwarf) Star",
+    "T (Brown dwarf) Star",
+    "Y (Brown dwarf) Star",
+    "L",
+    "T",
+    "Y",
+)
 
 
 def plugin_error(func):
@@ -3002,7 +3008,7 @@ class CodexTypes():
                         # elif ring.get("outerRadius") - ring.get("innerRadius") < 3500:
                         #    self.add_poi(
                         #        "Tourist", "Thin Rings", body_code)
-                        elif density < 0.005:
+                        elif density < 0.001:
                             self.add_poi(
                                 "Tourist", "Low Density Rings", body_code)
                         elif density > 1000:
