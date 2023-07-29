@@ -7,19 +7,39 @@ from canonn.debug import Debug
 import math
 
 
-class OrganicScanner():
-
-    def journal_entry(self, cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
-                      state, x, y, z, body, nearloc, client):
+class OrganicScanner:
+    def journal_entry(
+        self,
+        cmdr,
+        is_beta,
+        system,
+        SysFactionState,
+        SysFactionAllegiance,
+        DistFromStarLS,
+        station,
+        entry,
+        state,
+        x,
+        y,
+        z,
+        body,
+        nearloc,
+        client,
+    ):
         if entry.get("event") == "ScanOrganic":
             if entry.get("ScanType") in ("Sample", "Log"):
                 self.species = entry.get("Species_Localised")
+
+                #  if the Genus changed then reset the locations
+                if entry.get("Genus") != self.genus:
+                    self.lastloc = []
+
                 self.genus = entry.get("Genus")
                 self.show()
                 self.label["text"] = entry.get("Variant_Localised")
                 self.distance_label["text"] = entry.get("Genus_Localised")
                 # store the position of the last scan
-                self.lastloc = nearloc.copy()
+                self.lastloc.append(nearloc.copy())
                 self.target_distance = self.get_distances(self.genus)
                 self.distance_label["text"] = 0
                 self.distance = 0
@@ -27,33 +47,40 @@ class OrganicScanner():
                 theme.update(self.distance_label)
 
             else:
-                self.lastloc = None
+                self.lastloc = []
                 self.hide()
 
     def __init__(self, parent, gridrow):
-
         self.gridrow = gridrow
         self.parent = parent
+        self.lastloc = []
+        self.genus = ""
 
         # we do not declare any widgets here as we will need to destroy them
         # to force the frame to be hidden. But we start hidden so set a value
         self.hidden = True
 
     def updatePosition(self, body_name, planet_radius, nearloc):
-
         if not self.hidden:
             if not body_name:
                 self.hide()
             else:
-                self.distance = self.calc_distance(
-                    self.lastloc["Latitude"],
-                    self.lastloc["Longitude"],
-                    nearloc["Latitude"],
-                    nearloc["Longitude"],
-                    planet_radius
-                )
+                distances = []
+                for location in self.lastloc:
+                    distances.append(
+                        self.calc_distance(
+                            location["Latitude"],
+                            location["Longitude"],
+                            nearloc["Latitude"],
+                            nearloc["Longitude"],
+                            planet_radius,
+                        )
+                    )
+                self.distance = min(distances)
 
-                self.distance_label["text"] = f"{math.floor(self.distance)}m"
+                self.distance_label[
+                    "text"
+                ] = f"{math.floor(self.distance)}m / {self.target_distance}m"
                 if self.distance > self.target_distance:
                     self.distance_label.config(fg="green")
                     self.label.config(fg="green")
@@ -62,25 +89,25 @@ class OrganicScanner():
                     theme.update(self.distance_label)
 
     def calc_distance(self, lat_a, lon_a, lat_b, lon_b, radius):
-
         if radius is None:
             return 0.0
 
-        lat_a = lat_a * math.pi / 180.
-        lon_a = lon_a * math.pi / 180.
-        lat_b = lat_b * math.pi / 180.
-        lon_b = lon_b * math.pi / 180.
+        lat_a = lat_a * math.pi / 180.0
+        lon_a = lon_a * math.pi / 180.0
+        lat_b = lat_b * math.pi / 180.0
+        lon_b = lon_b * math.pi / 180.0
 
-        if(lat_a != lat_b or lon_b != lon_a):
+        if lat_a != lat_b or lon_b != lon_a:
             d_lambda = lon_b - lon_a
-            S_ab = math.acos(math.sin(lat_a)*math.sin(lat_b) +
-                             math.cos(lat_a)*math.cos(lat_b)*math.cos(d_lambda))
+            S_ab = math.acos(
+                math.sin(lat_a) * math.sin(lat_b)
+                + math.cos(lat_a) * math.cos(lat_b) * math.cos(d_lambda)
+            )
             return S_ab * radius
         else:
             return 0.0
 
     def get_distances(self, genus):
-
         lookup = {
             "$Codex_Ent_Aleoids_Genus_Name;": 150,
             "$Codex_Ent_Vents_Name;": 100,
@@ -105,19 +132,17 @@ class OrganicScanner():
             "$Codex_Ent_Tube_Name;": 100,
             "$Codex_Ent_Stratum_Genus_Name;": 500,
             "$Codex_Ent_Tubus_Genus_Name;": 800,
-            "$Codex_Ent_Tussocks_Genus_Name;": 200
+            "$Codex_Ent_Tussocks_Genus_Name;": 200,
         }
         return lookup.get(genus) or 100
 
     def show(self):
-
         if self.hidden:
             self.hidden = False
             self.frame = Frame(self.parent)
 
             self.frame.columnconfigure(2, weight=1)
-            self.frame.grid(row=self.gridrow, column=0,
-                            columnspan=2)
+            self.frame.grid(row=self.gridrow, column=0, columnspan=2)
             self.label = tk.Label(self.frame)
             self.label.grid(row=0, column=0)
             self.distance_label = tk.Label(self.frame)
@@ -128,7 +153,6 @@ class OrganicScanner():
             theme.update(self.distance_label)
 
     def hide(self):
-
         if not self.hidden:
             self.hidden = True
             self.label.destroy()
