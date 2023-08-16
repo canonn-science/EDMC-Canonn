@@ -38,11 +38,19 @@ from datetime import datetime
 
 
 def is_timestamp_older(timestamp1, timestamp2):
-    format_str = "%Y-%m-%d %H:%M:%S%z"
-    dt1 = datetime.strptime(timestamp1, format_str)
-    dt2 = datetime.strptime(timestamp2, format_str)
+    try:
+        format_str = "%Y-%m-%d %H:%M:%S%z"
+        if len(timestamp1) == len("2023-03-24 21:04:46+00"):
+            timestamp1 = timestamp1 + "00"
+        if len(timestamp2) == len("2023-03-24 21:04:46+00"):
+            timestamp2 = timestamp2 + "00"
+        signal = datetime.strptime(timestamp1, format_str)
+        update = datetime.strptime(timestamp2, format_str)
+    except Exception as e:
+        Debug.logger.error(e)
+        return False
 
-    return dt1 < dt2
+    return signal < update
 
 
 DWARFS = (
@@ -479,13 +487,49 @@ class CodexTypes:
         "twsites": ["Biology", "Tube Worms"],
     }
 
-    body_types = {
+    # these are high value body types used for Tourist Spots
+    # no longer using for High Value Planet POIs
+    hv_body_types = {
         "Metal-rich body": "Metal-Rich Body",
         "Metal rich body": "Metal-Rich Body",
         "Earth-like world": "Earthlike World",
         "Earthlike body": "Earthlike World",
         "Water world": "Water World",
         "Ammonia world": "Ammonia World",
+    }
+
+    # Translate all body types to human readable
+    body_types = {
+        "Class IV gas giant": "Class IV Gas Giant",
+        "Sudarsky class IV gas giant": "Class IV Gas Giant",
+        "Earth-like world": "Earthlike World",
+        "Earthlike body": "Earthlike World",
+        "High metal content body": "High Metal Content World",
+        "High metal content world": "High Metal Content World",
+        "Class II gas giant": "Class II Gas Giant",
+        "Sudarsky class II gas giant": "Class II Gas Giant",
+        "Water world": "Water World",
+        "Class III gas giant": "Class III Gas Giant",
+        "Sudarsky class III gas giant": "Class III Gas Giant",
+        "Gas giant with ammonia-based life": "Gas Giant With Ammonia Based Life",
+        "Gas giant with ammonia based life": "Gas Giant With Ammonia Based Life",
+        "Ammonia world": "Ammonia World",
+        "Rocky body": "Rocky Body",
+        "Water giant": "Water Giant",
+        "Gas giant with water-based life": "Gas Giant With Water Based Life",
+        "Gas giant with water based life": "Gas Giant With Water Based Life",
+        "Class I gas giant": "Class I Gas Giant",
+        "Sudarsky class I gas giant": "Class I Gas Giant",
+        "Icy body": "Icy Body",
+        "Class V gas giant": "Class V Gas Giant",
+        "Sudarsky class V gas giant": "Class V Gas Giant",
+        "Helium gas giant": "Helium Gas Giant",
+        "Rocky Ice world": "Rocky Ice World",
+        "Rocky ice body": "Rocky Ice World",
+        "Helium-rich gas giant": "Helium Rich Gas Giant",
+        "Helium rich gas giant": "Helium Rich Gas Giant",
+        "Metal-rich body": "Metal Rich Body",
+        "Metal rich body": "Metal Rich Body",
     }
 
     economies = {
@@ -1206,6 +1250,7 @@ class CodexTypes:
                         self.green_system(bodies)
                         self.deeply_nested(b, body_code)
                         self.satellite_star(b, body_code)
+                        self.high_value(b, body_code)
 
                         # Terraforming
                         if b.get("terraformingState") == "Terraformable":
@@ -1302,14 +1347,6 @@ class CodexTypes:
                                         "MissingData", "$Planets:Need FSS", body_code
                                     )
 
-                        # water ammonia etc
-                        if b.get("subType") in CodexTypes.body_types.keys():
-                            self.add_poi(
-                                "Planets",
-                                CodexTypes.body_types.get(b.get("subType")),
-                                body_code,
-                            )
-
                         # fast orbits
                         if b.get("orbitalPeriod"):
                             if abs(float(b.get("orbitalPeriod"))) <= 0.042:
@@ -1333,7 +1370,7 @@ class CodexTypes:
                                 self.add_poi(
                                     "Tourist",
                                     "Ringed {}".format(
-                                        CodexTypes.body_types.get(b.get("subType"))
+                                        CodexTypes.hv_body_types.get(b.get("subType"))
                                     ),
                                     body_code,
                                 )
@@ -1345,7 +1382,7 @@ class CodexTypes:
                                 self.add_poi(
                                     "Tourist",
                                     "{} Moon".format(
-                                        CodexTypes.body_types.get(b.get("subType"))
+                                        CodexTypes.hv_body_types.get(b.get("subType"))
                                     ),
                                     body_code,
                                 )
@@ -2074,7 +2111,7 @@ class CodexTypes:
                             .startswith("2020")
                         )
                         in_date = in_date and is_timestamp_older(
-                            b.get("signals").get("updateTime"), b.get("updateTime")
+                            b.get("updateTime"), b.get("signals").get("updateTime")
                         )
 
                         if (
@@ -2137,8 +2174,10 @@ class CodexTypes:
                     self.spansh_bodyq.put(temp_spanshdata)
                 else:
                     Debug.logger.error(f"Spansh result {r.status_code}")
-            except:
+            except Exception as e:
                 Debug.logger.error("Error getting Spansh data")
+                Debug.logger.error(e)
+                Debug.logger.exception(e)
 
             try:
                 url = (
@@ -3174,12 +3213,14 @@ class CodexTypes:
                         ringo = ""
 
                     if not_self and sibling and attribute_match and non_binary:
-                        if candidate.get("subType") in CodexTypes.body_types.keys():
+                        if candidate.get("subType") in CodexTypes.hv_body_types.keys():
                             self.add_poi(
                                 "Tourist",
                                 "{}Trojan {}".format(
                                     ringo,
-                                    CodexTypes.body_types.get(candidate.get("subType")),
+                                    CodexTypes.hv_body_types.get(
+                                        candidate.get("subType")
+                                    ),
                                 ),
                                 body_code,
                             )
@@ -3259,6 +3300,100 @@ class CodexTypes:
         for category in self.poidata.copy():
             if category in ("Jumponium", "GreenSystem"):
                 del self.poidata[category]
+
+    """
+
+    This will calculate the maximum value of the Planet and will display it if it is
+    higher than 1 million
+
+    Using Matt G's formula https://forums.frontier.co.uk/threads/exploration-value-formulae.232000/
+
+    Ideally we should check if it is first discovered or first mapped but that might not be practical
+
+
+    """
+
+    def high_value(self, body, body_code):
+        # no point in displaying stars as they are honked
+        subtype = CodexTypes.body_types.get(body.get("subType"))
+        if not body.get("type") == "Planet":
+            return
+
+        terraform = body.get("terraformingState") in ("Terraformable", "Terrforming")
+
+        basek = 300
+        k = 300
+        if subtype in ("Metal Rich Body"):
+            basek = 21790
+            k = basek
+        if subtype in ("Ammonia World"):
+            basek = 96932
+            k = basek
+        if subtype in ("Earthlike World", "Water World"):
+            basek = 64831
+            k = basek
+            if terraform:
+                k += 116295
+
+        if subtype in ("Class I Gas Giant"):
+            basek = 1656
+            k = basek
+
+        if subtype in ("Class II Gas Giant", "High Metal Content World"):
+            basek = 9654
+            k = basek
+            if terraform:
+                k += 100677
+
+        if basek == 300 and terraform:
+            k = basek + 93328
+
+        def GetBodyValue(
+            k,
+            mass,
+            isFirstDiscoverer=True,
+            isMapped=True,
+            isFirstMapped=True,
+            withEfficiencyBonus=True,
+            isOdyssey=True,
+            isFleetCarrierSale=False,
+        ):
+            q = 0.56591828
+            mappingMultiplier = 1
+
+            if isMapped:
+                if isFirstDiscoverer and isFirstMapped:
+                    mappingMultiplier = 3.699622554
+                elif isFirstMapped:
+                    mappingMultiplier = 8.0956
+                else:
+                    mappingMultiplier = 3.3333333333
+
+            value = (k + k * q * mass**0.2) * mappingMultiplier
+
+            if isMapped:
+                if isOdyssey:
+                    value += value * 0.3 if value * 0.3 > 555 else 555
+                if withEfficiencyBonus:
+                    value *= 1.25
+
+            value = max(500, value)
+            value *= 2.6 if isFirstDiscoverer else 1
+            value *= 0.75 if isFleetCarrierSale else 1
+
+            return round(value)
+
+        # Example usage
+        result = GetBodyValue(k, body.get("earthMasses"))
+        if result >= 1000000:
+            if terraform:
+                self.add_poi(
+                    "Planets", f"{body.get('terraformingState')} {subtype}", body_code
+                )
+            else:
+                self.add_poi("Planets", f"{subtype}", body_code)
+
+        return
 
     def satellite_star(self, body, body_code):
         # excluding brown dwarfs
