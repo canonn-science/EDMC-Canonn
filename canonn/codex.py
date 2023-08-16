@@ -1210,7 +1210,6 @@ class CodexTypes:
                         CodexTypes.fsscount = 0
 
                     if nvl(CodexTypes.fsscount, 0) >= nvl(CodexTypes.bodycount, 0):
-                        # self.add_poi("Planets", "Unexplored Bodies", "")
                         if CodexTypes.fsscount > 0:
                             self.systemprogress.grid()
                             # self.systemprogress["text"]="{}%".format(round((float(CodexTypes.bodycount)/float(CodexTypes.fsscount))*100,1))
@@ -1257,30 +1256,29 @@ class CodexTypes:
                             if b.get("isLandable"):
                                 if not b.get("rings"):
                                     self.add_poi(
-                                        "Planets", "Landable Terraformable", body_code
+                                        "Tourist", "Landable Terraformable", body_code
                                     )
                                 else:
                                     self.add_poi(
-                                        "Planets",
+                                        "Tourist",
                                         "Landable Ringed Terraformable",
                                         body_code,
                                     )
-                            else:
-                                self.add_poi("Planets", "Terraformable", body_code)
+
                         elif b.get("terraformingState") == "Terraforming":
                             if b.get("isLandable"):
                                 if not b.get("rings"):
                                     self.add_poi(
-                                        "Planets", "Landable Terraforming", body_code
+                                        "Tourist", "Landable Terraforming", body_code
                                     )
                                 else:
                                     self.add_poi(
-                                        "Planets",
+                                        "Tourist",
                                         "Landable Ringed Terraforming",
                                         body_code,
                                     )
                             else:
-                                self.add_poi("Planets", "Terraforming", body_code)
+                                self.add_poi("Tourist", "Terraforming", body_code)
                         else:
                             if b.get("rings") and b.get("isLandable"):
                                 self.add_poi(
@@ -3369,7 +3367,7 @@ class CodexTypes:
                 else:
                     mappingMultiplier = 3.3333333333
 
-            value = (k + k * q * mass**0.2) * mappingMultiplier
+            value = (k + k * q * pow(mass, 0.2)) * mappingMultiplier
 
             if isMapped:
                 if isOdyssey:
@@ -3385,6 +3383,8 @@ class CodexTypes:
 
         # Example usage
         result = GetBodyValue(k, body.get("earthMasses"))
+        Debug.logger.debug(f"{body.get('subType')} {body.get('earthMasses')} ${result}")
+
         if result >= 1000000:
             if terraform:
                 self.add_poi(
