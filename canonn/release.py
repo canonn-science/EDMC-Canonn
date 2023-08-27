@@ -34,8 +34,8 @@ import datetime
 from ttkHyperlinkLabel import HyperlinkLabel
 
 
-class ClientVersion():
-    ver = "7.3.1"
+class ClientVersion:
+    ver = "7.3.2"
     client_version = f"EDMC-Canonn.{ver}"
 
     @classmethod
@@ -48,7 +48,7 @@ class ClientVersion():
 
 
 RELEASE_CYCLE = 60 * 1000 * 60  # 1 Hour
-DEFAULT_URL = 'https://github.com/canonn-science/EDMC-Canonn/releases'
+DEFAULT_URL = "https://github.com/canonn-science/EDMC-Canonn/releases"
 WRAP_LENGTH = 200
 
 
@@ -65,7 +65,6 @@ def decode_unicode_references(data):
 
 
 class ReleaseLink(HyperlinkLabel):
-
     def __init__(self, parent):
         HyperlinkLabel.__init__(
             self,
@@ -73,11 +72,11 @@ class ReleaseLink(HyperlinkLabel):
             text="Fetching...",
             url=DEFAULT_URL,
             wraplength=50,  # updated in __configure_event below
-            anchor=tk.NW
+            anchor=tk.NW,
         )
         self.resized = False
         self.lasttime = datetime.datetime.now()
-        self.bind('<Configure>', self.__configure_event)
+        self.bind("<Configure>", self.__configure_event)
 
     def __configure_event(self, event):
         "Handle resizing."
@@ -90,7 +89,7 @@ class ReleaseLink(HyperlinkLabel):
         if not self.resized:
             Debug.logger.debug("Release widget resize")
             self.resized = True
-            self.configure(wraplength=event.width-2)
+            self.configure(wraplength=event.width - 2)
 
 
 class ReleaseThread(threading.Thread):
@@ -104,7 +103,6 @@ class ReleaseThread(threading.Thread):
 
 
 class Release(Frame):
-
     def __init__(self, parent, release, gridrow):
         "Initialise the ``News``."
 
@@ -112,10 +110,7 @@ class Release(Frame):
         sticky = tk.EW + tk.N  # full width, stuck to the top
         anchor = tk.NW
 
-        Frame.__init__(
-            self,
-            parent
-        )
+        Frame.__init__(self, parent)
 
         self.installed = False
 
@@ -133,7 +128,8 @@ class Release(Frame):
         self.hyperlink.grid(row=0, column=1, sticky="NSEW")
 
         self.button = tk.Button(
-            self, text="Click here to upgrade", command=self.click_installer)
+            self, text="Click here to upgrade", command=self.click_installer
+        )
         self.button.grid(row=1, column=0, columnspan=2, sticky="NSEW")
         self.button.grid_remove()
 
@@ -144,33 +140,37 @@ class Release(Frame):
         self.latest = {}
 
         # self.hyperlink.bind('<Configure>', self.hyperlink.configure_event)
-        self.bind('<<ReleaseUpdate>>', self.release_update)
+        self.bind("<<ReleaseUpdate>>", self.release_update)
 
-        Debug.logger.debug(config.get_str('Canonn:RemoveBackup'))
+        Debug.logger.debug(config.get_str("Canonn:RemoveBackup"))
 
         # trigger the update *after* the Tk main loop is running, since it can get the result and
         # try and send a Tk event before EDMC manages to get the main loop started.
         self.after_idle(self.update, None)
 
-        if self.rmbackup.get() == 1 and config.get_str('Canonn:RemoveBackup') and config.get_str('Canonn:RemoveBackup') != "None":
-            delete_dir = config.get_str('Canonn:RemoveBackup')
-            Debug.logger.debug('Canonn:RemoveBackup {}'.format(delete_dir))
+        if (
+            self.rmbackup.get() == 1
+            and config.get_str("Canonn:RemoveBackup")
+            and config.get_str("Canonn:RemoveBackup") != "None"
+        ):
+            delete_dir = config.get_str("Canonn:RemoveBackup")
+            Debug.logger.debug("Canonn:RemoveBackup {}".format(delete_dir))
             try:
                 shutil.rmtree(delete_dir)
             except:
                 Debug.logger.error("Cant delete {}".format(delete_dir))
 
             # lets not keep trying
-            config.set('Canonn_RemoveBackup', "None")
+            config.set("Canonn_RemoveBackup", "None")
 
     def update(self, event):
         self.release_thread()
         # check again in an hour
-        #Debug.logger.debug("checking for the next release in one hour")
-        #self.after(RELEASE_CYCLE, self.update)
+        # Debug.logger.debug("checking for the next release in one hour")
+        # self.after(RELEASE_CYCLE, self.update)
 
     def version2number(self, version):
-        major, minor, patch = version.split('.')
+        major, minor, patch = version.split(".")
         return (int(major) * 1000000) + (int(minor) * 1000) + int(patch)
 
     def release_thread(self):
@@ -180,11 +180,12 @@ class Release(Frame):
         headers = "X-GitHub-Api-Version:2022-11-28"
         self.latest = {}
         r = requests.get(
-            "https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest", headers)
+            "https://api.github.com/repos/canonn-science/EDMC-Canonn/releases/latest",
+            headers,
+        )
         latest = r.json()
         # Debug.logger.debug(latest)
         if not r.status_code == requests.codes.ok:
-
             Debug.logger.error("Error fetching release from github")
             Debug.logger.error(r.status_code)
             Debug.logger.error(r.json())
@@ -193,13 +194,11 @@ class Release(Frame):
             self.latest = latest
             Debug.logger.debug("latest release downloaded")
             if not config.shutting_down:
-                self.event_generate('<<ReleaseUpdate>>', when='tail')
+                self.event_generate("<<ReleaseUpdate>>", when="tail")
 
     def release_update(self, event):
-
         # if we have just installed a new version we can end the cycle
         if not self.installed:
-
             if self.latest:
                 Debug.logger.debug("Latest is not null")
 
@@ -208,36 +207,49 @@ class Release(Frame):
                 current = self.version2number(self.release)
                 release = self.version2number(self.latest.get("tag_name"))
 
-                self.hyperlink['url'] = self.latest.get("html_url")
-                self.hyperlink['text'] = "EDMC-Canonn: {}".format(
-                    self.latest.get("tag_name"))
+                self.hyperlink["url"] = self.latest.get("html_url")
+                self.hyperlink["text"] = "EDMC-Canonn: {}".format(
+                    self.latest.get("tag_name")
+                )
 
                 if current == release:
                     self.grid_remove()
                 elif current > release:
-                    self.hyperlink['text'] = "Experimental Release {}".format(
-                        self.release)
+                    self.hyperlink["text"] = "Experimental Release {}".format(
+                        self.release
+                    )
                     self.grid()
                 else:
-
                     if self.auto.get() == 1:
-                        self.hyperlink['text'] = "Release {}  Installed Please Restart".format(
-                            self.latest.get("tag_name"))
+                        self.hyperlink[
+                            "text"
+                        ] = "Release {}  Installed Please Restart".format(
+                            self.latest.get("tag_name")
+                        )
 
                         if self.installer():
-                            self.hyperlink['text'] = "Release {}  Installed Please Restart".format(
-                                self.latest.get("tag_name"))
+                            self.hyperlink[
+                                "text"
+                            ] = "Release {}  Installed Please Restart".format(
+                                self.latest.get("tag_name")
+                            )
                         else:
-                            self.hyperlink['text'] = "Release {}  Upgrade Failed".format(
-                                self.latest.get("tag_name"))
+                            self.hyperlink[
+                                "text"
+                            ] = "Release {}  Upgrade Failed".format(
+                                self.latest.get("tag_name")
+                            )
 
                     else:
-                        self.hyperlink['text'] = "Please Upgrade {}".format(
-                            self.latest.get("tag_name"))
+                        self.hyperlink["text"] = "Please Upgrade {}".format(
+                            self.latest.get("tag_name")
+                        )
                         self.button.grid()
                         if self.novoices.get() != 1:
-                            Player(Release.plugin_dir, [
-                                   "sounds\\prefix.wav", "sounds\\nag1.wav"]).start()
+                            Player(
+                                Release.plugin_dir,
+                                ["sounds\\prefixd.mp3", "sounds\\nag1d.mp3"],
+                            ).start()
                     self.grid()
             else:
                 Debug.logger.debug("Latest is null")
@@ -252,30 +264,35 @@ class Release(Frame):
         frame = nb.Frame(parent)
         frame.columnconfigure(2, weight=1)
         frame.grid(row=gridrow, column=0, sticky="NSEW")
-        nb.Checkbutton(frame, text="Auto Update This Plugin",
-                       variable=self.auto).grid(row=0, column=0, sticky="NW")
+        nb.Checkbutton(frame, text="Auto Update This Plugin", variable=self.auto).grid(
+            row=0, column=0, sticky="NW"
+        )
         nb.Checkbutton(frame, text="Remove backup", variable=self.rmbackup).grid(
-            row=0, column=1, sticky="NW")
+            row=0, column=1, sticky="NW"
+        )
         nb.Checkbutton(frame, text="Stop talking to me", variable=self.novoices).grid(
-            row=0, column=2, sticky="NW")
+            row=0, column=2, sticky="NW"
+        )
 
         return frame
 
     def prefs_changed(self, cmdr, is_beta):
         "Called when the user clicks OK on the settings dialog."
-        config.set('AutoUpdate', self.auto.get())
-        config.set('RemoveBackup', self.rmbackup.get())
-        config.set('NoVoices', self.novoices.get())
+        config.set("AutoUpdate", self.auto.get())
+        config.set("RemoveBackup", self.rmbackup.get())
+        config.set("NoVoices", self.novoices.get())
 
     def click_installer(self):
         self.button.grid_remove()
 
         if self.installer():
-            self.hyperlink['text'] = "Release {}  Installed Please Restart".format(
-                self.latest.get("tag_name"))
+            self.hyperlink["text"] = "Release {}  Installed Please Restart".format(
+                self.latest.get("tag_name")
+            )
         else:
-            self.hyperlink['text'] = "Release {}  Upgrade Failed".format(
-                self.latest.get("tag_name"))
+            self.hyperlink["text"] = "Release {}  Upgrade Failed".format(
+                self.latest.get("tag_name")
+            )
 
     def installer(self):
         # need to add some defensive code around this
@@ -283,20 +300,24 @@ class Release(Frame):
 
         Debug.logger.debug("Installing {}".format(tag_name))
 
-        new_plugin_dir = os.path.join(os.path.dirname(
-            Release.plugin_dir), "EDMC-Canonn-{}".format(tag_name))
+        new_plugin_dir = os.path.join(
+            os.path.dirname(Release.plugin_dir), "EDMC-Canonn-{}".format(tag_name)
+        )
 
         Debug.logger.debug("Checking for pre-existence")
         if os.path.isdir(new_plugin_dir):
-            Debug.logger.error(
-                "Download already exists: {}".format(new_plugin_dir))
+            Debug.logger.error("Download already exists: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")
             return False
 
         try:
             Debug.logger.debug("Downloading new version")
             download = requests.get(
-                "https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(tag_name), stream=True)
+                "https://github.com/canonn-science/EDMC-Canonn/archive/{}.zip".format(
+                    tag_name
+                ),
+                stream=True,
+            )
 
             try:
                 z = zipfile.ZipFile(BytesIO(download.content))
@@ -314,20 +335,20 @@ class Release(Frame):
 
         Debug.logger.debug("disable the current plugin")
         try:
-            os.rename(Release.plugin_dir,
-                      "{}.disabled".format(Release.plugin_dir))
-            Debug.logger.debug("Renamed {} to {}".format(Release.plugin_dir,
-                                                         "{}.disabled".format(Release.plugin_dir)))
+            os.rename(Release.plugin_dir, "{}.disabled".format(Release.plugin_dir))
+            Debug.logger.debug(
+                "Renamed {} to {}".format(
+                    Release.plugin_dir, "{}.disabled".format(Release.plugin_dir)
+                )
+            )
         except:
-            Debug.logger.error(
-                "Upgrade failed reverting: {}".format(new_plugin_dir))
+            Debug.logger.error("Upgrade failed reverting: {}".format(new_plugin_dir))
             plug.show_error("Canonn upgrade failed")
             shutil.rmtree(new_plugin_dir)
             return False
 
         if self.rmbackup.get() == 1:
-            config.set('Canonn_RemoveBackup',
-                       "{}.disabled".format(Release.plugin_dir))
+            config.set("Canonn_RemoveBackup", "{}.disabled".format(Release.plugin_dir))
 
         Debug.logger.debug("Upgrade complete")
 
