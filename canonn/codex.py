@@ -1779,11 +1779,21 @@ class CodexTypes:
                     if self.hidehumandetailed:
                         self.add_poi("Human", stype, bodycode)
                     else:
-                        self.add_poi(
-                            "Human",
-                            "$" + stype + ":" + self.stationdata[station]["economy"],
-                            bodycode,
-                        )
+                        if self.stationdata[station].get("economy"):
+                            self.add_poi(
+                                "Human",
+                                "$"
+                                + stype
+                                + ":"
+                                + self.stationdata[station]["economy"],
+                                bodycode,
+                            )
+                        else:
+                            self.add_poi(
+                                "Human",
+                                stype,
+                                bodycode,
+                            )
 
                     if bodycode is not None:
                         keep_latlon = None
