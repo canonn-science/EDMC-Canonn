@@ -169,9 +169,9 @@ eg: Canonn capture biology A rude looking tubus
 
 ## Codex
 
-This records the codex entries and a bit of extra info about body and lat lon. The codex entries are routed to the appropriate CAPI report. eg fgreports btreports etc. Most data gets sent to be stored in the Canonn API https://api.canonn.tech/documentation
+We save code data to our database. 
 
-We also provide excel sheets with much of the data held in the CAPI
+We provide excel sheets with much of the data held in the CAPI
 
 * [Surface Biology](https://canonn.fyi/biosheet)
 * [Guardian](https://canonn.fyi/guardiansheet)
