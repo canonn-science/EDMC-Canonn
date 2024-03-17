@@ -3317,7 +3317,7 @@ class CodexTypes:
         if not body.get("type") == "Planet":
             return
 
-        terraform = body.get("terraformingState") in ("Terraformable", "Terrforming")
+        terraform = body.get("terraformingState") in ("Terraformable", "Terraforming")
 
         basek = 300
         k = 300
