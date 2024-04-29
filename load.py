@@ -16,7 +16,6 @@ from canonn import codex
 from canonn import factionkill
 from canonn import fssreports
 from canonn import hdreport
-from canonn import materialReport
 from canonn import news
 from canonn import nhss
 from canonn import patrol
@@ -412,23 +411,6 @@ def journal_entry_wrapper(
         station,
         entry,
         state,
-        x,
-        y,
-        z,
-        body,
-        nearloc["Latitude"],
-        nearloc["Longitude"],
-        client,
-    )
-    materialReport.submit(
-        cmdr,
-        is_beta,
-        system,
-        SysFactionState,
-        SysFactionAllegiance,
-        DistFromStarLS,
-        station,
-        entry,
         x,
         y,
         z,
