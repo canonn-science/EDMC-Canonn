@@ -10,7 +10,7 @@ import sys
 import threading
 from canonn.debug import Debug
 from canonn.debug import debug, error
-from canonn.emitter import Emitter
+
 from canonn.release import Release
 
 import canonn.emitter

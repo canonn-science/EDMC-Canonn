@@ -23,7 +23,7 @@ import webbrowser
 from theme import theme
 from canonn.debug import Debug
 from canonn.debug import debug, error
-from canonn.emitter import Emitter
+
 from config import config
 from canonn.tooltip import CreateToolTip
 from ttkHyperlinkLabel import HyperlinkLabel

@@ -23,7 +23,7 @@ import inspect
 
 from canonn.debug import Debug
 from canonn.debug import debug, error
-from canonn.emitter import Emitter
+
 from canonn.systems import Systems
 from config import config
 

@@ -10,7 +10,7 @@ import threading
 import requests
 import sys
 import json
-from canonn.emitter import Emitter
+
 import canonn.emitter
 from canonn.debug import Debug
 from canonn.debug import debug, error
