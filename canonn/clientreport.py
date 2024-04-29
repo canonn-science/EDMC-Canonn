@@ -10,7 +10,6 @@ import sys
 import threading
 from canonn.debug import Debug
 from canonn.debug import debug, error
-from canonn.emitter import Emitter
 from canonn.release import Release
 
 import canonn.emitter
@@ -24,7 +23,7 @@ def submit(cmdr, is_beta, client, entry):
             AutoUpdateDisabled = False
 
         canonn.emitter.post(
-            "https://us-central1-canonn-api-236217.cloudfunctions.net/submitCient",
+            "https://europe-west1-canonn-api-236217.cloudfunctions.net/submitClient",
             {
                 "cmdr": cmdr,
                 "beta": is_beta,
