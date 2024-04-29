@@ -10,7 +10,7 @@ import sys
 import threading
 from canonn.debug import Debug
 from canonn.debug import debug, error
-
+from canonn.emitter import Emitter
 from canonn.release import Release
 
 import canonn.emitter
@@ -31,10 +31,4 @@ def submit(cmdr, is_beta, client, entry):
                 "client": client,
                 "autoupdate": AutoUpdateDisabled,
             },
-        )
-
-    if entry.get("event") in ("Fileheader"):
-        canonn.emitter.post(
-            "https://us-central1-canonn-api-236217.cloudfunctions.net/postGameVersion",
-            event,
         )
