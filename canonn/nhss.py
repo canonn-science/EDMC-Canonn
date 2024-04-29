@@ -25,7 +25,7 @@ class gSubmitNHSS(threading.Thread):
 
     def run(self):
 
-        Debug.logger.debug("sending gSubmitCodex")
+        Debug.logger.debug("sending gSubmitNHSS")
         url = "https://us-central1-canonn-api-236217.cloudfunctions.net/submitNHSS?cmdrName={}".format(
             self.cmdr
         )
