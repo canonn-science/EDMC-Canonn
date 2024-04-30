@@ -4545,8 +4545,8 @@ class codexEmitter:
         self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state
     ):
 
-        stellar_bodies = self.entry.get("Category") == "$Codex_Category_StellarBodies;"
-        green_giant = stellar_bodies and "Green" in self.entry.get("Name")
+        stellar_bodies = entry.get("Category") == "$Codex_Category_StellarBodies;"
+        green_giant = stellar_bodies and "Green" in entry.get("Name")
         excluded = stellar_bodies
 
         included = not excluded or green_giant
