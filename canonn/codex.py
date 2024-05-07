@@ -530,6 +530,7 @@ class CodexTypes:
         "Helium rich gas giant": "Helium Rich Gas Giant",
         "Metal-rich body": "Metal Rich Body",
         "Metal rich body": "Metal Rich Body",
+        "Unknown": "Unknown",
     }
 
     economies = {
@@ -547,6 +548,10 @@ class CodexTypes:
         "$economy_Undefined;": "Undefined",
         "$economy_Damaged;": "Damaged",
         "$economy_Repair;": "Repair",
+        "$economy_Prison;": "Prison",
+        "$economy_Rescue;": "Rescue",
+        "$economy_Carrier;": "Private Enterprise",
+        "$economy_Engineer;": "Engineering"
     }
 
     genus = {
@@ -1232,6 +1237,12 @@ class CodexTypes:
 
                     for k in bodies.keys():
                         b = bodies.get(k)
+
+                        ## handle missing subTYpe
+                        if b.get("type") == "Planet" and b.get("subType") is None:
+                            print("fixing subtype")
+                            b["subType"] = "Unknown"
+
                         # debug(json.dumps(b,indent=4))
                         body_code = b.get("name").replace(self.system + " ", "")
                         body_name = b.get("name")
@@ -1250,6 +1261,8 @@ class CodexTypes:
                         self.deeply_nested(b, body_code)
                         self.satellite_star(b, body_code)
                         self.high_value(b, body_code)
+
+
 
                         # Terraforming
                         if b.get("terraformingState") == "Terraformable":
@@ -1391,22 +1404,22 @@ class CodexTypes:
                         #    Landable high-g (>3g)
                         if (
                             b.get("type") == "Planet"
-                            and float(b.get("gravity")) > 2.7
                             and b.get("isLandable")
+                            and float(b.get("gravity")) > 2.7
                         ):
                             self.add_poi("Tourist", "High Gravity", body_code)
                         elif (
                             b.get("type") == "Planet"
-                            and float(b.get("gravity")) > 2.5
                             and b.get("isLandable")
+                            and float(b.get("gravity")) > 2.5
                         ):
                             self.add_poi("Tourist", "Walkable High Gravity", body_code)
 
                         #    Landable large (>18000km radius)
                         if (
                             b.get("type") == "Planet"
-                            and b.get("radius") > 18000
                             and b.get("isLandable")
+                            and b.get("radius") > 18000
                         ):
                             self.add_poi("Tourist", "Large Radius Landable", body_code)
 
@@ -1415,8 +1428,8 @@ class CodexTypes:
                         #    Tiny objects (<300km radius)
                         if (
                             b.get("type") == "Planet"
-                            and b.get("radius") < 300
                             and b.get("isLandable")
+                            and b.get("radius") < 300
                         ):
                             self.add_poi("Tourist", "Tiny Radius Landable", body_code)
 
@@ -1431,6 +1444,7 @@ class CodexTypes:
 
                         #    High eccentricity
                         if (
+                            b.get("orbitalEccentricity") and 
                             float(b.get("orbitalEccentricity") or 0)
                             > CodexTypes.eccentricity
                         ):
@@ -3326,8 +3340,10 @@ class CodexTypes:
         subtype = CodexTypes.body_types.get(body.get("subType"))
         if not body.get("type") == "Planet":
             return
+        if subtype == "Unknown":
+            return
 
-        terraform = body.get("terraformingState") in ("Terraformable", "Terrforming")
+        terraform = body.get("terraformingState") in ("Terraformable", "Terraforming")
 
         basek = 300
         k = 300
