@@ -35,7 +35,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 
 class ClientVersion:
-    ver = "7.3.2"
+    ver = "7.4.0"
     client_version = f"EDMC-Canonn.{ver}"
 
     @classmethod
@@ -221,23 +221,23 @@ class Release(Frame):
                     self.grid()
                 else:
                     if self.auto.get() == 1:
-                        self.hyperlink[
-                            "text"
-                        ] = "Release {}  Installed Please Restart".format(
-                            self.latest.get("tag_name")
+                        self.hyperlink["text"] = (
+                            "Release {}  Installed Please Restart".format(
+                                self.latest.get("tag_name")
+                            )
                         )
 
                         if self.installer():
-                            self.hyperlink[
-                                "text"
-                            ] = "Release {}  Installed Please Restart".format(
-                                self.latest.get("tag_name")
+                            self.hyperlink["text"] = (
+                                "Release {}  Installed Please Restart".format(
+                                    self.latest.get("tag_name")
+                                )
                             )
                         else:
-                            self.hyperlink[
-                                "text"
-                            ] = "Release {}  Upgrade Failed".format(
-                                self.latest.get("tag_name")
+                            self.hyperlink["text"] = (
+                                "Release {}  Upgrade Failed".format(
+                                    self.latest.get("tag_name")
+                                )
                             )
 
                     else:

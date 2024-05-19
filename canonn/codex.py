@@ -23,7 +23,7 @@ import webbrowser
 from theme import theme
 from canonn.debug import Debug
 from canonn.debug import debug, error
-from canonn.emitter import Emitter
+
 from config import config
 from canonn.tooltip import CreateToolTip
 from ttkHyperlinkLabel import HyperlinkLabel
@@ -530,6 +530,7 @@ class CodexTypes:
         "Helium rich gas giant": "Helium Rich Gas Giant",
         "Metal-rich body": "Metal Rich Body",
         "Metal rich body": "Metal Rich Body",
+        "Unknown": "Unknown",
     }
 
     economies = {
@@ -547,6 +548,10 @@ class CodexTypes:
         "$economy_Undefined;": "Undefined",
         "$economy_Damaged;": "Damaged",
         "$economy_Repair;": "Repair",
+        "$economy_Prison;": "Prison",
+        "$economy_Rescue;": "Rescue",
+        "$economy_Carrier;": "Private Enterprise",
+        "$economy_Engineer;": "Engineering"
     }
 
     genus = {
@@ -1232,6 +1237,12 @@ class CodexTypes:
 
                     for k in bodies.keys():
                         b = bodies.get(k)
+
+                        ## handle missing subTYpe
+                        if b.get("type") == "Planet" and b.get("subType") is None:
+                            print("fixing subtype")
+                            b["subType"] = "Unknown"
+
                         # debug(json.dumps(b,indent=4))
                         body_code = b.get("name").replace(self.system + " ", "")
                         body_name = b.get("name")
@@ -1250,6 +1261,8 @@ class CodexTypes:
                         self.deeply_nested(b, body_code)
                         self.satellite_star(b, body_code)
                         self.high_value(b, body_code)
+
+
 
                         # Terraforming
                         if b.get("terraformingState") == "Terraformable":
@@ -1391,22 +1404,22 @@ class CodexTypes:
                         #    Landable high-g (>3g)
                         if (
                             b.get("type") == "Planet"
-                            and float(b.get("gravity")) > 2.7
                             and b.get("isLandable")
+                            and float(b.get("gravity")) > 2.7
                         ):
                             self.add_poi("Tourist", "High Gravity", body_code)
                         elif (
                             b.get("type") == "Planet"
-                            and float(b.get("gravity")) > 2.5
                             and b.get("isLandable")
+                            and float(b.get("gravity")) > 2.5
                         ):
                             self.add_poi("Tourist", "Walkable High Gravity", body_code)
 
                         #    Landable large (>18000km radius)
                         if (
                             b.get("type") == "Planet"
-                            and b.get("radius") > 18000
                             and b.get("isLandable")
+                            and b.get("radius") > 18000
                         ):
                             self.add_poi("Tourist", "Large Radius Landable", body_code)
 
@@ -1415,8 +1428,8 @@ class CodexTypes:
                         #    Tiny objects (<300km radius)
                         if (
                             b.get("type") == "Planet"
-                            and b.get("radius") < 300
                             and b.get("isLandable")
+                            and b.get("radius") < 300
                         ):
                             self.add_poi("Tourist", "Tiny Radius Landable", body_code)
 
@@ -1431,6 +1444,7 @@ class CodexTypes:
 
                         #    High eccentricity
                         if (
+                            b.get("orbitalEccentricity") and 
                             float(b.get("orbitalEccentricity") or 0)
                             > CodexTypes.eccentricity
                         ):
@@ -1779,11 +1793,21 @@ class CodexTypes:
                     if self.hidehumandetailed:
                         self.add_poi("Human", stype, bodycode)
                     else:
-                        self.add_poi(
-                            "Human",
-                            "$" + stype + ":" + self.stationdata[station]["economy"],
-                            bodycode,
-                        )
+                        if self.stationdata[station].get("economy"):
+                            self.add_poi(
+                                "Human",
+                                "$"
+                                + stype
+                                + ":"
+                                + self.stationdata[station]["economy"],
+                                bodycode,
+                            )
+                        else:
+                            self.add_poi(
+                                "Human",
+                                stype,
+                                bodycode,
+                            )
 
                     if bodycode is not None:
                         keep_latlon = None
@@ -2372,9 +2396,9 @@ class CodexTypes:
         # need to initialise if not exists
         self.systemtitle_name["text"] = self.system
         # self.systemtitle_name["url"] = f"https://us-central1-canonn-api-236217.cloudfunctions.net/query/codex/biostats?id={self.system64}"
-        self.systemtitle_name[
-            "url"
-        ] = f"https://canonn-science.github.io/canonn-signals/index.html?system={self.system64}"
+        self.systemtitle_name["url"] = (
+            f"https://canonn-science.github.io/canonn-signals/index.html?system={self.system64}"
+        )
 
         openlist = False
         for category in self.types:
@@ -3316,8 +3340,10 @@ class CodexTypes:
         subtype = CodexTypes.body_types.get(body.get("subType"))
         if not body.get("type") == "Planet":
             return
+        if subtype == "Unknown":
+            return
 
-        terraform = body.get("terraformingState") in ("Terraformable", "Terrforming")
+        terraform = body.get("terraformingState") in ("Terraformable", "Terraforming")
 
         basek = 300
         k = 300
@@ -4430,7 +4456,7 @@ class CodexTypes:
         # experimental
 
 
-class guardianSites(Emitter):
+class guardianSites:
     # this is no longer used but might come back
     gstypes = {
         "ancient_tiny_001": 2,
@@ -4446,9 +4472,6 @@ class guardianSites(Emitter):
     }
 
     def __init__(self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
-        Emitter.__init__(
-            self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client
-        )
 
         example = {
             "timestamp": "2019-10-10T10:23:32Z",
@@ -4522,30 +4545,6 @@ class guardianSites(Emitter):
                     self.gstype = "Unknown"
                     self.modelreport = "grreports"
 
-    def run(self):
-        if (
-            self.modelreport
-            and self.modelreport in ("grreports", "gsreports")
-            and self.system
-        ):
-            payload = self.setPayload()
-            payload["userType"] = "pc"
-            payload["reportType"] = "new"
-            payload["reportStatus"] = "pending"
-            payload["type"] = self.gstype
-            payload["systemAddress"] = self.entry.get("SystemAddress")
-            payload["bodyName"] = self.body
-            payload["latitude"] = self.lat
-            payload["longitude"] = self.lon
-            payload["reportComment"] = json.dumps(self.entry, indent=4)
-            payload["frontierID"] = self.index
-
-            url = self.getUrl()
-            Debug.logger.debug(payload)
-
-            Debug.logger.debug(url)
-            self.send(payload, url)
-
     def get_index(self, value):
         a = []
         a = value.split("#")
@@ -4556,184 +4555,39 @@ class guardianSites(Emitter):
             return index_id
 
 
-class codexEmitter(Emitter):
-    types = {}
-    reporttypes = {}
-    excludecodices = {}
-
-    def split_region(self, region):
-        if region:
-            return region.replace("$Codex_RegionName_", "").replace(";", "")
-        else:
-            return None
+class codexEmitter:
 
     def __init__(
         self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state
     ):
-        Emitter.__init__(
-            self, cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client
-        )
-        self.modelreport = "xxreports"
-        self.modeltype = "xxtypes"
-        self.odyssey = state.get("Odyssey")
 
-    def getSystemPayload(self, name):
-        payload = self.setPayload()
-        payload["userType"] = "pc"
-        payload["reportType"] = "new"
-        payload["type"] = name
-        payload["reportStatus"] = "pending"
-        payload["isBeta"] = self.is_beta
-        payload["clientVersion"] = self.client
-        payload["regionID"] = self.split_region(self.entry.get("Region"))
-
-        return payload
-
-    def split_nearest_destination(self, nearest_destination):
-        # abort if no index
-        if not "index" in nearest_destination:
-            return None, None
-
-        ndarray = []
-        signal_type = None
-
-        ndarray = nearest_destination.split("#")
-        if len(ndarray) == 2:
-            dummy, c = nearest_destination.split("#")
-            dummy, index_id = c.split("=")
-            index_id = index_id[:-1]
-        else:
-            dummy, b, c = ndarray
-            dummy, signal_type = b.split("=")
-            dummy, index_id = c.split("=")
-            signal_type = signal_type[:-1]
-            index_id = index_id[:-1]
-
-        return signal_type, index_id
-
-    def getBodyPayload(self, name):
-        payload = self.getSystemPayload(name)
-        payload["bodyName"] = self.body
-        payload["coordX"] = self.x
-        payload["coordY"] = self.y
-        payload["coordZ"] = self.z
-        payload["latitude"] = self.lat
-        payload["longitude"] = self.lon
-        payload["regionID"] = self.split_region(self.entry.get("Region"))
-
-        nearest_destination = self.entry.get("NearestDestination")
-        if nearest_destination:
-            signal_type, index = self.split_nearest_destination(nearest_destination)
-            payload["frontierID"] = index
-
-        return payload
-
-    def getCodexPayload(self):
-        payload = self.getBodyPayload(self.entry.get("Name"))
-        payload["entryId"] = self.entry.get("EntryID")
-        payload["codexName"] = self.entry.get("Name")
-        payload["codexNameLocalised"] = self.entry.get("Name_Localised")
-        payload["subCategory"] = self.entry.get("SubCategory")
-        payload["subCategoryLocalised"] = self.entry.get("SubCategory_Localised")
-        payload["category"] = self.entry.get("Category")
-        payload["categoryLocalised"] = self.entry.get("Category_Localised")
-        payload["regionName"] = self.entry.get("Region")
-        payload["regionLocalised"] = self.entry.get("Region_Localised")
-        payload["systemAddress"] = self.entry.get("SystemAddress")
-        payload["voucherAmount"] = self.entry.get("VoucherAmount")
-        payload["rawJson"] = self.entry
-
-        del payload["type"]
-        del payload["reportStatus"]
-        del payload["userType"]
-        del payload["reportType"]
-        del payload["regionID"]
-
-        return payload
-
-    def getReportTypes(self, id):
-        if not codexEmitter.reporttypes.get(id):
-            url = "{}/reporttypes?journalID={}&_limit=1000".format(self.getUrl(), id)
-            Debug.logger.debug(url)
-            r = requests.get(
-                "{}/reporttypes?journalID={}&_limit=1000".format(self.getUrl(), id)
-            )
-            if r.status_code == requests.codes.ok:
-                for exc in r.json():
-                    codexEmitter.reporttypes["{}".format(exc["journalID"])] = {
-                        "endpoint": exc["endpoint"],
-                        "location": exc["location"],
-                        "type": exc["type"],
-                    }
-
-            else:
-                Debug.logger.error("error in getReportTypes")
-
-    def getExcluded(self):
-        if not codexEmitter.excludecodices:
-            tempexclude = {}
-            r = requests.get("{}/excludecodices?_limit=1000".format(self.getUrl()))
-            if r.status_code == requests.codes.ok:
-                for exc in r.json():
-                    tempexclude["${}_name;".format(exc["codexName"])] = True
-
-                codexEmitter.excludecodices = tempexclude
-
-    def run(self):
-        self.getExcluded()
-
-        # We don't want stellar bodies unless they are Green Giants
-
-        stellar_bodies = self.entry.get("Category") == "$Codex_Category_StellarBodies;"
-        green_giant = stellar_bodies and "Green" in self.entry.get("Name")
-        excluded = (
-            codexEmitter.excludecodices.get(self.entry.get("Name").lower())
-            or stellar_bodies
-        )
+        stellar_bodies = entry.get("Category") == "$Codex_Category_StellarBodies;"
+        green_giant = stellar_bodies and "Green" in entry.get("Name")
+        excluded = stellar_bodies
 
         included = not excluded or green_giant
 
         if included:
-            self.getReportTypes(self.entry.get("EntryID"))
-            url = self.getUrl()
 
             canonn.emitter.post(
                 "https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent",
                 {
                     "gameState": {
-                        "systemName": self.system,
-                        "systemCoordinates": [self.x, self.y, self.z],
-                        "bodyName": self.body,
-                        "latitude": self.lat,
-                        "longitude": self.lon,
-                        "clientVersion": self.client,
-                        "isBeta": self.is_beta,
+                        "systemName": system,
+                        "systemCoordinates": [x, y, z],
+                        "bodyName": body,
+                        "latitude": lat,
+                        "longitude": lon,
+                        "clientVersion": client,
+                        "isBeta": is_beta,
                         "platform": "PC",
-                        "odyssey": self.odyssey,
+                        "odyssey": state.get("Odyssey"),
                     },
-                    "rawEvent": self.entry,
-                    "eventType": self.entry.get("event"),
-                    "cmdrName": self.cmdr,
+                    "rawEvent": entry,
+                    "eventType": entry.get("event"),
+                    "cmdrName": cmdr,
                 },
             )
-
-            # CAPI doesnt want any stellar bodies so we will exclude them
-            if not stellar_bodies:
-                jid = self.entry.get("EntryID")
-                reportType = codexEmitter.reporttypes.get(str(jid))
-
-                if reportType:
-                    if reportType.get("location") == "body":
-                        payload = self.getBodyPayload(reportType.get("type"))
-                        self.modelreport = reportType.get("endpoint")
-                    else:
-                        payload = self.getSystemPayload(reportType.get("type"))
-                        self.modelreport = reportType.get("endpoint")
-                else:
-                    payload = self.getCodexPayload()
-                    self.modelreport = "reportcodices"
-
-                self.send(payload, url)
 
 
 def test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client):
@@ -4883,12 +4737,28 @@ def submit(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client, state)
             lon,
             client,
             state,
-        ).start()
+        )
 
     if approach_settlement or guardian_event:
-        guardianSites(
-            cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client
-        ).start()
+        canonn.emitter.post(
+            "https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent",
+            {
+                "gameState": {
+                    "systemName": system,
+                    "systemCoordinates": [x, y, z],
+                    "bodyName": body,
+                    "latitude": lat,
+                    "longitude": lon,
+                    "clientVersion": client,
+                    "isBeta": is_beta,
+                    "platform": "PC",
+                    "odyssey": state.get("Odyssey"),
+                },
+                "rawEvent": entry,
+                "eventType": entry.get("event"),
+                "cmdrName": cmdr,
+            },
+        )
 
     if entry.get("event") == "SendText" and entry.get("Message") == "codextest":
         test(cmdr, is_beta, system, x, y, z, entry, body, lat, lon, client)

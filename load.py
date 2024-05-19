@@ -16,8 +16,6 @@ from canonn import codex
 from canonn import factionkill
 from canonn import fssreports
 from canonn import hdreport
-from canonn import journaldata
-from canonn import materialReport
 from canonn import news
 from canonn import nhss
 from canonn import patrol
@@ -130,7 +128,6 @@ def plugin_start(plugin_dir):
     release.Release.plugin_start(plugin_dir)
     patrol.CanonnPatrol.plugin_start(plugin_dir)
     codex.CodexTypes.plugin_start(plugin_dir)
-    journaldata.plugin_start(plugin_dir)
     capture.plugin_start(plugin_dir)
     extool.BearingDestination.plugin_start(plugin_dir)
 
@@ -376,17 +373,6 @@ def journal_entry_wrapper(
         client,
         state,
     )
-    journaldata.submit(
-        cmdr,
-        is_beta,
-        system,
-        station,
-        entry,
-        client,
-        body,
-        nearloc["Latitude"],
-        nearloc["Longitude"],
-    )
     this.patrol.journal_entry(
         cmdr,
         is_beta,
@@ -425,23 +411,6 @@ def journal_entry_wrapper(
         station,
         entry,
         state,
-        x,
-        y,
-        z,
-        body,
-        nearloc["Latitude"],
-        nearloc["Longitude"],
-        client,
-    )
-    materialReport.submit(
-        cmdr,
-        is_beta,
-        system,
-        SysFactionState,
-        SysFactionAllegiance,
-        DistFromStarLS,
-        station,
-        entry,
         x,
         y,
         z,
