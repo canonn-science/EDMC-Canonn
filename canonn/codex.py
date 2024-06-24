@@ -10,6 +10,7 @@ except:
     from urllib import quote_plus
     from urllib import unquote
 
+import traceback
 from operator import truediv
 import canonn.emitter
 import json
@@ -68,11 +69,24 @@ def plugin_error(func):
         try:
             func(*args, **kwargs)
         except Exception as e:
+            error_message = traceback.format_exc()
             Debug.logger.error(f"{func.__name__} had an error")
             Debug.logger.error(args)
             Debug.logger.error(e)
             self = args[0]
-            self.add_poi("Other", "Plugin Error", args[3])
+            try:
+                self.add_poi("Other", "Plugin Error", args[3])
+            except:
+                self.add_poi("Other", "Plugin Error", None)
+            canonn.emitter.post(
+                "https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent/plugin/error",
+                {
+                    "system_name": self.system,
+                    "function_name": func.__name__,
+                    "clientVersion": ClientVersion.client(),
+                    "error_text": error_message,
+                },
+            )
 
     return wrapper
 
@@ -551,7 +565,7 @@ class CodexTypes:
         "$economy_Prison;": "Prison",
         "$economy_Rescue;": "Rescue",
         "$economy_Carrier;": "Private Enterprise",
-        "$economy_Engineer;": "Engineering"
+        "$economy_Engineer;": "Engineering",
     }
 
     genus = {
@@ -1262,8 +1276,6 @@ class CodexTypes:
                         self.satellite_star(b, body_code)
                         self.high_value(b, body_code)
 
-
-
                         # Terraforming
                         if b.get("terraformingState") == "Terraformable":
                             if b.get("isLandable"):
@@ -1444,8 +1456,8 @@ class CodexTypes:
 
                         #    High eccentricity
                         if (
-                            b.get("orbitalEccentricity") and 
-                            float(b.get("orbitalEccentricity") or 0)
+                            b.get("orbitalEccentricity")
+                            and float(b.get("orbitalEccentricity") or 0)
                             > CodexTypes.eccentricity
                         ):
                             self.add_poi("Tourist", "Highly Eccentric Orbit", body_code)
@@ -2865,6 +2877,7 @@ class CodexTypes:
             if len(self.poidata[hud_category]) == 0:
                 del self.poidata[hud_category]
 
+    @plugin_error
     def helium_rich(self, b):
         body_code = b.get("name").replace(self.system + " ", "")
         gasgiant = b.get("subType") and "gas giant" in b.get("subType").lower()
@@ -2885,7 +2898,9 @@ class CodexTypes:
         ):
             self.add_poi("Tourist", f"Helium Rich System", None)
 
+    @plugin_error
     def hot_landable(self, b):
+
         body_code = b.get("name").replace(self.system + " ", "")
         if b.get("subType"):
             type = b.get("subType").replace("-", " ")
@@ -2893,6 +2908,7 @@ class CodexTypes:
         if b.get("isLandable") and temperature and float(temperature) > 1500:
             self.add_poi("Tourist", f"Hot landable {type}", body_code)
 
+    @plugin_error
     def synchronous_orbit(self, b):
         body_code = b.get("name").replace(self.system + " ", "")
         valid = (
@@ -2920,6 +2936,7 @@ class CodexTypes:
 
     @plugin_error
     def shepherd_moon(self, body, bodies, body_code):
+
         if body.get("type") == "Barycentre":
             return
 
@@ -3194,6 +3211,7 @@ class CodexTypes:
                     self.add_poi("Tourist", "Close Ring Proximity", body_code)
                     self.add_poi("Tourist", "Close Ring Proximity", parent_code)
 
+    @plugin_error
     def trojan(self, candidate, bodies):
         # https://forums.frontier.co.uk/threads/hunt-for-trojans.369380/page-7
 
@@ -3253,6 +3271,7 @@ class CodexTypes:
                                 body_code,
                             )
 
+    @plugin_error
     def ringed_star(self, candidate):
         hasRings = False
         body_code = candidate.get("name").replace(self.system + " ", "")
@@ -3335,6 +3354,7 @@ class CodexTypes:
 
     """
 
+    @plugin_error
     def high_value(self, body, body_code):
         # no point in displaying stars as they are honked
         subtype = CodexTypes.body_types.get(body.get("subType"))
@@ -3421,6 +3441,7 @@ class CodexTypes:
 
         return
 
+    @plugin_error
     def satellite_star(self, body, body_code):
         # excluding brown dwarfs
         # if the star is designated a name ending in a digit it is a planet
@@ -3432,6 +3453,7 @@ class CodexTypes:
             if name[-1].isdigit() and name[-2] == " ":
                 self.add_poi("Tourist", "Star as Planet", body_code)
 
+    @plugin_error
     def deeply_nested(self, body, body_code):
         # true moon moon moons have parents that are planets
         # we are going to count parents that are planets
@@ -3465,6 +3487,7 @@ class CodexTypes:
         if nested and not mooncubed:
             self.add_poi("Tourist", "Deeply Nested", body_code)
 
+    @plugin_error
     def green_system(self, bodies):
         mats = [
             "Carbon",
@@ -3499,6 +3522,7 @@ class CodexTypes:
             body_code = body.get("name").replace(self.system + " ", "")
             self.jumponium(body, body_code, jclass)
 
+    @plugin_error
     def jumponium(self, body, body_code, jclass):
         materials = body.get("materials")
         basic = False
@@ -3569,6 +3593,7 @@ class CodexTypes:
             self.add_poi(jclass, f"$BoostFSD:Basic{modifier}", body_code)
             return
 
+    @plugin_error
     def rings(self, candidate, body_name):
         body_code = body_name.replace(self.system + " ", "")
         if candidate.get("rings") and not self.bodymismatch(self.system, body_name):
