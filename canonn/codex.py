@@ -328,10 +328,12 @@ def surface_pressure(tag, value):
 def get_synodic_period(b1, b2):
     T1 = b1.get("orbitalPeriod")
     T2 = b2.get("orbitalPeriod")
-    # make sure we dont divide by zero.
-    if T1 == T2 or abs((1 / T1) - (1 / T2)) or T1 + T2 == 0:
-        return 9999999999
-    Tsyn = 1 / abs((1 / T1) - (1 / T2))
+    try:
+        Tsyn = 1 / abs((1 / T1) - (1 / T2))
+    except ZeroDivisionError:
+        # return a very large number if we get a divide by zero error
+        # this is fine.
+        return 999999999999999999
     return Tsyn
 
 
