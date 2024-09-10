@@ -48,6 +48,16 @@ The POI system is used for directing people to places of interest to Canonn and 
  * Thargoid Sites show you the location of the nearest site and its type. 
  * Guardian Sites shows you the nearest guardian site 
 
+You can now store your own personal POIs in a CSV file. The column headings are the same as you would see if you downloaded csv from a body search in spansh. It requires a minimum of "System Name","X","Y,"Z" and either "Description" or "Subtype" columns.
+If "Description" is not Supplied then it will use "Subtype" if available or will just display "Personal POI" 
+
+You can Supply the description column to describe your POI. 
+
+The file must be called my_patrol.csv and is located in the canonn directory one level below the plugin folder
+
+e.g. C:\Users\\**YOURUSER**\AppData\Local\EDMarketConnector\canonn
+
+
 ### Usage
 * Click on the green arrows to see next or previous POI.
 * Click on the POI message to open a web page associated with the POI

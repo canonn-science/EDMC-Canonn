@@ -328,9 +328,12 @@ def surface_pressure(tag, value):
 def get_synodic_period(b1, b2):
     T1 = b1.get("orbitalPeriod")
     T2 = b2.get("orbitalPeriod")
-    if T1 == T2:
-        return 9999999999
-    Tsyn = 1 / abs((1 / T1) - (1 / T2))
+    try:
+        Tsyn = 1 / abs((1 / T1) - (1 / T2))
+    except ZeroDivisionError:
+        # return a very large number if we get a divide by zero error
+        # this is fine.
+        return 999999999999999999
     return Tsyn
 
 
@@ -1529,7 +1532,7 @@ class CodexTypes:
                                     + "$) "
                                     + english_name
                                 )
-
+                    
                     self.add_poi(hud_category, subcat, body_code)
 
                     if (r.get("latitude") is None) or (r.get("longitude") is None):
@@ -1876,10 +1879,20 @@ class CodexTypes:
 
         except Exception as e:
             # line = sys.exc_info()[-1].tb_lineno
-            self.add_poi("Other", "Plugin Error", None)
             Debug.logger.error("Plugin Error")
             Debug.logger.error(e)
             Debug.logger.exception(e)
+            error_message = traceback.format_exc()
+            canonn.emitter.post(
+                "https://us-central1-canonn-api-236217.cloudfunctions.net/postEvent/plugin/error",
+                {
+                    "system_name": self.system,
+                    "function_name": "refreshPOIData",
+                    "clientVersion": ClientVersion.client(),
+                    "error_text": error_message,
+                },
+            )
+            self.add_poi("Other", "Plugin Error", None)
 
         # Debug.logger.debug(f"refreshPOIData end {self.event}")
 
@@ -2823,6 +2836,7 @@ class CodexTypes:
 
     def add_poi(self, hud_category, english_name, body):
         # check if its bark mounds. if no volcanism then we will adjust the name
+
         if "Bark Mounds" in english_name and self.odyssey:
             # we need to change for volcanism
             for b in self.bodies.values():
@@ -3429,7 +3443,6 @@ class CodexTypes:
 
         # Example usage
         result = GetBodyValue(k, body.get("earthMasses"))
-        Debug.logger.debug(f"{body.get('subType')} {body.get('earthMasses')} ${result}")
 
         if result >= 1000000:
             if terraform:
