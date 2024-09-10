@@ -3444,7 +3444,6 @@ class CodexTypes:
 
         # Example usage
         result = GetBodyValue(k, body.get("earthMasses"))
-        Debug.logger.debug(f"{body.get('subType')} {body.get('earthMasses')} ${result}")
 
         if result >= 1000000:
             if terraform:
