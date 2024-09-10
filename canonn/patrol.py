@@ -563,24 +563,25 @@ class CanonnPatrol(Frame):
         if os.path.exists(filepath) and filename.endswith(".csv"):
             with open(filepath, mode="r", newline="", encoding="utf-8") as csv_file:
                 reader = csv.DictReader(csv_file, quotechar='"')
-                x = row.get("X") or row.get("x")
-                y = row.get("Y") or row.get("y")
-                z = row.get("Z") or row.get("z")
-                system = (
-                    row.get("System Name")
-                    or row.get("System")
-                    or row.get("system")
-                    or row.get("SystemName")
-                    or row.get("systemName")
-                )
-                description = (
-                    row.get("Description")
-                    or row.get("description")
-                    or row.get("Subtype")
-                    or "Personal POI"
-                )
+
                 for row in reader:
                     try:
+                        x = row.get("X") or row.get("x")
+                        y = row.get("Y") or row.get("y")
+                        z = row.get("Z") or row.get("z")
+                        system = (
+                            row.get("System Name")
+                            or row.get("System")
+                            or row.get("system")
+                            or row.get("SystemName")
+                            or row.get("systemName")
+                        )
+                        description = (
+                            row.get("Description")
+                            or row.get("description")
+                            or row.get("Subtype")
+                            or "Personal POI"
+                        )
                         patrol.append(
                             newPatrol(
                                 "Personal Patrol",
