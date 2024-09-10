@@ -555,6 +555,35 @@ class CanonnPatrol(Frame):
         # Debug.logger.debug("{}: {}".format(bgs.get("system_name"), retval))
         return retval
 
+    def getPersonalPatrol(self):
+        patrol = []
+        Debug.logger.debug("getPersonalPatrol")
+        filename = "my_patrol.csv"
+        filepath = os.path.join(config.app_dir_path, "canonn", filename)
+        if os.path.exists(filepath) and filename.endswith(".csv"):
+            with open(filepath, mode="r", newline="", encoding="utf-8") as csv_file:
+                reader = csv.DictReader(csv_file, quotechar='"')
+                for row in reader:
+                    Debug.logger.debug(row)
+                    patrol.append(
+                        newPatrol(
+                            "Personal Patrol",
+                            row.get("System Name"),
+                            [
+                                float(row.get("X")),
+                                float(row.get("Y")),
+                                float(row.get("Z")),
+                            ],
+                            row.get("Description")
+                            or row.get("Subtype")
+                            or "Personal POI",
+                            None,
+                            None,
+                        )
+                    )
+                    # Process the parsed JSON data (printing for this example)
+        return patrol
+
     def getGnosis(self):
         patrol = []
         gpos = gnosis()
@@ -858,8 +887,11 @@ class CanonnPatrol(Frame):
             if not self.started and not config.shutting_down:
                 self.event_generate("<<PatrolDisplay>>", when="tail")
             gnosisPatrol = self.getGnosis()
+
             if gnosisPatrol:
                 patrol_list.extend(gnosisPatrol)
+
+            patrol_list.extend(self.getPersonalPatrol())
 
             if self.thargoids != 1:
                 Debug.logger.debug("Getting Thargoid Tour")
