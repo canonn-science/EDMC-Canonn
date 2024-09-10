@@ -1532,8 +1532,7 @@ class CodexTypes:
                                     + "$) "
                                     + english_name
                                 )
-                    Debug.logger.debug("LOOK HERE")
-                    Debug.logger.debug(json.dumps(r))
+                    
                     self.add_poi(hud_category, subcat, body_code)
 
                     if (r.get("latitude") is None) or (r.get("longitude") is None):
