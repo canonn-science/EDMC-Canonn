@@ -1182,6 +1182,7 @@ class CodexTypes:
         if self.waitingPOI:
             return
         try:
+
             while not self.spansh_bodyq.empty():
                 # only expecting to go around once
                 self.temp_spanshdata = self.spansh_bodyq.get()
@@ -1235,8 +1236,13 @@ class CodexTypes:
                         if CodexTypes.fsscount > 0:
                             self.systemprogress.grid()
                             # self.systemprogress["text"]="{}%".format(round((float(CodexTypes.bodycount)/float(CodexTypes.fsscount))*100,1))
-                            self.systemprogress["text"] = "{}/{}".format(
-                                CodexTypes.bodycount, nvl(CodexTypes.fsscount, "?")
+                            rescan_text = ""
+                            if self.rescan:
+                                rescan_text = " Rescan"
+                            self.systemprogress["text"] = "{}/{}{}".format(
+                                CodexTypes.bodycount,
+                                nvl(CodexTypes.fsscount, "?"),
+                                rescan_text,
                             )
                     # else:
 
@@ -1532,7 +1538,7 @@ class CodexTypes:
                                     + "$) "
                                     + english_name
                                 )
-                    
+
                     self.add_poi(hud_category, subcat, body_code)
 
                     if (r.get("latitude") is None) or (r.get("longitude") is None):
@@ -2146,6 +2152,14 @@ class CodexTypes:
                     # debug("got EDSM Data")
                     j = r.json()
                     temp_spanshdata = j.get("system")
+
+                    # If the timestamp is older than odyssey we need to rescan the system
+                    self.rescan = False
+                    if is_timestamp_older(
+                        temp_spanshdata.get("date"), "2021-05-01 00:00:00+00"
+                    ):
+                        self.rescan = True
+
                     for b in temp_spanshdata.get("bodies"):
                         mismatch = self.bodymismatch(
                             temp_spanshdata.get("name"), b.get("name")
