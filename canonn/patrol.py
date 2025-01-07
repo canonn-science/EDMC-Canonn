@@ -120,9 +120,9 @@ def getShipType(id):
 
 def getShipSize(id):
     global ship_types
-    print(f"ship id {id}")
+
     if ship_types.get(id):
-        print(ship_types.get(id))
+
         return ship_types.get(id).get("size")
     return "L"
 
@@ -559,16 +559,32 @@ class CanonnPatrol(Frame):
         patrol = []
         Debug.logger.debug("getPersonalPatrol")
         filename = "my_patrol.csv"
+        filepaths = []
+        dirpath = os.path.join(config.app_dir_path, "canonn", "patrols")
         filepath = os.path.join(config.app_dir_path, "canonn", filename)
+
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+
+        # we will add the my_patrol.csv file for backwards compatibility
         if os.path.exists(filepath) and filename.endswith(".csv"):
+            filepaths.append(filepath)
+
+        # we need to searc the direpath for cv files and append them to filepaths
+        for file in os.listdir(dirpath):
+            if file.endswith(".csv"):
+                filepaths.append(os.path.join(dirpath, file))
+
+        # the files exist so lets just load them
+        for filepath in filepaths:
             with open(filepath, mode="r", newline="", encoding="utf-8") as csv_file:
                 reader = csv.DictReader(csv_file, quotechar='"')
 
                 for row in reader:
                     try:
-                        x = row.get("X") or row.get("x")
-                        y = row.get("Y") or row.get("y")
-                        z = row.get("Z") or row.get("z")
+                        x = row.get("X") or row.get("x") or row.get("Coord X")
+                        y = row.get("Y") or row.get("y") or row.get("Coord Y")
+                        z = row.get("Z") or row.get("z") or row.get("Coord Z")
                         system = (
                             row.get("System Name")
                             or row.get("System")
@@ -579,7 +595,10 @@ class CanonnPatrol(Frame):
                         description = (
                             row.get("Description")
                             or row.get("description")
+                            or row.get("instructions")
+                            or row.get("Instructions")
                             or row.get("Subtype")
+                            or row.get("Type")
                             or "Personal POI"
                         )
                         patrol.append(
@@ -592,8 +611,8 @@ class CanonnPatrol(Frame):
                                 None,
                             )
                         )
-                    except Exception(e):
-                        Debug.logger.error("can't append row")
+                    except Exception as e:
+                        Debug.logger.error(e)
                         Debug.logger.error(row)
                     # Process the parsed JSON data (printing for this example)
         return patrol
