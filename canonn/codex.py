@@ -3009,7 +3009,7 @@ class CodexTypes:
                             maxradius = outerRadius
 
                 # if it was all belts maxradius wont be set
-                if maxradius > 0:
+                if maxradius > 0 and body.get("semiMajorAxis"):
                     # all measurements in meters
                     semiMajorAxis = float(body.get("semiMajorAxis")) * 149597870691
                     try:
