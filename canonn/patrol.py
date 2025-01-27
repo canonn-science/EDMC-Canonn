@@ -980,7 +980,8 @@ class CanonnPatrol(Frame):
                 self.event_generate("<<PatrolDone>>", when="tail")
 
     def getEDSMPatrol(self):
-        url = "https://www.edsm.net/en/galactic-mapping/json"
+        # data originally from but now archived
+        # url = "https://www.edsm.net/en/galactic-mapping/json"
 
         types = {
             "minorPOI": "Minor Point of Interest",
@@ -1028,10 +1029,9 @@ class CanonnPatrol(Frame):
         ]
 
         try:
-            r = requests.get(url)
-            r.encoding = "utf-8"
-            Debug.logger.debug(r.encoding)
-            gmpentries = r.json()
+            gmp = os.path.join(CanonnPatrol.plugin_dir, "data", "gmp.json")
+            with open(gmp) as json_file:
+                gmpentries = json.load(json_file)
         except Exception as e:
             Debug.logger.error("Failed to fetch GMP POIs")
             Debug.logger.error(e)
