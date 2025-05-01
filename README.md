@@ -181,12 +181,14 @@ eg: Canonn capture biology A rude looking tubus
 
 We save code data to our database. 
 
-We provide excel sheets with much of the data held in the CAPI
+We provide google sheets with much of the data held in the CAPI
 
 * [Surface Biology](https://canonn.fyi/biosheet)
 * [Guardian](https://canonn.fyi/guardiansheet)
 * [Lagrange Clouds](https://canonn.fyi/cloudsheet)
 * [Thargoid](https://canonn.fyi/thargoidsheet)
+
+We also provide a csv for each of the codex entries showing which systems they are found in. Please seee the documentation for [Dumpr](https://github.com/canonn-science/Dumpr/blob/main/README.md) for links. 
 
 All Codex data some FSS Events and SAA Signals are stored in a cloud mysql database and used for showing code icons. This data can be accessed through data dumps in compressed json format.
 
