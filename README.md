@@ -190,7 +190,7 @@ We provide excel sheets with much of the data held in the CAPI
 
 All Codex data some FSS Events and SAA Signals are stored in a cloud mysql database and used for showing code icons. This data can be accessed through data dumps in compressed json format.
 
-* [Codex Events](https://drive.google.com/file/d/138PgJgUCv1Y10LRDsj3eUnOZh3cf_1v4/view?usp=sharing)
+* [Codex Events](https://storage.googleapis.com/canonn-downloads/codex.json.gz)
 * [FSS Events](https://drive.google.com/file/d/167wFlOrklf5tT2C1LtYGi8Ryjg-HpFXB/view?usp=sharing)
 * [Signals](https://drive.google.com/file/d/1VyxpC3xux7A9oKYZ9xEApVND-CFeF_Lf/view?usp=sharing)
 
