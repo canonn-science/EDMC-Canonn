@@ -31,7 +31,7 @@ from canonn.release import Release
 from canonn.systems import Systems
 from config import config
 from contextlib import closing
-from l10n import Locale
+
 from ttkHyperlinkLabel import HyperlinkLabel
 import html
 import plug
@@ -147,7 +147,7 @@ class UpdateThread(threading.Thread):
 
 
 def decode_unicode_references(data):
-    return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
+    return re.sub(r"&#(\d+)(;|(?=\s))", _callback, data)
 
 
 def get(list, index):
@@ -439,9 +439,7 @@ class CanonnPatrol(Frame):
                     )
                 )
                 self.distance["text"] = "{}ly".format(
-                    Locale.stringFromNumber(
-                        getDistance(p, self.nearest.get("coords")), 1
-                    )
+                    f"{getDistance(p, self.nearest.get('coords')):.1f}"
                 )
                 if self.system == self.nearest.get("system"):
                     self.distance["text"] = "0ly"
@@ -535,19 +533,19 @@ class CanonnPatrol(Frame):
         # Debug.logger.debug(bgs)
         if target:
             retval = "Canonn Influence {}%{}{}".format(
-                Locale.stringFromNumber(float(bgs.get("influence") * 100), 2),
+                f"{float(bgs.get('influence') * 100):.2f}",
                 states,
                 update_text,
             )
         if over:
             retval = "Canonn Influence {}%{} Check #mission_minor_faction on discord for instructions.{}".format(
-                Locale.stringFromNumber(float(bgs.get("influence") * 100), 2),
+                f"{float(bgs.get('influence') * 100):.2f}",
                 states,
                 update_text,
             )
         if under:
             retval = "Canonn Influence {}%{} Please complete missions for Canonn to increase our influence{}".format(
-                Locale.stringFromNumber(float(bgs.get("influence") * 100), 2),
+                f"{float(bgs.get('influence') * 100):.2f}",
                 states,
                 update_text,
             )
@@ -1387,13 +1385,13 @@ class CanonnPatrol(Frame):
                         f"https://www.edsm.net/en/system?systemName={system}"
                     )
                     self.distance["text"] = "{}ly".format(
-                        Locale.stringFromNumber(distance, 2)
+                        f"{distance:.2f}"
                     )
                     l = location.replace("_", " ")
 
                     if is_trade:
                         self.infolink["text"] = (
-                            f"{station} is {trade} {Locale.stringFromNumber(quantity,0)} {l} for ${Locale.stringFromNumber(price,0)} in system {system}"
+                            f"{station} is {trade} {quantity:,.0f} {l} for ${price:,.0f} in system {system}"
                         )
 
                         # Overlay trading
