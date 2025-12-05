@@ -31,7 +31,7 @@ from canonn.release import Release
 from canonn.systems import Systems
 from config import config
 from contextlib import closing
-from l10n import Locale
+
 from ttkHyperlinkLabel import HyperlinkLabel
 import html
 import plug
@@ -120,9 +120,9 @@ def getShipType(id):
 
 def getShipSize(id):
     global ship_types
-    print(f"ship id {id}")
+
     if ship_types.get(id):
-        print(ship_types.get(id))
+
         return ship_types.get(id).get("size")
     return "L"
 
@@ -147,7 +147,7 @@ class UpdateThread(threading.Thread):
 
 
 def decode_unicode_references(data):
-    return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
+    return re.sub(r"&#(\d+)(;|(?=\s))", _callback, data)
 
 
 def get(list, index):
@@ -439,9 +439,7 @@ class CanonnPatrol(Frame):
                     )
                 )
                 self.distance["text"] = "{}ly".format(
-                    Locale.stringFromNumber(
-                        getDistance(p, self.nearest.get("coords")), 1
-                    )
+                    f"{getDistance(p, self.nearest.get('coords')):.1f}"
                 )
                 if self.system == self.nearest.get("system"):
                     self.distance["text"] = "0ly"
@@ -535,19 +533,19 @@ class CanonnPatrol(Frame):
         # Debug.logger.debug(bgs)
         if target:
             retval = "Canonn Influence {}%{}{}".format(
-                Locale.stringFromNumber(float(bgs.get("influence") * 100), 2),
+                f"{float(bgs.get('influence') * 100):.2f}",
                 states,
                 update_text,
             )
         if over:
             retval = "Canonn Influence {}%{} Check #mission_minor_faction on discord for instructions.{}".format(
-                Locale.stringFromNumber(float(bgs.get("influence") * 100), 2),
+                f"{float(bgs.get('influence') * 100):.2f}",
                 states,
                 update_text,
             )
         if under:
             retval = "Canonn Influence {}%{} Please complete missions for Canonn to increase our influence{}".format(
-                Locale.stringFromNumber(float(bgs.get("influence") * 100), 2),
+                f"{float(bgs.get('influence') * 100):.2f}",
                 states,
                 update_text,
             )
@@ -559,16 +557,32 @@ class CanonnPatrol(Frame):
         patrol = []
         Debug.logger.debug("getPersonalPatrol")
         filename = "my_patrol.csv"
+        filepaths = []
+        dirpath = os.path.join(config.app_dir_path, "canonn", "patrols")
         filepath = os.path.join(config.app_dir_path, "canonn", filename)
+
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+
+        # we will add the my_patrol.csv file for backwards compatibility
         if os.path.exists(filepath) and filename.endswith(".csv"):
+            filepaths.append(filepath)
+
+        # we need to searc the direpath for cv files and append them to filepaths
+        for file in os.listdir(dirpath):
+            if file.endswith(".csv"):
+                filepaths.append(os.path.join(dirpath, file))
+
+        # the files exist so lets just load them
+        for filepath in filepaths:
             with open(filepath, mode="r", newline="", encoding="utf-8") as csv_file:
                 reader = csv.DictReader(csv_file, quotechar='"')
 
                 for row in reader:
                     try:
-                        x = row.get("X") or row.get("x")
-                        y = row.get("Y") or row.get("y")
-                        z = row.get("Z") or row.get("z")
+                        x = row.get("X") or row.get("x") or row.get("Coord X")
+                        y = row.get("Y") or row.get("y") or row.get("Coord Y")
+                        z = row.get("Z") or row.get("z") or row.get("Coord Z")
                         system = (
                             row.get("System Name")
                             or row.get("System")
@@ -579,7 +593,10 @@ class CanonnPatrol(Frame):
                         description = (
                             row.get("Description")
                             or row.get("description")
+                            or row.get("instructions")
+                            or row.get("Instructions")
                             or row.get("Subtype")
+                            or row.get("Type")
                             or "Personal POI"
                         )
                         patrol.append(
@@ -592,8 +609,8 @@ class CanonnPatrol(Frame):
                                 None,
                             )
                         )
-                    except Exception(e):
-                        Debug.logger.error("can't append row")
+                    except Exception as e:
+                        Debug.logger.error(e)
                         Debug.logger.error(row)
                     # Process the parsed JSON data (printing for this example)
         return patrol
@@ -961,7 +978,8 @@ class CanonnPatrol(Frame):
                 self.event_generate("<<PatrolDone>>", when="tail")
 
     def getEDSMPatrol(self):
-        url = "https://www.edsm.net/en/galactic-mapping/json"
+        # data originally from but now archived
+        # url = "https://www.edsm.net/en/galactic-mapping/json"
 
         types = {
             "minorPOI": "Minor Point of Interest",
@@ -1009,10 +1027,9 @@ class CanonnPatrol(Frame):
         ]
 
         try:
-            r = requests.get(url)
-            r.encoding = "utf-8"
-            Debug.logger.debug(r.encoding)
-            gmpentries = r.json()
+            gmp = os.path.join(CanonnPatrol.plugin_dir, "data", "gmp.json")
+            with open(gmp) as json_file:
+                gmpentries = json.load(json_file)
         except Exception as e:
             Debug.logger.error("Failed to fetch GMP POIs")
             Debug.logger.error(e)
@@ -1368,13 +1385,13 @@ class CanonnPatrol(Frame):
                         f"https://www.edsm.net/en/system?systemName={system}"
                     )
                     self.distance["text"] = "{}ly".format(
-                        Locale.stringFromNumber(distance, 2)
+                        f"{distance:.2f}"
                     )
                     l = location.replace("_", " ")
 
                     if is_trade:
                         self.infolink["text"] = (
-                            f"{station} is {trade} {Locale.stringFromNumber(quantity,0)} {l} for ${Locale.stringFromNumber(price,0)} in system {system}"
+                            f"{station} is {trade} {quantity:,.0f} {l} for ${price:,.0f} in system {system}"
                         )
 
                         # Overlay trading
