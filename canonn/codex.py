@@ -836,6 +836,7 @@ class CodexTypes:
         self.planetlist_body = None
         self.planetlist_show = False
         self.planetlist_auto = True
+        self.rescan = False
         # self.systemprogress.grid_remove()
 
     def nextBodyMode(self, event):
