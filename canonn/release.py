@@ -194,7 +194,7 @@ class Release(Frame):
             self.latest = latest
             Debug.logger.debug("latest release downloaded")
             if not config.shutting_down:
-                self.event_generate("<<ReleaseUpdate>>", when="tail")
+                self.after_idle(lambda: self.event_generate("<<ReleaseUpdate>>", when="tail"))
 
     def release_update(self, event):
         # if we have just installed a new version we can end the cycle
