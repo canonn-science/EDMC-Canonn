@@ -29,14 +29,6 @@ DEFAULT_NEWS_URL = 'https://canonn.science/wp-json/wp/v2/posts'
 WRAP_LENGTH = 200
 
 
-def _callback(matches):
-    id = matches.group(1)
-    try:
-        return unichr(int(id))
-    except:
-        return id
-
-
 class UpdateThread(threading.Thread):
     def __init__(self, widget):
         threading.Thread.__init__(self)
@@ -48,8 +40,7 @@ class UpdateThread(threading.Thread):
         self.widget.download()
 
 
-def decode_unicode_references(data):
-    return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
+# Use html.unescape() instead of custom decode_unicode_references
 
 
 class NewsLink(HyperlinkLabel):

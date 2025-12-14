@@ -13,6 +13,7 @@ except:
     import StringIO
     import StringIO as BytesIO
 
+import html
 import json
 import myNotebook as nb
 import os
@@ -52,16 +53,7 @@ DEFAULT_URL = "https://github.com/canonn-science/EDMC-Canonn/releases"
 WRAP_LENGTH = 200
 
 
-def _callback(matches):
-    id = matches.group(1)
-    try:
-        return unichr(int(id))
-    except:
-        return id
-
-
-def decode_unicode_references(data):
-    return re.sub("&#(\d+)(;|(?=\s))", _callback, data)
+# Use html.unescape() instead of custom decode_unicode_references
 
 
 class ReleaseLink(HyperlinkLabel):
