@@ -147,13 +147,18 @@ class Release(Frame):
         ):
             delete_dir = config.get_str("Canonn:RemoveBackup")
             Debug.logger.debug("Canonn:RemoveBackup {}".format(delete_dir))
-            try:
-                shutil.rmtree(delete_dir)
-            except:
-                Debug.logger.error("Cant delete {}".format(delete_dir))
-
-            # lets not keep trying
+            
+            # Always clear the config first to prevent repeated attempts
             config.set("Canonn_RemoveBackup", "None")
+            
+            if os.path.exists(delete_dir):
+                try:
+                    shutil.rmtree(delete_dir)
+                    Debug.logger.debug("Successfully deleted {}".format(delete_dir))
+                except Exception as e:
+                    Debug.logger.error("Failed to delete {}: {}".format(delete_dir, str(e)))
+            else:
+                Debug.logger.debug("Directory {} does not exist, skipping deletion".format(delete_dir))
 
     def update(self, event):
         self.release_thread()
