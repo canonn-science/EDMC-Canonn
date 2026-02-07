@@ -36,7 +36,7 @@ from ttkHyperlinkLabel import HyperlinkLabel
 
 
 class ClientVersion:
-    ver = "7.5.3"
+    ver = "7.6.0"
     client_version = f"EDMC-Canonn.{ver}"
 
     @classmethod
@@ -147,18 +147,22 @@ class Release(Frame):
         ):
             delete_dir = config.get_str("Canonn:RemoveBackup")
             Debug.logger.debug("Canonn:RemoveBackup {}".format(delete_dir))
-            
+
             # Always clear the config first to prevent repeated attempts
             config.set("Canonn_RemoveBackup", "None")
-            
+
             if os.path.exists(delete_dir):
                 try:
                     shutil.rmtree(delete_dir)
                     Debug.logger.debug("Successfully deleted {}".format(delete_dir))
                 except Exception as e:
-                    Debug.logger.error("Failed to delete {}: {}".format(delete_dir, str(e)))
+                    Debug.logger.error(
+                        "Failed to delete {}: {}".format(delete_dir, str(e))
+                    )
             else:
-                Debug.logger.debug("Directory {} does not exist, skipping deletion".format(delete_dir))
+                Debug.logger.debug(
+                    "Directory {} does not exist, skipping deletion".format(delete_dir)
+                )
 
     def update(self, event):
         self.release_thread()
@@ -191,7 +195,9 @@ class Release(Frame):
             self.latest = latest
             Debug.logger.debug("latest release downloaded")
             if not config.shutting_down:
-                self.after_idle(lambda: self.event_generate("<<ReleaseUpdate>>", when="tail"))
+                self.after_idle(
+                    lambda: self.event_generate("<<ReleaseUpdate>>", when="tail")
+                )
 
     def release_update(self, event):
         # if we have just installed a new version we can end the cycle
