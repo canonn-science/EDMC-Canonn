@@ -1176,6 +1176,29 @@ class CodexTypes:
             return True
         return False
 
+    def _ring_has_spansh_signals(self, ring_name):
+        """Return True if spansh (`self.bodies`) contains signals for this ring.
+
+        Checks both standalone Ring-type bodies and `rings` arrays on parent bodies.
+        """
+        if not self.bodies:
+            return False
+        for sb in self.bodies.values():
+            # standalone ring bodies
+            if sb.get("type") == "Ring" and sb.get("name") == ring_name:
+                signals = sb.get("signals") or {}
+                sigs = signals.get("signals") if isinstance(signals, dict) else None
+                if sigs and len(sigs) > 0:
+                    return True
+            # rings nested under parent bodies
+            for r in (sb.get("rings") or []):
+                if r.get("name") == ring_name:
+                    signals = r.get("signals") or {}
+                    sigs = signals.get("signals") if isinstance(signals, dict) else None
+                    if sigs and len(sigs) > 0:
+                        return True
+        return False
+
     # this seems horribly confused
     def refreshPOIData(self, event):
         # Debug.logger.debug(f"refreshPOIData {self.event} {self.waitingPOI}")
@@ -3670,7 +3693,12 @@ class CodexTypes:
                                 "$Rings:" + "{} Rings".format(ring.get("type")),
                                 ring_code,
                             )
-                        if ring_code not in self.saadata:
+                        # only mark rings as "Need DSS" if we don't have SAA data
+                        # and spansh doesn't already report signals for this ring
+                        if (
+                            ring_code not in self.saadata
+                            and not self._ring_has_spansh_signals(ring.get("name"))
+                        ):
                             self.add_poi("MissingData", "$Rings:Need DSS", ring_code)
 
                     area = get_area(ring.get("innerRadius"), ring.get("outerRadius"))
