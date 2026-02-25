@@ -3214,7 +3214,7 @@ class CodexTypes:
             parent = sibling
 
         if parent and parent.get("rings") and candidate.get("rings"):
-            if candidate.get("semiMajorAxis"):
+            if candidate.get("semiMajorAxis") is not None:
                 apehelion = self.apoapsis(
                     "semiMajorAxis",
                     candidate.get("semiMajorAxis"),
@@ -3222,20 +3222,16 @@ class CodexTypes:
                 )
                 ring_span = get_outer_radius(candidate) + get_outer_radius(parent)
 
+                distance = None
                 if binary:
-                    distance = (
-                        (candidate.get("semiMajorAxis") + parent.get("semiMajorAxis"))
-                        * 499.005
-                    ) - ring_span
+                    sma_c = candidate.get("semiMajorAxis")
+                    sma_p = parent.get("semiMajorAxis")
+                    if sma_c is not None and sma_p is not None:
+                        distance = (sma_c + sma_p) * 499.005 - ring_span
                 else:
                     distance = apehelion - ring_span
 
-                if distance < 2 and binary:
-                    parent_code = parent.get("name").replace(self.system + " ", "")
-                    self.add_poi("Tourist", "Close Ring Proximity", body_code)
-                    self.add_poi("Tourist", "Close Ring Proximity", parent_code)
-
-                if distance < 2 and not binary:
+                if distance is not None and distance < 2:
                     parent_code = parent.get("name").replace(self.system + " ", "")
                     self.add_poi("Tourist", "Close Ring Proximity", body_code)
                     self.add_poi("Tourist", "Close Ring Proximity", parent_code)
