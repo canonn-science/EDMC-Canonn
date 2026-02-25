@@ -1804,14 +1804,14 @@ class CodexTypes:
                         self.system + " ", ""
                     )
                     latlon = None
-                    if self.settlementdata[station]["coords"] is not None:
-                        latlon = (
-                            "("
-                            + str(float(self.settlementdata[station]["coords"][0]))
-                            + ","
-                            + str(float(self.settlementdata[station]["coords"][1]))
-                            + ")"
-                        )
+                    coords = self.settlementdata[station].get("coords")
+                    if coords and coords[0] is not None and coords[1] is not None:
+                        try:
+                            lat = float(coords[0])
+                            lon = float(coords[1])
+                            latlon = "(" + str(lat) + "," + str(lon) + ")"
+                        except (TypeError, ValueError):
+                            latlon = None
                     if self.hidehumandetailed:
                         self.add_poi("Human", stype, bodycode)
                     else:
