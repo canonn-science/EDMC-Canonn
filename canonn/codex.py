@@ -1176,29 +1176,6 @@ class CodexTypes:
             return True
         return False
 
-    def _ring_has_spansh_signals(self, ring_name):
-        """Return True if spansh (`self.bodies`) contains signals for this ring.
-
-        Checks both standalone Ring-type bodies and `rings` arrays on parent bodies.
-        """
-        if not self.bodies:
-            return False
-        for sb in self.bodies.values():
-            # standalone ring bodies
-            if sb.get("type") == "Ring" and sb.get("name") == ring_name:
-                signals = sb.get("signals") or {}
-                sigs = signals.get("signals") if isinstance(signals, dict) else None
-                if sigs and len(sigs) > 0:
-                    return True
-            # rings nested under parent bodies
-            for r in (sb.get("rings") or []):
-                if r.get("name") == ring_name:
-                    signals = r.get("signals") or {}
-                    sigs = signals.get("signals") if isinstance(signals, dict) else None
-                    if sigs and len(sigs) > 0:
-                        return True
-        return False
-
     # this seems horribly confused
     def refreshPOIData(self, event):
         # Debug.logger.debug(f"refreshPOIData {self.event} {self.waitingPOI}")
@@ -3650,22 +3627,22 @@ class CodexTypes:
         # Per-type large ring thresholds (outer radius in km)
         # Use lower-case, stripped keys for robust matching
         LARGE_RING_THRESHOLDS = {
-            "icy": 200613.69 + 2*1258869.15,  # avg + 2*stddev
-            "metal rich": 251178.23 + 2*1690418.48,
-            "metallic": 153597.01 + 2*2042750.99,
-            "rocky": 264628.40 + 2*1738788.52,
-            "class i gas giant": 173110.68 + 2*948981.16,
-            "class ii gas giant": 218040.60 + 2*550587.91,
-            "class iii gas giant": 313959.80 + 2*513029.76,
-            "class iv gas giant": 426823.62 + 2*945526.60,
-            "class v gas giant": 348755.37 + 2*229082.87,
-            "ammonia world": 95239.82 + 2*828124.31,
-            "earth-like world": 45635.77 + 2*13766.97,
-            "water world": 59753.81 + 2*583397.15,
-            "high metal content world": 63727.56 + 2*624444.95,
-            "rocky ice world": 70058.30 + 2*643744.53,
-            "rocky body": 22577.81 + 2*195496.18,
-            "water giant": 302505.59 + 2*1821135.28,
+            "icy": 200613.69 + 2 * 1258869.15,  # avg + 2*stddev
+            "metal rich": 251178.23 + 2 * 1690418.48,
+            "metallic": 153597.01 + 2 * 2042750.99,
+            "rocky": 264628.40 + 2 * 1738788.52,
+            "class i gas giant": 173110.68 + 2 * 948981.16,
+            "class ii gas giant": 218040.60 + 2 * 550587.91,
+            "class iii gas giant": 313959.80 + 2 * 513029.76,
+            "class iv gas giant": 426823.62 + 2 * 945526.60,
+            "class v gas giant": 348755.37 + 2 * 229082.87,
+            "ammonia world": 95239.82 + 2 * 828124.31,
+            "earth-like world": 45635.77 + 2 * 13766.97,
+            "water world": 59753.81 + 2 * 583397.15,
+            "high metal content world": 63727.56 + 2 * 624444.95,
+            "rocky ice world": 70058.30 + 2 * 643744.53,
+            "rocky body": 22577.81 + 2 * 195496.18,
+            "water giant": 302505.59 + 2 * 1821135.28,
             # Add more as needed
         }
         DEFAULT_LARGE_RING_THRESHOLD = 1000000  # fallback if type not found
@@ -3673,6 +3650,7 @@ class CodexTypes:
         if candidate.get("rings") and not self.bodymismatch(self.system, body_name):
             for ring in candidate.get("rings"):
                 ringname = ring.get("name")
+
                 bodymsimatch = self.bodymismatch(self.system, ringname)
                 bodymatch = not bodymsimatch
                 if bodymatch:
@@ -3694,11 +3672,9 @@ class CodexTypes:
                                 ring_code,
                             )
                         # only mark rings as "Need DSS" if we don't have SAA data
-                        # and spansh doesn't already report signals for this ring
-                        if (
-                            ring_code not in self.saadata
-                            and not self._ring_has_spansh_signals(ring.get("name"))
-                        ):
+                        # and spansh doesn't already report and id64 for this ring
+                        ringid = ring.get("id64")
+                        if ring_code not in self.saadata and ringid is None:
                             self.add_poi("MissingData", "$Rings:Need DSS", ring_code)
 
                     area = get_area(ring.get("innerRadius"), ring.get("outerRadius"))
@@ -3713,13 +3689,17 @@ class CodexTypes:
                     # Use body_types mapping for normalization if available
                     normalized_type = self.body_types.get(ring_type_raw, ring_type_raw)
                     ring_type_key = normalized_type.strip().lower()
-                    threshold = LARGE_RING_THRESHOLDS.get(ring_type_key, DEFAULT_LARGE_RING_THRESHOLD)
+                    threshold = LARGE_RING_THRESHOLDS.get(
+                        ring_type_key, DEFAULT_LARGE_RING_THRESHOLD
+                    )
                     # Ensure outerRadius is in kilometers
                     outer_radius = ring.get("outerRadius")
                     if outer_radius and outer_radius > 100000:  # likely meters, convert
                         outer_radius = outer_radius / 1000.0
                     # Enhanced debug output for validation
-                    Debug.logger.info(f"[RING DEBUG] body: {body_name}, ring name: {ring.get('name')}, raw type: '{ring_type_raw}', normalized: '{normalized_type}', key: '{ring_type_key}', threshold: {threshold}, outerRadius: {outer_radius}")
+                    Debug.logger.info(
+                        f"[RING DEBUG] body: {body_name}, ring name: {ring.get('name')}, raw type: '{ring_type_raw}', normalized: '{normalized_type}', key: '{ring_type_key}', threshold: {threshold}, outerRadius: {outer_radius}"
+                    )
                     if "Ring" in ring.get("name").replace(self.system + " ", ""):
                         if outer_radius > threshold:
                             self.add_poi("Tourist", "Large Radius Rings", body_code)
