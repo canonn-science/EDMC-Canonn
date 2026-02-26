@@ -790,6 +790,7 @@ class CodexTypes:
             "Planets",
             "Tourist",
             "Jumponium",
+            "Tritium",
             "GreenSystem",
         )
         k = 0
@@ -810,6 +811,7 @@ class CodexTypes:
             "Personal",
             "Tourist",
             "Jumponium",
+            "Tritium",
         )
         k = 0
         for category in self.typesPlanet:
@@ -1675,11 +1677,60 @@ class CodexTypes:
                     # self.remove_poi("MissingData", "$Rings:Need DSS", body_code)
 
                     if r.get("hud_category") == "Ring":
+                        hotspot_name = r.get("english_name")
                         self.add_poi(
                             r.get("hud_category"),
-                            "$Hotspots:" + r.get("english_name"),
+                            "$Hotspots:" + hotspot_name,
                             body_code,
                         )
+                        # If the hotspot indicates Tritium, add to Tritium category
+                        try:
+                            if hotspot_name and "tritium" in hotspot_name.lower():
+                                # keep system-level display as full hotspot name
+                                # self.add_poi("Tritium", "$Hotspots:" + hotspot_name, body_code)
+
+                                # parse hotspot into reserve, index and ring name
+                                parts = hotspot_name.split()
+                                reserve = None
+                                index = None
+                                ringname = None
+                                if len(parts) >= 3 and parts[1].isdigit():
+                                    reserve = parts[0]
+                                    index = parts[1]
+                                    ringname = " ".join(parts[2:])
+                                else:
+                                    # fallback: put entire hotspot into ringname
+                                    ringname = hotspot_name
+
+                                # create a planet-level grouping without the index so
+                                # the UI can render "Reserve <index> <ringname>" with
+                                # the index as a separate clickable label.
+                                group_name = (
+                                    f"{reserve} {ringname}"
+                                    if reserve and ringname
+                                    else ringname
+                                )
+                                self.add_ppoi(body_code, "Tritium", group_name)
+
+                                # store the index as an entry so the number is shown
+                                if index:
+                                    lst = self.ppoidata[body_code]["Tritium"].get(
+                                        group_name
+                                    )
+                                    if lst is not None:
+                                        entry = [str(index), None]
+                                        if entry not in lst:
+                                            lst.append(entry)
+
+                                # Add a system-level Tritium POI using the group name
+                                # (without the numeric index) so the system list shows
+                                # "<group_name> <index>" (e.g. "Pristine B Ring 2").
+                                try:
+                                    self.add_poi("Tritium", group_name, body_code)
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
                     elif r.get("hud_category") == "Geology":
                         if body_code not in self.ppoidata:
                             self.ppoidata[body_code] = {}
@@ -2421,6 +2472,7 @@ class CodexTypes:
         self.set_image("Planets", False)
         self.set_image("Tourist", False)
         self.set_image("Jumponium", False)
+        self.set_image("Tritium", False)
         self.set_image("GreenSystem", False)
 
         nothing = True
@@ -2688,6 +2740,7 @@ class CodexTypes:
         self.set_image("Personal_planet", False)
         self.set_image("Tourist_planet", False)
         self.set_image("Jumponium_planet", False)
+        self.set_image("Tritium_planet", False)
 
         # refresh ppoi for unknown list
         self.update_unknown_ppoi(self.planetlist_body)
@@ -2727,21 +2780,51 @@ class CodexTypes:
                         nunk = len(
                             self.ppoidata[self.planetlist_body][category]["Unknown"]
                         )
-                        nsites = len(self.ppoidata[self.planetlist_body][category])
+                        # For Tritium we may have a stray literal key named
+                        # "Tritium" (a generic placeholder). Exclude that
+                        # from the site counts so the percent/count reflect
+                        # actual group entries only.
+                        if category == "Tritium":
+                            nsites = len(
+                                [
+                                    k
+                                    for k in self.ppoidata[self.planetlist_body][
+                                        category
+                                    ]
+                                    if k not in ("Unknown", "Tritium")
+                                ]
+                            )
+                        else:
+                            nsites = len(self.ppoidata[self.planetlist_body][category])
+
                         if self.planetlist_body in self.saadata:
                             if category in self.saadata[self.planetlist_body]:
                                 nsites = self.saadata[self.planetlist_body][category]
-                        self.planetcol2[-1]["text"] = (
-                            str(round((nsites - nunk) / nsites * 100, 2))
-                            + "% ["
-                            + str(nsites - nunk)
-                            + "/"
-                            + str(nsites)
-                            + "]"
-                        )
+
+                        # Do not show a percent/count badge for Tritium —
+                        # it has no meaningful "sites" percentage to display.
+                        if category == "Tritium":
+                            self.planetcol2[-1]["text"] = ""
+                        else:
+                            if nsites and nsites > 0:
+                                self.planetcol2[-1]["text"] = (
+                                    str(round((nsites - nunk) / nsites * 100, 2))
+                                    + "% ["
+                                    + str(nsites - nunk)
+                                    + "/"
+                                    + str(nsites)
+                                    + "]"
+                                )
+                            else:
+                                self.planetcol2[-1]["text"] = ""
 
                 label = []
                 for type in self.ppoidata[self.planetlist_body][category]:
+                    # Skip the literal placeholder key "Tritium" so only
+                    # formatted group names (e.g. "Pristine B Ring") are
+                    # shown in the planet list.
+                    if category == "Tritium" and type == "Tritium":
+                        continue
                     if self.odyssey and type == "Unknown":
                         continue
                     self.planetcol1.append(
@@ -2788,6 +2871,23 @@ class CodexTypes:
                                             1
                                         ]: self.activateDestination(latlon),
                                     )
+                                else:
+                                    # For Tritium entries without lat/lon, make the
+                                    # numeric index clickable to focus the body (so
+                                    # the UI reads like "Pristine 2 A Ring" with 2
+                                    # clickable).
+                                    if category == "Tritium":
+                                        if config.get_int("theme") == 0:
+                                            label[-1]["fg"] = "blue"
+                                        if config.get_int("theme") == 1:
+                                            label[-1]["fg"] = "white"
+                                        label[-1]["cursor"] = "hand2"
+                                        label[-1].bind(
+                                            "<Button-1>",
+                                            lambda event, body=self.planetlist_body: self.bodyFocus(
+                                                body
+                                            ),
+                                        )
                                 theme.update(label[-1])
                                 label[-1].grid(row=row, column=col, sticky="NW")
                             if poi[1] is not None:
@@ -2867,6 +2967,16 @@ class CodexTypes:
                     english_name = "Ex-Bark Mounds"
 
         # Debug.logger.debug(f"add_poi - {hud_category} {english_name} {body}")
+
+        # Avoid adding a generic 'Tritium' hotspot entry which creates an
+        # undesired duplicate line like 'Tritium 2'. We only want the
+        # formatted group names (e.g. 'Pristine B Ring'). Also ignore
+        # SAA '$Hotspots:' raw names for Tritium category.
+        if hud_category == "Tritium":
+            if english_name:
+                en = english_name.strip()
+                if en.lower() == "tritium" or en.lower().startswith("$hotspots:"):
+                    return
 
         if hud_category not in self.poidata:
             self.poidata[hud_category] = {}
@@ -3710,6 +3820,114 @@ class CodexTypes:
                             self.add_poi("Tourist", "Low Density Rings", body_code)
                         elif density > 1000:
                             self.add_poi("Tourist", "High Density Rings", body_code)
+
+                    # Detect Tritium in ring materials (some ring objects include materials)
+                    try:
+                        ring_code = ring.get("name").replace(self.system + " ", "")
+                    except Exception:
+                        ring_code = ring.get("name")
+
+                    # Check for Tritium in spansh-style signals first
+                    found_tritium = False
+                    # spansh can place signals under ring['signals']['signals']
+                    ring_signals = None
+                    try:
+                        ring_signals = ring.get("signals") and ring.get("signals").get(
+                            "signals"
+                        )
+                    except Exception:
+                        ring_signals = None
+
+                    if ring_signals and isinstance(ring_signals, dict):
+                        # signals dict like {"Tritium": 1, ...}
+                        if ring_signals.get("Tritium") or ring_signals.get("tritium"):
+                            found_tritium = True
+
+                    # fallback: some data sources put materials in ring['materials']
+                    if not found_tritium:
+                        ring_materials = ring.get("materials") or ring.get("Materials")
+                        if ring_materials:
+                            if isinstance(ring_materials, dict):
+                                if ring_materials.get("Tritium") or ring_materials.get(
+                                    "tritium"
+                                ):
+                                    found_tritium = True
+                            else:
+                                for m in ring_materials:
+                                    if isinstance(m, dict):
+                                        if (
+                                            m.get("name") == "Tritium"
+                                            or m.get("Name") == "Tritium"
+                                        ):
+                                            found_tritium = True
+                                            break
+                                    elif isinstance(m, str) and m.lower() == "tritium":
+                                        found_tritium = True
+                                        break
+
+                    if found_tritium:
+                        # Build a friendly display name: <Reserve> <index> <RingSuffix>
+                        try:
+                            full_ring_name = ring.get("name") or ""
+                            no_system = full_ring_name.replace(self.system + " ", "")
+                        except Exception:
+                            no_system = ring.get("name") or ""
+
+                        # body_code is the parent body code (e.g. "b54-69 2")
+                        parent_body_code = body_code
+
+                        # ring suffix should be the part after the parent body code
+                        ring_suffix = no_system
+                        if no_system.startswith(parent_body_code):
+                            ring_suffix = no_system[len(parent_body_code) :].strip()
+
+                        # extract numeric index from parent_body_code if present
+                        index_token = ""
+                        try:
+                            toks = parent_body_code.split()
+                            for t in reversed(toks):
+                                if t.isdigit():
+                                    index_token = t
+                                    break
+                        except Exception:
+                            index_token = ""
+
+                        reserve = None
+                        try:
+                            # reserveLevel may be at candidate (planet) or ring
+                            reserve = candidate.get("reserveLevel") or ring.get(
+                                "reserveLevel"
+                            )
+                        except Exception:
+                            reserve = None
+
+                        # Build group_name (no default 'Tritium' placeholder)
+                        if reserve:
+                            group_name = f"{reserve} {ring_suffix}".strip()
+                        else:
+                            group_name = ring_suffix
+
+                        # Add system-level POI using the group name (no index)
+                        # so the system list shows "<group_name> <index>".
+                        self.add_poi("Tritium", group_name, parent_body_code)
+
+                        # For planet view, group by reserve + ring suffix and add index via wsaa helper
+                        try:
+                            if index_token.isdigit():
+                                self.add_ppoi_wsaa(
+                                    parent_body_code,
+                                    "Tritium",
+                                    group_name,
+                                    int(index_token),
+                                    None,
+                                    None,
+                                    False,
+                                )
+                            else:
+                                self.add_ppoi(parent_body_code, "Tritium", group_name)
+                        except Exception:
+                            # best-effort: fallback to simple ppoi
+                            self.add_ppoi(parent_body_code, "Tritium", group_name)
 
     def light_seconds(self, tag, value):
         if tag in ("distanceToArrival", "DistanceFromArrivalLS"):

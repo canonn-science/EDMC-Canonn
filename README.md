@@ -117,6 +117,7 @@ The plugin will look up EDSM and Canonn Databases to identify interesting facts 
 | ![Personal](icons/Personal_grey.gif) | Personal | Personal POIs recorded with the canonn capture command.
 | ![Ring](icons/Ring_grey.gif) | Rings | Rings and their contents are displayed with this Icon.
 | ![Tourist](icons/Tourist_grey.gif) | Tourist | Display notable facts about a system like collisions or unusual conditions.
+| ![tritium](icons/tritium_grey.gif) | Tritium | Tritium is present in planetary rings.
 | ![Green](icons/GreenSystem_grey.gif) | GreenSystem | All materials needed for premium jumponium synthesis can be found in the system.
 | ![Jumponium](icons/Jumponium_grey.gif) | Jumponium | Displayed when materials needed for jumponium synthesis can be found in the system.
 | ![Error](icons/None_grey.gif) | Error | Usually displayed when there is a plugin error.
