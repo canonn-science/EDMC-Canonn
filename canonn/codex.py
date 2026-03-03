@@ -1770,6 +1770,8 @@ class CodexTypes:
                 # only expecting to go around once
                 temp_cmdrdata = self.cmdrq.get()
                 body = temp_cmdrdata.get("body")
+                if body is None:
+                    continue
                 body_code = body.replace(self.system + " ", "")
 
                 if temp_cmdrdata["description"] is None:
