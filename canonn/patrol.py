@@ -443,8 +443,33 @@ class CanonnPatrol(Frame):
                 )
                 if self.system == self.nearest.get("system"):
                     self.distance["text"] = "0ly"
-                self.infolink["text"] = self.nearest.get("instructions")
+                # Set a short placeholder first so the widget (and wraplength)
+                # can stabilise and the window can resize, then update to full text.
+                full_text = self.nearest.get("instructions")
+                self.infolink["text"] = "."
                 self.infolink["url"] = self.parseurl(self.nearest.get("url"))
+                try:
+                    self.infolink.update_idletasks()
+                except:
+                    pass
+
+                def _set_full_text():
+                    try:
+                        self.infolink["text"] = full_text
+                        # ensure geometry/wrap is recalculated
+                        try:
+                            self.infolink.update_idletasks()
+                        except:
+                            pass
+                    except Exception:
+                        pass
+
+                # small delay to allow geometry/configure events to run first
+                try:
+                    self.infolink.after(100, _set_full_text)
+                except:
+                    # fallback: set immediately if after isn't available
+                    _set_full_text()
 
                 self.infolink.grid()
                 self.distance.grid()
