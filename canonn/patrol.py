@@ -997,6 +997,11 @@ class CanonnPatrol(Frame):
             self.sort_patrol()
 
             Debug.logger.debug("download done")
+            # mark downloaded only if we successfully populated the patrol list
+            if self.patrol_list:
+                self.downloaded = True
+            else:
+                self.downloaded = False
             self.started = True
             # poke an evennt safely
             if not config.shutting_down:
@@ -1525,7 +1530,6 @@ class CanonnPatrol(Frame):
             )
 
             if not self.downloaded:
-                self.downloaded = True
                 self.patrol_update()
             self.update()
 
@@ -1616,7 +1620,6 @@ class CanonnPatrol(Frame):
 
         self.capi_update = True
         if not self.downloaded:
-            self.downloaded = True
             self.patrol_update()
         self.update()
 
