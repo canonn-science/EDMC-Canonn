@@ -3931,6 +3931,24 @@ class CodexTypes:
                             # best-effort: fallback to simple ppoi
                             self.add_ppoi(parent_body_code, "Tritium", group_name)
 
+            # Taylor Ring: total ring system span < 25% of body radius.
+            # Only consider rings (not belts) and only when body radius is known.
+            body_radius_km = candidate.get("radius")
+            if body_radius_km:
+                ring_inner_radii = []
+                ring_outer_radii = []
+                for ring in candidate.get("rings"):
+                    if "Ring" in ring.get("name", ""):
+                        if ring.get("innerRadius") is not None:
+                            ring_inner_radii.append(float(ring.get("innerRadius")))
+                        if ring.get("outerRadius") is not None:
+                            ring_outer_radii.append(float(ring.get("outerRadius")))
+                if ring_inner_radii and ring_outer_radii:
+                    span_m = max(ring_outer_radii) - min(ring_inner_radii)
+                    body_radius_m = float(body_radius_km) * 1000.0
+                    if span_m < 0.25 * body_radius_m:
+                        self.add_poi("Tourist", "Taylor Ring", body_code)
+
     def light_seconds(self, tag, value):
         if tag in ("distanceToArrival", "DistanceFromArrivalLS"):
             return value
