@@ -3932,21 +3932,42 @@ class CodexTypes:
                             self.add_ppoi(parent_body_code, "Tritium", group_name)
 
             # Taylor Ring: total ring system span < 25% of body radius.
-            # Only consider rings (not belts) and only when body radius is known.
-            body_radius_km = candidate.get("radius")
+            # Only consider actual rings (not belts) and only planets.
+            # All comparisons are in km; ring radii from Spansh are in metres
+            # when > 100 000 (same heuristic used elsewhere in this method).
+            if candidate.get("type") == "Planet":
+                raw_radius = candidate.get("radius")  # km for planets
+                body_radius_km = float(raw_radius) if raw_radius else 0.0
+            elif candidate.get("type") == "Star":
+                sr = candidate.get("solarRadius")
+                body_radius_km = float(sr) * 696000.0 if sr else 0.0
+            else:
+                body_radius_km = 0.0
+
             if body_radius_km:
-                ring_inner_radii = []
-                ring_outer_radii = []
+                ring_inner_km = []
+                ring_outer_km = []
                 for ring in candidate.get("rings"):
                     if "Ring" in ring.get("name", ""):
-                        if ring.get("innerRadius") is not None:
-                            ring_inner_radii.append(float(ring.get("innerRadius")))
-                        if ring.get("outerRadius") is not None:
-                            ring_outer_radii.append(float(ring.get("outerRadius")))
-                if ring_inner_radii and ring_outer_radii:
-                    span_m = max(ring_outer_radii) - min(ring_inner_radii)
-                    body_radius_m = float(body_radius_km) * 1000.0
-                    if span_m < 0.25 * body_radius_m:
+                        inner = ring.get("innerRadius")
+                        outer = ring.get("outerRadius")
+                        if inner is not None:
+                            inner = float(inner)
+                            if inner > 100000:
+                                inner /= 1000.0  # metres → km
+                            ring_inner_km.append(inner)
+                        if outer is not None:
+                            outer = float(outer)
+                            if outer > 100000:
+                                outer /= 1000.0  # metres → km
+                            ring_outer_km.append(outer)
+                if ring_inner_km and ring_outer_km:
+                    span_km = max(ring_outer_km) - min(ring_inner_km)
+                    Debug.logger.debug(
+                        f"[TAYLOR RING] body: {body_name}, span_km: {span_km:.2f}, "
+                        f"body_radius_km: {body_radius_km:.2f}, threshold_km: {0.25 * body_radius_km:.2f}"
+                    )
+                    if span_km < 0.25 * body_radius_km:
                         self.add_poi("Tourist", "Taylor Ring", body_code)
 
     def light_seconds(self, tag, value):

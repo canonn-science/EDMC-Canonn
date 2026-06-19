@@ -29,8 +29,11 @@ class Debug:
         frame = nb.Frame(parent)
         frame.columnconfigure(1, weight=1)
         frame.grid(row=gridrow, column=0, sticky="NSEW")
-        HyperlinkLabel(frame, text=f"Release: {client}",
-                       url="https://github.com/canonn-science/EDMC-Canonn/blob/master/README.md").grid(row=1, column=0, sticky="NW")
+        HyperlinkLabel(
+            frame,
+            text=f"Release: {client}",
+            url="https://github.com/canonn-science/EDMC-Canonn/blob/master/README.md",
+        ).grid(row=1, column=0, sticky="NW")
 
         return frame
 
@@ -44,17 +47,29 @@ def error(value):
 
 
 def getSystemInfo(system):
-    debug(f"Getting system infor for {system}")
-    url = f"https://www.edsm.net/api-v1/system?showCoordinates=1&showInformation=1&showId=1&showPrimaryStar=1&systemName={system}"
+    debug(f"Getting system info for {system}")
+    url = f"https://spansh.co.uk/api/systems/field_values/system_names?q={system}"
     debug(f"url {url}")
-    r = requests.get(url)
+    headers = {"User-Agent": "Canonn EDMC-Canonn plugin"}
+    r = requests.get(url, headers=headers)
     debug(r)
-    s = r.json()
-    debug(s)
-    return s
+    for entry in r.json().get("min_max") or []:
+        if entry.get("name") == system:
+            s = {
+                "name": entry.get("name"),
+                "id64": entry.get("id64"),
+                "coords": {
+                    "x": entry.get("x"),
+                    "y": entry.get("y"),
+                    "z": entry.get("z"),
+                },
+            }
+            debug(s)
+            return s
+    return None
 
 
-class fakeSystem():
+class fakeSystem:
 
     @classmethod
     def StartJump(cls, cmdr, client, message, wrapper, state, parent):
@@ -92,19 +107,33 @@ class fakeSystem():
             "JumpType": "Hyperspace",
             "StarSystem": cls.system,
             "SystemAddress": cls.id64,
-            "StarClass": "X"
+            "StarClass": "X",
         }
-        
-        cls.localstate = { "dummy" : "dummy" }
+
+        cls.localstate = {"dummy": "dummy"}
         if state.get("Odyssey"):
             cls.localstate["Odyssey"] = state.get("Odyssey")
-        
-        cls.wrapper(cls.cmdr, True, cls.system, None, None, None, None, event,
-                    cls.localstate, cls.coords["x"], cls.coords["y"], cls.coords["z"], None,
-                    {"Latitude": None, "Longitude": None, "Temperature": None, "Gravity": None}, cls.client)
+
+        cls.wrapper(
+            cls.cmdr,
+            True,
+            cls.system,
+            None,
+            None,
+            None,
+            None,
+            event,
+            cls.localstate,
+            cls.coords["x"],
+            cls.coords["y"],
+            cls.coords["z"],
+            None,
+            {"Latitude": None, "Longitude": None, "Temperature": None, "Gravity": None},
+            cls.client,
+        )
         cls.parent.after(10000, cls.FSDJump)
 
-    @ classmethod
+    @classmethod
     def FSDJump(cls):
         plug.show_error("FSDJump")
         now = datetime.now()
@@ -129,20 +158,49 @@ class fakeSystem():
             "BodyType": "Star",
             "JumpDist": 57.624,
             "FuelUsed": 4.402946,
-            "FuelLevel": 21.086681
+            "FuelLevel": 21.086681,
         }
-        cls.wrapper(cls.cmdr, True, cls.system, None, None, None, None, event,
-                    cls.localstate, cls.coords["x"], cls.coords["y"], cls.coords["z"], None,
-                    {"Latitude": None, "Longitude": None, "Temperature": None, "Gravity": None}, cls.client)
+        cls.wrapper(
+            cls.cmdr,
+            True,
+            cls.system,
+            None,
+            None,
+            None,
+            None,
+            event,
+            cls.localstate,
+            cls.coords["x"],
+            cls.coords["y"],
+            cls.coords["z"],
+            None,
+            {"Latitude": None, "Longitude": None, "Temperature": None, "Gravity": None},
+            cls.client,
+        )
 
 
-def inject(cmdr, is_beta, system, SysFactionState, SysFactionAllegiance, DistFromStarLS, station, entry,
-           state, x, y, z, body, nearloc, client, journal_entry_wrapper, frame):
+def inject(
+    cmdr,
+    is_beta,
+    system,
+    SysFactionState,
+    SysFactionAllegiance,
+    DistFromStarLS,
+    station,
+    entry,
+    state,
+    x,
+    y,
+    z,
+    body,
+    nearloc,
+    client,
+    journal_entry_wrapper,
+    frame,
+):
     sendText = entry.get("event") == "SendText" and entry.get("Message")
-    bFakeJump = (
-        sendText and "canonn fakejump" in entry.get("Message").lower())
+    bFakeJump = sendText and "canonn fakejump" in entry.get("Message").lower()
 
     if bFakeJump:
         message = entry.get("Message")
-        fakeSystem.StartJump(cmdr, client, message,
-                             journal_entry_wrapper, state, frame)
+        fakeSystem.StartJump(cmdr, client, message, journal_entry_wrapper, state, frame)
