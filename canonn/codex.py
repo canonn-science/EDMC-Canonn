@@ -304,8 +304,8 @@ def journal2edsm(j):
                     .replace("eRingClass_", "")
                     .replace("MetalRich", "Metal Rich"),
                     "mass": float(ring.get("MassMT")),
-                    "innerRadius": float(ring.get("InnerRad")) / 1000,
-                    "outerRadius": float(ring.get("OuterRad")) / 1000,
+                    "innerRadius": float(ring.get("InnerRad")),
+                    "outerRadius": float(ring.get("OuterRad")),
                 }
             )
     if j.get("SemiMajorAxis"):
@@ -1280,6 +1280,7 @@ class CodexTypes:
                         self.trojan(b, bodies)
                         self.ringed_star(b)
                         self.close_rings(b, bodies, body_code)
+                        self.taylor_ring(b, body_name, body_code)
                         self.close_bodies(b, bodies, body_code)
                         self.close_flypast(b, bodies, body_code)
                         self.rings(b, body_name)
@@ -3823,6 +3824,8 @@ class CodexTypes:
                         elif density > 1000:
                             self.add_poi("Tourist", "High Density Rings", body_code)
 
+                        self.fast_rings(ring, candidate, body_code)
+
                     # Detect Tritium in ring materials (some ring objects include materials)
                     try:
                         ring_code = ring.get("name").replace(self.system + " ", "")
@@ -3931,44 +3934,60 @@ class CodexTypes:
                             # best-effort: fallback to simple ppoi
                             self.add_ppoi(parent_body_code, "Tritium", group_name)
 
-            # Taylor Ring: total ring system span < 25% of body radius.
-            # Only consider actual rings (not belts) and only planets.
-            # All comparisons are in km; ring radii from Spansh are in metres
-            # when > 100 000 (same heuristic used elsewhere in this method).
-            if candidate.get("type") == "Planet":
-                raw_radius = candidate.get("radius")  # km for planets
-                body_radius_km = float(raw_radius) if raw_radius else 0.0
-            elif candidate.get("type") == "Star":
-                sr = candidate.get("solarRadius")
-                body_radius_km = float(sr) * 696000.0 if sr else 0.0
-            else:
-                body_radius_km = 0.0
+    @plugin_error
+    def fast_rings(self, ring, candidate, body_code):
+        r_inner_m = ring.get("innerRadius")
+        r_outer_m = ring.get("outerRadius")
+        if r_inner_m and r_outer_m and float(r_outer_m) > float(r_inner_m):
+            _G = 6.674e-11  # m³ kg⁻¹ s⁻²
+            _solar_kg = 1.989e30
+            _earth_kg = 5.972e24
+            _sm = candidate.get("solarMasses")
+            _em = candidate.get("earthMasses")
+            _M_kg = None
+            if _sm and float(_sm) > 0:
+                _M_kg = float(_sm) * _solar_kg
+            elif _em and float(_em) > 0:
+                _M_kg = float(_em) * _earth_kg
+            if _M_kg:
+                _ri = float(r_inner_m)
+                _ro = float(r_outer_m)
+                _re = _ri + (_ro - _ri) / math.e
+                _T = 2 * math.pi * math.sqrt(_re**3 / (_G * _M_kg))
+                _v_outer = (2 * math.pi * _ro / _T) / 1000.0  # km/s
+                if _T < 7200 or _v_outer > 300:
+                    self.add_poi("Tourist", "Fast Rings", body_code)
 
-            if body_radius_km:
-                ring_inner_km = []
-                ring_outer_km = []
-                for ring in candidate.get("rings"):
-                    if "Ring" in ring.get("name", ""):
-                        inner = ring.get("innerRadius")
-                        outer = ring.get("outerRadius")
-                        if inner is not None:
-                            inner = float(inner)
-                            if inner > 100000:
-                                inner /= 1000.0  # metres → km
-                            ring_inner_km.append(inner)
-                        if outer is not None:
-                            outer = float(outer)
-                            if outer > 100000:
-                                outer /= 1000.0  # metres → km
-                            ring_outer_km.append(outer)
-                if ring_inner_km and ring_outer_km:
-                    span_km = max(ring_outer_km) - min(ring_inner_km)
-                    Debug.logger.debug(
-                        f"[TAYLOR RING] body: {body_name}, span_km: {span_km:.2f}, "
-                        f"body_radius_km: {body_radius_km:.2f}, threshold_km: {0.25 * body_radius_km:.2f}"
-                    )
-                    if span_km < 0.25 * body_radius_km:
-                        self.add_poi("Tourist", "Taylor Ring", body_code)
+    @plugin_error
+    def taylor_ring(self, candidate, body_name, body_code):
+        if candidate.get("type") == "Planet":
+            raw_radius = candidate.get("radius")  # km for planets
+            body_radius_km = float(raw_radius) if raw_radius else 0.0
+        elif candidate.get("type") == "Star":
+            sr = candidate.get("solarRadius")
+            body_radius_km = float(sr) * 696000.0 if sr else 0.0
+        else:
+            return  # Only process planets and stars
+
+        if body_radius_km:
+            actual_rings = [
+                r for r in (candidate.get("rings") or []) if "Ring" in r.get("name", "")
+            ]
+
+            if actual_rings:
+                ring_span_m = actual_rings[-1].get("outerRadius", 0) - actual_rings[
+                    0
+                ].get("innerRadius", 0)
+                body_radius_m = body_radius_km * 1000.0
+
+                Debug.logger.debug(
+                    f"[TAYLOR RING] body: {body_name}, "
+                    f"ring_span_km: {ring_span_m/1000:.2f}, "
+                    f"body_radius_km: {body_radius_km:.2f}, "
+                    f"threshold_km: {body_radius_m/4}"
+                )
+                if ring_span_m < body_radius_m / 4.0:
+                    self.add_poi("Tourist", "Taylor Ring", body_code)
 
     def light_seconds(self, tag, value):
         if tag in ("distanceToArrival", "DistanceFromArrivalLS"):
