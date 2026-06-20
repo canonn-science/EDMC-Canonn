@@ -31,7 +31,11 @@ class postJson(threading.Thread):
             Debug.logger.error(r.status_code)
         else:
             Debug.logger.debug("emitter.post success")
-            Debug.logger.debug(json.dumps(r.json(), indent=4))
+            if r.content:
+                try:
+                    Debug.logger.debug(json.dumps(r.json(), indent=4))
+                except Exception:
+                    pass
 
 
 def post(url, payload):
