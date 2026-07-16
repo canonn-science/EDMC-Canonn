@@ -13,6 +13,7 @@ except:
 import traceback
 from operator import truediv
 import canonn.emitter
+import canonn.collision as collision
 import json
 import math
 import myNotebook as nb
@@ -20,6 +21,7 @@ import os
 import re
 import requests
 import threading
+import time
 import webbrowser
 from theme import theme
 from canonn.debug import Debug
@@ -289,6 +291,7 @@ def journal2edsm(j):
     e["orbitalInclination"] = j.get("OrbitalInclination")
     e["rotationalPeriod"] = j.get("RotationPeriod") / 24 / 60 / 60
     e["argOfPeriapsis"] = j.get("Periapsis")
+    e["ascendingNode"] = j.get("AscendingNode")
     e["orbitalEccentricity"] = j.get("Eccentricity")
     e["meanAnomaly"] = j.get("MeanAnomaly")
     e["updateTime"] = j.get("timestamp")
@@ -323,18 +326,6 @@ def surface_pressure(tag, value):
         return value * 100000
     else:
         return value
-
-
-def get_synodic_period(b1, b2):
-    T1 = b1.get("orbitalPeriod")
-    T2 = b2.get("orbitalPeriod")
-    try:
-        Tsyn = 1 / abs((1 / T1) - (1 / T2))
-    except ZeroDivisionError:
-        # return a very large number if we get a divide by zero error
-        # this is fine.
-        return 999999999999999999
-    return Tsyn
 
 
 class codexName(threading.Thread):
@@ -826,6 +817,10 @@ class CodexTypes:
         self.event = None
         self.system = None
         self.bodies = None
+        self.collision_cancel_event = threading.Event()
+        self.collision_results = {}
+        self.collision_running = False
+        self.collision_signature = None
         self.body = None
         self.latitude = None
         self.longitude = None
@@ -1261,6 +1256,8 @@ class CodexTypes:
                         if bodies.get(k).get("solarRadius") is not None:
                             bodies[k]["radius"] = bodies.get(k).get("solarRadius")
 
+                    self.maybe_start_collision_scan(bodies)
+
                     for k in bodies.keys():
                         b = bodies.get(k)
 
@@ -1282,7 +1279,7 @@ class CodexTypes:
                         self.close_rings(b, bodies, body_code)
                         self.taylor_ring(b, body_name, body_code)
                         self.close_bodies(b, bodies, body_code)
-                        self.close_flypast(b, bodies, body_code)
+                        self.apply_collision_pois(b, body_code)
                         self.rings(b, body_name)
                         self.green_system(bodies)
                         self.deeply_nested(b, body_code)
@@ -3200,65 +3197,66 @@ class CodexTypes:
             return self.light_seconds("radius", body.get("radius"))
         return None
 
+    @staticmethod
+    def _collision_candidate_ready(b):
+        # mirrors the fields canonn.collision._build_candidate requires -
+        # used here just to detect when it's worth (re)running a scan
+        return (
+            b.get("type") in ("Planet", "Star")
+            and b.get("parents")
+            and b.get("semiMajorAxis") is not None
+            and b.get("orbitalEccentricity") is not None
+            and b.get("orbitalInclination") is not None
+            and b.get("argOfPeriapsis") is not None
+            and b.get("ascendingNode") is not None
+            and b.get("orbitalPeriod") is not None
+            and b.get("meanAnomaly") is not None
+            and b.get("updateTime") is not None
+        )
+
     @plugin_error
-    def close_flypast(self, body, bodies, body_code):
-        for sibling in bodies.values():
-            p1 = body.get("parents")
-            p2 = sibling.get("parents")
+    def maybe_start_collision_scan(self, bodies):
+        # The 3D collision search is O(n^2) per sibling group with an
+        # expensive per-pair orbit-crossing test, so we only (re)run it in a
+        # background thread when the set of candidate bodies has changed -
+        # never inline, and never on every journal/FSS tick.
+        if self.collision_running:
+            return
 
-            valid_body = True
-            valid_body = p2 and valid_body
-            valid_body = p1 and valid_body
-            valid_body = body.get("type") in ("Planet", "Star") and valid_body
-            valid_body = sibling.get("type") in ("Planet", "Star") and valid_body
-            valid_body = body.get("semiMajorAxis") is not None and valid_body
-            valid_body = sibling.get("semiMajorAxis") is not None and valid_body
-            valid_body = body.get("orbitalEccentricity") is not None and valid_body
-            valid_body = sibling.get("orbitalEccentricity") is not None and valid_body
-            valid_body = body.get("orbitalPeriod") is not None and valid_body
-            valid_body = sibling.get("orbitalPeriod") is not None and valid_body
-            not_self = body.get("bodyId") != sibling.get("bodyId")
-            valid_body = not_self and valid_body
+        signature = frozenset(
+            body_id
+            for body_id, b in bodies.items()
+            if self._collision_candidate_ready(b)
+        )
+        if not signature or signature == self.collision_signature:
+            return
 
-            # if we share teh same parent and not the same body
-            if valid_body and str(p1[0]) == str(p2[0]):
-                a1 = self.apoapsis(
-                    "semiMajorAxis",
-                    body.get("semiMajorAxis"),
-                    body.get("orbitalEccentricity"),
-                )
-                a2 = self.apoapsis(
-                    "semiMajorAxis",
-                    sibling.get("semiMajorAxis"),
-                    sibling.get("orbitalEccentricity"),
-                )
-                p1 = self.periapsis(
-                    "semiMajorAxis",
-                    body.get("semiMajorAxis"),
-                    body.get("orbitalEccentricity"),
-                )
-                p2 = self.periapsis(
-                    "semiMajorAxis",
-                    sibling.get("semiMajorAxis"),
-                    sibling.get("orbitalEccentricity"),
-                )
-                r1 = sibling.get("radius")
-                r2 = body.get("radius")
+        self.collision_signature = signature
+        self.collision_running = True
+        bodies_snapshot = {body_id: dict(b) for body_id, b in bodies.items()}
+        collision.CollisionCalculator(
+            bodies_snapshot, self.collision_cancel_event, self.collisionDataReady
+        ).start()
 
-                # we want this to be in km
-                adistance = (abs(a1 - a2) * 299792.5436) - (r1 + r2)
-                pdistance = (abs(p1 - a2) * 299792.5436) - (r1 + r2)
-                # print("distance {}, radii = {}".format(distance,r1+r2))
-                period = get_synodic_period(body, sibling)
+    def collisionDataReady(self, results):
+        # Runs in the CollisionCalculator thread - no Tkinter calls here
+        # other than event_generate (see getPOIdata for the same pattern).
+        if config.shutting_down:
+            return
+        self.collision_results = results if results is not None else {}
+        self.collision_running = False
+        self.frame.event_generate("<<refreshPOIData>>", when="head")
 
-                # its close if less than 100km
-                collision = adistance < 0 or pdistance < 0
-                close = adistance < 100 or pdistance < 100
-                # only considering a 30 day period
-                if collision and period < 40:
-                    self.add_poi("Tourist", "Collision Flypast", body_code)
-                elif close and period < 40:
-                    self.add_poi("Tourist", "Close Flypast", body_code)
+    def apply_collision_pois(self, body, body_code):
+        contacts = self.collision_results.get(body.get("bodyId"))
+        if not contacts:
+            return
+        soonest = min(contacts, key=lambda c: c["start_ms"])
+        now_ms = time.time() * 1000.0
+        if soonest["start_ms"] <= now_ms <= soonest["end_ms"]:
+            self.add_poi("Tourist", "Colliding Now", body_code)
+        else:
+            self.add_poi("Tourist", "Collider", body_code)
 
     @plugin_error
     def close_bodies(self, candidate, bodies, body_code):
@@ -4233,6 +4231,14 @@ class CodexTypes:
             elif entry.get("event") == "FSDTarget" and self.intaxi:
                 self.system = entry.get("Name")
             self.bodies = None
+            # leaving the system - stop any in-flight collision prediction
+            # immediately rather than let it keep running for a system we've
+            # departed
+            self.collision_cancel_event.set()
+            self.collision_cancel_event = threading.Event()
+            self.collision_results = {}
+            self.collision_running = False
+            self.collision_signature = None
             CodexTypes.fsscount = None
             CodexTypes.bodycount = None
             self.stationdata = {}
@@ -4763,6 +4769,10 @@ class CodexTypes:
         codexName(cls.get_codex_names).start()
         # except:
         #    Debug.logger.debug("no config file {}".format(file))
+
+    def plugin_stop(self):
+        """EDMC is closing - stop any in-flight collision prediction."""
+        self.collision_cancel_event.set()
 
     def plugin_prefs(self, parent, cmdr, is_beta, gridrow):
         "Called to get a tk Frame for the settings dialog."
