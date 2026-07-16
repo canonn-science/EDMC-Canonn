@@ -4058,19 +4058,16 @@ class CodexTypes:
             ) or is_invisible_ring(inner2_m, outer2_m, r2.get("mass")):
                 continue
 
-            name1 = (
-                r1.get("name", "")
-                .replace(self.system + " ", "")
-                .replace("Ring", "")
-                .strip()
-            )
-            name2 = (
-                r2.get("name", "")
-                .replace(self.system + " ", "")
-                .replace("Ring", "")
-                .strip()
-            )
+            name1 = self.ring_letter(r1.get("name", ""), body_code)
+            name2 = self.ring_letter(r2.get("name", ""), body_code)
             self.add_poi("Tourist", f"Racing Rings ({name1}-{name2})", body_code)
+
+    def ring_letter(self, ring_name, body_code):
+        # "<system> <body_code> <letter> Ring" -> "<letter>"
+        suffix = ring_name.replace(self.system + " ", "").replace("Ring", "").strip()
+        if suffix.startswith(body_code):
+            suffix = suffix[len(body_code) :].strip()
+        return suffix
 
     @plugin_error
     def taylor_ring(self, candidate, body_name, body_code):
