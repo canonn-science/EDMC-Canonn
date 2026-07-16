@@ -490,5 +490,5 @@ class CollisionCalculator(threading.Thread):
             Debug.logger.exception(e)
             results = None
 
-        if results is not None and not self.cancel_event.is_set():
+        if not self.cancel_event.is_set():
             self.callback(results)
