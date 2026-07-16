@@ -126,11 +126,11 @@ The plugin will look up EDSM and Canonn Databases to identify interesting facts 
                     
 | name | Description
 |-----------------------------------|------------------------------------------------|
-| Close Flypast | Bodies that will pass close to each other but will never collide |
-| Close Orbit | As above but not landable |
+| Close Orbit | Non-landable bodies that will pass close to each other but will never collide |
 | Close Orbit Landable | A landable that orbits very close to another body |
 | Close Ring Proximity | Rings of two bodies that may be close to each other |
-| Collision Flypast | These bodies are on similar orbits and have a chance of colliding in the future. Ed observatory collisions plugin can confirm |
+| Collider | A full 3D orbit-crossing check predicts these two bodies will come within contact distance of each other at a future date |
+| Colliding Now | As above, but the predicted contact window is currently in progress |
 | Deeply Nested | This is based on the in game nomenclature. If the last three chars are lower case then it is deeply nested. This will cover stars as well |
 | Eyeball Earthlike | An Earthlike world that always presents the same face to the sun |
 | Fast Orbital Period | The orbital period should be less than an hour to qualify |

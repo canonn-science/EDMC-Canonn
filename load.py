@@ -142,6 +142,7 @@ def plugin_stop():
     """
     Debug.logger.debug("Stopping the plugin")
     this.patrol.plugin_stop()
+    this.codexcontrol.plugin_stop()
 
 
 def plugin_app(parent):
