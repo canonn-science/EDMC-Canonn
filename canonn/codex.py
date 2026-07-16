@@ -3199,20 +3199,30 @@ class CodexTypes:
 
     @staticmethod
     def _collision_candidate_ready(b):
-        # mirrors the fields canonn.collision._build_candidate requires -
-        # used here just to detect when it's worth (re)running a scan
-        return (
-            b.get("type") in ("Planet", "Star")
-            and b.get("parents")
-            and b.get("semiMajorAxis") is not None
-            and b.get("orbitalEccentricity") is not None
-            and b.get("orbitalInclination") is not None
-            and b.get("argOfPeriapsis") is not None
-            and b.get("ascendingNode") is not None
-            and b.get("orbitalPeriod") is not None
-            and b.get("meanAnomaly") is not None
-            and b.get("updateTime") is not None
-        )
+        # Mirror canonn.collision._build_candidate gating to decide when a (re)scan is needed.
+        if b.get("type") not in ("Planet", "Star") or not b.get("parents"):
+            return False
+
+        a = b.get("semiMajorAxis")
+        e = b.get("orbitalEccentricity")
+        period = b.get("orbitalPeriod")
+        if a is None or e is None or period is None:
+            return False
+        if a <= 0 or e < 0 or e >= 1 or not period:
+            return False
+
+        if (
+            b.get("orbitalInclination") is None
+            or b.get("argOfPeriapsis") is None
+            or b.get("ascendingNode") is None
+            or b.get("meanAnomaly") is None
+            or b.get("updateTime") is None
+        ):
+            return False
+
+        if b.get("type") == "Star":
+            return bool(b.get("solarRadius"))
+        return bool(b.get("radius"))
 
     @plugin_error
     def maybe_start_collision_scan(self, bodies):
