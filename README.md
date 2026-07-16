@@ -126,7 +126,7 @@ The plugin will look up EDSM and Canonn Databases to identify interesting facts 
                     
 | name | Description
 |-----------------------------------|------------------------------------------------|
-| Close Orbit | As above but not landable |
+| Close Orbit | Non-landable bodies that will pass close to each other but will never collide |
 | Close Orbit Landable | A landable that orbits very close to another body |
 | Close Ring Proximity | Rings of two bodies that may be close to each other |
 | Collider | A full 3D orbit-crossing check predicts these two bodies will come within contact distance of each other at a future date |
