@@ -218,6 +218,59 @@ def get_outer_radius(body):
     return result
 
 
+# Racing Rings physics constants (see body-physics.service.ts in Canonn Signals)
+RING_DYNAMICS_G = 6.6743e-11  # m^3 kg^-1 s^-2
+SOLAR_MASS_KG = 1.989e30
+EARTH_MASS_KG = 5.972e24
+# Elite's ring "MassMT" field is not a real-world megatonne - it's Elite's own
+# "teragram megatonne" unit, equal to 1e12 kg.
+KG_PER_MEGATONNE = 1e12
+
+RACING_RINGS_MAX_GAP_KM = 50
+RACING_RINGS_MIN_SPEED_DIFF_KMS = 5
+INVISIBLE_RING_MAX_DENSITY = 0.1  # kg/km^2
+INVISIBLE_RING_MIN_WIDTH_KM = 1_000_000
+
+
+def ring_parent_mass_kg(candidate):
+    solar_masses = candidate.get("solarMasses")
+    earth_masses = candidate.get("earthMasses")
+    if solar_masses and float(solar_masses) > 0:
+        return float(solar_masses) * SOLAR_MASS_KG
+    if earth_masses and float(earth_masses) > 0:
+        return float(earth_masses) * EARTH_MASS_KG
+    return None
+
+
+def ring_dynamics(inner_m, outer_m, parent_mass_kg, nominal_fraction=3 / 8):
+    """Orbital period (s) and tangential velocities (km/s) at the inner/outer edges
+    of a ring, treated as a single rigid body rotating at one period (Elite's rings
+    don't shear like real Keplerian ones). nominal_fraction is the fraction of the
+    way from inner to outer edge used to evaluate that period - 3/8 is the factor
+    Canonn's Research Group tuned against in-game observation.
+
+    inner_m/outer_m: ring radii in metres. parent_mass_kg: parent body mass in kg.
+    """
+    if not inner_m or not outer_m or outer_m <= inner_m or not parent_mass_kg:
+        return None
+    nominal_m = inner_m + (outer_m - inner_m) * nominal_fraction
+    period_s = 2 * math.pi * math.sqrt(nominal_m**3 / (RING_DYNAMICS_G * parent_mass_kg))
+    min_v_kms = (2 * math.pi * inner_m / period_s) / 1000.0
+    max_v_kms = (2 * math.pi * outer_m / period_s) / 1000.0
+    return period_s, min_v_kms, max_v_kms
+
+
+def is_invisible_ring(inner_m, outer_m, mass_field):
+    # Very low areal density and very wide rings don't actually render in-game.
+    if not inner_m or not outer_m or outer_m <= inner_m or not mass_field:
+        return False
+    width_km = (outer_m - inner_m) / 1000.0
+    area_km2 = math.pi * ((outer_m / 1000.0) ** 2 - (inner_m / 1000.0) ** 2)
+    mass_kg = float(mass_field) * KG_PER_MEGATONNE
+    density = mass_kg / area_km2 if area_km2 > 0 else 0
+    return density < INVISIBLE_RING_MAX_DENSITY and width_km > INVISIBLE_RING_MIN_WIDTH_KM
+
+
 def convert_materials(mats):
     retval = {}
     for material in mats:
@@ -1278,6 +1331,7 @@ class CodexTypes:
                         self.ringed_star(b)
                         self.close_rings(b, bodies, body_code)
                         self.taylor_ring(b, body_name, body_code)
+                        self.racing_rings(b, body_code)
                         self.close_bodies(b, bodies, body_code)
                         self.apply_collision_pois(b, body_code)
                         self.rings(b, body_name)
@@ -3948,15 +4002,7 @@ class CodexTypes:
         r_outer_m = ring.get("outerRadius")
         if r_inner_m and r_outer_m and float(r_outer_m) > float(r_inner_m):
             _G = 6.674e-11  # m³ kg⁻¹ s⁻²
-            _solar_kg = 1.989e30
-            _earth_kg = 5.972e24
-            _sm = candidate.get("solarMasses")
-            _em = candidate.get("earthMasses")
-            _M_kg = None
-            if _sm and float(_sm) > 0:
-                _M_kg = float(_sm) * _solar_kg
-            elif _em and float(_em) > 0:
-                _M_kg = float(_em) * _earth_kg
+            _M_kg = ring_parent_mass_kg(candidate)
             if _M_kg:
                 _ri = float(r_inner_m)
                 _ro = float(r_outer_m)
@@ -3965,6 +4011,63 @@ class CodexTypes:
                 _v_outer = (2 * math.pi * _ro / _T) / 1000.0  # km/s
                 if _T < 7200 or _v_outer > 300:
                     self.add_poi("Tourist", "Fast Rings", body_code)
+
+    @plugin_error
+    def racing_rings(self, candidate, body_code):
+        # A pair of adjacent rings whose gap is small and whose rotational speeds
+        # differ enough that a commander flying between them would see one ring
+        # visibly overtaking the other.
+        if candidate.get("type") not in ("Planet", "Star"):
+            return
+
+        actual_rings = [
+            r for r in (candidate.get("rings") or []) if "Ring" in r.get("name", "")
+        ]
+        if len(actual_rings) < 2:
+            return
+
+        parent_mass_kg = ring_parent_mass_kg(candidate)
+        if not parent_mass_kg:
+            return
+
+        sorted_rings = sorted(actual_rings, key=lambda r: r.get("innerRadius") or 0)
+
+        for r1, r2 in zip(sorted_rings, sorted_rings[1:]):
+            inner1_m = r1.get("innerRadius")
+            outer1_m = r1.get("outerRadius")
+            inner2_m = r2.get("innerRadius")
+            outer2_m = r2.get("outerRadius")
+
+            dyn1 = ring_dynamics(inner1_m, outer1_m, parent_mass_kg)
+            dyn2 = ring_dynamics(inner2_m, outer2_m, parent_mass_kg)
+            if not dyn1 or not dyn2:
+                continue
+
+            _, _, max_v1_kms = dyn1
+            _, min_v2_kms, _ = dyn2
+
+            gap_km = (inner2_m - outer1_m) / 1000.0
+            velocity_diff_kms = max_v1_kms - min_v2_kms
+
+            if gap_km >= RACING_RINGS_MAX_GAP_KM:
+                continue
+            if velocity_diff_kms <= RACING_RINGS_MIN_SPEED_DIFF_KMS:
+                continue
+            if is_invisible_ring(
+                inner1_m, outer1_m, r1.get("mass")
+            ) or is_invisible_ring(inner2_m, outer2_m, r2.get("mass")):
+                continue
+
+            name1 = self.ring_letter(r1.get("name", ""), body_code)
+            name2 = self.ring_letter(r2.get("name", ""), body_code)
+            self.add_poi("Tourist", f"Racing Rings ({name1}-{name2})", body_code)
+
+    def ring_letter(self, ring_name, body_code):
+        # "<system> <body_code> <letter> Ring" -> "<letter>"
+        suffix = ring_name.replace(self.system + " ", "").replace("Ring", "").strip()
+        if suffix.startswith(body_code):
+            suffix = suffix[len(body_code) :].strip()
+        return suffix
 
     @plugin_error
     def taylor_ring(self, candidate, body_name, body_code):
