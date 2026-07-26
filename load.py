@@ -11,6 +11,7 @@ import sys
 import os
 import time
 import canonn
+from canonn import architect
 from canonn import clientreport
 from canonn import codex
 from canonn import factionkill
@@ -127,6 +128,7 @@ def plugin_start(plugin_dir):
     # print this.patrol
     release.Release.plugin_start(plugin_dir)
     patrol.CanonnPatrol.plugin_start(plugin_dir)
+    architect.ArchitectDisplay.plugin_start(plugin_dir)
     codex.CodexTypes.plugin_start(plugin_dir)
     capture.plugin_start(plugin_dir)
     extool.BearingDestination.plugin_start(plugin_dir)
@@ -171,6 +173,11 @@ def plugin_app(parent):
     this.target = canonn.target.TargetDisplay(table, 7, this.codexcontrol)
     this.scan_organic = organic_scanner.OrganicScanner(table, 8)
     this.guardian = canonn.guardian.Display(table, 9)
+    # Lives inside the codex panel's bordered box, between the system name
+    # and the codex icon row, rather than its own row in the main table.
+    this.architect_display = architect.ArchitectDisplay(
+        this.codexcontrol.architect_slot, 0
+    )
 
     whitelist = whiteList(parent)
     whitelist.fetchData()
@@ -525,6 +532,8 @@ def journal_entry_wrapper(
     )
 
     hdreport.submit(cmdr, is_beta, system, station, entry, client, state)
+
+    this.architect_display.journal_entry(cmdr, system, entry)
 
 
 def dashboard_entry(cmdr, is_beta, entry):

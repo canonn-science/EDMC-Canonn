@@ -38,15 +38,23 @@ class CreateToolTip(object):
             self.widget.after_cancel(id)
 
     def showtip(self, event=None):
-        x = y = 0
-        x, y, cx, cy = self.widget.bbox("insert")
-        x += self.widget.winfo_rootx() + 25
-        y += self.widget.winfo_rooty() + 20
+        if not self.text:
+            return
+        # Pinned to the widget's own bottom-left corner rather than the
+        # pointer -- bbox("insert") only means something for Text/Entry
+        # widgets (silently (0, 0, 0, 0) on a Label), and following the
+        # pointer made the tooltip land in a different spot every time
+        # depending on where the mouse entered.
+        x = self.widget.winfo_rootx()
+        y = self.widget.winfo_rooty() + self.widget.winfo_height()
         # creates a toplevel window
         self.tw = tk.Toplevel(self.widget)
         # Leaves only the label and removes the app window
         self.tw.wm_overrideredirect(True)
         self.tw.wm_geometry("+%d+%d" % (x, y))
+        # Without this the tooltip can end up rendered behind the main
+        # window on Windows and never actually be seen.
+        self.tw.wm_attributes("-topmost", True)
         label = tk.Label(self.tw, text=self.text, justify='left',
                        background="#ffffff", relief='solid', borderwidth=1,
                        wraplength = self.wraplength)

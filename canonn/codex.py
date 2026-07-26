@@ -723,11 +723,17 @@ class CodexTypes:
         self.container.grid(row=0, column=0, sticky="NSEW", columnspan=2)
         self.container.grid_remove()
 
+        # Slot for other plugin widgets (e.g. the Architect display) that
+        # want to sit inside this bordered box, between the system name and
+        # the codex icon row.
+        self.architect_slot = Frame(self.container)
+        self.architect_slot.grid(row=1, column=0, columnspan=2, sticky="NSEW")
+
         self.titlepanel = Frame(self.container)
-        self.titlepanel.grid(row=1, column=0, sticky="NSEW")
+        self.titlepanel.grid(row=2, column=0, sticky="NSEW")
 
         self.systempanel = Frame(self.container)
-        self.systempanel.grid(row=2, column=0, sticky="NSEW")
+        self.systempanel.grid(row=3, column=0, sticky="NSEW")
         self.systempanel.grid_remove()
 
         self.systemtitle = Frame(self.titlepanel)
@@ -743,7 +749,7 @@ class CodexTypes:
         self.systemprogress.grid_remove()
 
         self.planetpanel = Frame(self.container)
-        self.planetpanel.grid(row=3, column=0, sticky="NSEW")
+        self.planetpanel.grid(row=4, column=0, sticky="NSEW")
         self.planetpanel.grid_remove()
 
         self.planettitle = Frame(self.titlepanel)
