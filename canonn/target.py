@@ -38,12 +38,13 @@ class TargetDisplay():
     def set_plugin_dir(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
 
-    def __init__(self, parent, gridrow, codexControl):
+    def __init__(self, parent, gridrow, codexControl, architectDisplay):
         padx, pady = 10, 5  # formatting
         sticky = tk.EW + tk.N  # full width, stuck to the top
         anchor = tk.NW
 
         self.codexControl = codexControl
+        self.architectDisplay = architectDisplay
         self.gridrow = gridrow
         self.parent = parent
 
@@ -116,7 +117,10 @@ class TargetDisplay():
                 self.target = {
                     "name": self.spansh.get("name"),
                     "id64": self.spansh.get("id64"),
-                    "coords": self.spansh.get("system").get("coords").values()
+                    "coords": self.spansh.get("system").get("coords").values(),
+                    # so jump() can tell architect display about the target's
+                    # factions without a journal entry to read them from
+                    "factions": self.spansh.get("system").get("factions") or []
                 }
             else:
                 self.target = None
@@ -152,6 +156,20 @@ class TargetDisplay():
 
             self.codexControl.journal_entry(
                 self.cmdr, False, self.target.get("name"), None, entry, self.state, x, y, z, None, None, None, self.client)
+
+            if "factions" in self.target:
+                # spansh gave us the target's factions directly, so we can
+                # tell the architect display about them straight away
+                entry["Factions"] = [{"Name": faction.get("name")}
+                                      for faction in self.target.get("factions")]
+                self.architectDisplay.journal_entry(
+                    self.cmdr, self.target.get("name"), entry)
+            else:
+                # swapping back to the real current system, which has no
+                # factions of its own to hand over - re-resolve it the same
+                # way a synthetic StartUp event does, by scanning the journal
+                self.architectDisplay.journal_entry(
+                    self.cmdr, self.target.get("name"), {"event": "StartUp"})
 
         # swap over current and taget so we can switch back.
         swap = self.current
