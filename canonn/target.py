@@ -38,12 +38,13 @@ class TargetDisplay():
     def set_plugin_dir(cls, plugin_dir):
         cls.plugin_dir = plugin_dir
 
-    def __init__(self, parent, gridrow, codexControl):
+    def __init__(self, parent, gridrow, codexControl, architectDisplay):
         padx, pady = 10, 5  # formatting
         sticky = tk.EW + tk.N  # full width, stuck to the top
         anchor = tk.NW
 
         self.codexControl = codexControl
+        self.architectDisplay = architectDisplay
         self.gridrow = gridrow
         self.parent = parent
 
@@ -116,7 +117,13 @@ class TargetDisplay():
                 self.target = {
                     "name": self.spansh.get("name"),
                     "id64": self.spansh.get("id64"),
-                    "coords": self.spansh.get("system").get("coords").values()
+                    "coords": self.spansh.get("system").get("coords").values(),
+                    # so jump() can tell architect display about the target's
+                    # factions without a journal entry to read them from.
+                    # Left as None (rather than []) when spansh didn't
+                    # provide any, so jump() can tell "no data" apart from
+                    # "confirmed no factions".
+                    "factions": self.spansh.get("system").get("factions")
                 }
             else:
                 self.target = None
@@ -153,10 +160,43 @@ class TargetDisplay():
             self.codexControl.journal_entry(
                 self.cmdr, False, self.target.get("name"), None, entry, self.state, x, y, z, None, None, None, self.client)
 
+            factions = self.target.get("factions")
+            if factions is not None:
+                # spansh gave us the target's factions directly, so the
+                # architect display doesn't need a journal entry to read
+                # them from. Build a separate dict rather than mutating
+                # entry - it's already been handed to codexControl, which
+                # may hold onto it (e.g. queued in its own log queue).
+                architect_entry = dict(
+                    entry, Factions=[{"Name": faction.get("name")} for faction in factions])
+            else:
+                # swapping back to the real current system, which has no
+                # factions of its own to hand over - re-resolve it the same
+                # way a synthetic StartUp event does, by scanning the journal
+                architect_entry = {"event": "StartUp"}
+
+            self.notify_architect_after_refresh(
+                self.target.get("name"), architect_entry)
+
         # swap over current and taget so we can switch back.
         swap = self.current
         self.current = self.target
         self.target = swap
+
+    def notify_architect_after_refresh(self, name, entry):
+        # codexControl's own system name label updates asynchronously, once
+        # its background POI fetch completes and fires <<refreshPOIData>> -
+        # so telling the architect display about the swap immediately would
+        # show the new system's data while the heading above it still shows
+        # the old system's name. Wait for that same signal before updating it.
+        funcid = None
+
+        def on_refresh(event):
+            self.codexControl.frame.unbind("<<refreshPOIData>>", funcid)
+            self.architectDisplay.journal_entry(self.cmdr, name, entry)
+
+        funcid = self.codexControl.frame.bind(
+            "<<refreshPOIData>>", on_refresh, add="+")
 
     def save(self, event):
         # this should always exist but better safe than sorry
