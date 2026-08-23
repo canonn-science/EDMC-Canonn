@@ -725,9 +725,12 @@ class CodexTypes:
 
         # Slot for other plugin widgets (e.g. the Architect display) that
         # want to sit inside this bordered box, between the system name and
-        # the codex icon row.
-        self.architect_slot = Frame(self.container)
-        self.architect_slot.grid(row=1, column=0, columnspan=2, sticky="NSEW")
+        # the codex icon row (row 1). Handed over as the container itself,
+        # not a wrapper frame - a wrapper's own grid slot in the container
+        # doesn't shrink when its child is grid_remove()'d, leaving a blank
+        # gap, so the widget that actually toggles visibility needs to be
+        # gridded directly into the container.
+        self.architect_slot = self.container
 
         self.titlepanel = Frame(self.container)
         self.titlepanel.grid(row=2, column=0, sticky="NSEW")

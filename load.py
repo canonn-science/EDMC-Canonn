@@ -171,9 +171,10 @@ def plugin_app(parent):
     this.hyperdiction = hdreport.hyperdictionDetector.setup(table, 5)
     this.guestbook = guestBook.setup(table, 6)
     # Lives inside the codex panel's bordered box, between the system name
-    # and the codex icon row, rather than its own row in the main table.
+    # and the codex icon row (row 1 there), rather than its own row in the
+    # main table.
     this.architect_display = architect.ArchitectDisplay(
-        this.codexcontrol.architect_slot, 0
+        this.codexcontrol.architect_slot, 1
     )
     this.target = canonn.target.TargetDisplay(table, 7, this.codexcontrol, this.architect_display)
     this.scan_organic = organic_scanner.OrganicScanner(table, 8)
