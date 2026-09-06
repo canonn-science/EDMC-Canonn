@@ -2429,6 +2429,17 @@ class CodexTypes:
 
                 if "SAAsignals" in temp_poidata:
                     for v in temp_poidata["SAAsignals"]:
+                        english_name = v.get("english_name")
+                        if (
+                            english_name
+                            and english_name.startswith("$")
+                            and english_name.endswith(";")
+                        ):
+                            # The server can return signal types it never
+                            # decoded (e.g. $PlanetaryMiningLocation_Name;) -
+                            # a properly decoded name is never a raw token,
+                            # so skip these instead of showing them as-is.
+                            continue
                         self.saaq.put(v)
                 if "cmdr" in temp_poidata:
                     for v in temp_poidata["cmdr"]:
