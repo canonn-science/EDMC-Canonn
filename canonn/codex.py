@@ -2299,15 +2299,16 @@ class CodexTypes:
                             signals = b.get("signals").get("signals")
                             for key in signals.keys():
                                 type = key
+                                if not type or "$SAA_SignalType_" not in type:
+                                    # Unrecognised signal type - skip it rather than
+                                    # letting it inherit the previous signal's category.
+                                    continue
                                 english_name = (
                                     type.replace("$SAA_SignalType_", "")
                                     .replace("ical;", "y")
                                     .replace(";", "")
                                 )
-                                if " Ring" in b.get("name"):
-                                    cat = "Ring"
-                                if "$SAA_SignalType_" in type:
-                                    cat = english_name
+                                cat = "Ring" if " Ring" in b.get("name") else english_name
 
                                 saa_signal = {}
                                 saa_signal["body"] = b.get("name")
@@ -4810,17 +4811,18 @@ class CodexTypes:
 
             signals = entry.get("Signals")
             for i, v in enumerate(signals):
-                found = False
                 type = v.get("Type")
+                if not type or "$SAA_SignalType_" not in type:
+                    # Unrecognised signal type (e.g. new journal additions like
+                    # $PlanetaryMiningLocation_Name;) - skip it rather than letting
+                    # it inherit the previous signal's category.
+                    continue
                 english_name = (
                     type.replace("$SAA_SignalType_", "")
                     .replace("ical;", "y")
                     .replace(";", "")
                 )
-                if " Ring" in bodyName:
-                    cat = "Ring"
-                if "$SAA_SignalType_" in type:
-                    cat = english_name
+                cat = "Ring" if " Ring" in bodyName else english_name
 
                 saa_signal = {}
                 saa_signal["body"] = entry.get("BodyName")
