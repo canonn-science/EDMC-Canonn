@@ -2299,15 +2299,16 @@ class CodexTypes:
                             signals = b.get("signals").get("signals")
                             for key in signals.keys():
                                 type = key
+                                if not type or "$SAA_SignalType_" not in type:
+                                    # Unrecognised signal type - skip it rather than
+                                    # letting it inherit the previous signal's category.
+                                    continue
                                 english_name = (
                                     type.replace("$SAA_SignalType_", "")
                                     .replace("ical;", "y")
                                     .replace(";", "")
                                 )
-                                if " Ring" in b.get("name"):
-                                    cat = "Ring"
-                                if "$SAA_SignalType_" in type:
-                                    cat = english_name
+                                cat = "Ring" if " Ring" in b.get("name") else english_name
 
                                 saa_signal = {}
                                 saa_signal["body"] = b.get("name")
@@ -2338,6 +2339,13 @@ class CodexTypes:
                                 ):
                                     signals = ring.get("signals").get("signals")
                                     for key in signals.keys():
+                                        if key.startswith("$") and key.endswith(";"):
+                                            # Not a genuine mineral hotspot name
+                                            # (e.g. a new signal type like
+                                            # $PlanetaryMiningLocation_Name;) -
+                                            # skip it rather than showing it as
+                                            # a ring hotspot.
+                                            continue
                                         saa_signal = {}
                                         saa_signal["body"] = b.get("name")
                                         saa_signal["hud_category"] = "Ring"
@@ -2421,6 +2429,17 @@ class CodexTypes:
 
                 if "SAAsignals" in temp_poidata:
                     for v in temp_poidata["SAAsignals"]:
+                        english_name = v.get("english_name")
+                        if (
+                            english_name
+                            and english_name.startswith("$")
+                            and english_name.endswith(";")
+                        ):
+                            # The server can return signal types it never
+                            # decoded (e.g. $PlanetaryMiningLocation_Name;) -
+                            # a properly decoded name is never a raw token,
+                            # so skip these instead of showing them as-is.
+                            continue
                         self.saaq.put(v)
                 if "cmdr" in temp_poidata:
                     for v in temp_poidata["cmdr"]:
@@ -4810,17 +4829,31 @@ class CodexTypes:
 
             signals = entry.get("Signals")
             for i, v in enumerate(signals):
-                found = False
                 type = v.get("Type")
-                english_name = (
-                    type.replace("$SAA_SignalType_", "")
-                    .replace("ical;", "y")
-                    .replace(";", "")
-                )
-                if " Ring" in bodyName:
-                    cat = "Ring"
-                if "$SAA_SignalType_" in type:
+                if not type:
+                    continue
+                has_saa_prefix = type.startswith("$SAA_SignalType_")
+                is_ring = " Ring" in bodyName
+                # Real ring mineral hotspots are reported as bare names
+                # (e.g. "Monazite"), never as localisation tokens. A new
+                # token-style signal (e.g. $PlanetaryMiningLocation_Name;)
+                # can appear on a ring body too, so token-ness - not just
+                # the ring flag - decides whether it's a genuine hotspot.
+                is_token = type.startswith("$") and type.endswith(";")
+                if has_saa_prefix:
+                    english_name = (
+                        type.replace("$SAA_SignalType_", "")
+                        .replace("ical;", "y")
+                        .replace(";", "")
+                    )
                     cat = english_name
+                elif is_ring and not is_token:
+                    english_name = type
+                    cat = "Ring"
+                else:
+                    # Unrecognised signal type - skip it rather than
+                    # misclassifying it as Biology/Geology/Ring/etc.
+                    continue
 
                 saa_signal = {}
                 saa_signal["body"] = entry.get("BodyName")
