@@ -4812,17 +4812,23 @@ class CodexTypes:
             signals = entry.get("Signals")
             for i, v in enumerate(signals):
                 type = v.get("Type")
-                if not type or "$SAA_SignalType_" not in type:
-                    # Unrecognised signal type (e.g. new journal additions like
-                    # $PlanetaryMiningLocation_Name;) - skip it rather than letting
-                    # it inherit the previous signal's category.
+                if not type:
+                    continue
+                is_ring = " Ring" in bodyName
+                has_saa_prefix = "$SAA_SignalType_" in type
+                if not is_ring and not has_saa_prefix:
+                    # Unrecognised signal type on a non-ring body (e.g. new journal
+                    # additions like $PlanetaryMiningLocation_Name;) - skip it rather
+                    # than letting it inherit the previous signal's category. Ring
+                    # bodies always report bare mineral names (no $SAA_SignalType_
+                    # prefix), so those still need to fall through to "Ring".
                     continue
                 english_name = (
                     type.replace("$SAA_SignalType_", "")
                     .replace("ical;", "y")
                     .replace(";", "")
                 )
-                cat = "Ring" if " Ring" in bodyName else english_name
+                cat = english_name if has_saa_prefix else "Ring"
 
                 saa_signal = {}
                 saa_signal["body"] = entry.get("BodyName")
