@@ -14,6 +14,7 @@ import traceback
 from operator import truediv
 import canonn.emitter
 import canonn.collision as collision
+import canonn.green_gas_giant as green_gas_giant
 import json
 import math
 import myNotebook as nb
@@ -297,7 +298,11 @@ def journal2edsm(j):
     if j.get("OrbitalPeriod"):
         e["orbitalPeriod"] = j.get("OrbitalPeriod") / 24 / 60 / 60
 
-    e["surfaceTemperature"] = int(j.get("SurfaceTemperature"))
+    if j.get("SurfaceTemperature") is not None:
+        e["surfaceTemperature"] = float(j.get("SurfaceTemperature"))
+    # Journal data is full float32 precision; Spansh/EDSM rounds it, which
+    # matters for the Green Gas Giant predictor's narrow float32 windows.
+    e["_precision"] = "full"
     e["distanceToArrival"] = int(round(j.get("DistanceFromArrivalLS"), 0))
     e["bodyId"] = j.get("BodyID")
     e["parents"] = j.get("Parents")
@@ -1267,6 +1272,7 @@ class CodexTypes:
                         if b.get("bodyId") not in self.bodies and not self.bodymismatch(
                             self.temp_spanshdata.get("name"), b.get("name")
                         ):
+                            b.setdefault("_precision", "rounded")
                             self.bodies[b.get("bodyId")] = b
 
             # Debug.logger.debug("self.bodies")
@@ -1336,6 +1342,7 @@ class CodexTypes:
                         self.hot_landable(b)
                         self.synchronous_orbit(b)
                         self.helium_rich(b)
+                        self.green_gas_giant(b)
                         self.trojan(b, bodies)
                         self.ringed_star(b)
                         self.close_rings(b, bodies, body_code)
@@ -3118,6 +3125,42 @@ class CodexTypes:
             and float(composition.get("Helium")) >= 30
         ):
             self.add_poi("Tourist", f"Helium Rich System", None)
+
+    @plugin_error
+    def green_gas_giant(self, b):
+        # Speculative reconstruction of the community "seven-layer ladder"
+        # model (see https://github.com/canonn-science/EDMC-Canonn/issues/222)
+        # for which gas giants render green in the Codex.
+        subtype = b.get("subType")
+        if not subtype:
+            return
+
+        class_key = green_gas_giant.classify(subtype)
+        if class_key not in green_gas_giant.CANDIDATE_LABELS:
+            # Unpredictable class (Class II/V, helium-rich) or not a gas giant.
+            return
+
+        body_code = b.get("name").replace(self.system + " ", "")
+
+        # Defer to the real Codex entry once the commander has actually
+        # found ANY green gas giant in this system - at that point the rest
+        # can just be checked visually, so we stop guessing system-wide.
+        tourist_pois = self.poidata.get("Tourist", {})
+        if any(name in tourist_pois for name in green_gas_giant.ALL_CODEX_NAMES):
+            return
+
+        result = green_gas_giant.predict(
+            subtype,
+            b.get("surfaceTemperature"),
+            b.get("earthMasses"),
+            (b.get("radius") or 0) * 1000,
+            precision=b.get("_precision", "rounded"),
+        )
+
+        Debug.logger.debug(f"green_gas_giant {body_code} {result}")
+
+        if result["verdict"] in (green_gas_giant.GREEN, green_gas_giant.GREEN_LOW_CONFIDENCE):
+            self.add_poi("Tourist", green_gas_giant.CANDIDATE_LABELS[class_key], body_code)
 
     @plugin_error
     def hot_landable(self, b):
