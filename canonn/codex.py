@@ -3067,6 +3067,17 @@ class CodexTypes:
                 if en.lower() == "tritium" or en.lower().startswith("$hotspots:"):
                     return
 
+        # Journal/codex events can arrive out of order, so a confirmed
+        # "Green ..." Codex entry can land after we've already added the
+        # speculative "Green ...?" prediction. Clear every prediction for
+        # the system as soon as any confirmed entry shows up, rather than
+        # leaving a stale prediction sitting next to the confirmed one.
+        if hud_category == "Tourist" and english_name in green_gas_giant.ALL_CODEX_NAMES:
+            tourist = self.poidata.get("Tourist")
+            if tourist:
+                for label in green_gas_giant.CANDIDATE_LABELS.values():
+                    tourist.pop(label, None)
+
         if hud_category not in self.poidata:
             self.poidata[hud_category] = {}
         if english_name not in self.poidata[hud_category]:
